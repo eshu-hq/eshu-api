@@ -1,0 +1,39 @@
+// shape for the single bounded in-API mutation (operator suppression upsert).
+// Canonical mutations persist through explicit core-owned admission contracts:
+// eshu-api keeps the HTTP shape and calls this versioned port, which the
+// core-owned Postgres store satisfies. A breaking change to the admission
+// shape must bump this version in the same diff.
+const SuppressionAdmissionContractVersion = "v0"
+
+// SuppressionAdmission is the versioned admission-contract port the API
+// handler depends on instead of a direct table handle. It aliases the
+// narrow mutation store so existing fakes and the core-owned Postgres
+// implementation keep satisfying it unchanged.
+type SuppressionAdmission = VulnerabilitySuppressionMutationStore
+
+var _ SuppressionAdmission = (*impact.PostgresVulnerabilitySuppressionMutationStore)(nil)
+
+// impact.VulnerabilitySuppressionMutationResult moved to
+// internal/query/supply/chain/impact with the suppression mutation store
+// (#6060 lane A); see compat_supply_chain.go.
+
+// VulnerabilitySuppressionMutationRequest is the operator-facing POST body.
+// Source and author are deliberately absent because the server derives them
+// from the authenticated mutation path.
+type VulnerabilitySuppressionMutationRequest struct {
+	SuppressionID string                           `json:"suppression_id"`
+	Justification string                           `json:"justification"`
+	AuthoredAt    string                           `json:"authored_at"`
+	ExpiresAt     string                           `json:"expires_at,omitempty"`
+	Reason        string                           `json:"reason"`
+	EvidenceRef   string                           `json:"evidence_ref,omitempty"`
+	Scope         vulnerabilitysuppressionv1.Scope `json:"scope"`
+}
+
+// VulnerabilitySuppressionMutationResponse is returned after a suppression
+// mutation is durably committed.
+type VulnerabilitySuppressionMutationResponse struct {
+	SuppressionID string `json:"suppression_id"`
+	GenerationID  string `json:"generation_id"`
+	Status        string `json:"status"`
+}
