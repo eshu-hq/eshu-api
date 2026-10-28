@@ -9,7 +9,9 @@ PR activates the dormant Go lanes with no workflow changes.
 `ci` runs path-selected lanes behind stable job names; `ci-complete` is the
 only context a `main` ruleset requires. It passes when needed lanes passed
 and fails when any needed lane failed — legitimately skipped lanes are fine,
-so docs-only PRs (`README.md`, other `**/*.md`, `LICENSE`) run no lane.
+so docs-only PRs (`README.md`, other `**/*.md` except `docs/provenance.md`,
+`LICENSE`) run no lane. `docs/provenance.md` is a parity input (see the
+table below), not a prose page.
 
 | PR changes | Lanes that run |
 | --- | --- |
