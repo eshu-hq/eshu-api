@@ -1,0 +1,56 @@
+# Seed CI for eshu-api (Refs eshu-hq/eshu#8872).
+#
+# Minimal self-contained lane for a docs-and-contracts seed: parity
+# proves the vendored upstream copies are byte-exact against the pinned
+# source commit, and lint keeps the tree clean. No reusable workflow
+# dependency until the extraction PR outgrows this lane.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Contract parity vs pinned source
+        run: bash scripts/check-parity.sh
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No whitespace errors
+        run: git diff --check
+      - name: Shell syntax
+        run: bash -n scripts/check-parity.sh
+      - name: Shell executable bit
+        run: test -x scripts/check-parity.sh
+      - name: Go formatting of vendored copies
+        run: |
+          command -v gofmt >/dev/null || { echo "gofmt missing on runner" >&2; exit 1; }
+          out="$(gofmt -l contracts/upstream/)"
+          if [ -n "$out" ]; then
+            echo "gofmt would reformat: $out" >&2
+            exit 1
+          fi
+      - name: No secrets in tree
+        # .github is excluded: the pattern below would otherwise match
+        # itself. GitHub secret scanning still covers workflow files.
+        run: |
+          if grep -rEn '(gh[op]_[A-Za-z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|aws_secret_access_key|AKIA[0-9A-Z]{16})' --exclude-dir=.git --exclude-dir=.github .; then
+            echo "secret-like pattern found" >&2
+            exit 1
+          fi
