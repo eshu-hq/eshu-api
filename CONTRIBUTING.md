@@ -21,7 +21,9 @@ table below), not a prose page.
 | Fixtures/config tests read (`testdata/**`, `**/*.json`, `**/*.yaml`/`yml`, `**/*.example.*`) | `test` only |
 | Shell scripts (`**/*.sh`) | `shell` only |
 | `contracts/upstream/**`, `scripts/check-parity.sh`, `docs/provenance.md` | `parity` |
-| `.github/workflows/**` | `actionlint`, plus `lint`/`test`/`race`/`parity` to prove the lanes still work |
+| `.github/workflows/**` | `actionlint`, plus `lint`/`test`/`race`/`parity`/`image` to prove the lanes still work |
+| `Dockerfile`, `.dockerignore` | `image` (build only, no push) |
+| Tag `v*` | `release`: multi-arch push to `ghcr.io/eshu-hq/eshu-api` with provenance, SBOM, Trivy gate, GitHub Release (see `docs/release.md`) |
 
 Anything unclassified runs the full Go lanes. `contracts/upstream/**` holds
 byte-exact source copies (parity evidence, not build inputs) and never
@@ -50,7 +52,6 @@ see it.
   `COVERAGE_FLOOR`, which may only rise toward the 90% finish line.
 - Fork PRs run the required lanes on a read-only token with no secrets.
 
-Deferred until their prerequisites land (tracked under `#1`): the `image`
-lane (a `Dockerfile` exists; the lane itself is not wired yet), Dependabot
+Deferred until its prerequisite lands (tracked under `#1`): Dependabot
 (config not added yet; unblocked by `go.mod`). The coverage ratchet is
 live at the skeleton baseline and may only rise toward 90%.

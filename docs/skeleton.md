@@ -56,8 +56,8 @@ land with core dispatch; the gate stays closed until then.
 ## NOT_CHECKED
 
 Core dispatch over the read contracts, suppression and other admission
-routes, scoped-token/OIDC resolvers, release cut with provenance and
-vulnerability scan, QA deployment from the destination artifact, parity
-re-proof against the live core path, concurrency and partial-failure
-proof, rehearsed rollback, owner production acceptance, and in-tree
-removal. Those stay open under `eshu-hq/eshu#8872`.
+routes, scoped-token/OIDC resolvers, the first tag cut from the release
+workflow in `docs/release.md`, QA deployment from the destination
+artifact, parity re-proof against the live core path, concurrency and
+partial-failure proof, rehearsed rollback, owner production acceptance,
+and in-tree removal. Those stay open under `eshu-hq/eshu#8872`.

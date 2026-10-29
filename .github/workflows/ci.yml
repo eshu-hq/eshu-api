@@ -2,7 +2,7 @@
 #
 # Stable job names (org contract; only ci-complete is ever required in a
 # ruleset): changes, parity, lint, test, race, shell, govulncheck, gosec,
-# actionlint, ci-complete.
+# actionlint, image, ci-complete.
 #
 # Skeleton state: this repo holds versioned contracts, parity evidence,
 # and its first Go increment (HTTP skeleton: router, auth, v1 alias and
@@ -14,12 +14,11 @@
 # parent toolchain from loading them, and they stay excluded from the `go`
 # path class so parity bumps never pay for Go lanes.
 #
-# Deferred until their prerequisites land (tracked under #1, not silently
-# dropped): the `image` lane (a Dockerfile exists; the lane itself is not
-# wired yet), Dependabot (unblocked by go.mod; config not added yet).
+# Deferred until its prerequisite lands (tracked under #1, not silently
+# dropped): Dependabot (unblocked by go.mod; config not added yet).
 # The coverage ratchet is live: COVERAGE_FLOOR sits at the skeleton
-# baseline and may only rise toward the 90% finish line. Tag v* has no
-# release workflow today.
+# baseline and may only rise toward the 90% finish line. Tag v* ships
+# through .github/workflows/release.yml (Refs eshu-hq/eshu#9520).
 #
 # Pinned actions (SHAs synced 2026-10-28 with the uses: lines below;
 # re-verify with git ls-remote when auditing; Dependabot
@@ -32,6 +31,8 @@
 #   rhysd/actionlint v1.7.12             914e7df21a07ef503a81201c76d2b11c789d3fca
 #   ludeeus/action-shellcheck (master)   00b27aa7cb85167568cb48a3838b75f4265f2bca
 #   github/codeql-action/upload-sarif v4.39.1 9b3254085494b55a0f7c4c2b3d2d52cc712ce370
+#   docker/setup-buildx-action v3        8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+#   docker/build-push-action v6          10e90e3645eae34f1e60eeb005ba3a3d33f178e8
 # Go tools (hash-verified by the toolchain on install):
 #   golangci-lint v2.12.2 (same binary Eshu uses; config in .golangci.yml)
 #   govulncheck v1.9.0, run with -scan package (Go 1.26 SSA-safe)
@@ -72,6 +73,7 @@ jobs:
       deps: ${{ steps.filter.outputs.deps }}
       parity: ${{ steps.filter.outputs.parity }}
       workflows: ${{ steps.filter.outputs.workflows }}
+      image: ${{ steps.filter.outputs.image }}
       misc: ${{ steps.filter.outputs.misc }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -114,6 +116,9 @@ jobs:
               - 'docs/provenance.md'
             workflows:
               - '.github/workflows/**'
+            image:
+              - 'Dockerfile'
+              - '.dockerignore'
             misc:
               # Anything not classified above runs the full Go lanes.
               # Docs-only must keep skipping, so the docs skip set stays
@@ -136,6 +141,8 @@ jobs:
               - '!scripts/check-parity.sh'
               - '!docs/provenance.md'
               - '!.github/workflows/**'
+              - '!Dockerfile'
+              - '!.dockerignore'
 
   parity:
     needs: [changes]
@@ -362,8 +369,30 @@ jobs:
         with:
           fail_on_error: true
 
+  image:
+    # Build-only lane (Refs eshu-hq/eshu-api#3, eshu-hq/eshu#9520): proves
+    # the Dockerfile still builds on PRs that touch it, without pushing.
+    # Tag pushes ship through release.yml, not here.
+    needs: [changes]
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.image == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.misc == 'true'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build image (no push)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          platforms: linux/amd64
+          provenance: false
+
   ci-complete:
-    needs: [changes, parity, lint, test, race, shell, govulncheck, gosec, actionlint]
+    needs: [changes, parity, lint, test, race, shell, govulncheck, gosec, actionlint, image]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
