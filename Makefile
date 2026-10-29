@@ -8,9 +8,9 @@
 # marker keeps the module toolchain from loading parity evidence as build
 # inputs.
 
-# Measured baseline from the first Go PR (HTTP skeleton, review round 2):
-# 87.2% of statements. The floor may only rise toward the 90% finish line.
-COVERAGE_FLOOR ?= 87.2
+# Measured baseline from the first Go PR (HTTP skeleton, review round 3):
+# 88.7% of statements. The floor may only rise toward the 90% finish line.
+COVERAGE_FLOOR ?= 88.7
 
 .PHONY: ci parity lint test race
 

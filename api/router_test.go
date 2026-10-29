@@ -210,3 +210,40 @@ func TestRouter_EnvelopeNegotiation(t *testing.T) {
 		t.Errorf("error.code = %v, want 'unauthenticated'", errSection["code"])
 	}
 }
+
+// TestRouter_Envelope503 pins the negotiated-envelope 503: an
+// authenticated envelope caller on a core route gets the 503 in the
+// envelope error shape — exact top-level key set, backend_unavailable
+// code, and no Retry-After on the permanent skeleton outage.
+func TestRouter_Envelope503(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("https://core:8443", skeletonTestKey)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	req := authedRequest("GET", "/api/v0/repositories")
+	req.Header.Set("Accept", "application/eshu.envelope+json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", rec.Code)
+	}
+	if got := rec.Header().Get("Deprecation"); got != "true" {
+		t.Fatalf("Deprecation = %q, want 'true' on v0 errors", got)
+	}
+	decoded, keys := decodeEnvelope(t, rec)
+	if !slices.Equal(keys, []string{"data", "error", "truth"}) {
+		t.Fatalf("top-level keys = %v, want [data error truth]", keys)
+	}
+	errSection, ok := decoded["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("body has no error section: %v", decoded)
+	}
+	if errSection["code"] != "backend_unavailable" {
+		t.Errorf("error.code = %v, want 'backend_unavailable'", errSection["code"])
+	}
+	if rec.Result().Header.Get("Retry-After") != "" {
+		t.Errorf("Retry-After is set on the permanent skeleton 503: the outage is not transient")
+	}
+}

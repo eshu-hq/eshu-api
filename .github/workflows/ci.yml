@@ -215,8 +215,8 @@ jobs:
     timeout-minutes: 15
     env:
       # Baseline measured by the first Go PR (HTTP skeleton, review round
-      # 2): 87.2% of statements. May only rise; the finish line is 90% (#1).
-      COVERAGE_FLOOR: "87.2"
+      # 3): 88.7% of statements. May only rise; the finish line is 90% (#1).
+      COVERAGE_FLOOR: "88.7"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: hasgo
