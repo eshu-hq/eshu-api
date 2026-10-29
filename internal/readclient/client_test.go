@@ -48,7 +48,7 @@ func TestDo_SendsEnvelopeAndAuth(t *testing.T) {
 
 	client := NewClient(DefaultConfig(core.URL+"/", "core-key"))
 	query := url.Values{"limit": []string{"5"}}
-	raw, err := client.Do(context.Background(), "/repositories", query)
+	raw, err := client.Do(context.Background(), "repositories", query)
 	if err != nil {
 		t.Fatalf("Do() error = %v", err)
 	}
@@ -127,6 +127,37 @@ func TestStatusError_DescribesRoute(t *testing.T) {
 	err := &StatusError{StatusCode: http.StatusBadGateway, Route: "repositories", Snippet: "upstream down"}
 	if got := err.Error(); got != "readclient: route repositories answered HTTP 502" {
 		t.Errorf("Error() = %q, want route plus status", got)
+	}
+}
+
+// TestNewClient_NormalizesZeroValue pins the promised bounds on the
+// zero-value path: a bare Config still gets the census timeout, and a
+// negative budget falls back instead of failing every call.
+func TestNewClient_NormalizesZeroValue(t *testing.T) {
+	t.Parallel()
+
+	bare := NewClient(Config{BaseURL: "https://core:8443"})
+	if bare.cfg.Timeout != DefaultTimeout {
+		t.Errorf("zero-value Timeout = %v, want DefaultTimeout %v", bare.cfg.Timeout, DefaultTimeout)
+	}
+	negative := NewClient(Config{BaseURL: "https://core:8443", ResponseByteBudget: -1})
+	if negative.cfg.ResponseByteBudget != DefaultResponseByteBudget {
+		t.Errorf("negative budget = %d, want DefaultResponseByteBudget %d", negative.cfg.ResponseByteBudget, DefaultResponseByteBudget)
+	}
+}
+
+// TestDo_RejectsBadRoutes pins route validation: separators, traversal,
+// scheme/host smuggling, and the empty route all fail before any network
+// call, so a bad route can never redirect the client or escape the
+// read-API prefix.
+func TestDo_RejectsBadRoutes(t *testing.T) {
+	t.Parallel()
+
+	client := NewClient(DefaultConfig("http://127.0.0.1:1", "core-key"))
+	for _, route := range []string{"", "a/b", "/repositories", `a\b`, "..", "../x", "http://evil", "a:b", "a@b", "a?b", "a#b"} {
+		if _, err := client.Do(context.Background(), route, nil); err == nil || !strings.Contains(err.Error(), "invalid route") {
+			t.Errorf("Do(%q) error = %v, want an invalid-route error", route, err)
+		}
 	}
 }
 

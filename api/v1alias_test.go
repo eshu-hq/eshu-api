@@ -189,6 +189,38 @@ func TestV1Alias_MiddlewareRewritesBeforeAuth(t *testing.T) {
 	}
 }
 
+// TestV1Alias_RewritesEscapedPath pins the RawPath mirror: an escaped v1
+// request must reach downstream with both Path and EscapedPath rewritten,
+// never split across versions.
+func TestV1Alias_RewritesEscapedPath(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	// Catch-all: an escaped slash (%2F) never splits into mux segments,
+	// so no subtree pattern can route it. The rewrite itself is what this
+	// test pins, and it happens before mux matching.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(r.URL.Path + "|" + r.URL.EscapedPath()))
+	})
+
+	handler := v1PrefixAliasMiddleware(mux)
+
+	req := httptest.NewRequest("GET", "/api/v1/repo%2Fname", nil)
+	if req.URL.RawPath == "" {
+		t.Fatal("test setup: expected RawPath to carry the escaped form")
+	}
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if got, want := rec.Body.String(), "/api/v0/repo/name|/api/v0/repo%2Fname"; got != want {
+		t.Fatalf("path|escaped = %q, want %q", got, want)
+	}
+}
+
 // TestV1Alias_WrongOrderFailsAuth documents the layering requirement: if
 // the rewrite ran after the auth gate, v1 requests would 403.
 func TestV1Alias_WrongOrderFailsAuth(t *testing.T) {

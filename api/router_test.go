@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 )
 
@@ -197,13 +198,9 @@ func TestRouter_EnvelopeNegotiation(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want 401", rec.Code)
 	}
-	body, err := io.ReadAll(rec.Result().Body)
-	if err != nil {
-		t.Fatalf("read body: %v", err)
-	}
-	var decoded map[string]any
-	if err := json.Unmarshal(body, &decoded); err != nil {
-		t.Fatalf("decode body %q: %v", body, err)
+	decoded, keys := decodeEnvelope(t, rec)
+	if !slices.Equal(keys, []string{"data", "error", "truth"}) {
+		t.Fatalf("top-level keys = %v, want [data error truth]", keys)
 	}
 	errSection, ok := decoded["error"].(map[string]any)
 	if !ok {

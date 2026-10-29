@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -62,8 +63,33 @@ func TestWriteUnauthorized_PlainShape(t *testing.T) {
 	}
 }
 
+// decodeEnvelope decodes a recorder body once into both the generic map
+// and the sorted top-level key set. A recorder body reads exactly once
+// (Result caches the response), so envelope-shape tests take both views
+// from this single read. The exact key set pins the envelope wire shape:
+// adding, removing, or renaming a top-level field fails the caller.
+func decodeEnvelope(t *testing.T, rec *httptest.ResponseRecorder) (map[string]any, []string) {
+	t.Helper()
+
+	body, err := io.ReadAll(rec.Result().Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(body, &decoded); err != nil {
+		t.Fatalf("decode body %q: %v", body, err)
+	}
+	keys := make([]string, 0, len(decoded))
+	for k := range decoded {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return decoded, keys
+}
+
 // TestWriteUnauthorized_EnvelopeShape pins the negotiated-envelope 401:
-// the error section carries code/message/correlation_id.
+// the exact top-level key set (data, truth, error) plus an error section
+// carrying code/message/correlation_id.
 func TestWriteUnauthorized_EnvelopeShape(t *testing.T) {
 	t.Parallel()
 
@@ -75,7 +101,10 @@ func TestWriteUnauthorized_EnvelopeShape(t *testing.T) {
 	if rec.Result().StatusCode != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want 401", rec.Result().StatusCode)
 	}
-	decoded := decodeBody(t, rec)
+	decoded, keys := decodeEnvelope(t, rec)
+	if !slices.Equal(keys, []string{"data", "error", "truth"}) {
+		t.Fatalf("top-level keys = %v, want [data error truth]", keys)
+	}
 	errSection, ok := decoded["error"].(map[string]any)
 	if !ok {
 		t.Fatalf("body has no error section: %v", decoded)
@@ -144,17 +173,16 @@ func TestRequireAuth_Gate(t *testing.T) {
 		return rec
 	}
 
-	t.Run("health passes without a key", func(t *testing.T) {
+	t.Run("gate carries no public-path exceptions", func(t *testing.T) {
 		t.Parallel()
-		if rec := call("", "/health", ""); rec.Code != http.StatusOK {
-			t.Fatalf("GET /health status = %d, want 200", rec.Code)
-		}
-	})
 
-	t.Run("readyz passes without a key", func(t *testing.T) {
-		t.Parallel()
-		if rec := call("", "/readyz", ""); rec.Code != http.StatusOK {
-			t.Fatalf("GET /readyz status = %d, want 200", rec.Code)
+		// Probes stay public because the router registers them outside
+		// the gate (pinned in router_test), not because the gate admits
+		// them: the gate denies every path it wraps without a key.
+		for _, path := range []string{"/health", "/readyz", "/api/v0/status"} {
+			if rec := call(skeletonTestKey, path, ""); rec.Code != http.StatusUnauthorized {
+				t.Fatalf("GET %s without credential status = %d, want 401", path, rec.Code)
+			}
 		}
 	})
 

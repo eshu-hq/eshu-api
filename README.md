@@ -45,7 +45,9 @@ currently `v0`).
 
 Skeleton only. The route census this work builds on is
 `go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu` (271 rows: 221 reads backed
-by reader ports, 50 mutations through core-owned admission stores). This
+by reader ports, 50 mutations through core-owned admission stores,
+measured from the current map; the seed parity basis recorded 270/220 at
+the pinned commit — see `docs/provenance.md`). This
 increment serves health, readiness, and the auth-gated `/api/*` chain
 (401 envelope, v1 rewrite, v0 deprecation headers, explicit 503 until
 core dispatch lands); no core route is served and nothing here carries

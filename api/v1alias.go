@@ -24,6 +24,13 @@ func v1PrefixAliasMiddleware(next http.Handler) http.Handler {
 			r2 := r.Clone(r.Context())
 			u := *r.URL
 			u.Path = "/api/v0/" + r.URL.Path[len("/api/v1/"):]
+			// Mirror the rewrite onto the escaped form when one is
+			// present. A stale RawPath would split the request's
+			// identity: Path says v0 while EscapedPath still says v1,
+			// and downstream classification must never see that split.
+			if strings.HasPrefix(u.RawPath, "/api/v1/") {
+				u.RawPath = "/api/v0/" + u.RawPath[len("/api/v1/"):]
+			}
 			r2.URL = &u
 			next.ServeHTTP(w, r2)
 			return

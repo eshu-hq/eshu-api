@@ -55,7 +55,8 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 }
 
 // health reports the served contract versions and the intended core
-// origin. It takes no credential and reveals none.
+// origin. It takes no credential; it discloses only the configured core
+// origin, never the API key.
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":              "ok",

@@ -123,19 +123,17 @@ func bearerKey(r *http.Request) (string, bool) {
 	return key, true
 }
 
-// RequireAuth gates next behind the shared-key bearer credential. The
-// health and readiness probes pass without a credential; every /api/*
-// request without a valid Bearer [REDACTED] denied with WriteUnauthorized.
-// An empty configured key fails closed: every /api/* request is denied.
+// RequireAuth gates next behind the shared-key bearer credential.
+// Every request without a valid Bearer [REDACTED] denied with
+// WriteUnauthorized. An empty configured key fails closed. The gate
+// carries no public-path exceptions: probes stay public because the
+// router registers them outside the gate, not because the gate admits
+// them, so every request the gate sees is an authenticated-route request.
 //
 // The skeleton carries the shared-key source only. Scoped-token and OIDC
 // resolvers land with core dispatch; the gate stays closed until then.
 func RequireAuth(apiKey string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" || r.URL.Path == "/readyz" {
-			next.ServeHTTP(w, r)
-			return
-		}
 		if apiKey == "" {
 			WriteUnauthorized(w, r)
 			return

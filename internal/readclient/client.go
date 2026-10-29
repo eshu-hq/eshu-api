@@ -87,18 +87,47 @@ type Client struct {
 	http *http.Client
 }
 
-// NewClient builds a Client from cfg.
+// NewClient builds a Client from cfg. Non-positive Timeout falls back
+// to DefaultTimeout and a negative ResponseByteBudget falls back to
+// DefaultResponseByteBudget, so the bounds the package promises hold on
+// every path, including a zero-value Config.
 func NewClient(cfg Config) *Client {
+	if cfg.Timeout <= 0 {
+		cfg.Timeout = DefaultTimeout
+	}
+	if cfg.ResponseByteBudget < 0 {
+		cfg.ResponseByteBudget = DefaultResponseByteBudget
+	}
 	return &Client{
 		cfg:  cfg,
 		http: &http.Client{Timeout: cfg.Timeout},
 	}
 }
 
+// validRoute reports whether route names a single path segment under the
+// read-API prefix: no separators, no parent traversal, and no scheme or
+// host that could redirect the call off the configured origin.
+func validRoute(route string) bool {
+	if route == "" {
+		return false
+	}
+	if strings.ContainsAny(route, `/\?#`) || strings.Contains(route, "..") {
+		return false
+	}
+	if strings.Contains(route, ":") || strings.Contains(route, "@") {
+		return false
+	}
+	return true
+}
+
 // Do calls one read-contract route and returns its raw envelope body.
-// Route names a path under /api/v0/, for example "repositories".
+// Route names a single path segment under /api/v0/, for example
+// "repositories". Anything else fails before any network call.
 func (c *Client) Do(ctx context.Context, route string, query url.Values) ([]byte, error) {
-	target := strings.TrimRight(c.cfg.BaseURL, "/") + readAPIPrefix + strings.TrimLeft(route, "/")
+	if !validRoute(route) {
+		return nil, fmt.Errorf("readclient: invalid route %q", route)
+	}
+	target := strings.TrimRight(c.cfg.BaseURL, "/") + readAPIPrefix + route
 	if len(query) > 0 {
 		target += "?" + query.Encode()
 	}
