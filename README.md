@@ -30,18 +30,26 @@ currently `v0`).
 
 | Path | What it holds |
 | --- | --- |
+| `api/` | HTTP skeleton: router, auth gate, v1 alias, v0 deprecation |
+| `internal/readclient/` | Versioned HTTP read-contract client (no core imports) |
+| `cmd/eshu-api/` | Binary: health/readyz today, core dispatch next |
 | `contracts/` | Versioned contract surface and byte-exact upstream copies |
-| `contracts/upstream/` | Verbatim source copies; parity-checked, not build inputs |
+| `contracts/upstream/` | Verbatim source copies; parity-checked, not build inputs (nested module marker keeps the toolchain out) |
 | `docs/provenance.md` | Source pins, file mapping, reproduction commands |
 | `docs/parity.md` | What moves, what stays, compatibility policy, open proofs |
+| `docs/skeleton.md` | What this increment serves, credential posture, NOT_CHECKED |
 | `scripts/check-parity.sh` | Parity gate: re-fetches pinned sources, compares bytes |
+| `Dockerfile` | Multi-stage pre-cutover image (no image lane wired yet) |
 
 ## Status
 
-Preparation only. The route census this seed builds on is
-`go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu` (270 rows: 220 reads backed
-by reader ports, 50 mutations through core-owned admission stores). No
-route implementation moves in this seed, and nothing here is served from
-production. See `docs/parity.md` for the proofs still required before any
-cutover, including extracted-path parity on QA EKS, independent review,
-and a rehearsed rollback.
+Skeleton only. The route census this work builds on is
+`go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu` (271 rows: 221 reads backed
+by reader ports, 50 mutations through core-owned admission stores). This
+increment serves health, readiness, and the auth-gated `/api/*` chain
+(401 envelope, v1 rewrite, v0 deprecation headers, explicit 503 until
+core dispatch lands); no core route is served and nothing here carries
+production authority. See `docs/skeleton.md` for this increment and
+`docs/parity.md` for the proofs still required before any cutover,
+including extracted-path parity on QA EKS, independent review, and a
+rehearsed rollback.

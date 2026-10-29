@@ -1,8 +1,9 @@
 # Contributing to eshu-api
 
-Seed state: this repo holds versioned contracts plus parity evidence
-(`contracts/`, `docs/provenance.md`) and has no `go.mod` yet. The first Go
-PR activates the dormant Go lanes with no workflow changes.
+Skeleton state: this repo holds versioned contracts, parity evidence
+(`contracts/`, `docs/provenance.md`), and its first Go increment
+(`api/`, `internal/readclient/`, `cmd/eshu-api/`, `go.mod`). The Go lanes
+run for real; no workflow change was needed to activate them.
 
 ## CI lanes
 
@@ -28,9 +29,12 @@ triggers Go lanes on its own.
 
 ## Local proof
 
-`make ci` runs the `parity`, `lint`, `test`, and `race` commands. Until
-`go.mod` lands the Go targets notice that and pass vacuously; `parity`
-(`bash scripts/check-parity.sh`) is the lane with teeth.
+`make ci` runs the `parity`, `lint`, `test`, and `race` commands. Every
+target runs for real now that `go.mod` has landed. The `contracts/upstream/`
+tree stays out of every Go command by construction: its nested `go.mod`
+marker keeps the module toolchain from loading parity evidence as build
+inputs (see `docs/provenance.md`), so `go build ./...` and friends never
+see it.
 
 ## Rules that do not bend
 
@@ -47,5 +51,6 @@ triggers Go lanes on its own.
 - Fork PRs run the required lanes on a read-only token with no secrets.
 
 Deferred until their prerequisites land (tracked under `#1`): the `image`
-lane (needs a `Dockerfile`), Dependabot (needs `go.mod`), the coverage
-ratchet (baseline `NOT_MEASURED` until the first Go package lands).
+lane (a `Dockerfile` exists; the lane itself is not wired yet), Dependabot
+(config not added yet; unblocked by `go.mod`). The coverage ratchet is
+live at the skeleton baseline and may only rise toward 90%.

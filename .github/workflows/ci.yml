@@ -4,19 +4,22 @@
 # ruleset): changes, parity, lint, test, race, shell, govulncheck, gosec,
 # actionlint, ci-complete.
 #
-# Seed state: this repo holds versioned contracts plus parity evidence and
-# has no go.mod yet, so the Go lanes (lint/test/race/coverage) are dormant
-# by design — each skips its tool steps with a notice when go.mod is absent
-# and the push/PR run stays green. The first Go PR adds go.mod and the same
-# lanes activate with no job-name churn. contracts/upstream/** holds
-# byte-exact source copies (parity evidence, not build inputs) and is
-# excluded from the `go` path class so parity bumps never pay for Go lanes.
+# Skeleton state: this repo holds versioned contracts, parity evidence,
+# and its first Go increment (HTTP skeleton: router, auth, v1 alias and
+# deprecation, read-contract client, health/readyz binary). The Go lanes
+# run for real now; `go.mod` presence still gates each lane's tool steps so
+# the seed-shaped tree could never go vacuously green by accident.
+# contracts/upstream/** holds byte-exact source copies (parity evidence,
+# not build inputs): the nested module marker in that directory keeps the
+# parent toolchain from loading them, and they stay excluded from the `go`
+# path class so parity bumps never pay for Go lanes.
 #
 # Deferred until their prerequisites land (tracked under #1, not silently
-# dropped): the `image` lane (needs a Dockerfile), Dependabot (needs
-# go.mod), the coverage-floor ratchet (baseline NOT_MEASURED until the
-# first Go package lands; COVERAGE_FLOOR starts at 0.0 and may only rise
-# toward the 90% finish line). Tag v* has no release workflow today.
+# dropped): the `image` lane (a Dockerfile exists; the lane itself is not
+# wired yet), Dependabot (unblocked by go.mod; config not added yet).
+# The coverage ratchet is live: COVERAGE_FLOOR sits at the skeleton
+# baseline and may only rise toward the 90% finish line. Tag v* has no
+# release workflow today.
 #
 # Pinned actions (SHAs synced 2026-10-28 with the uses: lines below;
 # re-verify with git ls-remote when auditing; Dependabot
@@ -211,10 +214,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Baseline NOT_MEASURED until the first Go package lands; the first
-      # Go PR measures it, sets the floor at that baseline, and ratchets up.
-      # May only rise; the finish line is 90% of statements (#1).
-      COVERAGE_FLOOR: "0.0"
+      # Baseline measured by the first Go PR (HTTP skeleton): 86.0% of
+      # statements. May only rise; the finish line is 90% (#1).
+      COVERAGE_FLOOR: "86.0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: hasgo
