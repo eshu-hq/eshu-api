@@ -1,13 +1,16 @@
 # Local parity for the CI lanes lint/test/race. CI adds parity, shell,
 # govulncheck, gosec, and actionlint; see .github/workflows/ci.yml.
-# Needs: go (version in go.mod once it lands), golangci-lint v2.12.2
+# Needs: go (version in go.mod), golangci-lint v2.12.2
 # (same binary Eshu uses), git (for the 500-line cap file list).
 #
-# Seed state: no go.mod yet. The Go targets below notice that and pass
-# vacuously; `parity` is the lane with teeth until the first Go PR lands,
-# at which point these targets activate unchanged.
+# Skeleton state: go.mod has landed, so every Go target below runs for
+# real. The contracts/upstream/ tree never reaches them: its nested go.mod
+# marker keeps the module toolchain from loading parity evidence as build
+# inputs.
 
-COVERAGE_FLOOR ?= 0.0
+# Measured baseline from the first Go PR (HTTP skeleton, review round 3):
+# 88.7% of statements. The floor may only rise toward the 90% finish line.
+COVERAGE_FLOOR ?= 88.7
 
 .PHONY: ci parity lint test race
 
