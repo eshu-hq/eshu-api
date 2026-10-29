@@ -39,7 +39,8 @@ currently `v0`).
 | `docs/parity.md` | What moves, what stays, compatibility policy, open proofs |
 | `docs/skeleton.md` | What this increment serves, credential posture, NOT_CHECKED |
 | `scripts/check-parity.sh` | Parity gate: re-fetches pinned sources, compares bytes |
-| `Dockerfile` | Multi-stage pre-cutover image (no image lane wired yet) |
+| `Dockerfile` | Multi-stage pre-cutover image (PRs prove it via the `image` lane) |
+| `.github/workflows/release.yml` | Tag `v*` release: GHCR push with provenance, SBOM, Trivy gate (see `docs/release.md`) |
 
 ## Status
 
