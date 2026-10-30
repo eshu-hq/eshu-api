@@ -1,5 +1,6 @@
-// Command eshu-api serves the eshu-api HTTP skeleton: the versioned
+// Command eshu-api serves the eshu-api HTTP surface: the versioned
 // routing, auth, v1 alias, and deprecation surface over health and
-// readiness today, and over the versioned core read contracts once core
-// dispatch lands. It takes no core handles and makes no core calls yet.
+// readiness, and over the core origin through byte-for-byte dispatch of
+// the authenticated /api/* subtree. It takes no core handles and makes
+// no core calls except the HTTP dispatch to the configured origin.
 package main

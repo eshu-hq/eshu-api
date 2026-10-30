@@ -134,35 +134,56 @@ func TestRouter_FullChain(t *testing.T) {
 		}
 	})
 
-	t.Run("v0 with credential reaches the skeleton 503", func(t *testing.T) {
+	t.Run("v0 with credential dispatches to the core", func(t *testing.T) {
 		t.Parallel()
+
+		core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
+		mux := http.NewServeMux()
+		mux.Handle("/", core.handler())
+		upstream := httptest.NewServer(mux)
+		defer upstream.Close()
+
+		srv := NewServer(upstream.URL, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
 
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/repositories?limit=5"))
 
-		if rec.Code != http.StatusServiceUnavailable {
-			t.Fatalf("status = %d, want 503 (no core dispatch yet)", rec.Code)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want the core's 200", rec.Code)
+		}
+		if core.lastPath != "/api/v0/repositories" || core.lastQuery != "limit=5" {
+			t.Errorf("upstream saw %s?%s, want /api/v0/repositories?limit=5", core.lastPath, core.lastQuery)
 		}
 		if got := rec.Header().Get("Deprecation"); got != "true" {
-			t.Fatalf("Deprecation = %q, want 'true' on v0 errors", got)
+			t.Fatalf("Deprecation = %q, want 'true' on v0 dispatch", got)
 		}
-		decoded := decodeMap(t, rec)
-		if decoded["error_code"] != "backend_unavailable" {
-			t.Errorf("error_code = %q, want 'backend_unavailable'", decoded["error_code"])
-		}
-		if rec.Result().Header.Get("Retry-After") != "" {
-			t.Errorf("Retry-After is set on the permanent skeleton 503: the outage is not transient")
+		body, _ := io.ReadAll(rec.Result().Body)
+		if string(body) != core.body {
+			t.Errorf("body = %q, want the core bytes %q", body, core.body)
 		}
 	})
 
 	t.Run("v1 with credential rewrites before auth", func(t *testing.T) {
 		t.Parallel()
 
+		core := &stubCore{status: http.StatusOK, body: `{"ok":true}`}
+		mux := http.NewServeMux()
+		mux.Handle("/", core.handler())
+		upstream := httptest.NewServer(mux)
+		defer upstream.Close()
+
+		srv := NewServer(upstream.URL, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
+
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, authedRequest("GET", "/api/v1/repositories"))
 
-		if rec.Code != http.StatusServiceUnavailable {
-			t.Fatalf("status = %d, want 503 (v1 rewrote to v0 before the gate)", rec.Code)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want the core's 200 (v1 rewrote to v0 before the gate)", rec.Code)
+		}
+		if core.lastPath != "/api/v0/repositories" {
+			t.Errorf("upstream path = %q, want the rewritten v0 path", core.lastPath)
 		}
 		if got := rec.Header().Get("Deprecation"); got != "" {
 			t.Fatalf("Deprecation = %q, want empty on v1 even after the rewrite", got)
@@ -211,14 +232,23 @@ func TestRouter_EnvelopeNegotiation(t *testing.T) {
 	}
 }
 
-// TestRouter_Envelope503 pins the negotiated-envelope 503: an
-// authenticated envelope caller on a core route gets the 503 in the
-// envelope error shape — exact top-level key set, backend_unavailable
-// code, and no Retry-After on the permanent skeleton outage.
-func TestRouter_Envelope503(t *testing.T) {
+// TestRouter_EnvelopeDispatchRelays pins the negotiated-envelope core
+// route: an authenticated envelope caller's Accept crosses to the core
+// and the core's envelope bytes come back untouched, with the v0
+// deprecation headers from the outer middleware.
+func TestRouter_EnvelopeDispatchRelays(t *testing.T) {
 	t.Parallel()
 
-	srv := NewServer("https://core:8443", skeletonTestKey)
+	core := &stubCore{
+		status: http.StatusOK,
+		body:   `{"data":{"ok":true},"error":null,"truth":null}`,
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
+
+	srv := NewServer(upstream.URL, skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	req := authedRequest("GET", "/api/v0/repositories")
@@ -226,24 +256,20 @@ func TestRouter_Envelope503(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("status = %d, want 503", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want the core's 200", rec.Code)
+	}
+	if core.lastAccept != "application/eshu.envelope+json" {
+		t.Errorf("upstream Accept = %q, want the caller's envelope MIME", core.lastAccept)
 	}
 	if got := rec.Header().Get("Deprecation"); got != "true" {
-		t.Fatalf("Deprecation = %q, want 'true' on v0 errors", got)
+		t.Fatalf("Deprecation = %q, want 'true' on v0 dispatch", got)
 	}
 	decoded, keys := decodeEnvelope(t, rec)
 	if !slices.Equal(keys, []string{"data", "error", "truth"}) {
 		t.Fatalf("top-level keys = %v, want [data error truth]", keys)
 	}
-	errSection, ok := decoded["error"].(map[string]any)
-	if !ok {
-		t.Fatalf("body has no error section: %v", decoded)
-	}
-	if errSection["code"] != "backend_unavailable" {
-		t.Errorf("error.code = %v, want 'backend_unavailable'", errSection["code"])
-	}
-	if rec.Result().Header.Get("Retry-After") != "" {
-		t.Errorf("Retry-After is set on the permanent skeleton 503: the outage is not transient")
+	if decoded["data"] == nil {
+		t.Errorf("envelope data = nil, want the core's payload relayed")
 	}
 }
