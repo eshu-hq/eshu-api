@@ -5,32 +5,33 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 )
 
-// backendUnavailableCode is the stable machine-readable code the
-// skeleton answers on core routes it cannot serve yet. It reuses the
-// versioned in-tree vocabulary value "backend_unavailable"; the message
-// states the skeleton status so no caller mistakes it for a live backend
-// outage. The 503 is permanent: it never carries Retry-After, matching
-// the in-tree rule that a permanent backend_unavailable never tells a
-// client to retry.
-const backendUnavailableCode = "backend_unavailable"
-
-// Server holds the dependencies of the pre-cutover serving surface. Core
-// dispatch over the versioned read contracts lands next; until then the
-// server answers health and readiness itself and the /api/* subtree
-// through the auth gate only. The server carries no credential and makes
-// no core calls.
+// Server holds the dependencies of the dispatch surface. It answers
+// health and readiness itself and proxies the authenticated /api/*
+// subtree to the configured core origin (see dispatch.go). The server
+// carries no credential: the key gates requests and crosses to the core
+// only in the Authorization header, never in logs or health output.
 type Server struct {
 	coreBaseURL string
 	apiKey      string
+	core        *url.URL
+	httpClient  *http.Client
 }
 
-// NewServer builds a Server that advertises coreBaseURL as its intended
-// core origin and gates /api/* behind apiKey. An empty apiKey fails
-// closed: every /api/* request is denied until a key is configured.
+// NewServer builds a Server that dispatches to coreBaseURL and gates
+// /api/* behind apiKey. An empty apiKey fails closed: every /api/*
+// request is denied until a key is configured. An empty or unparsable
+// origin fails closed too: dispatch answers the local 503 until a valid
+// origin is configured.
 func NewServer(coreBaseURL, apiKey string) *Server {
-	return &Server{coreBaseURL: coreBaseURL, apiKey: apiKey}
+	return &Server{
+		coreBaseURL: coreBaseURL,
+		apiKey:      apiKey,
+		core:        parseCoreOrigin(coreBaseURL),
+		httpClient:  dispatchClient(),
+	}
 }
 
 // writeError writes a status-coded JSON error in the caller's negotiated
@@ -77,27 +78,18 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-// unavailable answers every core route the skeleton cannot serve yet. It
-// sits behind the auth gate, so reaching it proves the caller carried a
-// valid credential; the 503 says the route has no core dispatch behind
-// it, not that the caller's credential failed.
-func (s *Server) unavailable(w http.ResponseWriter, r *http.Request) {
-	writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-		"eshu-api skeleton: core dispatch is not wired yet; no core routes are served")
-}
-
-// routes registers the skeleton surface. Health and readiness are
-// public; the /api/* subtree is auth-gated and, until core dispatch
-// lands, served by the explicit 503 above.
+// routes registers the dispatch surface. Health and readiness are
+// public; the /api/* subtree is auth-gated and dispatched to the core
+// origin byte-for-byte (see dispatch.go).
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /readyz", s.ready)
-	mux.Handle("/api/", RequireAuth(s.apiKey, http.HandlerFunc(s.unavailable)))
+	mux.Handle("/api/", RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
 	return mux
 }
 
-// Handler returns the production middleware chain over the skeleton
+// Handler returns the production middleware chain over the dispatch
 // routes. Layering is load-bearing and pinned by tests:
 //
 //	deprecation (outer: sees the original path, so /api/v1/* never

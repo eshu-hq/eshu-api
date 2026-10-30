@@ -20,10 +20,11 @@ import (
 // every /api/* request 401s until the operator sets it.
 const apiKeyEnvVar = "ESHU_API_KEY"
 
-// server holds the dependencies of the pre-cutover serving surface. Core
-// dispatch over the read-contract clients lands next; until then the
-// server answers health and readiness itself and gates /api/* behind the
-// shared key. It carries no credential at rest and makes no core calls.
+// server holds the dependencies of the dispatch surface. It answers
+// health and readiness itself, gates /api/* behind the shared key, and
+// dispatches authenticated calls to the core origin. It carries no
+// credential at rest and takes no core handles.
+
 type server struct {
 	coreBaseURL string
 	apiKey      string
@@ -33,7 +34,7 @@ func newServer(coreBaseURL, apiKey string) *server {
 	return &server{coreBaseURL: coreBaseURL, apiKey: apiKey}
 }
 
-// handler returns the production middleware chain over the skeleton
+// handler returns the production middleware chain over the dispatch
 // routes, with the sunset date read from the environment.
 func (s *server) handler() http.Handler {
 	return api.NewServer(s.coreBaseURL, s.apiKey).Handler(api.V0SunsetFromEnv(os.Getenv))
@@ -41,7 +42,7 @@ func (s *server) handler() http.Handler {
 
 func run(args []string, logOut *slog.Logger) error {
 	flags := flag.NewFlagSet("eshu-api", flag.ContinueOnError)
-	addr := flags.String("addr", ":8080", "listen address for the skeleton surface")
+	addr := flags.String("addr", ":8080", "listen address for the dispatch surface")
 	coreBaseURL := flags.String("core-base-url", "", "core read-API origin, for example https://core:8443")
 	if err := flags.Parse(args); err != nil {
 		return err

@@ -30,9 +30,9 @@ currently `v0`).
 
 | Path | What it holds |
 | --- | --- |
-| `api/` | HTTP skeleton: router, auth gate, v1 alias, v0 deprecation |
+| `api/` | HTTP surface: router, auth gate, v1 alias, v0 deprecation, core dispatch |
 | `internal/readclient/` | Versioned HTTP read-contract client (no core imports) |
-| `cmd/eshu-api/` | Binary: health/readyz today, core dispatch next |
+| `cmd/eshu-api/` | Binary: health/readyz plus dispatched `/api/*` |
 | `contracts/` | Versioned contract surface and byte-exact upstream copies |
 | `contracts/upstream/` | Verbatim source copies; parity-checked, not build inputs (nested module marker keeps the toolchain out) |
 | `docs/provenance.md` | Source pins, file mapping, reproduction commands |
@@ -44,15 +44,13 @@ currently `v0`).
 
 ## Status
 
-Skeleton only. The route census this work builds on is
-`go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu` (271 rows: 221 reads backed
-by reader ports, 50 mutations through core-owned admission stores,
-measured from the current map; the seed parity basis recorded 270/220 at
-the pinned commit — see `docs/provenance.md`). This
-increment serves health, readiness, and the auth-gated `/api/*` chain
-(401 envelope, v1 rewrite, v0 deprecation headers, explicit 503 until
-core dispatch lands); no core route is served and nothing here carries
-production authority. See `docs/skeleton.md` for this increment and
-`docs/parity.md` for the proofs still required before any cutover,
-including extracted-path parity on QA EKS, independent review, and a
-rehearsed rollback.
+Dispatch lands in this increment; cutover authority does not. The route
+census this work builds on is `go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu`
+(277 rows at `origin/main`: 227 reads, 50 mutations; the seed parity
+basis recorded 270/220 at the pinned commit — see `docs/provenance.md`).
+This increment serves health, readiness, and the auth-gated `/api/*` chain
+(401 envelope, v1 rewrite, v0 deprecation headers, byte-for-byte dispatch
+to the configured core origin). Nothing here carries production authority:
+see `docs/skeleton.md` for this increment and `docs/parity.md` for the
+proofs still required before any cutover, including extracted-path parity
+on QA EKS, independent review, and a rehearsed rollback.
