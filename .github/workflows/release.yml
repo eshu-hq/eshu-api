@@ -1,12 +1,15 @@
 # eshu-api release (Refs eshu-hq/eshu#9520, part of eshu-hq/eshu#6707).
 #
-# Tags `v*` publish `ghcr.io/eshu-hq/eshu-api` images with SLSA provenance,
-# an SPDX SBOM, SBOM attestation, and a Trivy vulnerability gate, then cut
-# a GitHub Release carrying the SBOM. PRs never push: the `image` lane in
-# ci.yml proves the Dockerfile still builds, and this workflow pushes only
-# on tag-push events. Publish steps gate on the push event (not the ref
-# type), so a manual dispatch on any ref, tag or branch, builds without
-# pushing and proves the workflow itself still works.
+# Pushes to main and tags `v*` publish `ghcr.io/eshu-hq/eshu-api` images
+# with SLSA provenance, an SPDX SBOM, SBOM attestation, and a Trivy
+# vulnerability gate. Version-tag pushes additionally cut a GitHub Release
+# carrying the SBOM. PRs never push: the `image` lane in ci.yml proves the
+# Dockerfile still builds, and this workflow pushes only on push events
+# (main branch or version tag). Publish steps gate on the push event (not
+# the ref type), so a manual dispatch on any ref, tag or branch, builds
+# without pushing and proves the workflow itself still works. Pushes to
+# main publish the moving main, latest, and sha-<full-sha> tags with the
+# same provenance, SBOM, and attestation hardening as version-tag releases.
 #
 # Pinned actions (re-verify with git ls-remote when auditing; Dependabot
 # github-actions proposes bumps, weekly grouped):
@@ -27,6 +30,8 @@ name: release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   workflow_dispatch:
@@ -35,7 +40,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: image-publish-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -66,8 +71,9 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
+      - name: Extract metadata (tag events)
+        id: meta-tag
+        if: github.ref_type == 'tag'
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -76,6 +82,16 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha,prefix=sha-,format=long
+      - name: Extract metadata (main-branch pushes)
+        id: meta-branch
+        if: github.ref_type == 'branch'
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=main
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=long
       - name: Compute source date epoch
         id: epoch
         run: echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
@@ -83,7 +99,8 @@ jobs:
         id: labels
         run: |
           CREATED="$(date -u -d "@${{ steps.epoch.outputs.epoch }}" '+%Y-%m-%dT%H:%M:%SZ')"
-          printf '%s\n' '${{ steps.meta.outputs.labels }}' > /tmp/labels.txt
+          printf '%s\n%s\n' '${{ steps.meta-tag.outputs.labels }}' '${{ steps.meta-branch.outputs.labels }}' > /tmp/labels.txt
+          sed -i '/^[[:space:]]*$/d' /tmp/labels.txt
           sed -i "s|org\\.opencontainers\\.image\\.created=.*|org.opencontainers.image.created=${CREATED}|" /tmp/labels.txt
           { echo 'labels<<EOF'; cat /tmp/labels.txt; echo 'EOF'; } >> "${GITHUB_OUTPUT}"
       - name: Build and push image
@@ -94,7 +111,9 @@ jobs:
           file: ./Dockerfile
           push: ${{ github.event_name == 'push' }}
           provenance: false
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta-tag.outputs.tags }}
+            ${{ steps.meta-branch.outputs.tags }}
           labels: ${{ steps.labels.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -171,7 +190,7 @@ jobs:
 
   github-release:
     needs: [build-and-push, trivy]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

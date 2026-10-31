@@ -1,11 +1,13 @@
 # Release (Refs `eshu-hq/eshu#9520`, part of `eshu-hq/eshu#6707`)
 
-Tags `v*` are the only publishing event. A tag push builds the
+Pushes to `main` and tags `v*` publish. Either event builds the
 `Dockerfile` for `linux/amd64,linux/arm64`, pushes
 `ghcr.io/eshu-hq/eshu-api`, and attaches SLSA provenance plus an SPDX
 SBOM to the image. Trivy blocks the release on any `HIGH` or `CRITICAL`
-CVE in the pushed digest. The workflow then cuts a GitHub Release
-carrying the SBOM. Nothing here deploys: QA wiring lives in
+CVE in the pushed digest. A tag push additionally cuts a GitHub Release
+carrying the SBOM; a push to `main` publishes the moving `main`,
+`latest`, and `sha-<full-sha>` tags with the same hardening and no
+Release. Nothing here deploys: QA wiring lives in
 `iac-eks-eshu` and stays non-authoritative until core dispatch lands.
 
 ## Cut a release
@@ -28,14 +30,15 @@ gh attestation verify \
 ## What the workflow proves
 
 - `build-and-push`: reproducible metadata (pinned labels, source epoch),
-  push on tag-push events only (a manual dispatch on any ref, tag or
-  branch, builds without pushing), SLSA provenance and SBOM attestations
-  pushed to GHCR and verified back with `gh attestation verify`.
+  push on push events only — main branch or version tag (a manual
+  dispatch on any ref, tag or branch, builds without pushing), SLSA
+  provenance and SBOM attestations pushed to GHCR and verified back
+  with `gh attestation verify`.
 - `trivy`: image scan fails on `HIGH`/`CRITICAL`; the SARIF uploads as
   an artifact for triage when it fails.
-- `github-release`: runs only after the scan passes; the tag carries a
-  Release with the SBOM and the digest in the notes, so a deploy pin
-  never comes from a hand-typed tag.
+- `github-release`: runs only after the scan passes, on version tags
+  only; the tag carries a Release with the SBOM and the digest in the
+  notes, so a deploy pin never comes from a hand-typed tag.
 
 ## Failed-scan residue
 
