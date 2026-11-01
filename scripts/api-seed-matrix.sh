@@ -6,8 +6,9 @@
 # asserts the lane turns green again. It never compares the tree against a
 # committed count or list.
 #
-# 14 checks: vet, lint, format, race, tidy, the 500-line cap, and the
-# coverage floor (RED + GREEN each).
+# 17 checks: vet, lint, format, race, tidy, the 500-line cap, and the
+# coverage floor (RED + GREEN each), plus the `make lint` / `make race` exit
+# status regression for eshu-hq/eshu-api#21.
 #
 # Lane commands are the exact steps the pinned eshu-hq/.github go-collector-ci
 # reusable runs (ci.yml calls it), not `make lint`: the Makefile lint recipe
@@ -214,6 +215,51 @@ if cap_lane >"$LOG" 2>&1; then
 	ok "cap GREEN after seed removal"
 else
 	bad "cap GREEN after seed removal"
+fi
+
+# --- make gates: the Makefile recipes must fail when an earlier step fails ---
+# Regression for eshu-hq/eshu-api#21: the recipes chained steps with `;`, so
+# `make lint` and `make race` exited 0 on a failing vet or data race.
+cat >zz_seed_vet.go <<'EOF2'
+package ciworkflow
+
+import "fmt"
+
+var _ = fmt.Sprintf("%d", "not-a-number")
+EOF2
+if make lint >"$LOG" 2>&1; then
+	bad "make lint RED on seeded printf mismatch (recipe exited 0)"
+elif rg -q "zz_seed_vet.go" "$LOG"; then
+	ok "make lint RED on seeded printf mismatch"
+else
+	bad "make lint RED on seeded printf mismatch (no finding on the seed)"
+fi
+rm -f zz_seed_vet.go
+cat >zz_seed_race_test.go <<'EOF2'
+package ciworkflow
+
+import "testing"
+
+func TestSeedMatrixRace(t *testing.T) {
+	x := 0
+	done := make(chan bool)
+	go func() { x = 1; done <- true }()
+	_ = x
+	<-done
+}
+EOF2
+if make race >"$LOG" 2>&1; then
+	bad "make race RED on seeded data race (recipe exited 0)"
+elif rg -q "DATA RACE" "$LOG"; then
+	ok "make race RED on seeded data race"
+else
+	bad "make race RED on seeded data race (no race reported on the seed)"
+fi
+rm -f zz_seed_race_test.go
+if make lint >"$LOG" 2>&1; then
+	ok "make lint GREEN after seed removal"
+else
+	bad "make lint GREEN after seed removal"
 fi
 
 # --- coverage floor: `make race` with an unreachable floor fails ---
