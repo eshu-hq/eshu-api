@@ -54,3 +54,5 @@ to the configured core origin). Nothing here carries production authority:
 see `docs/skeleton.md` for this increment and `docs/parity.md` for the
 proofs still required before any cutover, including extracted-path parity
 on QA EKS, independent review, and a rehearsed rollback.
+
+<!-- lane-selection proof, do not merge -->
