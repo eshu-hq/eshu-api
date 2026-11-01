@@ -1,42 +1,78 @@
 # eshu-api CI gates (Refs eshu-hq/eshu-api#1, part of eshu-hq/eshu#6707).
 #
-# Stable job names (org contract; only ci-complete is ever required in a
-# ruleset): changes, parity, lint, test, race, shell, govulncheck, gosec,
-# actionlint, image, ci-complete.
+# Thin caller: a `changes` job classifies paths, `parity` is this repo's own
+# lane, a `lanes` job runs the shared lane bodies inside the pinned
+# eshu-hq/.github reusable, and `ci-complete` aggregates. `ci-complete` is
+# the ONLY context a ruleset requires (org contract). The effective lane set
+# inside `lanes` is lint, test, race, shell, image, govulncheck, gosec,
+# actionlint; the inner names appear as `lanes / <lane>`.
+#
+# Lane bodies come from
+# eshu-hq/.github/.github/workflows/go-collector-ci.yml pinned to the v2
+# commit SHA (the peeled tag, never the mutable tag). Each run-* input
+# below is the exact expression the retired inline lane used as its `if:`.
+# `changes` has no `if:` guard on purpose: every lane needs it, so skipping
+# it on a schedule run would skip every lane.
+#
+# Kept in this repo, not in the reusable:
+# - `parity` (scripts/check-parity.sh) is api-specific, so it stays a
+#   separate job beside `lanes`, with its retired gate, and is a ci-complete
+#   need.
+# - The `image` lane maps onto the reusable image inputs: a plain
+#   `docker build` of ./Dockerfile on the amd64 runner (no push), which
+#   keeps the build-only, linux/amd64 semantics. Tag pushes and main still
+#   ship through .github/workflows/release.yml, not here.
+#
+# Accepted deltas of the move (documented, not silent):
+# - gosec SARIF no longer uploads to the Security tab (the reusable runs on
+#   a read-only token for fork safety); findings ride the 14-day artifact.
+#   Scheduled runs now fail the lane when findings exist
+#   (gosec-fail-on-findings), where the retired step only counted them.
+# - Scheduled govulncheck/gosec no longer open or update a tracking issue
+#   (no reusable hook yet); a red scheduled run replaces it and triage rides
+#   the run page. The issues: write / security-events: write job grants go
+#   with them.
+# - The `go.mod` presence probe is gone: go.mod has landed, so the lanes
+#   never go dormant.
+# - The coverage artifact no longer sets if-no-files-found: error, and the
+#   summary posts the last 30 `go tool cover -func` lines (the floor check
+#   still fails the lane below COVERAGE_FLOOR).
+# - golangci-lint is installed with `go install` at the same version
+#   instead of golangci-lint-action. The 500-line cap scans every .go file
+#   under the tree via find (including contracts/upstream/**, all under the
+#   cap today) instead of `git ls-files`.
+# - actionlint runs from the sha256-checked 1.7.12 tarball instead of the
+#   rhysd/actionlint action, so PR annotations from the action's problem
+#   matcher are gone; the findings stay in the lane log.
+# - shellcheck runs from the reusable's ludeeus/action-shellcheck pin
+#   (2.0.0, 00cae500...) instead of the repo's former master pin.
+# - Tool pins that are inputs here: golangci-lint v2.12.2, govulncheck
+#   v1.9.0 (run with -scan package, Go 1.26 SSA-safe), gosec v2.30.0
+#   (newer than the reusable default v2.27.1, held at the retired pin),
+#   actionlint 1.7.12 (sha256 8aca8db9...a3d8, tarball-verified).
+# - workflow_dispatch still runs no lane (every retired gate keyed on push,
+#   schedule, or pull_request); unchanged by the move.
 #
 # Skeleton state: this repo holds versioned contracts, parity evidence,
 # and its first Go increment (HTTP skeleton: router, auth, v1 alias and
-# deprecation, read-contract client, health/readyz binary). The Go lanes
-# run for real now; `go.mod` presence still gates each lane's tool steps so
-# the seed-shaped tree could never go vacuously green by accident.
+# deprecation, read-contract client, health/readyz binary).
 # contracts/upstream/** holds byte-exact source copies (parity evidence,
 # not build inputs): the nested module marker in that directory keeps the
 # parent toolchain from loading them, and they stay excluded from the `go`
 # path class so parity bumps never pay for Go lanes.
 #
-# Deferred until its prerequisite lands (tracked under #1, not silently
-# dropped): Dependabot (unblocked by go.mod; config not added yet).
-# The coverage ratchet is live: COVERAGE_FLOOR sits at the measured
-# total (past the 90% finish line) and may only rise. Tag v* ships
-# through .github/workflows/release.yml (Refs eshu-hq/eshu#9520).
+# The coverage ratchet is live: coverage-floor sits at the measured total
+# (past the 90% finish line), is pinned equal to the Makefile by
+# ci_workflow_test.go, and may only rise. Dependabot (gomod and
+# github-actions, weekly grouped) proposes bumps; the reusable pin moves by
+# a reviewed commit, with the contract test updated alongside it.
 #
-# Pinned actions (SHAs synced 2026-10-28 with the uses: lines below;
-# re-verify with git ls-remote when auditing; Dependabot
-# github-actions proposes bumps, weekly grouped):
+# Pinned actions (SHAs synced with the uses: lines below; re-verify with
+# git ls-remote when auditing):
 #   actions/checkout v7.0.1              3d3c42e5aac5ba805825da76410c181273ba90b1
-#   actions/setup-go v7.0.0              b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
 #   dorny/paths-filter v4                ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
-#   golangci/golangci-lint-action v9.3.0 ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a
-#   actions/upload-artifact v7.0.2       cf430e030ddbb5b0abf93d22962f4752f3646cd9
-#   rhysd/actionlint v1.7.12             914e7df21a07ef503a81201c76d2b11c789d3fca
-#   ludeeus/action-shellcheck (master)   00b27aa7cb85167568cb48a3838b75f4265f2bca
-#   github/codeql-action/upload-sarif v4.39.1 9b3254085494b55a0f7c4c2b3d2d52cc712ce370
-#   docker/setup-buildx-action v3        8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
-#   docker/build-push-action v6          10e90e3645eae34f1e60eeb005ba3a3d33f178e8
-# Go tools (hash-verified by the toolchain on install):
-#   golangci-lint v2.12.2 (same binary Eshu uses; config in .golangci.yml)
-#   govulncheck v1.9.0, run with -scan package (Go 1.26 SSA-safe)
-#   gosec v2.30.0, run with -no-fail; the SARIF finding count is advisory
+#   eshu-hq/.github go-collector-ci v2   4d01ab90baf5dd77c21cc1ee6bdf701332613449
+# Every other action runs inside the reusable at that same pin.
 
 name: ci
 
@@ -154,245 +190,46 @@ jobs:
       - name: Contract parity vs pinned source
         run: bash scripts/check-parity.sh
 
-  lint:
+  lanes:
+    name: lanes
     needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: hasgo
-        run: |
-          if [ -f go.mod ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "no go.mod yet: Go lanes are dormant (see workflow header), run stays green"; fi
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          go-version-file: go.mod
-      - name: vet
-        if: steps.hasgo.outputs.present == 'true'
-        run: go vet ./...
-      - name: lint (whole repo, no baseline)
-        if: steps.hasgo.outputs.present == 'true'
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: v2.12.2
-          args: --timeout 10m
-      - name: format check (gofumpt)
-        if: steps.hasgo.outputs.present == 'true'
-        run: golangci-lint fmt --diff ./...
-      - name: tidy check
-        if: steps.hasgo.outputs.present == 'true'
-        run: |
-          go mod tidy -diff
-          git diff --exit-code -- go.mod go.sum
-      - name: 500-line file cap (wc -l, sole static gate)
-        run: |
-          over=0
-          for f in $(git ls-files '*.go'); do
-            n=$(wc -l < "$f")
-            if [ "$n" -gt 500 ]; then echo "$f: $n lines"; over=1; fi
-          done
-          if [ "$over" -ne 0 ]; then echo "FAIL: .go files over 500 lines"; exit 1; fi
-
-  test:
-    needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: hasgo
-        run: |
-          if [ -f go.mod ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "no go.mod yet: test lane is dormant (see workflow header), run stays green"; fi
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          go-version-file: go.mod
-      - name: build
-        if: steps.hasgo.outputs.present == 'true'
-        run: go build ./...
-      - name: test
-        if: steps.hasgo.outputs.present == 'true'
-        run: go test ./... -count=1
-
-  race:
-    needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      # Measured after the coverage-90 increment (#1): 96.5% of
-      # statements, past the 90% finish line. May only rise.
-      COVERAGE_FLOOR: "96.5"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: hasgo
-        run: |
-          if [ -f go.mod ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "no go.mod yet: race lane is dormant (see workflow header), run stays green"; fi
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          go-version-file: go.mod
-      - name: race + coverprofile
-        if: steps.hasgo.outputs.present == 'true'
-        run: go test ./... -race -count=1 -covermode=atomic -coverprofile=coverage.out
-      - name: coverage totals
-        if: steps.hasgo.outputs.present == 'true'
-        run: go tool cover -func=coverage.out >> "$GITHUB_STEP_SUMMARY"
-      - name: enforce floor (may only rise; finish line is 90%)
-        if: steps.hasgo.outputs.present == 'true'
-        run: |
-          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/, "", $3); print $3}')
-          echo "statement coverage total=${total}% floor=${COVERAGE_FLOOR}%"
-          awk -v t="$total" -v f="$COVERAGE_FLOOR" 'BEGIN { if (t + 0 < f + 0) { print "FAIL: coverage below floor"; exit 1 } }'
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          name: coverage
-          path: coverage.out
-          retention-days: 14
-          if-no-files-found: error
-
-  shell:
-    needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && needs.changes.outputs.shell == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: shellcheck
-        uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca
-        with:
-          scandir: .
-          format: gcc
-
-  govulncheck:
-    needs: [changes]
-    if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && (needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      issues: write # scheduled runs file or update a findings issue
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: hasgo
-        run: |
-          if [ -f go.mod ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "no go.mod yet: govulncheck is dormant (see workflow header), run stays green"; fi
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          go-version-file: go.mod
-      - name: govulncheck (package mode is Go 1.26 SSA-safe)
-        if: steps.hasgo.outputs.present == 'true'
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
-          "$(go env GOPATH)/bin/govulncheck" -scan package ./...
-      - name: file or update findings issue (scheduled runs)
-        if: failure() && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          title="[govulncheck] findings $(date -u +%F)"
-          body="Scheduled govulncheck failed on ${{ github.sha }}. See run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}."
-          open=$(gh issue list --search "$title in:title" --state open --json number --jq '.[0].number')
-          if [ -n "$open" ] && [ "$open" != "null" ]; then
-            gh issue comment "$open" --body "$body"
-          else
-            gh issue create --title "$title" --body "$body"
-          fi
-
-  gosec:
-    needs: [changes]
-    if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.workflows == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      security-events: write # SARIF upload to the Security tab
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: hasgo
-        run: |
-          if [ -f go.mod ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "no go.mod yet: gosec is dormant (see workflow header), run stays green"; fi
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.hasgo.outputs.present == 'true'
-        with:
-          go-version-file: go.mod
-      - name: gosec SARIF
-        if: steps.hasgo.outputs.present == 'true'
-        # -no-fail: gosec's bundled type-checker cannot fully load Go 1.26
-        # generics and exits non-zero even with zero findings; the finding
-        # count below is the gate. Advisory until the false-positive rate
-        # here is measured; findings are triaged in the open, never
-        # blanket-excluded.
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@v2.30.0
-          "$(go env GOPATH)/bin/gosec" -no-fail -fmt=sarif -out=gosec.sarif ./...
-      - name: upload SARIF
-        # Non-PR events only: fork PRs cannot write code-scanning results.
-        # No continue-on-error: a failed upload must fail the job loudly,
-        # never pass silently green. The scan step above needs contents:read
-        # alone, so PR lanes still run for forks on a read-only token.
-        if: github.event_name != 'pull_request' && steps.hasgo.outputs.present == 'true'
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-        with:
-          sarif_file: gosec.sarif
-      - name: finding count (advisory until the local false-positive rate is measured)
-        if: steps.hasgo.outputs.present == 'true'
-        run: |
-          n=$(jq '[.runs[].results[]] | length' gosec.sarif)
-          echo "## gosec findings: $n" >> "$GITHUB_STEP_SUMMARY"
-          echo "gosec findings: $n"
-      - name: file or update findings issue (scheduled runs)
-        if: failure() && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          title="[gosec] findings $(date -u +%F)"
-          body="Scheduled gosec failed on ${{ github.sha }}. See run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}."
-          open=$(gh issue list --search "$title in:title" --state open --json number --jq '.[0].number')
-          if [ -n "$open" ] && [ "$open" != "null" ]; then
-            gh issue comment "$open" --body "$body"
-          else
-            gh issue create --title "$title" --body "$body"
-          fi
-
-  actionlint:
-    needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && needs.changes.outputs.workflows == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
-        with:
-          fail_on_error: true
-
-  image:
-    # Build-only lane (Refs eshu-hq/eshu-api#3, eshu-hq/eshu#9520): proves
-    # the Dockerfile still builds on PRs that touch it, without pushing.
-    # Tag pushes ship through release.yml, not here.
-    needs: [changes]
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.image == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.misc == 'true'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Build image (no push)
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          platforms: linux/amd64
-          provenance: false
+    # No timeout-minutes: the schema forbids it on reusable-call jobs. Each
+    # inner lane carries its own timeout, which bounds this job.
+    uses: eshu-hq/.github/.github/workflows/go-collector-ci.yml@4d01ab90baf5dd77c21cc1ee6bdf701332613449 # v2
+    with:
+      module: eshu-api
+      go-version-file: go.mod
+      # Measured after the coverage-90 increment (#1): 96.5% of statements,
+      # past the 90% finish line. May only rise; pinned equal to the
+      # Makefile by TestCoverageFloorParity.
+      coverage-floor: 96.5
+      # Pin every tool the retired lanes pinned; the reusable defaults float
+      # across tags and this move must neither downgrade nor silently
+      # upgrade a scanner.
+      golangci-lint-version: v2.12.2
+      govulncheck-version: v1.9.0
+      gosec-version: v2.30.0
+      actionlint-version: 1.7.12
+      actionlint-sha256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+      run-lint: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true')) }}
+      run-test: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true')) }}
+      run-race: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true')) }}
+      run-shell: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && needs.changes.outputs.shell == 'true') }}
+      # Build-only image proof (Refs eshu-hq/eshu-api#3, eshu-hq/eshu#9520):
+      # bare docker build of ./Dockerfile, no push, no tag.
+      run-image: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.image == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.misc == 'true')) }}
+      image-context: .
+      # No boundary gate in this repo: the lane stays off.
+      run-boundary: false
+      run-govulncheck: ${{ github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && (needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true')) }}
+      run-gosec: ${{ github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.workflows == 'true')) }}
+      # Findings fail scheduled runs so triage stays loud; PR and push runs
+      # stay advisory green.
+      gosec-fail-on-findings: ${{ github.event_name == 'schedule' }}
+      run-actionlint: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && needs.changes.outputs.workflows == 'true') }}
 
   ci-complete:
-    needs: [changes, parity, lint, test, race, shell, govulncheck, gosec, actionlint, image]
+    needs: [changes, parity, lanes]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -402,9 +239,9 @@ jobs:
           python3 - <<'EOF'
           import json, os
           # NEEDS_JSON is toJSON(needs): {job: {"result": ..., "outputs": ...}}.
-          # Compare v["result"]: comparing whole job OBJECTS never matches
+          # Compare v["result"]: comparing whole job objects never matches
           # (false-green), and needs.*.result is a bare ARRAY that kills
-          # green runs. Proven by a sibling satellite seed matrix.
+          # green runs. Never change this shape without a seeded red proof.
           needs = json.loads(os.environ["NEEDS_JSON"])
           bad = {k: v.get("result") for k, v in needs.items()
                  if isinstance(v, dict) and v.get("result") in ("failure", "cancelled")}
