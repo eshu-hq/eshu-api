@@ -16,8 +16,8 @@
 #
 # Deferred until its prerequisite lands (tracked under #1, not silently
 # dropped): Dependabot (unblocked by go.mod; config not added yet).
-# The coverage ratchet is live: COVERAGE_FLOOR sits at the skeleton
-# baseline and may only rise toward the 90% finish line. Tag v* ships
+# The coverage ratchet is live: COVERAGE_FLOOR sits at the measured
+# total (past the 90% finish line) and may only rise. Tag v* ships
 # through .github/workflows/release.yml (Refs eshu-hq/eshu#9520).
 #
 # Pinned actions (SHAs synced 2026-10-28 with the uses: lines below;
@@ -221,9 +221,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Baseline measured by the first Go PR (HTTP skeleton, review round
-      # 3): 88.7% of statements. May only rise; the finish line is 90% (#1).
-      COVERAGE_FLOOR: "88.7"
+      # Measured after the coverage-90 increment (#1): 96.5% of
+      # statements, past the 90% finish line. May only rise.
+      COVERAGE_FLOOR: "96.5"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: hasgo
