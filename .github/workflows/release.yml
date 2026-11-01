@@ -11,6 +11,11 @@
 # main publish the moving main, latest, and sha-<full-sha> tags with the
 # same provenance, SBOM, and attestation hardening as version-tag releases.
 #
+# A tag run first refuses any tag that is not vMAJOR.MINOR.PATCH[-prerelease]
+# or that does not point at the protected main head. Both guards run before
+# login, build, push, attestation, scan, and Release, so a stray v* tag
+# publishes nothing. The guards apply to manual dispatch on a tag as well.
+#
 # Pinned actions (re-verify with git ls-remote when auditing; Dependabot
 # github-actions proposes bumps, weekly grouped):
 #   actions/checkout v7.0.1              3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -60,9 +65,30 @@ jobs:
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
+      - name: Require a semantic version tag
+        if: github.ref_type == 'tag'
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ ! "${TAG_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "tag '${TAG_NAME}' is not vMAJOR.MINOR.PATCH[-prerelease]" >&2
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - name: Require the tag to point at the protected main head
+        if: github.ref_type == 'tag'
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          TAG_COMMIT: ${{ github.sha }}
+        run: |
+          git fetch origin main --quiet
+          main_head="$(git rev-parse origin/main)"
+          if [[ "${TAG_COMMIT}" != "${main_head}" ]]; then
+            echo "tag '${TAG_NAME}' points at ${TAG_COMMIT}, not the protected main head ${main_head}" >&2
+            exit 1
+          fi
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Log in to Container Registry
         if: github.event_name == 'push'
