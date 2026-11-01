@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -256,4 +257,60 @@ func TestRequireAuth_Gate(t *testing.T) {
 			t.Fatalf("uppercased key status = %d, want 401 (comparison is case-sensitive)", rec.Code)
 		}
 	})
+}
+
+// TestCorrelationID_HeaderPrecedenceAndFormat pins the lookup order and the
+// minted shape: X-Correlation-ID wins over X-Request-ID, surrounding
+// whitespace is trimmed, a blank header falls through, and a minted ID is
+// 32 lowercase hex characters (16 random bytes).
+func TestCorrelationID_HeaderPrecedenceAndFormat(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		headers map[string]string
+		want    string // empty means "minted"
+	}{
+		{"correlation beats request id", map[string]string{"X-Correlation-ID": "c1", "X-Request-ID": "r1"}, "c1"},
+		{"value is trimmed", map[string]string{"X-Correlation-ID": "  c2  "}, "c2"},
+		{"blank correlation falls through", map[string]string{"X-Correlation-ID": "   ", "X-Request-ID": "r3"}, "r3"},
+		{"no headers mints", nil, ""},
+		{"all blank mints", map[string]string{"X-Correlation-ID": " ", "X-Request-ID": " "}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodGet, "/api/v0/status", nil)
+			for key, value := range tt.headers {
+				req.Header.Set(key, value)
+			}
+			got := CorrelationID(req)
+			if tt.want != "" {
+				if got != tt.want {
+					t.Errorf("CorrelationID() = %q, want %q", got, tt.want)
+				}
+				return
+			}
+			if !regexp.MustCompile(`^[0-9a-f]{32}$`).MatchString(got) {
+				t.Errorf("minted CorrelationID() = %q, want 32 lowercase hex characters", got)
+			}
+		})
+	}
+}
+
+// TestWriteJSON_EncodeFailureAnswers500 pins the encode-failure branch: a
+// value json cannot marshal yields a plain 500 and never a half-written
+// 2xx or a JSON content type.
+func TestWriteJSON_EncodeFailureAnswers500(t *testing.T) {
+	t.Parallel()
+
+	rec := httptest.NewRecorder()
+	writeJSON(rec, http.StatusOK, map[string]any{"bad": make(chan int)})
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rec.Code)
+	}
+	if strings.Contains(rec.Header().Get("Content-Type"), "application/json") {
+		t.Errorf("Content-Type = %q, want a non-JSON error body", rec.Header().Get("Content-Type"))
+	}
 }

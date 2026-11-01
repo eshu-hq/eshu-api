@@ -49,9 +49,10 @@ see it.
   issue on the same lines.
 - Coverage: the `race` job uploads a coverprofile (14-day retention), posts
   per-package `go tool cover -func` totals, and fails below
-  `COVERAGE_FLOOR`, which may only rise toward the 90% finish line.
+  `COVERAGE_FLOOR`, which sits at the measured total (past the 90% finish
+  line) and may only rise.
 - Fork PRs run the required lanes on a read-only token with no secrets.
 
 Deferred until its prerequisite lands (tracked under `#1`): Dependabot
 (config not added yet; unblocked by `go.mod`). The coverage ratchet is
-live at the skeleton baseline and may only rise toward 90%.
+live at the measured total and may only rise.
