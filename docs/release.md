@@ -17,6 +17,11 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
+The tag must be `vMAJOR.MINOR.PATCH[-prerelease]` and must point at the
+current head of `main`. The first steps of the run refuse any other `v*` tag
+before anything is built, logged in, pushed, or released; cut the tag from
+an up-to-date `main` and push it right away.
+
 Watch the `release` run on the tag: `build-and-push`, then `trivy`,
 then `github-release`. The release body records the pushed digest;
 verify it before deploying anywhere:
