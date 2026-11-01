@@ -11,10 +11,10 @@
 # status regression for eshu-hq/eshu-api#21.
 #
 # Lane commands are the exact steps the pinned eshu-hq/.github go-collector-ci
-# reusable runs (ci.yml calls it), not `make lint`: the Makefile lint recipe
-# chains its steps with `;`, so only the last step sets the exit status and
-# earlier failures (vet, golangci-lint, fmt, tidy) are swallowed. The floor
-# checks use `make race`, whose last command is the floor comparison.
+# reusable runs (ci.yml calls it). The floor checks use `make race`, and the
+# `make gates` checks run `make lint` and `make race` themselves: those
+# recipes once chained their steps with `;` and exited 0 on a failing earlier
+# step (eshu-hq/eshu-api#21), so the matrix now pins their exit status.
 # The ci-complete aggregation and the govulncheck/gosec/actionlint lanes are
 # proven by the reusable's own selftest and are not reseeded here.
 #
