@@ -46,6 +46,11 @@ marker keeps the module toolchain from loading parity evidence as build
 inputs (see `docs/provenance.md`), so `go build ./...` and friends never
 see it.
 
+`bash scripts/api-seed-matrix.sh` is the local seeded RED/GREEN matrix (not a CI
+gate): it plants a defect per lane (vet, lint, format, race, tidy, the 500-line
+cap, the coverage floor), asserts the lane command goes red, then green, and
+leaves the tree as it found it.
+
 ## Rules that do not bend
 
 - **No static gates** besides the 500-line cap on `.go` files (`wc -l` step
