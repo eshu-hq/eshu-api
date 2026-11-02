@@ -9,12 +9,17 @@ preparation only; nothing here carries cutover authority.
 | --- | --- |
 | Source repository | `eshu-hq/eshu` |
 | Source commit | `428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5` (`origin/main` at the replay-ledger merge; covers the suppression, terminal-failure, sign-in, and replay-ledger admission seams) |
+| Source commit (retirement, admin-identity) | `ebaf4dfa0de672851bbec7a427e28fdb41344380` (`origin/main` at the admin-identity merge; covers both seams, byte-identical since) |
+| Source commit (setup) | `1b35b907ee237de64b0710d25e955fec43e9677b` (setup seam head, `eshu-hq/eshu#9853`; method set frozen at v0) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
 | `TerminalFailureAdmissionContractVersion` | `v0` |
 | `ReplayLedgerAdmissionContractVersion` | `v0` |
 | `SignInPolicyAdmissionContractVersion` | `v0` |
+| `RetirementAdmissionContractVersion` | `v0` |
+| `AdminIdentityAdmissionContractVersion` | `v0` |
+| `SetupAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -36,6 +41,12 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/acknowledgement/admission.go` (ledger block) + `handler.go` (`Ledger`) | `contracts/upstream/replay-ledger-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/sign_in_policy_admission_contract_test.go` | `contracts/upstream/sign_in_policy_admission_contract_test.go` | `3ce68b7ea519acf581acb70bb42929d03deed0de5c99e6312329078c71c72842` | verbatim |
 | `go/internal/query/sign_in_policy_types.go` (`SignInPolicyUpdateRequest`, version, alias) | `contracts/upstream/sign-in-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/retirement/admission_contract_test.go` at `ebaf4dfa0d` | `contracts/upstream/retirement_admission_contract_test.go` | `8ade12f13bd24786ee348c27807b223e24a685abe7d114b46abfeff1ebe926dd` | verbatim |
+| `go/internal/query/admin/retirement/admission.go` (version, alias) + `handler.go` (`Triggerer`) at `ebaf4dfa0d` | `contracts/upstream/retirement-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/identity/admission_contract_test.go` at `ebaf4dfa0d` | `contracts/upstream/admin_identity_admission_contract_test.go` | `1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559` | verbatim |
+| `go/internal/query/admin/identity/admission.go` (version, alias) + `types.go` (`MutationStore`) at `ebaf4dfa0d` | `contracts/upstream/admin-identity-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/setup_admission_contract_test.go` at `1b35b907ee` | `contracts/upstream/setup_admission_contract_test.go` | `b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea` | verbatim |
+| `go/internal/query/setup_types.go` (version, alias, `SetupStore`, input/owner/response shapes) at `1b35b907ee` | `contracts/upstream/setup-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 

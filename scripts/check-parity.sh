@@ -11,6 +11,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_REPO="eshu-hq/eshu"
 SRC_SHA="428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5"
 RAW="https://raw.githubusercontent.com/${SRC_REPO}/${SRC_SHA}"
+# Per-family pins for seams that merged after SRC_SHA. Each family is
+# fetched at the commit where its vendored files reached final form.
+SRC_SHA_MAIN="ebaf4dfa0de672851bbec7a427e28fdb41344380"
+SRC_SHA_SETUP="1b35b907ee237de64b0710d25e955fec43e9677b"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -19,6 +23,15 @@ fetch() {
   local path="$1"
   curl -fsSL --retry 3 "${RAW}/${path}" -o "${tmpdir}/fetched" || {
     echo "FAIL: fetch ${path} at ${SRC_SHA}" >&2
+    exit 1
+  }
+  printf '%s' "${tmpdir}/fetched"
+}
+
+fetch_at() {
+  local sha="$1" path="$2"
+  curl -fsSL --retry 3 "https://raw.githubusercontent.com/${SRC_REPO}/${sha}/${path}" -o "${tmpdir}/fetched" || {
+    echo "FAIL: fetch ${path} at ${sha}" >&2
     exit 1
   }
   printf '%s' "${tmpdir}/fetched"
@@ -69,6 +82,35 @@ check_file "go/internal/query/sign_in_policy_admission_contract_test.go" \
   "contracts/upstream/sign_in_policy_admission_contract_test.go" \
   "3ce68b7ea519acf581acb70bb42929d03deed0de5c99e6312329078c71c72842"
 
+check_file_at() {
+  local sha="$1" src_path="$2" dest_rel="$3" want_hash="$4"
+  local fetched
+  fetched="$(fetch_at "$sha" "$src_path")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "$want_hash" ]]; then
+    echo "FAIL: ${src_path} at ${sha} hash ${got_hash} != recorded ${want_hash}" >&2
+    exit 1
+  fi
+  if ! cmp -s "$fetched" "${REPO_ROOT}/${dest_rel}"; then
+    echo "FAIL: ${dest_rel} differs from ${src_path} at ${sha}" >&2
+    exit 1
+  fi
+  echo "OK: ${dest_rel} byte-identical to ${src_path} at ${sha}"
+}
+
+check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/retirement/admission_contract_test.go" \
+  "contracts/upstream/retirement_admission_contract_test.go" \
+  "8ade12f13bd24786ee348c27807b223e24a685abe7d114b46abfeff1ebe926dd"
+
+check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/identity/admission_contract_test.go" \
+  "contracts/upstream/admin_identity_admission_contract_test.go" \
+  "1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559"
+
+check_file_at "$SRC_SHA_SETUP" "go/internal/query/setup_admission_contract_test.go" \
+  "contracts/upstream/setup_admission_contract_test.go" \
+  "b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea"
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -112,12 +154,52 @@ check_excerpt "contracts/upstream/replay-ledger-wire-shapes.txt" \
 check_excerpt "contracts/upstream/sign-in-wire-shapes.txt" \
   "go/internal/query/sign_in_policy_types.go"
 
+check_excerpt_at() {
+  local sha="$1" dest_rel="$2"
+  shift 2
+  local excerpt_ok=1
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    local found=0
+    for src_path in "$@"; do
+      local excerpt_src
+      excerpt_src="$(fetch_at "$sha" "$src_path")"
+      if grep -qFx -- "$line" "$excerpt_src"; then
+        found=1
+        break
+      fi
+    done
+    if [[ "$found" != "1" ]]; then
+      echo "FAIL: excerpt line missing from pinned sources at ${sha}: ${line}" >&2
+      excerpt_ok=0
+    fi
+  done < "${REPO_ROOT}/${dest_rel}"
+  if [[ "$excerpt_ok" != "1" ]]; then
+    exit 1
+  fi
+  echo "OK: ${dest_rel} lines all present in pinned sources at ${sha}"
+}
+
+check_excerpt_at "$SRC_SHA_MAIN" "contracts/upstream/retirement-wire-shapes.txt" \
+  "go/internal/query/admin/retirement/admission.go" \
+  "go/internal/query/admin/retirement/handler.go"
+
+check_excerpt_at "$SRC_SHA_MAIN" "contracts/upstream/admin-identity-wire-shapes.txt" \
+  "go/internal/query/admin/identity/admission.go" \
+  "go/internal/query/admin/identity/types.go"
+
+check_excerpt_at "$SRC_SHA_SETUP" "contracts/upstream/setup-wire-shapes.txt" \
+  "go/internal/query/setup_types.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
 grep -qF 'TerminalFailureAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terminal-failure-wire-shapes.txt"
 grep -qF 'ReplayLedgerAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/replay-ledger-wire-shapes.txt"
 grep -qF 'SignInPolicyAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/sign-in-wire-shapes.txt"
+grep -qF 'RetirementAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/retirement-wire-shapes.txt"
+grep -qF 'AdminIdentityAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-wire-shapes.txt"
+grep -qF 'SetupAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/setup-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 echo "parity: all checks passed"
