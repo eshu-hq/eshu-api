@@ -14,7 +14,7 @@ RAW="https://raw.githubusercontent.com/${SRC_REPO}/${SRC_SHA}"
 # Per-family pins for seams that merged after SRC_SHA. Each family is
 # fetched at the commit where its vendored files reached final form.
 SRC_SHA_MAIN="ebaf4dfa0de672851bbec7a427e28fdb41344380"
-SRC_SHA_SETUP="1b35b907ee237de64b0710d25e955fec43e9677b"
+SRC_SHA_SETUP="fd326f35c9fb497eec0abefad197a5d4b137b823"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
