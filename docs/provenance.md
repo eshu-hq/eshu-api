@@ -10,7 +10,7 @@ preparation only; nothing here carries cutover authority.
 | Source repository | `eshu-hq/eshu` |
 | Source commit | `428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5` (`origin/main` at the replay-ledger merge; covers the suppression, terminal-failure, sign-in, and replay-ledger admission seams) |
 | Source commit (retirement, admin-identity) | `ebaf4dfa0de672851bbec7a427e28fdb41344380` (`origin/main` at the admin-identity merge; covers both seams, byte-identical since) |
-| Source commit (setup) | `1b35b907ee237de64b0710d25e955fec43e9677b` (setup seam head, `eshu-hq/eshu#9853`; method set frozen at v0) |
+| Source commit (setup) | `fd326f35c9fb497eec0abefad197a5d4b137b823` (merge of `eshu-hq/eshu#9853`; method set frozen at v0) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
