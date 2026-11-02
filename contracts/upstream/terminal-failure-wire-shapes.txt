@@ -1,0 +1,33 @@
+
+// TerminalFailureAdmissionContractVersion versions the #8872
+// admission-contract shape for the operator terminal-failure
+// acknowledgement mutation (POST
+// /api/v0/admin/collector-failures/acknowledge). Canonical mutations
+// persist through explicit core-owned admission contracts: eshu-api keeps
+// the HTTP shape and calls this versioned port, which the core-owned
+// Postgres store satisfies. A breaking change to the admission shape must
+// bump this version in the same diff.
+const TerminalFailureAdmissionContractVersion = "v0"
+
+// TerminalFailureAdmission is the versioned admission-contract port the
+// API handler depends on instead of a direct table handle. It aliases the
+// narrow family store so existing fakes and the core-owned Postgres
+// implementation keep satisfying it unchanged.
+type TerminalFailureAdmission = Acknowledger
+
+var _ TerminalFailureAdmission = (*pgstorage.TerminalFailureAckStore)(nil)
+
+// ReplayLedgerAdmissionContractVersion versions the #8872
+
+// acknowledgeRequest is the operator's body: the failed target, the reason, and
+// the idempotency key. The acknowledgement names the newest unresolved failure
+// on the scope at the time of the write and stores its observed raw class.
+type acknowledgeRequest struct {
+	CollectorKind  string `json:"collector_kind"`
+	InstanceID     string `json:"instance_id"`
+	ScopeID        string `json:"scope_id"`
+	Reason         string `json:"reason"`
+	IdempotencyKey string `json:"idempotency_key"`
+}
+
+func (r *acknowledgeRequest) normalize() {

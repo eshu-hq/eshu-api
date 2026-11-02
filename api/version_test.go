@@ -85,10 +85,28 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/suppression-admission.md", "SuppressionAdmissionContractVersion"); got != SuppressionAdmissionContractVersion {
 		t.Errorf("contracts/suppression-admission.md pins %q, constant is %q: move them in the same diff", got, SuppressionAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/terminal-failure-admission.md", "TerminalFailureAdmissionContractVersion"); got != TerminalFailureAdmissionContractVersion {
+		t.Errorf("contracts/terminal-failure-admission.md pins %q, constant is %q: move them in the same diff", got, TerminalFailureAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/replay-ledger-admission.md", "ReplayLedgerAdmissionContractVersion"); got != ReplayLedgerAdmissionContractVersion {
+		t.Errorf("contracts/replay-ledger-admission.md pins %q, constant is %q: move them in the same diff", got, ReplayLedgerAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/sign-in-admission.md", "SignInPolicyAdmissionContractVersion"); got != SignInPolicyAdmissionContractVersion {
+		t.Errorf("contracts/sign-in-admission.md pins %q, constant is %q: move them in the same diff", got, SignInPolicyAdmissionContractVersion)
+	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "CoreReadContractsVersion"); got != CoreReadContractsVersion {
 		t.Errorf("docs/provenance.md pins core %q, constant is %q: record the new pin before consuming it", got, CoreReadContractsVersion)
 	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "SuppressionAdmissionContractVersion"); got != SuppressionAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins admission %q, constant is %q: record the new pin before consuming it", got, SuppressionAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "TerminalFailureAdmissionContractVersion"); got != TerminalFailureAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins terminal-failure %q, constant is %q: record the new pin before consuming it", got, TerminalFailureAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "ReplayLedgerAdmissionContractVersion"); got != ReplayLedgerAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins replay-ledger %q, constant is %q: record the new pin before consuming it", got, ReplayLedgerAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SignInPolicyAdmissionContractVersion"); got != SignInPolicyAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins sign-in %q, constant is %q: record the new pin before consuming it", got, SignInPolicyAdmissionContractVersion)
 	}
 }

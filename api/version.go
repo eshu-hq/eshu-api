@@ -19,3 +19,25 @@ const CoreReadContractsVersion = "v0"
 // contracts/suppression-admission.md. Route dispatch over this port lands
 // with core dispatch, not in the skeleton.
 const SuppressionAdmissionContractVersion = "v0"
+
+// TerminalFailureAdmissionContractVersion names the versioned admission
+// port for the operator terminal-failure acknowledgement mutation. It
+// must move in lockstep with the in-tree
+// TerminalFailureAdmissionContractVersion; the vendored pin lives in
+// contracts/terminal-failure-admission.md. Route dispatch over this port
+// lands with core dispatch, not in the skeleton.
+const TerminalFailureAdmissionContractVersion = "v0"
+
+// ReplayLedgerAdmissionContractVersion names the versioned admission port
+// for the shared replay idempotency ledger. It must move in lockstep
+// with the in-tree ReplayLedgerAdmissionContractVersion; the vendored
+// pin lives in contracts/replay-ledger-admission.md. Ledger calls over
+// this port land with core dispatch, not in the skeleton.
+const ReplayLedgerAdmissionContractVersion = "v0"
+
+// SignInPolicyAdmissionContractVersion names the versioned admission port
+// for the admin sign-in policy mutation. It must move in lockstep with
+// the in-tree SignInPolicyAdmissionContractVersion; the vendored pin
+// lives in contracts/sign-in-admission.md. Route dispatch over this port
+// lands with core dispatch, not in the skeleton.
+const SignInPolicyAdmissionContractVersion = "v0"
