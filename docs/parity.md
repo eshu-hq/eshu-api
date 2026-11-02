@@ -52,14 +52,20 @@ globals.
 `SuppressionAdmissionContractVersion v0`,
 `TerminalFailureAdmissionContractVersion v0`,
 `ReplayLedgerAdmissionContractVersion v0`,
-`SignInPolicyAdmissionContractVersion v0`). A breaking change to any
+`SignInPolicyAdmissionContractVersion v0`,
+`RetirementAdmissionContractVersion v0`,
+`AdminIdentityAdmissionContractVersion v0`,
+`SetupAdmissionContractVersion v0`). A breaking change to any
 named port fails the frozen-set test next to that port in the source
 (`TestCoreReadContractsVersioned`,
 `TestSuppressionAdmissionContractIsVersioned`,
 `TestReadStoreContractIsVersioned`,
 `TestTerminalFailureAdmissionContractIsVersioned`,
 `TestReplayLedgerAdmissionContractIsVersioned`,
-`TestSignInPolicyAdmissionContractIsVersioned`) until the frozen list is
+`TestSignInPolicyAdmissionContractIsVersioned`,
+`TestRetirementAdmissionContractIsVersioned`,
+`TestAdminIdentityAdmissionContractIsVersioned`,
+`TestSetupAdmissionContractIsVersioned`) until the frozen list is
 deliberately updated; the version bump rides alongside as manual
 convention and this repository records the new pin before consuming it.
 No shared-table shortcut is ever a compatible change.
