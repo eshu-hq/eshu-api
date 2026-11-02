@@ -61,18 +61,22 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 // key; admission_contracts stays as the legacy suppression alias.
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
-		"status":                               "ok",
-		"service":                              "eshu-api",
-		"core_read_contracts":                  CoreReadContractsVersion,
-		"admission_contracts":                  SuppressionAdmissionContractVersion,
-		"suppression_admission_contracts":      SuppressionAdmissionContractVersion,
-		"terminal_failure_admission_contracts": TerminalFailureAdmissionContractVersion,
-		"replay_ledger_admission_contracts":    ReplayLedgerAdmissionContractVersion,
-		"sign_in_policy_admission_contracts":   SignInPolicyAdmissionContractVersion,
-		"retirement_admission_contracts":       RetirementAdmissionContractVersion,
-		"admin_identity_admission_contracts":   AdminIdentityAdmissionContractVersion,
-		"setup_admission_contracts":            SetupAdmissionContractVersion,
-		"core":                                 s.coreBaseURL,
+		"status":                                       "ok",
+		"service":                                      "eshu-api",
+		"core_read_contracts":                          CoreReadContractsVersion,
+		"admission_contracts":                          SuppressionAdmissionContractVersion,
+		"suppression_admission_contracts":              SuppressionAdmissionContractVersion,
+		"terminal_failure_admission_contracts":         TerminalFailureAdmissionContractVersion,
+		"replay_ledger_admission_contracts":            ReplayLedgerAdmissionContractVersion,
+		"sign_in_policy_admission_contracts":           SignInPolicyAdmissionContractVersion,
+		"retirement_admission_contracts":               RetirementAdmissionContractVersion,
+		"admin_identity_admission_contracts":           AdminIdentityAdmissionContractVersion,
+		"setup_admission_contracts":                    SetupAdmissionContractVersion,
+		"provider_config_mutation_admission_contracts": ProviderConfigMutationAdmissionContractVersion,
+		"provider_config_read_admission_contracts":     ProviderConfigReadAdmissionContractVersion,
+		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
+		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
+		"core":                                         s.coreBaseURL,
 	})
 }
 
