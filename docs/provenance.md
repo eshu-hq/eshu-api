@@ -11,6 +11,8 @@ preparation only; nothing here carries cutover authority.
 | Source commit | `428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5` (`origin/main` at the replay-ledger merge; covers the suppression, terminal-failure, sign-in, and replay-ledger admission seams) |
 | Source commit (retirement, admin-identity) | `ebaf4dfa0de672851bbec7a427e28fdb41344380` (`origin/main` at the admin-identity merge; covers both seams, byte-identical since) |
 | Source commit (setup) | `fd326f35c9fb497eec0abefad197a5d4b137b823` (merge of `eshu-hq/eshu#9853`; method set frozen at v0) |
+| Source commit (provider-config) | `99381691b1ac49254e813e5a013cfb654d432491` (merge of `eshu-hq/eshu#9870`; mutation 5 + read 3 methods, frozen at v0) |
+| Source commit (oidc-login, github-login) | `1e03478614fc54882b9616d37ea9103ea5ada6f4` (merge of `eshu-hq/eshu#9863`; 2 + 2 service methods, frozen at v0) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -20,6 +22,10 @@ preparation only; nothing here carries cutover authority.
 | `RetirementAdmissionContractVersion` | `v0` |
 | `AdminIdentityAdmissionContractVersion` | `v0` |
 | `SetupAdmissionContractVersion` | `v0` |
+| `ProviderConfigMutationAdmissionContractVersion` | `v0` |
+| `ProviderConfigReadAdmissionContractVersion` | `v0` |
+| `OIDCLoginAdmissionContractVersion` | `v0` |
+| `GitHubLoginAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -47,6 +53,13 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/identity/admission.go` (version, alias) + `types.go` (`MutationStore`) at `ebaf4dfa0d` | `contracts/upstream/admin-identity-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/setup_admission_contract_test.go` at `1b35b907ee` | `contracts/upstream/setup_admission_contract_test.go` | `b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea` | verbatim |
 | `go/internal/query/setup_types.go` (version, alias, `SetupStore`, input/owner/response shapes) at `1b35b907ee` | `contracts/upstream/setup-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/provider/config/mutation_admission_contract_test.go` at `99381691` | `contracts/upstream/mutation_admission_contract_test.go` | `15bd3551a50b503919a065da7fa8e077a0ac7179b3f3a9e8160673592f4d0e3b` | verbatim |
+| `go/internal/query/admin/provider/config/read_admission_contract_test.go` at `99381691` | `contracts/upstream/read_admission_contract_test.go` | `51d80f84961ea7b8e25e51c69b5c406b38f00ed77edfafd31c419450bfc4886d` | verbatim |
+| `go/internal/query/admin/provider/config/admission.go` (versions, aliases) + `types.go` (`MutationStore`, `ReadStore`) + `mutations.go` (`Mount`) at `99381691` | `contracts/upstream/provider-config-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/oidc_login_admission_contract_test.go` at `1e034786` | `contracts/upstream/oidc_login_admission_contract_test.go` | `03342f7ad0d28aef72583ce21a7747fe360fe755367fef40660e58361f19d2c0` | verbatim |
+| `go/internal/query/oidc_login_handler.go` (version, alias, `OIDCLoginService`, request/response shapes, `Mount`) + `go/cmd/api/oidc_login.go` (adapter, 503) at `1e034786` | `contracts/upstream/oidc-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/github_login_admission_contract_test.go` at `1e034786` | `contracts/upstream/github_login_admission_contract_test.go` | `f6a7fc9920176c76c8cf6e5ec223e881323564405b5931770d43db9f7256889c` | verbatim |
+| `go/internal/query/github_login_handler.go` (version, alias, `GitHubLoginService`, request/response shapes, `Mount`) + `go/cmd/api/github_login.go` (adapter, 503) at `1e034786` | `contracts/upstream/github-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 

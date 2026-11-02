@@ -64,3 +64,33 @@ const AdminIdentityAdmissionContractVersion = "v0"
 // contracts/setup-admission.md. Route dispatch over this port lands
 // with core dispatch, not in the skeleton.
 const SetupAdmissionContractVersion = "v0"
+
+// ProviderConfigMutationAdmissionContractVersion names the versioned
+// admission port for admin provider-config mutations. It must move in
+// lockstep with the in-tree
+// ProviderConfigMutationAdmissionContractVersion; the vendored pin lives
+// in contracts/provider-config-admission.md. Route dispatch over this
+// port lands with core dispatch, not in the skeleton.
+const ProviderConfigMutationAdmissionContractVersion = "v0"
+
+// ProviderConfigReadAdmissionContractVersion names the versioned
+// admission port for the reads backing the provider-config enable-time
+// guard. It must move in lockstep with the in-tree
+// ProviderConfigReadAdmissionContractVersion; the vendored pin lives in
+// contracts/provider-config-admission.md. Reads over this port land with
+// core dispatch, not in the skeleton.
+const ProviderConfigReadAdmissionContractVersion = "v0"
+
+// OIDCLoginAdmissionContractVersion names the versioned admission port
+// for the OIDC login flow. It must move in lockstep with the in-tree
+// OIDCLoginAdmissionContractVersion; the vendored pin lives in
+// contracts/oidc-login-admission.md. Route dispatch over this port lands
+// with core dispatch, not in the skeleton.
+const OIDCLoginAdmissionContractVersion = "v0"
+
+// GitHubLoginAdmissionContractVersion names the versioned admission port
+// for the GitHub login flow. It must move in lockstep with the in-tree
+// GitHubLoginAdmissionContractVersion; the vendored pin lives in
+// contracts/github-login-admission.md. Route dispatch over this port
+// lands with core dispatch, not in the skeleton.
+const GitHubLoginAdmissionContractVersion = "v0"

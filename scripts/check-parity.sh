@@ -15,6 +15,8 @@ RAW="https://raw.githubusercontent.com/${SRC_REPO}/${SRC_SHA}"
 # fetched at the commit where its vendored files reached final form.
 SRC_SHA_MAIN="ebaf4dfa0de672851bbec7a427e28fdb41344380"
 SRC_SHA_SETUP="fd326f35c9fb497eec0abefad197a5d4b137b823"
+SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
+SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -111,6 +113,22 @@ check_file_at "$SRC_SHA_SETUP" "go/internal/query/setup_admission_contract_test.
   "contracts/upstream/setup_admission_contract_test.go" \
   "b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea"
 
+check_file_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/admin/provider/config/mutation_admission_contract_test.go" \
+  "contracts/upstream/mutation_admission_contract_test.go" \
+  "15bd3551a50b503919a065da7fa8e077a0ac7179b3f3a9e8160673592f4d0e3b"
+
+check_file_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/admin/provider/config/read_admission_contract_test.go" \
+  "contracts/upstream/read_admission_contract_test.go" \
+  "51d80f84961ea7b8e25e51c69b5c406b38f00ed77edfafd31c419450bfc4886d"
+
+check_file_at "$SRC_SHA_AUTHLOGIN" "go/internal/query/oidc_login_admission_contract_test.go" \
+  "contracts/upstream/oidc_login_admission_contract_test.go" \
+  "03342f7ad0d28aef72583ce21a7747fe360fe755367fef40660e58361f19d2c0"
+
+check_file_at "$SRC_SHA_AUTHLOGIN" "go/internal/query/github_login_admission_contract_test.go" \
+  "contracts/upstream/github_login_admission_contract_test.go" \
+  "f6a7fc9920176c76c8cf6e5ec223e881323564405b5931770d43db9f7256889c"
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -191,6 +209,19 @@ check_excerpt_at "$SRC_SHA_MAIN" "contracts/upstream/admin-identity-wire-shapes.
 check_excerpt_at "$SRC_SHA_SETUP" "contracts/upstream/setup-wire-shapes.txt" \
   "go/internal/query/setup_types.go"
 
+check_excerpt_at "$SRC_SHA_PROVIDERCONFIG" "contracts/upstream/provider-config-wire-shapes.txt" \
+  "go/internal/query/admin/provider/config/admission.go" \
+  "go/internal/query/admin/provider/config/types.go" \
+  "go/internal/query/admin/provider/config/mutations.go"
+
+check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/oidc-login-wire-shapes.txt" \
+  "go/internal/query/oidc_login_handler.go" \
+  "go/cmd/api/oidc_login.go"
+
+check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/github-login-wire-shapes.txt" \
+  "go/internal/query/github_login_handler.go" \
+  "go/cmd/api/github_login.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -200,6 +231,10 @@ grep -qF 'SignInPolicyAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/u
 grep -qF 'RetirementAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/retirement-wire-shapes.txt"
 grep -qF 'AdminIdentityAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-wire-shapes.txt"
 grep -qF 'SetupAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/setup-wire-shapes.txt"
+grep -qF 'ProviderConfigMutationAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/provider-config-wire-shapes.txt"
+grep -qF 'ProviderConfigReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/provider-config-wire-shapes.txt"
+grep -qF 'OIDCLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/oidc-login-wire-shapes.txt"
+grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/github-login-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 echo "parity: all checks passed"

@@ -104,6 +104,27 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/setup-admission.md", "SetupAdmissionContractVersion"); got != SetupAdmissionContractVersion {
 		t.Errorf("contracts/setup-admission.md pins %q, constant is %q: move them in the same diff", got, SetupAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/provider-config-admission.md", "ProviderConfigMutationAdmissionContractVersion"); got != ProviderConfigMutationAdmissionContractVersion {
+		t.Errorf("contracts/provider-config-admission.md pins %q, constant is %q: move them in the same diff", got, ProviderConfigMutationAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/provider-config-admission.md", "ProviderConfigReadAdmissionContractVersion"); got != ProviderConfigReadAdmissionContractVersion {
+		t.Errorf("contracts/provider-config-admission.md pins %q, constant is %q: move them in the same diff", got, ProviderConfigReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/oidc-login-admission.md", "OIDCLoginAdmissionContractVersion"); got != OIDCLoginAdmissionContractVersion {
+		t.Errorf("contracts/oidc-login-admission.md pins %q, constant is %q: move them in the same diff", got, OIDCLoginAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/github-login-admission.md", "GitHubLoginAdmissionContractVersion"); got != GitHubLoginAdmissionContractVersion {
+		t.Errorf("contracts/github-login-admission.md pins %q, constant is %q: move them in the same diff", got, GitHubLoginAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
+		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/admin-identity-admission.md", "AdminIdentityAdmissionContractVersion"); got != AdminIdentityAdmissionContractVersion {
+		t.Errorf("contracts/admin-identity-admission.md pins %q, constant is %q: move them in the same diff", got, AdminIdentityAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/setup-admission.md", "SetupAdmissionContractVersion"); got != SetupAdmissionContractVersion {
+		t.Errorf("contracts/setup-admission.md pins %q, constant is %q: move them in the same diff", got, SetupAdmissionContractVersion)
+	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "CoreReadContractsVersion"); got != CoreReadContractsVersion {
 		t.Errorf("docs/provenance.md pins core %q, constant is %q: record the new pin before consuming it", got, CoreReadContractsVersion)
 	}
@@ -128,6 +149,18 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "SetupAdmissionContractVersion"); got != SetupAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins setup %q, constant is %q: record the new pin before consuming it", got, SetupAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "ProviderConfigMutationAdmissionContractVersion"); got != ProviderConfigMutationAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins provider-config mutation %q, constant is %q: record the new pin before consuming it", got, ProviderConfigMutationAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "ProviderConfigReadAdmissionContractVersion"); got != ProviderConfigReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins provider-config read %q, constant is %q: record the new pin before consuming it", got, ProviderConfigReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "OIDCLoginAdmissionContractVersion"); got != OIDCLoginAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins OIDC login %q, constant is %q: record the new pin before consuming it", got, OIDCLoginAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "GitHubLoginAdmissionContractVersion"); got != GitHubLoginAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins GitHub login %q, constant is %q: record the new pin before consuming it", got, GitHubLoginAdmissionContractVersion)
+	}
 }
 
 // TestHealthReportsPinnedContractVersions pins the /health version
@@ -144,15 +177,19 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 
 	health := decodeMap(t, rec)
 	want := map[string]string{
-		"core_read_contracts":                  CoreReadContractsVersion,
-		"admission_contracts":                  SuppressionAdmissionContractVersion,
-		"suppression_admission_contracts":      SuppressionAdmissionContractVersion,
-		"terminal_failure_admission_contracts": TerminalFailureAdmissionContractVersion,
-		"replay_ledger_admission_contracts":    ReplayLedgerAdmissionContractVersion,
-		"sign_in_policy_admission_contracts":   SignInPolicyAdmissionContractVersion,
-		"retirement_admission_contracts":       RetirementAdmissionContractVersion,
-		"admin_identity_admission_contracts":   AdminIdentityAdmissionContractVersion,
-		"setup_admission_contracts":            SetupAdmissionContractVersion,
+		"core_read_contracts":                          CoreReadContractsVersion,
+		"admission_contracts":                          SuppressionAdmissionContractVersion,
+		"suppression_admission_contracts":              SuppressionAdmissionContractVersion,
+		"terminal_failure_admission_contracts":         TerminalFailureAdmissionContractVersion,
+		"replay_ledger_admission_contracts":            ReplayLedgerAdmissionContractVersion,
+		"sign_in_policy_admission_contracts":           SignInPolicyAdmissionContractVersion,
+		"retirement_admission_contracts":               RetirementAdmissionContractVersion,
+		"admin_identity_admission_contracts":           AdminIdentityAdmissionContractVersion,
+		"setup_admission_contracts":                    SetupAdmissionContractVersion,
+		"provider_config_mutation_admission_contracts": ProviderConfigMutationAdmissionContractVersion,
+		"provider_config_read_admission_contracts":     ProviderConfigReadAdmissionContractVersion,
+		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
+		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {

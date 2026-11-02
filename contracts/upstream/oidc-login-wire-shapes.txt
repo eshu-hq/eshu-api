@@ -1,0 +1,91 @@
+// OIDCLoginAdmissionContractVersion versions the #8872
+// admission-contract shape for OIDC login (GET
+// /api/v0/auth/oidc/login, GET /api/v0/auth/oidc/callback). Canonical
+// logins persist through explicit core-owned admission contracts:
+// eshu-api keeps the HTTP shape and calls this versioned port, which the
+// core-owned Service implementation satisfies. A renamed, added, removed,
+// or re-signed method fails the frozen method-set test until that list is
+// deliberately updated in the same diff; bump this version alongside so
+// dest consumers can pin the shape they code against.
+//
+// The optional OIDCProviderLister is not part of v0: a dest client that
+// implements only the 2 admission methods silently drops runtime provider
+// discovery (RegisteredProviders returns nil). Dest must also implement
+// the lister or accept DB-row-only discovery. Browser-session issuance on
+// callback belongs to the BrowserSessions family's own seam, not this
+// contract.
+const OIDCLoginAdmissionContractVersion = "v0"
+
+// OIDCLoginAdmission is the versioned admission-contract port the API
+// handler depends on instead of a concrete login service. It aliases the
+// narrow login service so existing fakes and the core-owned Service
+// implementation keep satisfying it unchanged.
+type OIDCLoginAdmission = OIDCLoginService
+
+// OIDCLoginService resolves generic OIDC Authorization Code login requests
+// into Eshu browser-session authorization contexts.
+type OIDCLoginService interface {
+	StartOIDCLogin(context.Context, OIDCLoginStartRequest) (OIDCLoginStartResponse, error)
+	CompleteOIDCLogin(context.Context, OIDCLoginCompleteRequest) (OIDCLoginCompleteResponse, error)
+}
+
+// OIDCLoginStartRequest selects one configured identity provider and the
+// tenant/workspace boundary the dashboard session should enter after callback.
+type OIDCLoginStartRequest struct {
+	ProviderConfigID string
+	TenantID         string
+	WorkspaceID      string
+	ReturnToPath     string
+}
+
+// OIDCLoginStartResponse contains the provider authorization redirect URL.
+type OIDCLoginStartResponse struct {
+	RedirectURL string
+}
+
+// OIDCLoginCompleteRequest carries the callback state and authorization code.
+type OIDCLoginCompleteRequest struct {
+	State string
+	Code  string
+}
+
+// OIDCLoginCompleteResponse carries the resolved Eshu auth context and optional
+// local path for post-login browser navigation.
+//
+// ProviderGroupHashes carries the hashed external group claims that mapped to
+// this session's grants at login. They are persisted hash-only so bounded
+// active-session refresh can re-resolve the group-to-role mappings and detect
+// removed or tombstoned mappings rather than trusting stale role IDs alone.
+type OIDCLoginCompleteResponse struct {
+	Auth                AuthContext
+	ProviderConfigID    string
+	ProviderSubjectID   string
+	ProviderGroupHashes []string
+	ProviderProofAt     time.Time
+	ReturnToPath        string
+}
+
+// Mount registers OIDC login routes.
+func (h *OIDCLoginHandler) Mount(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v0/auth/oidc/login", h.handleStart)
+	mux.HandleFunc("GET /api/v0/auth/oidc/callback", h.handleCallback)
+}
+
+
+var (
+	_ query.OIDCLoginAdmission = oidcServiceAdapter{}
+	_ query.OIDCProviderLister = oidcServiceAdapter{}
+)
+
+// oidcLoginAdmission binds the assembled OIDC login service through the
+// versioned #8872 admission contract. A nil service yields an untyped nil
+// port (never a value adapter wrapping nil) so the handler's serviceReady
+// check fails closed to 503 instead of panicking on a nil backing
+// service. NewService never returns nil today and disabled configs return
+// early, so this guards the binding invariant rather than a live path.
+func oidcLoginAdmission(service *oidclogin.Service) query.OIDCLoginAdmission {
+	if service == nil {
+		return nil
+	}
+	return oidcServiceAdapter{service}
+}
