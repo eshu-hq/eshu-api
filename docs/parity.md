@@ -22,8 +22,12 @@ after the move.
   durable writes travel with them.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
-  admission contract; the only in-tree seam is the suppression admission
-  recorded in `contracts/suppression-admission.md`.
+  admission contract; the versioned in-tree seams are the suppression,
+  terminal-failure, replay-ledger, and sign-in admissions recorded in
+  `contracts/suppression-admission.md`,
+  `contracts/terminal-failure-admission.md`,
+  `contracts/replay-ledger-admission.md`, and
+  `contracts/sign-in-admission.md`.
 - OpenAPI contract fragments and the `api/` server, router, auth, v1
   alias, and deprecation middleware: move in the follow-up extraction
   PR, reviewed row-for-row against the ownership map. This seed carries
@@ -41,13 +45,20 @@ globals.
 
 `eshu-api` supports the exact pinned core contract versions in
 `docs/provenance.md` (`CoreReadContractsVersion v0`,
-`SuppressionAdmissionContractVersion v0`). A breaking change to any
+`SuppressionAdmissionContractVersion v0`,
+`TerminalFailureAdmissionContractVersion v0`,
+`ReplayLedgerAdmissionContractVersion v0`,
+`SignInPolicyAdmissionContractVersion v0`). A breaking change to any
 named port fails the frozen-set test next to that port in the source
 (`TestCoreReadContractsVersioned`,
 `TestSuppressionAdmissionContractIsVersioned`,
-`TestReadStoreContractIsVersioned`) until the version bumps in the same
-diff; this repository then records the new pin before consuming it. No
-shared-table shortcut is ever a compatible change.
+`TestReadStoreContractIsVersioned`,
+`TestTerminalFailureAdmissionContractIsVersioned`,
+`TestReplayLedgerAdmissionContractIsVersioned`,
+`TestSignInPolicyAdmissionContractIsVersioned`) until the frozen list is
+deliberately updated; the version bump rides alongside as manual
+convention and this repository records the new pin before consuming it.
+No shared-table shortcut is ever a compatible change.
 
 ## Open proofs (NOT_CHECKED)
 

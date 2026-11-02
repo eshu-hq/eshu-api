@@ -21,10 +21,9 @@ Reads consume the versioned core read-contract set
 (`querycontract.CoreReadContractsVersion`, currently `v0`): the
 `GraphQuery` and `ContentStore` ports plus the Postgres `ReadStore`
 surface. Mutations keep their HTTP shape here and persist through explicit
-versioned core admission contracts, one per mutation family; the only
-in-tree seam so far is the bounded suppression admission
-(`query.SuppressionAdmission` at `SuppressionAdmissionContractVersion`,
-currently `v0`).
+versioned core admission contracts, one per mutation family; the
+versioned in-tree seams so far are the suppression, terminal-failure,
+replay-ledger, and sign-in admissions (all currently `v0`).
 
 ## Layout
 
