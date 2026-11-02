@@ -1,0 +1,36 @@
+// AdminIdentityAdmissionContractVersion versions the #8872
+// admission-contract shape for tenant-scoped admin identity mutations
+// (invitation revoke, role grant/revoke, IdP group mapping
+// create/delete). Canonical mutations persist through explicit
+// core-owned admission contracts: eshu-api keeps the HTTP shape and
+// calls this versioned port, which the core-owned Postgres store
+// satisfies. A breaking change to the mutation shape fails the frozen
+// method-set test until that list is deliberately updated; bump this
+// version alongside (manually — the bump is convention, the frozen list
+// is the enforcement) so dest consumers can pin the shape.
+const AdminIdentityAdmissionContractVersion = "v0"
+
+// AdminIdentityAdmission is the versioned admission-contract port the API
+// handler depends on instead of a direct store handle. It aliases the
+// narrow mutation store so existing fakes and the core-owned Postgres
+// implementation keep satisfying it unchanged.
+type AdminIdentityAdmission = MutationStore
+
+type MutationStore interface {
+	// RevokeAdminInvitation soft-revokes an invitation. It is idempotent: an
+	// invitation that is already revoked/accepted/expired is left unchanged and
+	// its current status is reported.
+	RevokeAdminInvitation(ctx context.Context, req InvitationRevokeRequest) (InvitationRevokeResult, error)
+	// GrantAdminRoleAssignment idempotently activates a membership-role row.
+	// It validates the role exists and is active in the tenant before granting.
+	GrantAdminRoleAssignment(ctx context.Context, req RoleAssignmentGrantRequest) (RoleAssignmentMutationResult, error)
+	// RevokeAdminRoleAssignment tombstones a membership-role row. Idempotent.
+	RevokeAdminRoleAssignment(ctx context.Context, req RoleAssignmentRevokeRequest) (RoleAssignmentMutationResult, error)
+	// CreateAdminIdPGroupMapping idempotently activates a group->role mapping.
+	// It validates the provider config and role exist and are active in the
+	// tenant before creating, and returns the opaque mapping_ref.
+	CreateAdminIdPGroupMapping(ctx context.Context, req IdPGroupMappingCreateRequest) (IdPGroupMappingCreateResult, error)
+	// DeleteAdminIdPGroupMapping tombstones one mapping resolved by its opaque
+	// mapping_ref, tenant-scoped. Idempotent.
+	DeleteAdminIdPGroupMapping(ctx context.Context, req IdPGroupMappingDeleteRequest) (IdPGroupMappingDeleteResult, error)
+}
