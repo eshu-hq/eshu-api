@@ -4,6 +4,7 @@
 package api
 
 import (
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -94,6 +95,15 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/sign-in-admission.md", "SignInPolicyAdmissionContractVersion"); got != SignInPolicyAdmissionContractVersion {
 		t.Errorf("contracts/sign-in-admission.md pins %q, constant is %q: move them in the same diff", got, SignInPolicyAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
+		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/admin-identity-admission.md", "AdminIdentityAdmissionContractVersion"); got != AdminIdentityAdmissionContractVersion {
+		t.Errorf("contracts/admin-identity-admission.md pins %q, constant is %q: move them in the same diff", got, AdminIdentityAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/setup-admission.md", "SetupAdmissionContractVersion"); got != SetupAdmissionContractVersion {
+		t.Errorf("contracts/setup-admission.md pins %q, constant is %q: move them in the same diff", got, SetupAdmissionContractVersion)
+	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "CoreReadContractsVersion"); got != CoreReadContractsVersion {
 		t.Errorf("docs/provenance.md pins core %q, constant is %q: record the new pin before consuming it", got, CoreReadContractsVersion)
 	}
@@ -108,5 +118,45 @@ func TestContractVersionsArePinned(t *testing.T) {
 	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "SignInPolicyAdmissionContractVersion"); got != SignInPolicyAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins sign-in %q, constant is %q: record the new pin before consuming it", got, SignInPolicyAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins retirement %q, constant is %q: record the new pin before consuming it", got, RetirementAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "AdminIdentityAdmissionContractVersion"); got != AdminIdentityAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins admin-identity %q, constant is %q: record the new pin before consuming it", got, AdminIdentityAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SetupAdmissionContractVersion"); got != SetupAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins setup %q, constant is %q: record the new pin before consuming it", got, SetupAdmissionContractVersion)
+	}
+}
+
+// TestHealthReportsPinnedContractVersions pins the /health version
+// keys to the package constants: every served admission version,
+// including the three newest ports, must match its constant, so a
+// bumped constant with a stale handler (or vice versa) fails here.
+func TestHealthReportsPinnedContractVersions(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("https://core:8443", skeletonTestKey)
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
+	srv.Handler(DefaultV0Sunset).ServeHTTP(rec, req)
+
+	health := decodeMap(t, rec)
+	want := map[string]string{
+		"core_read_contracts":                  CoreReadContractsVersion,
+		"admission_contracts":                  SuppressionAdmissionContractVersion,
+		"suppression_admission_contracts":      SuppressionAdmissionContractVersion,
+		"terminal_failure_admission_contracts": TerminalFailureAdmissionContractVersion,
+		"replay_ledger_admission_contracts":    ReplayLedgerAdmissionContractVersion,
+		"sign_in_policy_admission_contracts":   SignInPolicyAdmissionContractVersion,
+		"retirement_admission_contracts":       RetirementAdmissionContractVersion,
+		"admin_identity_admission_contracts":   AdminIdentityAdmissionContractVersion,
+		"setup_admission_contracts":            SetupAdmissionContractVersion,
+	}
+	for key, wantVersion := range want {
+		if health[key] != wantVersion {
+			t.Errorf("/health %q = %q, want pinned %q", key, health[key], wantVersion)
+		}
 	}
 }

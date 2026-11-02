@@ -68,6 +68,19 @@ func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 	if health["core_read_contracts"] != "v0" || health["admission_contracts"] != "v0" {
 		t.Errorf("/health contracts = %v, want the pinned v0 versions", health)
 	}
+	for _, key := range []string{
+		"suppression_admission_contracts",
+		"terminal_failure_admission_contracts",
+		"replay_ledger_admission_contracts",
+		"sign_in_policy_admission_contracts",
+		"retirement_admission_contracts",
+		"admin_identity_admission_contracts",
+		"setup_admission_contracts",
+	} {
+		if health[key] != "v0" {
+			t.Errorf("/health %s = %q, want the pinned v0 version", key, health[key])
+		}
+	}
 	if health["core"] != "https://core:8443" {
 		t.Errorf("/health core = %q, want the configured origin", health["core"])
 	}

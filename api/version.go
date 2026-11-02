@@ -41,3 +41,26 @@ const ReplayLedgerAdmissionContractVersion = "v0"
 // lives in contracts/sign-in-admission.md. Route dispatch over this port
 // lands with core dispatch, not in the skeleton.
 const SignInPolicyAdmissionContractVersion = "v0"
+
+// RetirementAdmissionContractVersion names the versioned admission port
+// for the operator repository retirement trigger. It must move in
+// lockstep with the in-tree RetirementAdmissionContractVersion; the
+// vendored pin lives in contracts/retirement-admission.md. Route
+// dispatch over this port lands with core dispatch, not in the
+// skeleton.
+const RetirementAdmissionContractVersion = "v0"
+
+// AdminIdentityAdmissionContractVersion names the versioned admission
+// port for tenant-scoped admin identity mutations. It must move in
+// lockstep with the in-tree AdminIdentityAdmissionContractVersion; the
+// vendored pin lives in contracts/admin-identity-admission.md. Route
+// dispatch over this port lands with core dispatch, not in the
+// skeleton.
+const AdminIdentityAdmissionContractVersion = "v0"
+
+// SetupAdmissionContractVersion names the versioned admission port for
+// the first-run setup wizard mutations. It must move in lockstep with
+// the in-tree SetupAdmissionContractVersion; the vendored pin lives in
+// contracts/setup-admission.md. Route dispatch over this port lands
+// with core dispatch, not in the skeleton.
+const SetupAdmissionContractVersion = "v0"
