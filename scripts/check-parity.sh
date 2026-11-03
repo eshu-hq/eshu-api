@@ -251,10 +251,17 @@ echo "OK: version pins v0 present"
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core
 # packages. Dest dispatches over HTTP write-through; the vendored
 # contracts/upstream copies are parity evidence, not build inputs (their
-# own go.mod is a separate module). Fails closed on any core import.
-if go list -deps ./api/... ./internal/... ./cmd/... 2>/dev/null | grep -q '^github\.com/eshu-hq/eshu/'; then
+# own go.mod is a separate module). Fails closed on any core import AND
+# on a listing-tool failure: a suppressed stderr that yields an empty
+# list must never read as proof.
+if ! go list -deps ./api/... ./internal/... ./cmd/... >"${tmpdir}/deps" 2>"${tmpdir}/deps.err"; then
+  echo "FAIL: go list -deps failed, no-core-import unproven" >&2
+  cat "${tmpdir}/deps.err" >&2
+  exit 1
+fi
+if grep -q '^github\.com/eshu-hq/eshu\(/\|$\)' "${tmpdir}/deps"; then
   echo "FAIL: runtime packages import eshu-hq/eshu core code (HTTP write-through only)" >&2
-  go list -deps ./api/... ./internal/... ./cmd/... 2>/dev/null | grep '^github\.com/eshu-hq/eshu/' >&2
+  grep '^github\.com/eshu-hq/eshu\(/\|$\)' "${tmpdir}/deps" >&2
   exit 1
 fi
 echo "OK: runtime packages import no eshu-hq/eshu core code"

@@ -39,8 +39,15 @@ func (s *Server) suppressionWriteThrough(w http.ResponseWriter, r *http.Request)
 // allScopes is the resolved caller scope. The route always passes true
 // today (the shared key maps to AllScopes in core); the false branch is
 // the hookup point for the day dest gains a scoped/session resolver,
-// and it stays a plain deny until then.
+// and it stays a plain deny until then. Like dispatch, it fails closed
+// with the permanent 503 when no core origin is configured, so the
+// native route can never dereference an unconfigured origin.
 func (s *Server) suppressionWriteThroughAs(w http.ResponseWriter, r *http.Request, allScopes bool) {
+	if s.core == nil {
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
+			"eshu-api: core origin is not configured; no core routes are served")
+		return
+	}
 	if !authorizeSuppressionOperator(allScopes) {
 		writeError(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden),
 			"all-scopes operator authorization is required")

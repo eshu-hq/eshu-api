@@ -175,6 +175,85 @@ func TestSuppressionPilot_OtherFamiliesStillProxy(t *testing.T) {
 	}
 }
 
+// TestSuppressionPilot_UnconfiguredOriginFailsClosed pins the P0 fix:
+// with no core origin configured the native route answers the
+// permanent 503 backend_unavailable instead of panicking, in both
+// negotiated shapes and for both spellings of the upsert path.
+func TestSuppressionPilot_UnconfiguredOriginFailsClosed(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("", skeletonTestKey)
+	if srv.core != nil {
+		t.Fatalf("NewServer(\"\", key).core = non-nil, want nil (unconfigured origin)")
+	}
+	handler := srv.Handler(DefaultV0Sunset)
+
+	for _, accept := range []string{EnvelopeMIME, "application/json"} {
+		for _, path := range []string{
+			"/api/v0/supply-chain/impact/suppressions",
+			"/api/v0/supply-chain/impact/suppressions/",
+		} {
+			req := authedRequest(http.MethodPost, path)
+			if accept != "" {
+				req.Header.Set("Accept", accept)
+			}
+			rec := httptest.NewRecorder()
+
+			func() {
+				defer func() {
+					if recovered := recover(); recovered != nil {
+						t.Errorf("Accept %q path %q: panicked with %v, want 503", accept, path, recovered)
+					}
+				}()
+				handler.ServeHTTP(rec, req)
+			}()
+
+			if rec.Code != http.StatusServiceUnavailable {
+				t.Errorf("Accept %q path %q: status = %d, want 503", accept, path, rec.Code)
+			}
+			if got := rec.Header().Get("Retry-After"); got != "" {
+				t.Errorf("Accept %q path %q: Retry-After = %q, want absent (permanent 503)", accept, path, got)
+			}
+			body, _ := io.ReadAll(rec.Result().Body)
+			if !strings.Contains(string(body), "backend_unavailable") {
+				t.Errorf("Accept %q path %q: body = %q, want backend_unavailable", accept, path, body)
+			}
+		}
+	}
+}
+
+// TestSuppressionPilot_BothSpellingsWriteThrough pins that both
+// spellings of the upsert path stay on the native route: method, path
+// (as spelled), and body forward to the same core route.
+func TestSuppressionPilot_BothSpellingsWriteThrough(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{
+		"/api/v0/supply-chain/impact/suppressions",
+		"/api/v0/supply-chain/impact/suppressions/",
+	} {
+		core := &stubCore{status: http.StatusCreated, body: `{"status":"created"}`}
+		mux := http.NewServeMux()
+		mux.Handle("/", core.handler())
+		upstream := httptest.NewServer(mux)
+		defer upstream.Close()
+
+		srv := NewServer(upstream.URL, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
+
+		req := authedRequest(http.MethodPost, path)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if core.hits != 1 || core.lastPath != path {
+			t.Errorf("path %q: hits = %d lastPath = %q, want the native route to forward as spelled", path, core.hits, core.lastPath)
+		}
+		if rec.Code != http.StatusCreated {
+			t.Errorf("path %q: status = %d, want relayed 201", path, rec.Code)
+		}
+	}
+}
+
 // TestSuppressionPilot_DeadCoreIs503WithoutRetryAfter pins the pilot's
 // dead-core shape on the native route: permanent 503
 // backend_unavailable with no Retry-After, in both negotiated shapes.
