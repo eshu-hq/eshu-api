@@ -4,6 +4,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -407,5 +408,41 @@ func TestDispatch_TimeoutMatchesReadContract(t *testing.T) {
 	handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/repositories"))
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("status = %d, want 503 after the dispatch bound", rec.Code)
+	}
+}
+
+// TestDispatch_CanceledContextFailsClosedWithoutRetry pins cancellation
+// propagation: a caller that cancels mid-flight gets the permanent 503
+// backend_unavailable, the core is never hit, and no retry follows.
+func TestDispatch_CanceledContextFailsClosedWithoutRetry(t *testing.T) {
+	t.Parallel()
+
+	core := &stubCore{status: http.StatusOK, body: `{"data":[]}`}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
+
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	req := authedRequest(http.MethodPost, "/api/v0/supply-chain/impact/suppressions").WithContext(ctx)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if core.hits != 0 {
+		t.Errorf("upstream hits = %d, want 0 (canceled before dispatch)", core.hits)
+	}
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("status = %d, want 503", rec.Code)
+	}
+	body, _ := io.ReadAll(rec.Result().Body)
+	if !strings.Contains(string(body), "backend_unavailable") {
+		t.Errorf("body = %q, want backend_unavailable", body)
+	}
+	if got := rec.Header().Get("Retry-After"); got != "" {
+		t.Errorf("Retry-After = %q, want absent (permanent 503)", got)
 	}
 }
