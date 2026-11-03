@@ -48,3 +48,23 @@ closed with the wrapper-level guard error (never a panic) when storage
 is absent. A breaking change to the admission shape must bump
 `SuppressionAdmissionContractVersion` in the same diff, and this
 repository records the new pin before consuming it.
+
+## Native-dispatch pilot (arbiter ruling (a): HTTP write-through)
+
+The suppression upsert is the pilot family for native dispatch:
+`api/suppression.go` registers the explicit route inside `RequireAuth`
+ahead of the generic proxy and forwards to the same core route with
+method, path, query, headers (including the original `Authorization`
+header), and body relayed; core bytes come back unmodified and core
+re-judges every forwarded call as backstop. Dest adds exactly one shape
+the generic relay cannot produce: the family 403 for a non-AllScopes
+identity (`TestSuppressionPilot_AuthorizerRejectsNonAllScopes`).
+
+Audit parity: governance audit stays core-side on forwarded requests.
+The in-tree suppression mutation handler at the provenance pin emits no
+audit event, and dest emits none either, so this route has no audit gap.
+Families whose in-tree handlers do emit audit stay on the generic relay
+until a versioned audit-append contract exists. `scripts/check-parity.sh`
+gates the pilot with the no-core-import proof (`go list -deps` over the
+runtime packages must show no `eshu-hq/eshu` import) alongside the
+403/503 wire-shape excerpt.

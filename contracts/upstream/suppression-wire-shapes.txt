@@ -37,3 +37,14 @@ type VulnerabilitySuppressionMutationResponse struct {
 	GenerationID  string `json:"generation_id"`
 	Status        string `json:"status"`
 }
+
+	authCtx, ok := auth.AuthContextFromContext(r.Context())
+	authCtx = auth.NormalizeAuthContext(authCtx)
+	if !ok || !authCtx.AllScopes || authCtx.Mode == auth.AuthModeBrowserSession {
+		querycontract.WriteError(w, http.StatusForbidden, "all-scopes operator authorization is required")
+		return
+	}
+	if h.SuppressionMutations == nil {
+		querycontract.WriteError(w, http.StatusServiceUnavailable, "vulnerability suppression mutation store is unavailable")
+		return
+	}

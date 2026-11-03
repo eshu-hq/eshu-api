@@ -247,4 +247,16 @@ grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/up
 grep -qF 'SAMLLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/saml-login-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
+# No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
+# runtime module (api, internal, cmd) must not import eshu-hq/eshu core
+# packages. Dest dispatches over HTTP write-through; the vendored
+# contracts/upstream copies are parity evidence, not build inputs (their
+# own go.mod is a separate module). Fails closed on any core import.
+if go list -deps ./api/... ./internal/... ./cmd/... 2>/dev/null | grep -q '^github\.com/eshu-hq/eshu/'; then
+  echo "FAIL: runtime packages import eshu-hq/eshu core code (HTTP write-through only)" >&2
+  go list -deps ./api/... ./internal/... ./cmd/... 2>/dev/null | grep '^github\.com/eshu-hq/eshu/' >&2
+  exit 1
+fi
+echo "OK: runtime packages import no eshu-hq/eshu core code"
+
 echo "parity: all checks passed"
