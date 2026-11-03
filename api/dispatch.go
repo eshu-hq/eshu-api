@@ -77,6 +77,16 @@ func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 			"eshu-api: core origin is not configured; no core routes are served")
 		return
 	}
+	forwardToCore(s, w, r)
+}
+
+// forwardToCore proxies one call to the configured core origin and
+// relays the core's answer byte-for-byte: status, headers, and body. It
+// owns exactly one synthetic error: when the core cannot be reached it
+// answers the permanent 503 backend_unavailable. A core-marked retryable
+// 503 keeps the Retry-After the core sent: relayed core bytes cross
+// unmodified and this function never invents headers.
+func forwardToCore(s *Server, w http.ResponseWriter, r *http.Request) {
 	target := strings.TrimRight(s.coreBaseURL, "/") + r.URL.RequestURI()
 	upstream, err := http.NewRequestWithContext(r.Context(), r.Method, target, r.Body)
 	if err != nil {

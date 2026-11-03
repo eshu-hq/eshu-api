@@ -98,6 +98,15 @@ func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /readyz", s.ready)
+	// Native-dispatch pilot: the suppression upsert has its explicit
+	// per-family route with the AllScopes authorizer. It is registered
+	// ahead of the generic proxy; every other family still crosses the
+	// byte-relay below.
+	mux.Handle(suppressionRoute, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough)))
+	// The trailing-slash spelling is the same upsert (core mounts the
+	// exact path and decides; dest keeps both spellings on the native
+	// route so the family is never split across dispatch paths).
+	mux.Handle(suppressionRoute+"/", RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough)))
 	mux.Handle("/api/", RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
 	return mux
 }
