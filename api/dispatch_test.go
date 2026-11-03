@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -411,38 +412,79 @@ func TestDispatch_TimeoutMatchesReadContract(t *testing.T) {
 	}
 }
 
+// countingTransport counts outbound dispatch attempts at the Do level,
+// so a retry loop would fail the test even when the core never answers.
+type countingTransport struct {
+	base     http.RoundTripper
+	attempts *int32
+}
+
+func (t countingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	atomic.AddInt32(t.attempts, 1)
+	return t.base.RoundTrip(req)
+}
+
 // TestDispatch_CanceledContextFailsClosedWithoutRetry pins cancellation
-// propagation: a caller that cancels mid-flight gets the permanent 503
-// backend_unavailable, the core is never hit, and no retry follows.
+// propagation on the shared forward path: a canceled caller gets the
+// permanent 503 backend_unavailable with no retry. It covers the native
+// pilot route and the generic relay, pre-cancel and mid-flight, with the
+// attempt count proving a single dispatch attempt in every case.
 func TestDispatch_CanceledContextFailsClosedWithoutRetry(t *testing.T) {
 	t.Parallel()
 
-	core := &stubCore{status: http.StatusOK, body: `{"data":[]}`}
-	mux := http.NewServeMux()
-	mux.Handle("/", core.handler())
-	upstream := httptest.NewServer(mux)
-	defer upstream.Close()
-
-	srv := NewServer(upstream.URL, skeletonTestKey)
-	handler := srv.Handler(DefaultV0Sunset)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	req := authedRequest(http.MethodPost, "/api/v0/supply-chain/impact/suppressions").WithContext(ctx)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if core.hits != 0 {
-		t.Errorf("upstream hits = %d, want 0 (canceled before dispatch)", core.hits)
+	cases := []struct {
+		name   string
+		method string
+		path   string
+		cancel string // "before" serves a pre-canceled context; "during" cancels mid-flight
+	}{
+		{"native pre-cancel", http.MethodPost, "/api/v0/supply-chain/impact/suppressions", "before"},
+		{"relay pre-cancel", "GET", "/api/v0/repositories", "before"},
+		{"native mid-flight", http.MethodPost, "/api/v0/supply-chain/impact/suppressions", "during"},
+		{"relay mid-flight", "GET", "/api/v0/repositories", "during"},
 	}
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Errorf("status = %d, want 503", rec.Code)
-	}
-	body, _ := io.ReadAll(rec.Result().Body)
-	if !strings.Contains(string(body), "backend_unavailable") {
-		t.Errorf("body = %q, want backend_unavailable", body)
-	}
-	if got := rec.Header().Get("Retry-After"); got != "" {
-		t.Errorf("Retry-After = %q, want absent (permanent 503)", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				time.Sleep(500 * time.Millisecond)
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer slow.Close()
+
+			srv := NewServer(slow.URL, skeletonTestKey)
+			var attempts int32
+			srv.httpClient = &http.Client{Transport: countingTransport{base: http.DefaultTransport, attempts: &attempts}}
+			handler := srv.Handler(DefaultV0Sunset)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			if tc.cancel == "before" {
+				cancel()
+			} else {
+				defer cancel()
+				go func() {
+					time.Sleep(100 * time.Millisecond)
+					cancel()
+				}()
+			}
+			req := authedRequest(tc.method, tc.path).WithContext(ctx)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+
+			if got := atomic.LoadInt32(&attempts); got != 1 {
+				t.Errorf("dispatch attempts = %d, want exactly 1 (no retry)", got)
+			}
+			if rec.Code != http.StatusServiceUnavailable {
+				t.Errorf("status = %d, want 503", rec.Code)
+			}
+			body, _ := io.ReadAll(rec.Result().Body)
+			if !strings.Contains(string(body), "backend_unavailable") {
+				t.Errorf("body = %q, want backend_unavailable", body)
+			}
+			if got := rec.Header().Get("Retry-After"); got != "" {
+				t.Errorf("Retry-After = %q, want absent (permanent 503)", got)
+			}
+		})
 	}
 }
