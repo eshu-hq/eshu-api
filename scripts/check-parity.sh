@@ -17,6 +17,7 @@ SRC_SHA_MAIN="ebaf4dfa0de672851bbec7a427e28fdb41344380"
 SRC_SHA_SETUP="fd326f35c9fb497eec0abefad197a5d4b137b823"
 SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
 SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
+SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -129,6 +130,10 @@ check_file_at "$SRC_SHA_AUTHLOGIN" "go/internal/query/github_login_admission_con
   "contracts/upstream/github_login_admission_contract_test.go" \
   "f6a7fc9920176c76c8cf6e5ec223e881323564405b5931770d43db9f7256889c"
 
+check_file_at "$SRC_SHA_SAMLLOGIN" "go/internal/query/saml_login_admission_contract_test.go" \
+  "contracts/upstream/saml_login_admission_contract_test.go" \
+  "bc04787bd208bf07428f4a9bc4660946342c7e4f3b60121202cb7f0a070556d0"
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -222,6 +227,10 @@ check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/github-login-wire-shap
   "go/internal/query/github_login_handler.go" \
   "go/cmd/api/github_login.go"
 
+check_excerpt_at "$SRC_SHA_SAMLLOGIN" "contracts/upstream/saml-login-wire-shapes.txt" \
+  "go/internal/query/saml_admission.go" \
+  "go/internal/query/saml_handler.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -235,6 +244,7 @@ grep -qF 'ProviderConfigMutationAdmissionContractVersion = "v0"' "${REPO_ROOT}/c
 grep -qF 'ProviderConfigReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/provider-config-wire-shapes.txt"
 grep -qF 'OIDCLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/oidc-login-wire-shapes.txt"
 grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/github-login-wire-shapes.txt"
+grep -qF 'SAMLLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/saml-login-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 echo "parity: all checks passed"

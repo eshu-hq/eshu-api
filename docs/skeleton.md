@@ -12,10 +12,10 @@ handle crosses the boundary.
 - `go.mod`: module `github.com/eshu-hq/eshu-api`, stdlib only. No import
   of a core implementation package exists anywhere in this tree.
 - `api/`: the HTTP surface. `version.go` pins `CoreReadContractsVersion`
-  and the eleven admission versions (`Suppression`, `TerminalFailure`,
+  and the twelve admission versions (`Suppression`, `TerminalFailure`,
   `ReplayLedger`, `SignInPolicy`, `Retirement`, `AdminIdentity`,
   `Setup`, `ProviderConfigMutation`, `ProviderConfigRead`, `OIDCLogin`,
-  `GitHubLogin`) to `v0` (lockstep with the
+  `GitHubLogin`, `SAMLLogin`) to `v0` (lockstep with the
   vendored pins under `contracts/`); `v1alias.go` and `deprecation.go`
   port the in-tree middleware behavior (`/api/v1/` rewrite ahead of auth,
   `Deprecation`/`Sunset` on `/api/v0/*` only, v1 never carries them);

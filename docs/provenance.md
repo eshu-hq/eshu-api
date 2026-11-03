@@ -13,6 +13,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (setup) | `fd326f35c9fb497eec0abefad197a5d4b137b823` (merge of `eshu-hq/eshu#9853`; method set frozen at v0) |
 | Source commit (provider-config) | `99381691b1ac49254e813e5a013cfb654d432491` (merge of `eshu-hq/eshu#9870`; mutation 5 + read 3 methods, frozen at v0) |
 | Source commit (oidc-login, github-login) | `1e03478614fc54882b9616d37ea9103ea5ada6f4` (merge of `eshu-hq/eshu#9863`; 2 + 2 service methods, frozen at v0) |
+| Source commit (saml-login) | `aac271ad78e328462dabc7518d5f7e5739bdc651` (merge of `eshu-hq/eshu#9897`; 5 store methods, frozen at v0, with the lister carve-out) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -26,6 +27,7 @@ preparation only; nothing here carries cutover authority.
 | `ProviderConfigReadAdmissionContractVersion` | `v0` |
 | `OIDCLoginAdmissionContractVersion` | `v0` |
 | `GitHubLoginAdmissionContractVersion` | `v0` |
+| `SAMLLoginAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -60,6 +62,8 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/oidc_login_handler.go` (version, alias, `OIDCLoginService`, request/response shapes, `Mount`) + `go/cmd/api/oidc_login.go` (adapter, 503) at `1e034786` | `contracts/upstream/oidc-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/github_login_admission_contract_test.go` at `1e034786` | `contracts/upstream/github_login_admission_contract_test.go` | `f6a7fc9920176c76c8cf6e5ec223e881323564405b5931770d43db9f7256889c` | verbatim |
 | `go/internal/query/github_login_handler.go` (version, alias, `GitHubLoginService`, request/response shapes, `Mount`) + `go/cmd/api/github_login.go` (adapter, 503) at `1e034786` | `contracts/upstream/github-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/saml_login_admission_contract_test.go` at `aac271ad` | `contracts/upstream/saml_login_admission_contract_test.go` | `bc04787bd208bf07428f4a9bc4660946342c7e4f3b60121202cb7f0a070556d0` | verbatim |
+| `go/internal/query/saml_admission.go` (versions, alias) + `saml_handler.go` (`SAMLStore`, `SAMLProviderConfig`, `SAMLRequestCreateRecord`, `SAMLProviderIDLister`, `Mount`) at `aac271ad` | `contracts/upstream/saml-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 

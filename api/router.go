@@ -76,6 +76,7 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 		"provider_config_read_admission_contracts":     ProviderConfigReadAdmissionContractVersion,
 		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
 		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
+		"saml_login_admission_contracts":               SAMLLoginAdmissionContractVersion,
 		"core":                                         s.coreBaseURL,
 	})
 }
