@@ -116,6 +116,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/github-login-admission.md", "GitHubLoginAdmissionContractVersion"); got != GitHubLoginAdmissionContractVersion {
 		t.Errorf("contracts/github-login-admission.md pins %q, constant is %q: move them in the same diff", got, GitHubLoginAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/saml-login-admission.md", "SAMLLoginAdmissionContractVersion"); got != SAMLLoginAdmissionContractVersion {
+		t.Errorf("contracts/saml-login-admission.md pins %q, constant is %q: move them in the same diff", got, SAMLLoginAdmissionContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
 		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
 	}
@@ -161,6 +164,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "GitHubLoginAdmissionContractVersion"); got != GitHubLoginAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins GitHub login %q, constant is %q: record the new pin before consuming it", got, GitHubLoginAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SAMLLoginAdmissionContractVersion"); got != SAMLLoginAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins SAML login %q, constant is %q: record the new pin before consuming it", got, SAMLLoginAdmissionContractVersion)
+	}
 }
 
 // TestHealthReportsPinnedContractVersions pins the /health version
@@ -190,6 +196,7 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 		"provider_config_read_admission_contracts":     ProviderConfigReadAdmissionContractVersion,
 		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
 		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
+		"saml_login_admission_contracts":               SAMLLoginAdmissionContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {

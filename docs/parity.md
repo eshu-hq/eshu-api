@@ -24,8 +24,8 @@ after the move.
   stores do not. Each persists through an explicit versioned core
   admission contract; the versioned in-tree seams are the suppression,
   terminal-failure, replay-ledger, sign-in, retirement, admin-identity,
-  setup, provider-config, OIDC login, and GitHub login admissions
-  recorded in
+  setup, provider-config, OIDC login, GitHub login, and SAML login
+  admissions recorded in
   `contracts/suppression-admission.md`,
   `contracts/terminal-failure-admission.md`,
   `contracts/replay-ledger-admission.md`,
@@ -34,8 +34,9 @@ after the move.
   `contracts/admin-identity-admission.md`,
   `contracts/setup-admission.md`,
   `contracts/provider-config-admission.md`,
-  `contracts/oidc-login-admission.md`, and
-  `contracts/github-login-admission.md`.
+  `contracts/oidc-login-admission.md`,
+  `contracts/github-login-admission.md`, and
+  `contracts/saml-login-admission.md`.
 - OpenAPI contract fragments and the `api/` server, router, auth, v1
   alias, and deprecation middleware: move in the follow-up extraction
   PR, reviewed row-for-row against the ownership map. This seed carries

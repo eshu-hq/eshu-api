@@ -94,3 +94,10 @@ const OIDCLoginAdmissionContractVersion = "v0"
 // contracts/github-login-admission.md. Route dispatch over this port
 // lands with core dispatch, not in the skeleton.
 const GitHubLoginAdmissionContractVersion = "v0"
+
+// SAMLLoginAdmissionContractVersion names the versioned admission port
+// for the SAML login flow. It must move in lockstep with the in-tree
+// SAMLLoginAdmissionContractVersion; the vendored pin lives in
+// contracts/saml-login-admission.md. Route dispatch over this port
+// lands with core dispatch, not in the skeleton.
+const SAMLLoginAdmissionContractVersion = "v0"

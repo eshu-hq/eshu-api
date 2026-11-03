@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package query
+
+// SAMLLoginAdmission is the #8872 admission boundary for SAML login:
+// GET metadata, GET login, and POST ACS on
+// /api/v0/auth/saml/providers/{provider_id}/*. It aliases SAMLStore so
+// the boundary is identity-verified by the frozen contract test rather
+// than a parallel hand-maintained shape; it will back the eshu-api
+// extraction handoff for this family.
+//
+// Sessions, the assertion verifier, and the sign-in policy reader stay
+// wired alongside the store and outside this contract, mirroring how the
+// OIDC and GitHub login contracts leave session issuance to the
+// BrowserSessions family's own seam. The optional SAMLProviderIDLister
+// is not part of v0: a dest client implementing only the 5 aliased
+// methods silently drops runtime provider discovery
+// (RegisteredProviderIDs returns nil).
+type SAMLLoginAdmission = SAMLStore
+
+// SAMLLoginAdmissionContractVersion pins the versioned shape of
+// SAMLLoginAdmission. Any breaking change to the method set must bump
+// this alongside the frozen-list update in
+// saml_login_admission_contract_test.go so dest consumers can pin the
+// shape.
+const SAMLLoginAdmissionContractVersion = "v0"
+
+// SAMLStore resolves SAML provider state and maps validated principals to Eshu
+// authorization context. Implementations must keep raw assertions and claims
+// out of durable storage.
+type SAMLStore interface {
+	GetSAMLProvider(context.Context, string) (SAMLProviderConfig, bool, error)
+	CreateSAMLRequest(context.Context, string, SAMLRequestCreateRecord) error
+	// ConsumeSAMLRequest atomically marks the pending AuthnRequest as consumed
+	// and returns the sanitized return_to path stored when the request was
+	// created (empty string when none was stored), whether the request was
+	// found and consumed, and any error.
+	ConsumeSAMLRequest(context.Context, string, string, string, time.Time) (string, bool, error)
+	ReserveSAMLReplay(context.Context, string, string, time.Time) (bool, error)
+	ResolveSAMLPrincipal(context.Context, string, samlauth.Principal, time.Time) (AuthContext, bool, error)
+}
+
+// SAMLProviderConfig is the query-layer provider view used during login.
+type SAMLProviderConfig struct {
+	ProviderConfigID                 string
+	ServiceProvider                  samlauth.ServiceProviderConfig
+	IdentityProviderMetadataXML      []byte
+	ExpectedIdentityProviderEntityID string
+	GroupMapping                     samlauth.ClaimMapping
+	ClockSkew                        time.Duration
+}
+
+// SAMLRequestCreateRecord is the hash-only AuthnRequest state stored for ACS.
+// ReturnToPath is the sanitized post-login redirect path (same-origin only,
+// already validated by authsafe.ReturnPath). Empty string means no redirect —
+// the ACS handler falls back to a JSON session response.
+type SAMLRequestCreateRecord struct {
+	RequestIDHash  string
+	RelayStateHash string
+	ReturnToPath   string
+	IssuedAt       time.Time
+	ExpiresAt      time.Time
+}
+
+// SAMLProviderIDLister is an optional extension on SAMLStore implementations
+// that can enumerate the set of provider_config_ids they manage. The
+// AuthProviderListHandler uses it to surface env-config SAML providers for the
+// pre-auth provider discovery endpoint. Implementations that do not list
+// providers (e.g. fakes in unit tests) need not implement this interface.
+type SAMLProviderIDLister interface {
+	ListProviderIDs() []string
+}
+
+
+// Mount registers the SAML service-provider routes.
+func (h *SAMLHandler) Mount(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v0/auth/saml/providers/{provider_id}/metadata", h.handleMetadata)
+	mux.HandleFunc("GET /api/v0/auth/saml/providers/{provider_id}/login", h.handleLogin)
+	mux.HandleFunc("POST /api/v0/auth/saml/providers/{provider_id}/acs", h.handleACS)
+}
