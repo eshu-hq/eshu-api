@@ -56,9 +56,16 @@ The suppression upsert is the pilot family for native dispatch:
 ahead of the generic proxy and forwards to the same core route with
 method, path, query, headers (including the original `Authorization`
 header), and body relayed; core bytes come back unmodified and core
-re-judges every forwarded call as backstop. Dest adds exactly one shape
-the generic relay cannot produce: the family 403 for a non-AllScopes
-identity (`TestSuppressionPilot_AuthorizerRejectsNonAllScopes`).
+re-judges every forwarded call as backstop. Dest holds the AllScopes
+authorizer on the route (`TestSuppressionPilot_AuthorizerRejectsNonAllScopes`
+pins the helper); see Scope honesty below for what is and is not live.
+
+Scope honesty: dest holds the AllScopes authorizer per the dispatch
+ruling, but with no scoped/session resolver the deny branch is
+unreachable on the live route until one lands — the live 403s on this
+route are core's, which re-judges every forwarded call as backstop. The
+deny-shape test pins the contract for the resolver-landing day, not a
+live path.
 
 Audit parity: governance audit stays core-side on forwarded requests.
 The in-tree suppression mutation handler at the provenance pin emits no

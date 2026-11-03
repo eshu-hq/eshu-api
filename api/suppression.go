@@ -22,11 +22,13 @@ const suppressionRoute = "POST /api/v0/supply-chain/impact/suppressions"
 //
 // Trust model, binding: dest's only credential is the shared key, which
 // core maps to AllScopes (so the dest allow branch is the live one and
-// core re-judges every forwarded call as backstop). Dest has no
-// scoped/session resolver, so the family-403 deny branch is unreachable
-// in production and is recorded as such, not faked. Dest adds exactly
-// the family 403 and no handler validation: request/response semantics
-// stay core-owned. Governance audit stays core-side on forwarded
+// core re-judges every forwarded call as backstop, which is also where
+// the live 403s come from today). Dest has no scoped/session resolver,
+// so the deny branch is unreachable in production until one lands; it
+// is recorded as such, not faked, and the tests pin its shape for that
+// day rather than a live path. Dest adds no handler validation:
+// request/response semantics stay core-owned. Governance audit stays
+// core-side on forwarded
 // requests — Suppression emits no handler audit in core and dest emits
 // none, so there is no audit gap on this route (unlike families whose
 // handlers do emit, which stay on the generic relay until a versioned

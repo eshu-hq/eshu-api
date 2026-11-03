@@ -55,11 +55,13 @@ func TestSuppressionPilot_AuthorizerRejectsNonAllScopes(t *testing.T) {
 	}
 }
 
-// TestSuppressionPilot_DenyBranchServesFamily403 pins the pilot's
-// native 403 at the HTTP layer: a non-AllScopes identity is denied in
-// dest with the documented shape and never reaches the core, in both
-// negotiated shapes.
-func TestSuppressionPilot_DenyBranchServesFamily403(t *testing.T) {
+// TestSuppressionPilot_DenyBranchShapePinned pins the deny shape for
+// the day dest gains a scoped/session resolver: a non-AllScopes identity
+// is denied with the documented shape and the core is never reached, in
+// both negotiated shapes. The branch is unreachable on the live route
+// today (the route passes true; the live 403s are core's), so this pins
+// the contract, not a live path.
+func TestSuppressionPilot_DenyBranchShapePinned(t *testing.T) {
 	t.Parallel()
 
 	srv := NewServer("http://core.invalid", skeletonTestKey)
