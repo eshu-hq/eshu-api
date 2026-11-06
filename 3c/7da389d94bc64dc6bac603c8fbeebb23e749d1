@@ -1,0 +1,112 @@
+.github/workflows/read-latency.yml
+  h_78a442cba0b3e6 5-9,32,71-79
+api/d3_latency_test.go
+  h_78a442cba0b3e6 69-71,76-77
+api/d4_conformance_test.go
+  h_78a442cba0b3e6 1-209
+api/d4_families_auth_test.go
+  h_78a442cba0b3e6 1-307
+api/d4_families_parity_test.go
+  h_78a442cba0b3e6 1-197
+api/d4_latency_test.go
+  h_78a442cba0b3e6 1-96
+api/d4_openapi_test.go
+  h_78a442cba0b3e6 1-134
+api/d4_relay_test.go
+  h_78a442cba0b3e6 1-200
+api/d4_terminate.go
+  h_78a442cba0b3e6 1-149
+api/d4_wave.go
+  h_78a442cba0b3e6 1-127
+api/family.go
+  h_78a442cba0b3e6 97-109
+api/leafb_latency_test.go
+  h_78a442cba0b3e6 68-70,75-76
+api/router.go
+  h_78a442cba0b3e6 241-262
+api/setup_spec_posture_test.go
+  h_78a442cba0b3e6 102-106,110
+api/telemetry_test.go
+  h_78a442cba0b3e6 62-77,112-114,128,207-209,216,231,243,274
+contracts/d4-native-next.md
+  h_78a442cba0b3e6 1-143
+docs/d4-latency.md
+  h_78a442cba0b3e6 1-59
+docs/parity.md
+  h_78a442cba0b3e6 31-36,86-105,134-154
+docs/provenance.md
+  h_78a442cba0b3e6 19,102-120
+openapi/components.go
+  h_78a442cba0b3e6 36-50,54-56,65-71,222-374,447-454
+openapi/paths/catalog/doc.go
+  h_78a442cba0b3e6 4,6-8,10,12-15
+openapi/paths/catalog/playbooks.go
+  h_78a442cba0b3e6 1-91
+openapi/paths/cicd/doc.go
+  h_78a442cba0b3e6 1-14
+openapi/paths/cicd/routes.go
+  h_78a442cba0b3e6 1-141
+openapi/paths/cicd/run_correlation_aggregate.go
+  h_78a442cba0b3e6 1-104
+openapi/paths/cloud/doc.go
+  h_78a442cba0b3e6 1-13
+openapi/paths/cloud/routes.go
+  h_78a442cba0b3e6 1-77
+openapi/paths/evidence/bundle.go
+  h_78a442cba0b3e6 1-59
+openapi/paths/evidence/deployable_unit.go
+  h_78a442cba0b3e6 1-42
+openapi/paths/evidence/doc.go
+  h_78a442cba0b3e6 1-20
+openapi/paths/evidence/documentation.go
+  h_78a442cba0b3e6 1-280
+openapi/paths/evidence/documentation_finding_aggregate.go
+  h_78a442cba0b3e6 1-122
+openapi/paths/evidence/evidence_routes.go
+  h_78a442cba0b3e6 1-239
+openapi/paths/evidence/investigation_workflows.go
+  h_78a442cba0b3e6 1-92
+openapi/paths/infrastructure/doc.go
+  h_78a442cba0b3e6 1-15
+openapi/paths/infrastructure/resource_aggregate.go
+  h_78a442cba0b3e6 1-107
+openapi/paths/infrastructure/routes.go
+  h_78a442cba0b3e6 1-338
+openapi/paths/repository/branches.go
+  h_78a442cba0b3e6 1-94
+openapi/paths/repository/doc.go
+  h_78a442cba0b3e6 1-20
+openapi/paths/repository/freshness.go
+  h_78a442cba0b3e6 1-136
+openapi/paths/repository/package_registry.go
+  h_78a442cba0b3e6 1-395
+openapi/paths/repository/package_registry_aggregate.go
+  h_78a442cba0b3e6 1-100
+openapi/paths/repository/repository_routes.go
+  h_78a442cba0b3e6 1-398
+openapi/paths/repository/stats_and_coverage.go
+  h_78a442cba0b3e6 1-133
+openapi/spec.go
+  h_78a442cba0b3e6 12,14-17,34-36,49,81-85,107-124
+openapi/spec_d4_test.go
+  h_78a442cba0b3e6 1-172
+scripts/check-parity.sh
+  h_78a442cba0b3e6 450-537,628-689
+scripts/measure-d3-latency.sh
+  h_78a442cba0b3e6 20-24
+scripts/measure-d4-latency.sh
+  h_78a442cba0b3e6 1-68
+scripts/measure-leafb-latency.sh
+  h_78a442cba0b3e6 20-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3c7da389d94bc64dc6bac603c8fbeebb23e749d1",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
