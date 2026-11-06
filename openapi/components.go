@@ -7,7 +7,9 @@ package openapi
 // exactly the schemas and responses the landed family fragments
 // reference, nothing more. Entry bytes are ported from the pinned core
 // commits 428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5 (sign-in-policy lane)
-// and ebaf4dfa0de672851bbec7a427e28fdb41344380 (retirement lane):
+// and ebaf4dfa0de672851bbec7a427e28fdb41344380 (retirement lane). The
+// terminal-failure lane adds no entries: its fragment references only
+// ErrorResponse plus the five responses above (gated in check-parity.sh):
 //
 //   - AdminSignInPolicy, AdminSignInPolicyUpdateRequest: schemas from
 //     go/internal/query/openapi/components_sign_in_policy.go.

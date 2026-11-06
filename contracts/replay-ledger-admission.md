@@ -48,3 +48,36 @@ list is deliberately updated; bump
 `ReplayLedgerAdmissionContractVersion` alongside (manually — the bump is
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
+
+## Native dispatch (tier C-a: the ledger half of the family PR)
+
+The replay ledger rides the terminal-failure native-dispatch lane in
+the SAME PR (Decision 5 acceptance box): the acknowledgement POST is
+tier C-a HTTP write-through (`api/terminalfailure.go`), and the
+claim/complete pair it depends on runs inside the core handler on every
+forwarded request. Dest holds no ledger handle, keeps no ledger state,
+and takes no direct table handle — canonical mutations persist through
+explicit core admission. Core is the sole writer of
+`admin_replay_requests`.
+
+Dest-side ledger semantics: none. Dest forwards every duplicate
+delivery exactly once (no dest retry, no dest dedup) and relays core's
+collapse byte-for-byte, so the stranded-`in_progress` and
+fingerprint-mismatch windows stay exactly as core defines them: a
+refusal before the claim leaves the key unconsumed for a corrected
+retry; a duplicate claim of the same key with the same fingerprint
+replays the stored outcome (`duplicate`); the same key with a different
+target, or a still-`in_progress` key, answers 409; the ledger row stays
+in progress on failure so a retry resumes instead of losing the
+outcome.
+
+Concurrency proof (the center of this family PR):
+`TestTerminalFailureNative_DuplicateDeliveryCollapsesToOneEffect`,
+`TestTerminalFailureNative_KeyReuseAcrossTargetsIs409`, and
+`TestTerminalFailureNative_ParallelDuplicateDeliveries` in
+`api/terminalfailure_ledger_test.go` run a ledger-faithful core fake
+(same claim/complete rules, same target-fingerprint scheme) and assert
+the ledger row — one recorded effect, the completed claim, the replayed
+stored outcome — after sequential and 16-way parallel duplicate
+deliveries. Dest never invents a ledger state: the fake's ledger is the
+core contract, dest only forwards and relays.
