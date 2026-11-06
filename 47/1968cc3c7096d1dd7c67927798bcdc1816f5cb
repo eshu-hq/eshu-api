@@ -1,0 +1,32 @@
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 1-112
+api/router.go
+  h_78a442cba0b3e6 9-10,136-143
+contracts/sign-in-admission.md
+  h_78a442cba0b3e6 88-110
+openapi/components.go
+  h_78a442cba0b3e6 1-93
+openapi/doc.go
+  h_78a442cba0b3e6 1-11
+openapi/paths/auth/doc.go
+  h_78a442cba0b3e6 1-13
+openapi/paths/auth/sign_in_policy.go
+  h_78a442cba0b3e6 1-90
+openapi/spec.go
+  h_78a442cba0b3e6 1-79
+openapi/spec_test.go
+  h_78a442cba0b3e6 1-226
+scripts/check-parity.sh
+  h_78a442cba0b3e6 88-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "471968cc3c7096d1dd7c67927798bcdc1816f5cb",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
