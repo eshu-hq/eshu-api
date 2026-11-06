@@ -1,0 +1,16 @@
+api/d4_conformance_test.go
+  h_78a442cba0b3e6 15-17
+scripts/measure-d4-latency.sh
+  h_78a442cba0b3e6 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b52f88aca7d6480345f8e498d3331b3bfcee220a",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
