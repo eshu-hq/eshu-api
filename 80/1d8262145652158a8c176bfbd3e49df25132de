@@ -1,0 +1,14 @@
+api/telemetry_dispatch_test.go
+  h_78a442cba0b3e6 26-30,32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "801d8262145652158a8c176bfbd3e49df25132de",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
