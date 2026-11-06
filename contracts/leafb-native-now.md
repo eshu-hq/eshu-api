@@ -22,8 +22,10 @@ section with rollback.
 ## Production binding
 
 - Transport: the existing versioned core HTTP read API
-  (`CoreReadContractsVersion v0`), bounded client (30s, 256KiB budget,
-  no redirect, no retry), forwarded credential and negotiation headers,
+  (`CoreReadContractsVersion v0`), bounded client (30s, no redirect,
+  no retry; no dest-side byte budget — `forwardToCore` streams the
+  body unbounded, the 256KiB budget lives only in the unused
+  `internal/readclient`), forwarded credential and negotiation headers,
   guaranteed correlation ID, fail-closed local 503 (permanent, never
   `Retry-After`) when no core origin is configured.
 - Trust model: dest's only constructible identity is the shared key,
