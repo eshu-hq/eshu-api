@@ -57,7 +57,7 @@ func TestSpec_ServesD4Families(t *testing.T) {
 			continue
 		}
 		for method, op := range item {
-			got, _ := op.(map[string]any)["operationId"]
+			got := op.(map[string]any)["operationId"]
 			if got != wantOp {
 				t.Errorf("%s %s operationId = %v, want %q", path, method, got, wantOp)
 			}
