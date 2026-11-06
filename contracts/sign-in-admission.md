@@ -85,12 +85,29 @@ audit-append contract; this lane re-implements nothing.
 (`go list -deps` over the runtime packages must show no `eshu-hq/eshu`
 import) alongside the family-403/store-503 wire-shape excerpt.
 
-OpenAPI: the fragment move (`paths/auth/sign_in_policy.go` per the
-ownership map) is deferred per `docs/parity.md` — fragments move
-row-for-row in the follow-up extraction PR, and this seed carries only
-the versioned seam. The route is native-dispatch; the spec fragment is
-still served from core until that PR. A spec still served by relay is
-not native.
+OpenAPI: native since this lane (satellite-design Decision 5(c),
+overriding the `docs/parity.md` deferral for this family). The
+fragment moved row-for-row from the pinned core commit `428790ab` —
+`go/internal/query/openapi/paths/auth/sign_in_policy.go` into dest
+`openapi/paths/auth/sign_in_policy.go`, byte-identical (operationIds
+`getPublicSignInPolicy`, `getAdminSignInPolicy`,
+`updateAdminSignInPolicy` preserved; `scripts/check-parity.sh` gates
+the identity). The dest assembly (`openapi/spec.go`, minimal shared
+block in `openapi/components.go`: the two family schemas plus
+`ErrorResponse` and the `Forbidden`/`InternalError`/`ServiceUnavailable`
+responses the fragment references) serves `GET /api/v0/openapi.json`
+from compiled constants ahead of the generic proxy — no core import,
+no core fetch, served even with no core origin configured — inside
+`RequireAuth` like every dest `/api/*` route. `TestSpec_*` pin the
+family section, lossless assembly, and local-$ref resolution;
+`TestOpenAPINative_*` pin the served route, the v1 alias landing, and
+the key gate.
+
+Scope honesty: the dest document serves exactly the landed families
+(sign-in-policy first). Other families' entries are absent until their
+lanes port their fragments — this endpoint no longer relays core's full
+spec. Core serves the spec public; dest keeps it behind the shared key,
+adding no new public surface in this lane.
 
 Rollback: additive. Revert this lane's dest commit (or re-pin the prior
 digest) and the PATCH falls back to the generic byte-relay with the

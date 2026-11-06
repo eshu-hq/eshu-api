@@ -85,6 +85,13 @@ check_file "go/internal/query/sign_in_policy_admission_contract_test.go" \
   "contracts/upstream/sign_in_policy_admission_contract_test.go" \
   "3ce68b7ea519acf581acb70bb42929d03deed0de5c99e6312329078c71c72842"
 
+# Native spec (Decision 5(c)): the sign-in-policy OpenAPI fragment is a
+# byte-identical port of the pinned core file, gated here like the
+# upstream evidence above.
+check_file "go/internal/query/openapi/paths/auth/sign_in_policy.go" \
+  "openapi/paths/auth/sign_in_policy.go" \
+  "8e158762038a0d5e1719b1b75e865b80962be88a92e69872453fc300e0174cf3"
+
 check_file_at() {
   local sha="$1" src_path="$2" dest_rel="$3" want_hash="$4"
   local fetched
