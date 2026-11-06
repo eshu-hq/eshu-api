@@ -9,15 +9,16 @@ import (
 
 	"github.com/eshu-hq/eshu-api/openapi/paths/auth"
 	"github.com/eshu-hq/eshu-api/openapi/paths/status"
+	supplychain "github.com/eshu-hq/eshu-api/openapi/paths/supply/chain"
 )
 
 // SpecVersion names the native-spec contract: v0 serves exactly the
 // families whose OpenAPI fragments have landed in this repository
 // (sign-in-policy first, retirement second, terminal-failure third,
 // admin-identity mutations fourth, admin-identity reads fifth,
-// provider-config sixth, admin-recovery seventh). It advances as
-// family lanes port their fragments; the served family set is pinned
-// by the Spec tests.
+// provider-config sixth, admin-recovery seventh, suppression eighth).
+// It advances as family lanes port their fragments; the served family
+// set is pinned by the Spec tests.
 const SpecVersion = "v0"
 
 // specPrefix opens the served document: the protocol version, the
@@ -28,7 +29,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config, admin-recovery); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config, admin-recovery, suppression); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -64,7 +65,8 @@ func familyPaths() string {
 		strings.TrimSpace(auth.AdminMutations) + "\n" +
 		strings.TrimSpace(auth.AdminReads) + "\n" +
 		strings.TrimSpace(auth.AdminProviderConfigMutations) + "\n" +
-		strings.TrimSuffix(strings.TrimSpace(status.AdminRecovery), ",") + "\n"
+		strings.TrimSpace(status.AdminRecovery) + "\n" +
+		strings.TrimSuffix(strings.TrimSpace(supplychain.SuppressionMutation), ",") + "\n"
 }
 
 // Spec returns the dest-assembled OpenAPI 3.0 document for the landed

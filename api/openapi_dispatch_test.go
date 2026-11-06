@@ -174,6 +174,45 @@ func TestOpenAPINative_ServesRetirementFamily(t *testing.T) {
 	}
 }
 
+// TestOpenAPINative_ServesSuppressionFamily pins the dest-served
+// openapi.json for the suppression family (satellite-design Decision
+// 5(c), D0 backfill): the native route answers 200 with the suppression
+// upsert path and pinned operationId, and it answers from compiled
+// constants — no core fetch, so an unconfigured origin still serves the
+// spec. The route itself stays on its existing tier-C write-through
+// dispatch; this lane ports the fragment only.
+func TestOpenAPINative_ServesSuppressionFamily(t *testing.T) {
+	t.Parallel()
+
+	for _, origin := range []string{"http://core.invalid", ""} {
+		srv := NewServer(origin, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
+
+		req := authedRequest(http.MethodGet, "/api/v0/openapi.json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("origin %q: status = %d, want 200", origin, rec.Code)
+		}
+		body, _ := io.ReadAll(rec.Result().Body)
+		var doc map[string]any
+		if err := json.Unmarshal(body, &doc); err != nil {
+			t.Fatalf("origin %q: served spec is not valid JSON: %v", origin, err)
+		}
+		paths, _ := doc["paths"].(map[string]any)
+		item, ok := paths["/api/v0/supply-chain/impact/suppressions"].(map[string]any)
+		if !ok {
+			t.Errorf("origin %q: served spec lacks /api/v0/supply-chain/impact/suppressions", origin)
+			continue
+		}
+		post, _ := item["post"].(map[string]any)
+		if got := post["operationId"]; got != "createVulnerabilitySuppression" {
+			t.Errorf("origin %q: suppressions post operationId = %v, want createVulnerabilitySuppression", origin, got)
+		}
+	}
+}
+
 // TestOpenAPINative_ServesAdminIdentityFamily pins the dest-served
 // openapi.json for the admin-identity mutation family (satellite-design
 // Decision 5(c)): the native route answers 200 with the fragment's three

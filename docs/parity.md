@@ -6,18 +6,18 @@ still open. It is a preparation record, not a cutover claim.
 
 ## Census basis
 
-`go/cmd/api/CUTOVER_OWNERSHIP.md` at the provenance pin maps all 270
-live API routes: 220 `read` rows backed by reader ports only
+`go/cmd/api/CUTOVER_OWNERSHIP.md` at the provenance pin maps all 278
+live API routes: 228 `read` rows backed by reader ports only
 (`db.ReadStore`, graph `GraphQuery`, `ContentStore`), 50 `mutation` rows
 persisting through core-owned admission storage, mounted by `newRouter`
-(244) or `wireAPI` (26). The OpenAPI fragments under
+(247) or `wireAPI` (31). The OpenAPI fragments under
 `go/internal/query/openapi/` publish the request/response shapes; the
 spec assembly order is the compatibility surface the destination owns
 after the move.
 
 ## What moves
 
-- Read families (all 220 `read` rows): consumers of the versioned core
+- Read families (all 228 `read` rows): consumers of the versioned core
   read contracts recorded in `contracts/core-read-contracts.md`. No
   durable writes travel with them.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
@@ -51,7 +51,11 @@ after the move.
   provider-config mutation fragment
   (`openapi/paths/auth/admin_provider_config_mutations.go`, #46),
   and the admin-recovery mutation fragment
-  (`openapi/paths/status/admin_recovery.go`, this lane)
+  (`openapi/paths/status/admin_recovery.go`, C-c2 lane #47), and the
+  suppression fragment
+  (`openapi/paths/supply/chain/suppression_mutation.go`, D0 lane —
+  line-verbatim subset port closing the Decision 5(c) gap the C-b
+  ruling left open for the pilot family)
   — per-family fragment moves now land in their family PRs per
   satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 

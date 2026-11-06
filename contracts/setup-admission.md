@@ -109,7 +109,7 @@ at the flip/removal review: Setup option-C transport plus carve-out
 retirement needs a later arbiter review before core Setup removal.
 Disclosed, not faked: the MFA step's issued browser session relays
 through dest today but is unusable at dest until the dest session
-resolver lands (arbiter TBD 5) — a fresh-deployment operator
+resolver lands (arbiter TBD5-resolver) — a fresh-deployment operator
 completes the wizard through dest and then signs in through the
 core-served session path until then.
 
