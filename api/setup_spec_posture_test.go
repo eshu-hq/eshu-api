@@ -99,10 +99,15 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 	// security marker only on the permanently-public login-picker
 	// entry. The next lane that ports another public-marked fragment
 	// revisits this test again.
+	// D4 Native-next revisit (recorded, not silent): match the marker
+	// key with an empty-array value (`"security":[]` in the re-marshaled
+	// form), not the bare word — the infra fragment ports a
+	// resource_kind enum value named "security" that is not a
+	// public-route posture marker.
 	providersMarked := false
 	for path, item := range paths {
 		rawItem, _ := json.Marshal(item)
-		if !strings.Contains(string(rawItem), `"security"`) {
+		if !strings.Contains(string(rawItem), `"security":[]`) {
 			continue
 		}
 		if path != "/api/v0/auth/providers" {

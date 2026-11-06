@@ -447,6 +447,94 @@ check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/
   "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
   "AdminInvitations"
 
+# D4 Native-next wave (Decision 5(c)): the CICD, Documentation, Infra,
+# PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
+# Playbooks fragments are byte-identical ports (whole-file) or
+# line-verbatim subsets of the pinned core files at SRC_SHA_WAVE (every
+# file below is byte-identical at the D2 wave pin and at origin/main,
+# so no new source pin is minted — see docs/provenance.md).
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cicd/routes.go" \
+  "openapi/paths/cicd/routes.go" \
+  "ddf2537b643884319ef98554f883a37a58f88bcab026ad94c32b34b747e07167"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cicd/run_correlation_aggregate.go" \
+  "openapi/paths/cicd/run_correlation_aggregate.go" \
+  "f69d8339a3fa2a926ec5173f0655ac1bf1f3411b13438e310cff3f221bdb409d"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/documentation.go" \
+  "openapi/paths/evidence/documentation.go" \
+  "3fa8a202c0ac4a3935eb1b98c097c535e0ba95d17f0f07a2491815a458183635"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/documentation_finding_aggregate.go" \
+  "openapi/paths/evidence/documentation_finding_aggregate.go" \
+  "8c7eaa6fb39036ea12a65bd10ee092e534d620651c9b33a1fcbb25fae4db9b72"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/bundle.go" \
+  "openapi/paths/evidence/bundle.go" \
+  "f62e158efa2734993c1fb4c3ecd8d0a5f24e36343937bba3048fa29b9b4b48a2"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/investigation_workflows.go" \
+  "openapi/paths/evidence/investigation_workflows.go" \
+  "347f93d71ca8e54a7cb0350829261ffcb4661afdace73d69352912168f886054"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cloud/routes.go" \
+  "openapi/paths/cloud/routes.go" \
+  "393f69d6bf1f71a5cd271c3e62fabb44ab22bf2a1ab3010243fe90ee30d478db"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/infrastructure/routes.go" \
+  "openapi/paths/infrastructure/routes.go" \
+  "6ce1fdca8609a6c4d6c56c7adf3ecfa6d31387ad64077c4780c62d245d03e136"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/infrastructure/resource_aggregate.go" \
+  "openapi/paths/infrastructure/resource_aggregate.go" \
+  "52caf0997f965428af702d0ebfbc99f3ada3007d3979e993f74c06ad01a64765"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/package_registry.go" \
+  "openapi/paths/repository/package_registry.go" \
+  "b47f0506bdf450443d689bfeb815f4a72b4d2ba367e2686db6d5918c5472517c"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/package_registry_aggregate.go" \
+  "openapi/paths/repository/package_registry_aggregate.go" \
+  "9cc3627c261b109d31e83e12b860c988671078d74affa88cf045e8429688d8eb"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/branches.go" \
+  "openapi/paths/repository/branches.go" \
+  "1b92ee9e992dbf3cbca68983687ce31dde638193b16de965a3085d5222fd9d67"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/stats_and_coverage.go" \
+  "openapi/paths/repository/stats_and_coverage.go" \
+  "2823f88f0659e77fa347ff72eb9f1bd3147343ad022efb737ab1201eb0bc293a"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/freshness.go" \
+  "openapi/paths/repository/freshness.go" \
+  "9b60537e00fea4e8c6b535b9359498c9c0ee9d912fedca52562c6f0bdae78c4a"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/catalog/playbooks.go" \
+  "openapi/paths/catalog/playbooks.go" \
+  "f6a66c1873062dde7c6d7a3ef2bbc10e8293665f9e3971a61a3274f1909d2d46"
+
+# D4 subsets: the evidence routes entry drops core's dangling 501
+# UnsupportedCapability response (no definition at the pin — porting it
+# would dangle the served document); the deployable-unit entry ports
+# alone from the shared investigations file; the repository subset drops
+# the mux-health entry (dest serves its own probe shape) and the
+# schema-interpolated story entry (no line-verbatim port without a core
+# import). Every remaining payload line is verbatim in the pinned file.
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/routes.go" \
+  "openapi/paths/evidence/evidence_routes.go" \
+  "8c9950983d889af526fcd886ee02944f9179c99fde60c191c972c53605df563a" \
+  "EvidenceRoutes"
+
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/evidence/investigations.go" \
+  "openapi/paths/evidence/deployable_unit.go" \
+  "df0e51563c025a4c6571f31a04704c9abce4b9e33e613baadac5d4e316924cb0" \
+  "DeployableUnitPacket"
+
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/repository/routes.go" \
+  "openapi/paths/repository/repository_routes.go" \
+  "3641f90522c313023386476d92fce558219284e0cc76c886b6b6ecd07527ae65" \
+  "RepositoryRoutes"
+
 # The doc-UI shells ride their const openers (`const swaggerUIHTML =
 # `<!doctype html>` in core): no standalone doctype line exists to
 # line-match, so this gate compares the whole shell block instead. The
@@ -536,6 +624,68 @@ check_leafb_components_at() {
 }
 
 check_leafb_components_at
+
+# D4 wave components (Decision 5(c)): every ported line of the D4 block
+# in openapi/components.go — the RepoId parameter, the
+# CollectorReadinessEnvelope, Repository, RepositoryRef, CatalogWorkload,
+# InvestigationEvidencePacket, Relationship, and ActiveWorkSource
+# schemas, and the GatewayTimeout response — must appear verbatim in
+# its pinned component source (same block rule as the D2 gate: the
+# first line matches as a substring, every following line whole-line).
+check_d4_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.go" >&2
+      return 1
+    fi
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"RepoId": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CollectorReadinessEnvelope": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"Repository": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"RepositoryRef": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CatalogWorkload": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"InvestigationEvidencePacket": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"Relationship": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"ActiveWorkSource": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components_active_work_source.go" \
+    || fail=1
+  check_block '"GatewayTimeout": {' "$SRC_SHA_WAVE" "go/internal/query/openapi/components_responses.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: D4 components lines all verbatim in pinned component sources"
+}
+
+check_d4_components_at
 
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,

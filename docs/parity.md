@@ -28,7 +28,12 @@ after the move.
   `contracts/terminal-failure-admission.md`; the D3 scope (16 routes
   across those four pins, minus the families D2 already terminated
   and the 3 unpinned Admin GETs) terminates natively per
-  `contracts/d3-admin-reads.md` and the rest stay on the generic
+  `contracts/d3-admin-reads.md`; the D4 scope (46 Native-next routes
+  across CICD, Documentation, Infra, PackageRegistry, Repositories,
+  Evidence, InvestigationWorkflows, and Playbooks — Compare deferred
+  to D6) terminates natively per `contracts/d4-native-next.md` on the
+  `CoreReadContractsVersion v0` port transport with no per-family
+  admission alias; and the rest stay on the generic
   relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
@@ -78,8 +83,26 @@ after the move.
   POSTs (`openapi/paths/status/admin_reads.go`, line-verbatim subset)
   and the invitations list GET
   (`openapi/paths/auth/admin_invitations.go`, line-verbatim get-only
-  subset) — per-family fragment moves now land in their family PRs per
-  satellite-design Decision 5(c) on eshu-hq/eshu#9669.
+  subset),
+  and the D4 Native-next wave: the CICD routes and run-correlation
+  aggregates, the documentation facts/findings entries and finding
+  aggregates, the cloud resources entry, the infrastructure
+  ecosystem/relationship entries and resource aggregates, the
+  package-registry entries and aggregates, the repository catalog,
+  list, language, branches, content, context, coverage, freshness,
+  stats, and tree entries, the evidence admission-decision,
+  relationship, citation, bundle, and deployable-unit entries, the
+  investigation-workflow entries, and the query-playbook entries
+  (fifteen whole-file ports plus three line-verbatim subsets: the
+  evidence routes without core's dangling 501, the deployable-unit
+  packet entry alone, and the repository routes without the
+  mux-health and schema-interpolated story entries), with the shared
+  components block extended by the RepoId parameter, the
+  CollectorReadinessEnvelope, Repository, RepositoryRef,
+  CatalogWorkload, InvestigationEvidencePacket, Relationship, and
+  ActiveWorkSource schemas, and the GatewayTimeout response the wave
+  entries reference — per-family fragment moves now land in their
+  family PRs per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
 ## Native-now termination (D2)
 
@@ -107,6 +130,27 @@ read-latency gate (`docs/d3-latency.md`: GET 0.55x, POST 0.79x vs the
 1.50 budget). Data still comes from the versioned core read API (dest
 holds no table/queue handle). Termination claims stay provisional
 until the arbiter re-reviews the D0 evidence (blocker B1).
+
+## Native termination (D4)
+
+The 46 Native-next read routes (CICD, Documentation, Infra,
+PackageRegistry, Repositories, Evidence, InvestigationWorkflows,
+Playbooks) terminate natively per `contracts/d4-native-next.md`:
+explicit gated routes ahead of the generic relay, the shared-key
+family authorizer with the documented deny shape, byte-parity
+dispatch/conformance proof vs the relayed reference, extended
+`viaNative`/`viaRelay` telemetry, and the satellite-owned
+read-latency gate (`docs/d4-latency.md` with the relay-route
+disclosure). The transport pin is `CoreReadContractsVersion v0` with
+no per-family admission alias — the minting rule forbids inventing
+one, and all 46 rows are reader-port reads. Divergences stay
+disclosed in the contract: the story spec key waits for its schema
+helper, the admission-decisions 501 waits for core to define the
+response, four literals skip the duplicate slash registration (their
+slash spellings still terminate under the parent subtree), and the
+D2/D3 relay legs moved to the still-relaying dependencies and
+code-bundle routes. Termination claims stay provisional until the
+arbiter re-reviews the D0 evidence (blocker B1).
 
 ## What stays in the core
 

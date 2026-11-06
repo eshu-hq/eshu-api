@@ -238,6 +238,28 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)
 	}
+	// D4 Native-next reads termination (Refs eshu-hq/eshu#9669): the
+	// 46 Native-next read routes register explicitly inside the D4 wave
+	// gate, ahead of the generic proxy. A valid shared key terminates
+	// on the native lane; a foreign credential class (scoped token,
+	// OIDC bearer, session cookie) relays explicitly on the relay lane
+	// so core judges it; credential-less callers — and junk-cookie
+	// carriers, per the D2 follow-up lesson — get the standing 401.
+	// Each trailing-slash spelling stays on the wave route for the same
+	// never-split reason. Compare, and every other family still cross
+	// their existing lanes.
+	for _, entry := range d4Wave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.d4ReadGate(http.HandlerFunc(s.serveD4Terminated)))
+		mux.Handle(pattern, gated)
+		// The four d4SlashSkip literals skip the slash double: their
+		// slash subtree would panic against the wildcard sibling (see
+		// d4_wave.go). Those spellings still terminate natively under
+		// the parent list-subtree registration.
+		if !d4SlashSkip[pattern] {
+			mux.Handle(pattern+"/", gated)
+		}
+	}
 	// D2 wave-public carve-out (core-public parity): the four routes
 	// core serves pre-auth register explicitly OUTSIDE any gate, ahead
 	// of the generic proxy. Docs and redoc serve compiled shells with

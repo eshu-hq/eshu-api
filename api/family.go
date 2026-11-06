@@ -94,6 +94,19 @@ var familyPrefixes = []struct {
 	{"/openapi.json", "api_router"},
 	{"/docs", "api_router"},
 	{"/redoc", "api_router"},
+	{"/ci-cd", "cicd"},
+	{"/documentation/", "documentation"},
+	{"/cloud/resources", "infra"},
+	{"/ecosystem", "infra"},
+	{"/infra/", "infra"},
+	{"/relationships/", "infra"},
+	{"/package-registry", "package_registry"},
+	{"/repositories", "repositories"},
+	{"/catalog", "repositories"},
+	{"/evidence/", "evidence"},
+	{"/investigations/deployable-unit", "evidence"},
+	{"/investigation-workflows", "investigation_workflows"},
+	{"/query-playbooks", "playbooks"},
 }
 
 // classifyFamily maps a request path to its closed family label. The
