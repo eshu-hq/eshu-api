@@ -11,7 +11,12 @@ slower than the relay it replaces.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkLeafBRelayRead`),
-  shared-key GET + POST through the full production chain.
+  shared-key GET (`/api/v0/repositories`) + POST
+  (`/api/v0/repositories/search`) through the full production chain.
+  Note the legs compare different routes by design (relay covers
+  not-yet-terminated families); both do exactly one server-side fetch,
+  so the 1.50 bound stays a real pathology check, not route-cost
+  noise.
 - After leg: the terminated wave (`BenchmarkLeafBTerminatedRead`),
   shared-key GET (`/api/v0/capabilities`) + POST (`/api/v0/ask`)
   through the full production chain with the wave gate and family
@@ -27,18 +32,18 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Numbers (local, 2026-11-06 re-run)
 
-Shared host, in-process stub core (`go test` benchmarks, 2000x5).
+Shared host, in-process stub core.
 Re-run on 2026-11-06 via `bash scripts/measure-leafb-latency.sh`
 (eshu-api#51 evidence-overclaim follow-up: the PR description had
 quoted POST 0.98 while this doc committed 1.03 from the earlier run —
-both under budget, but the figures disagreed). The earlier run's POST
-ratio was 1.03 (GET 0.99); the fresh numbers below supersede it, and
-future quotes must cite the latest committed run.
+both under budget, but the figures disagreed). A second fresh run at
+the review-fix HEAD supersedes the 1.05/0.92 figures below; future
+quotes must cite the latest committed run.
 
 | Leg | Terminated (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| GET | 290807 | 277588 | 1.05 | ≤ 1.50 |
-| POST | 341354 | 370461 | 0.92 | ≤ 1.50 |
+| GET | 91559 | 85801 | 1.07 | ≤ 1.50 |
+| POST | 92500 | 94123 | 0.98 | ≤ 1.50 |
 
 No measurable overhead: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment

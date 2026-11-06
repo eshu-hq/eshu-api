@@ -111,15 +111,16 @@ func (s *Server) serveLeafBPublicRead(w http.ResponseWriter, r *http.Request) {
 // contact. An empty configured key fails closed like RequireAuth.
 // Session relay stays name-matched (hasLeafBSessionCookie) until the
 // D8 session resolver lands and dest can resolve the class itself.
-// leafbSessionCookieNames are the session-cookie names core sets on
-// the browser-session credential class. The names are not secrets —
-// they are the wire contract core's Set-Cookie uses — so the gate
-// matches on name, never on value. The bare eshu_session spelling is
-// the pre-__Host name the conformance suite pins alongside the
-// current __Host- names.
+// leafbSessionCookieNames are the session-credential cookie names core
+// sets (BrowserSessionCookieName + BrowserSessionCookieNameInsecure in
+// go/internal/query/auth/session/cookies.go). CSRF names are excluded
+// on purpose: core states the CSRF cookie "is not a session
+// credential", so a CSRF-only caller is credential-less and keeps the
+// dest 401 with zero core contact. The names are not secrets — they
+// are the wire contract core's Set-Cookie uses — so the gate matches
+// on name, never on value.
 var leafbSessionCookieNames = map[string]struct{}{
 	"__Host-eshu_session": {},
-	"__Host-eshu_csrf":    {},
 	"eshu_session":        {},
 }
 

@@ -187,7 +187,6 @@ func TestLeafBWaveRelayExplicitForUnresolvableIdentities(t *testing.T) {
 				{"oidc bearer", map[string]string{"Authorization": "Bearer oidc-jwt.def.ghi"}},
 				{"browser session", map[string]string{"Cookie": "eshu_session=sess_123"}},
 				{"browser session (__Host-eshu_session)", map[string]string{"Cookie": "__Host-eshu_session=sess_123"}},
-				{"browser session (__Host-eshu_csrf)", map[string]string{"Cookie": "__Host-eshu_csrf=csrf_456"}},
 			} {
 				core := &stubCore{
 					status: http.StatusOK,

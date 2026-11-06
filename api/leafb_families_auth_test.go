@@ -177,6 +177,8 @@ func TestLeafBGated_JunkCookieIs401WithoutCoreContact(t *testing.T) {
 		"tracking_id=abc123",
 		"eshu_session=",
 		"session=Bearer " + skeletonTestKey,
+		"__Host-eshu_csrf=csrf_456",
+		"eshu_csrf=csrf_456",
 	} {
 		req := httptest.NewRequest(http.MethodGet, "/api/v0/capabilities", nil)
 		req.Header.Set("Cookie", cookie)
