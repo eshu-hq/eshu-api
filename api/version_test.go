@@ -122,6 +122,18 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/recovery-admission.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
 		t.Errorf("contracts/recovery-admission.md pins %q, constant is %q: move them in the same diff", got, RecoveryAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/admin-read-admission.md", "AdminReadAdmissionContractVersion"); got != AdminReadAdmissionContractVersion {
+		t.Errorf("contracts/admin-read-admission.md pins %q, constant is %q: move them in the same diff", got, AdminReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/admin-identity-admission.md", "AdminIdentityReadAdmissionContractVersion"); got != AdminIdentityReadAdmissionContractVersion {
+		t.Errorf("contracts/admin-identity-admission.md pins %q, constant is %q: move them in the same diff", got, AdminIdentityReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/governance-audit-read-admission.md", "GovernanceAuditReadAdmissionContractVersion"); got != GovernanceAuditReadAdmissionContractVersion {
+		t.Errorf("contracts/governance-audit-read-admission.md pins %q, constant is %q: move them in the same diff", got, GovernanceAuditReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/terminal-failure-admission.md", "TerminalFailureReadAdmissionContractVersion"); got != TerminalFailureReadAdmissionContractVersion {
+		t.Errorf("contracts/terminal-failure-admission.md pins %q, constant is %q: move them in the same diff", got, TerminalFailureReadAdmissionContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
 		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
 	}
@@ -173,6 +185,18 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins recovery %q, constant is %q: record the new pin before consuming it", got, RecoveryAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "AdminReadAdmissionContractVersion"); got != AdminReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins admin reads %q, constant is %q: record the new pin before consuming it", got, AdminReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "AdminIdentityReadAdmissionContractVersion"); got != AdminIdentityReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins admin-identity reads %q, constant is %q: record the new pin before consuming it", got, AdminIdentityReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "GovernanceAuditReadAdmissionContractVersion"); got != GovernanceAuditReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins governance-audit reads %q, constant is %q: record the new pin before consuming it", got, GovernanceAuditReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "TerminalFailureReadAdmissionContractVersion"); got != TerminalFailureReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins terminal-failure reads %q, constant is %q: record the new pin before consuming it", got, TerminalFailureReadAdmissionContractVersion)
+	}
 }
 
 // TestHealthReportsPinnedContractVersions pins the /health version
@@ -204,6 +228,10 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
 		"saml_login_admission_contracts":               SAMLLoginAdmissionContractVersion,
 		"recovery_admission_contracts":                 RecoveryAdmissionContractVersion,
+		"admin_read_admission_contracts":               AdminReadAdmissionContractVersion,
+		"admin_identity_read_admission_contracts":      AdminIdentityReadAdmissionContractVersion,
+		"governance_audit_read_admission_contracts":    GovernanceAuditReadAdmissionContractVersion,
+		"terminal_failure_read_admission_contracts":    TerminalFailureReadAdmissionContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {

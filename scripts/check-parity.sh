@@ -19,6 +19,7 @@ SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
 SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
 SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"
 SRC_SHA_RECOVERY="7c60583996d9a3ccc46288f40a38f614a4f28ea8"
+SRC_SHA_D1="2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923"
 SRC_SHA_D0="ec1643d67f"
 
 tmpdir="$(mktemp -d)"
@@ -316,6 +317,24 @@ check_file_at "$SRC_SHA_RECOVERY" "go/internal/query/admin/recovery_admission_co
   "contracts/upstream/recovery_admission_contract_test.go" \
   "50dd78f3dc9bde8fdc67d7f818e0b2fdfdeb22fa7ce62d8650c361345826af24"
 
+# D1 read-admission pins (eshu-hq/eshu#10259, unwired seams): the four
+# frozen method-set tests, byte-identical to the pinned core commit.
+check_file_at "$SRC_SHA_D1" "go/internal/query/admin/read_admission_contract_test.go" \
+  "contracts/upstream/admin_read_admission_contract_test.go" \
+  "51148149f97cd6613f6d7349d4f6dbb02ca55de9bf00e23cfcf410491cfe6784"
+
+check_file_at "$SRC_SHA_D1" "go/internal/query/admin/identity/read_admission_contract_test.go" \
+  "contracts/upstream/admin_identity_read_admission_contract_test.go" \
+  "50e02d231061f28f261670bddeacec828e0e01f43269ab4cf9ed6045c217011f"
+
+check_file_at "$SRC_SHA_D1" "go/internal/query/admin/identity/governance_audit_read_admission_contract_test.go" \
+  "contracts/upstream/governance_audit_read_admission_contract_test.go" \
+  "b6b033cfdbdaf9cb788b1e7354e199caeda5b1604c7230e0b58caf97b3b2aef5"
+
+check_file_at "$SRC_SHA_D1" "go/internal/query/admin/acknowledgement/terminal_failure_read_admission_contract_test.go" \
+  "contracts/upstream/terminal_failure_read_admission_contract_test.go" \
+  "c0e86ef4e90ff24e6756f27bd870675782baeeeb9b1c37f9e0551e0cb035f51a"
+
 # Native spec (Decision 5(c)): the admin-recovery OpenAPI fragment is a
 # line-verbatim subset of the pinned core file. Core ships the lane
 # entries and the relay-only routes in one file, so no whole-file
@@ -458,6 +477,18 @@ check_excerpt_at "$SRC_SHA_RECOVERY" "contracts/upstream/recovery-wire-shapes.tx
   "go/internal/query/admin/recovery_admission.go" \
   "go/internal/query/admin/handler.go"
 
+check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/admin-read-wire-shapes.txt" \
+  "go/internal/query/admin/read_admission.go" \
+  "go/internal/query/admin/handler.go"
+
+check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/admin-identity-read-wire-shapes.txt" \
+  "go/internal/query/admin/identity/read_admission.go" \
+  "go/internal/query/admin/identity/governance_audit_read_admission.go" \
+  "go/internal/query/admin/identity/types.go"
+
+check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/terminal-failure-read-wire-shapes.txt" \
+  "go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -473,6 +504,10 @@ grep -qF 'OIDCLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upst
 grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/github-login-wire-shapes.txt"
 grep -qF 'SAMLLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/saml-login-wire-shapes.txt"
 grep -qF 'RecoveryAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/recovery-wire-shapes.txt"
+grep -qF 'AdminReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-read-wire-shapes.txt"
+grep -qF 'AdminIdentityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
+grep -qF 'GovernanceAuditReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
+grep -qF 'TerminalFailureReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terminal-failure-read-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the

@@ -24,6 +24,29 @@ contract comment and the compile assertion. The frozen method set is
 (4 methods: `ResolveTarget`, `Acknowledge`, `ListTerminalFailureAcks`,
 `ListTerminalFailures`).
 
+## Read pin (D1, unwired)
+
+`TerminalFailureReadAdmissionContractVersion = "v0"`, with the port defined as:
+
+```go
+type TerminalFailureReadAdmission = TerminalFailureReader
+```
+
+Both lines are vendored verbatim in
+`contracts/upstream/terminal-failure-read-wire-shapes.txt`, with the
+surrounding contract comment, the read-only `TerminalFailureReader`
+port, and the compile assertion. The frozen method set is
+`frozenTerminalFailureReadAdmission` in
+`contracts/upstream/terminal_failure_read_admission_contract_test.go`
+(2 methods: `ListTerminalFailureAcks`, `ListTerminalFailures`).
+
+The reads stay on the generic relay until the D3 lane lands; no
+native route moves in this record. The acknowledgement mutation
+surface (`ResolveTarget`, `Acknowledge`) stays on
+`TerminalFailureAdmission`; a dest consumer implementing only this
+contract can serve the reads but cannot mark a failure known and
+expected through it.
+
 ## HTTP shape
 
 The operator-facing POST body and the acknowledgement response, vendored
@@ -44,7 +67,8 @@ verbatim in `contracts/upstream/terminal-failure-wire-shapes.txt`:
 
 `TestTerminalFailureAdmissionContractIsVersioned` pins the version and the
 frozen method set; the core-owned `TerminalFailureAckStore` satisfies the
-port at compile time. A breaking change to the admission shape fails the
+port at compile time. `TestTerminalFailureReadAdmissionContractIsVersioned`
+pins the D1 read version and frozen set the same way. A breaking change to the admission shape fails the
 frozen test until the list is deliberately updated; bump
 `TerminalFailureAdmissionContractVersion` alongside (manually — the bump
 is convention, the frozen list is the enforcement), and this repository

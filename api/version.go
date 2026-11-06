@@ -111,3 +111,38 @@ const SAMLLoginAdmissionContractVersion = "v0"
 // reopen, and recover-generations routes share the already-pinned
 // ReplayLedgerAdmissionContractVersion for their claim/complete pair.
 const RecoveryAdmissionContractVersion = "v0"
+
+// AdminReadAdmissionContractVersion names the versioned admission port
+// for the operator admin reads the admin endpoints admit through
+// ReadStore. It must move in lockstep with the in-tree
+// AdminReadAdmissionContractVersion; the vendored pin lives in
+// contracts/admin-read-admission.md. Reads over this port stay on the
+// generic relay until the D3 lane lands; this record moves no route.
+const AdminReadAdmissionContractVersion = "v0"
+
+// AdminIdentityReadAdmissionContractVersion names the versioned
+// admission port for tenant-scoped admin identity reads. It must move
+// in lockstep with the in-tree
+// AdminIdentityReadAdmissionContractVersion; the vendored pin lives in
+// contracts/admin-identity-admission.md. Reads over this port stay on
+// the generic relay until the D3 lane lands; this record moves no
+// route.
+const AdminIdentityReadAdmissionContractVersion = "v0"
+
+// GovernanceAuditReadAdmissionContractVersion names the versioned
+// admission port for the governance-audit reads backing the
+// tenant-admin audit links. It must move in lockstep with the in-tree
+// GovernanceAuditReadAdmissionContractVersion; the vendored pin lives
+// in contracts/governance-audit-read-admission.md. Reads over this
+// port stay on the generic relay until the D3 and D6 lanes land; this
+// record moves no route.
+const GovernanceAuditReadAdmissionContractVersion = "v0"
+
+// TerminalFailureReadAdmissionContractVersion names the versioned
+// admission port for the operator terminal-failure reads. It must move
+// in lockstep with the in-tree
+// TerminalFailureReadAdmissionContractVersion; the vendored pin lives
+// in contracts/terminal-failure-admission.md. Reads over this port
+// stay on the generic relay until the D3 lane lands; this record moves
+// no route.
+const TerminalFailureReadAdmissionContractVersion = "v0"

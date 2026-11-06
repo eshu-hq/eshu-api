@@ -12,10 +12,12 @@ handle crosses the boundary.
 - `go.mod`: module `github.com/eshu-hq/eshu-api`, stdlib only. No import
   of a core implementation package exists anywhere in this tree.
 - `api/`: the HTTP surface, plus the Leaf E telemetry registry (`family.go`, `telemetry.go`, `exposition.go`, `instrument.go`; see `docs/telemetry.md`): per-family request/dispatch/authorizer/audit-drop signals on public `GET /metrics`, one structured log line per dispatch request keyed on the echoed-or-minted correlation ID, trace-context propagation to the core. `version.go` pins `CoreReadContractsVersion`
-  and the twelve admission versions (`Suppression`, `TerminalFailure`,
+  and the seventeen admission versions (`Suppression`, `TerminalFailure`,
   `ReplayLedger`, `SignInPolicy`, `Retirement`, `AdminIdentity`,
   `Setup`, `ProviderConfigMutation`, `ProviderConfigRead`, `OIDCLogin`,
-  `GitHubLogin`, `SAMLLogin`) to `v0` (lockstep with the
+  `GitHubLogin`, `SAMLLogin`, `Recovery`, `AdminRead`,
+  `AdminIdentityRead`, `GovernanceAuditRead`, `TerminalFailureRead`)
+  to `v0` (lockstep with the
   vendored pins under `contracts/`); `v1alias.go` and `deprecation.go`
   port the in-tree middleware behavior (`/api/v1/` rewrite ahead of auth,
   `Deprecation`/`Sunset` on `/api/v0/*` only, v1 never carries them);

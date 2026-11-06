@@ -25,6 +25,29 @@ contract comment and the `MutationStore` port. The frozen method set is
 `RevokeAdminRoleAssignment`, `CreateAdminIdPGroupMapping`,
 `DeleteAdminIdPGroupMapping`).
 
+## Read pin (D1, unwired)
+
+`AdminIdentityReadAdmissionContractVersion = "v0"`, with the port defined as:
+
+```go
+type AdminIdentityReadAdmission = ReadStore
+```
+
+Both lines are vendored verbatim in
+`contracts/upstream/admin-identity-read-wire-shapes.txt`, with the
+surrounding contract comment and the `ReadStore` port. The frozen
+method set is `frozenAdminIdentityReadAdmission` in
+`contracts/upstream/admin_identity_read_admission_contract_test.go`
+(6 methods: `ListAdminInvitations`, `ListAdminRoleAssignments`,
+`ListAdminRoles`, `ListAdminIdPProviders`,
+`ListAdminIdPGroupMappings`, `ListAdminAPITokens`).
+
+The reads stay on the generic relay until the D3 lane lands; no
+native route moves in this record. Every method is scoped strictly to
+the caller's tenant (and workspace where applicable) and none returns
+a secret, hash, invite code, credential handle, or external group
+hash.
+
 ## HTTP shape
 
 The operator-facing mutation bodies and results, vendored
@@ -49,6 +72,8 @@ until the list is deliberately updated; bump
 `AdminIdentityAdmissionContractVersion` alongside (manually — the bump is
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
+`TestAdminIdentityReadAdmissionContractIsVersioned` pins the D1 read
+version and frozen set the same way.
 
 ## Native dispatch (tier C-b: HTTP write-through)
 
