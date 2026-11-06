@@ -148,10 +148,21 @@ func (s *Server) routes() *http.ServeMux {
 	// family still cross the byte-relay below.
 	mux.Handle(terminalFailureRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
 	mux.Handle(terminalFailureRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
-	// Native spec (Decision 5(c)): the sign-in-policy, retirement, and
-	// terminal-failure fragments landed in openapi/, so the assembled
-	// document is served from compiled constants ahead of the generic
-	// proxy — no core fetch, served even with no core origin configured.
+	// Native dispatch, AdminIdentityMutations (tier C-b): the five
+	// tenant-scoped admin identity mutation routes have their explicit
+	// per-family routes with the AllScopes authorizer, ahead of the
+	// generic proxy. Each trailing-slash spelling stays on the native
+	// route for the same never-split reason; the family's reads and
+	// every other family still cross the byte-relay below.
+	for _, route := range adminIdentityRoutes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
+	}
+	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
+	// terminal-failure, and admin-identity fragments landed in openapi/,
+	// so the assembled document is served from compiled constants ahead
+	// of the generic proxy — no core fetch, served even with no core
+	// origin configured.
 	// It stays inside RequireAuth like every dest /api/* route (core
 	// serves it public; dest adds no new public surface here). The
 	// document serves exactly the landed families; the rest still relay

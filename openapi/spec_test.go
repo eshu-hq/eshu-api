@@ -121,6 +121,48 @@ func TestSpec_ServesTerminalFailureFamily(t *testing.T) {
 	}
 }
 
+// TestSpec_ServesAdminIdentityFamily pins the native-spec contract for
+// the admin-identity mutation family (satellite-design Decision 5(c)):
+// the assembled document is valid JSON and carries the three fragment
+// paths whose keys are unique to the mutation surface — the invitation
+// revoke, the role-assignment revoke, and the mapping delete — with
+// their pinned operationIds. The grant and create POSTs share path keys
+// with the family GETs, so per the core OpenAPI convention they live in
+// the reads fragment, which this lane does not port (reads stay relay);
+// the lossless-assembly test below pins that the served paths equal the
+// ported fragment, and scripts/check-parity.sh gates its byte-identity.
+func TestSpec_ServesAdminIdentityFamily(t *testing.T) {
+	t.Parallel()
+
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(Spec()), &doc); err != nil {
+		t.Fatalf("Spec() is not valid JSON: %v", err)
+	}
+
+	paths, ok := doc["paths"].(map[string]any)
+	if !ok {
+		t.Fatalf("Spec() paths = %T, want object", doc["paths"])
+	}
+
+	for path, want := range map[string]map[string]string{
+		"/api/v0/auth/local/invitations/{invite_id}/revoke":   {"post": "revokeAdminInvitation"},
+		"/api/v0/auth/admin/role-assignments/revoke":          {"post": "revokeAdminRoleAssignment"},
+		"/api/v0/auth/admin/idp-group-mappings/{mapping_ref}": {"delete": "deleteAdminIdPGroupMapping"},
+	} {
+		item, ok := paths[path].(map[string]any)
+		if !ok {
+			t.Errorf("paths lacks %s: %v", path, keys(paths))
+			continue
+		}
+		for operation, wantID := range want {
+			op, _ := item[operation].(map[string]any)
+			if got := op["operationId"]; got != wantID {
+				t.Errorf("%s %s operationId = %v, want %s", path, operation, got, wantID)
+			}
+		}
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
 // family path objects equal the ported fragments' parsed path objects, so
 // the only reviewed delta to the pinned core fragments is the fragment files
@@ -138,6 +180,9 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/admin/collector-failures/acknowledge",
 		"/api/v0/admin/collector-failures/acknowledgements/query",
 		"/api/v0/admin/collector-failures/query",
+		"/api/v0/auth/local/invitations/{invite_id}/revoke",
+		"/api/v0/auth/admin/role-assignments/revoke",
+		"/api/v0/auth/admin/idp-group-mappings/{mapping_ref}",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -158,7 +203,8 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // components block must carry every schema and response the fragments
 // name (ErrorResponse plus BadRequest, Forbidden, Conflict,
 // InternalError, and ServiceUnavailable for the terminal-failure
-// fragment; AdminSignInPolicy schemas for the sign-in-policy family).
+// fragment; NotFound for the admin-identity fragment; AdminSignInPolicy
+// schemas for the sign-in-policy family).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
 
@@ -239,8 +285,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 
 // TestSpec_VersionPinned pins the native-spec contract version: v0 serves
 // exactly the families whose fragments have landed (sign-in-policy first,
-// retirement second, terminal-failure third). It advances as family lanes
-// port their fragments.
+// retirement second, terminal-failure third, admin-identity fourth). It
+// advances as family lanes port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 
