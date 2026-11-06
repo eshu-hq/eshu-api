@@ -113,6 +113,13 @@ check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/retirement/admission_cont
   "contracts/upstream/retirement_admission_contract_test.go" \
   "8ade12f13bd24786ee348c27807b223e24a685abe7d114b46abfeff1ebe926dd"
 
+# Native spec (Decision 5(c)): the retirement OpenAPI fragment is a
+# byte-identical port of the pinned core file, gated here like the
+# upstream evidence above.
+check_file_at "$SRC_SHA_MAIN" "go/internal/query/openapi/paths/status/repository_retirement.go" \
+  "openapi/paths/status/repository_retirement.go" \
+  "d576e641f9bf9e95ea3f5e81d73b6b185ee88bb54fe9c64301524b7f801c3fef"
+
 check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/identity/admission_contract_test.go" \
   "contracts/upstream/admin_identity_admission_contract_test.go" \
   "1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559"

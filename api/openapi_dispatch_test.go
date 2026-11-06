@@ -85,6 +85,46 @@ func TestOpenAPINative_ServesSignInPolicyFamily(t *testing.T) {
 	}
 }
 
+// TestOpenAPINative_ServesRetirementFamily pins the dest-served
+// openapi.json for the retirement family (satellite-design Decision
+// 5(c)): the native route answers 200 with the family's path, and it
+// answers from compiled constants — no core fetch, so an unconfigured
+// origin still serves the spec.
+func TestOpenAPINative_ServesRetirementFamily(t *testing.T) {
+	t.Parallel()
+
+	for _, origin := range []string{"http://core.invalid", ""} {
+		srv := NewServer(origin, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
+
+		req := authedRequest(http.MethodGet, "/api/v0/openapi.json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("origin %q: status = %d, want 200", origin, rec.Code)
+		}
+		if got := rec.Header().Get("Content-Type"); got != "application/json; charset=utf-8" {
+			t.Errorf("origin %q: Content-Type = %q, want the JSON document shape", origin, got)
+		}
+		body, _ := io.ReadAll(rec.Result().Body)
+		var doc map[string]any
+		if err := json.Unmarshal(body, &doc); err != nil {
+			t.Fatalf("origin %q: served spec is not valid JSON: %v", origin, err)
+		}
+		paths, _ := doc["paths"].(map[string]any)
+		item, ok := paths["/api/v0/admin/repository-retirements"].(map[string]any)
+		if !ok {
+			t.Errorf("origin %q: served spec lacks /api/v0/admin/repository-retirements", origin)
+			continue
+		}
+		post, _ := item["post"].(map[string]any)
+		if got := post["summary"]; got != "Retire repositories: mark, fence, then purge their indexed state" {
+			t.Errorf("origin %q: retirement post summary = %v, want the pinned summary", origin, got)
+		}
+	}
+}
+
 // TestOpenAPINative_V1AliasServesSpec pins that the v1 alias rewrite lands
 // the spec request on the same native handler: GET /api/v1/openapi.json
 // answers the dest-assembled document with the v0 deprecation headers
@@ -108,5 +148,8 @@ func TestOpenAPINative_V1AliasServesSpec(t *testing.T) {
 	body, _ := io.ReadAll(rec.Result().Body)
 	if !strings.Contains(string(body), `"updateAdminSignInPolicy"`) {
 		t.Errorf("v1 spec body lacks updateAdminSignInPolicy, want the native family section")
+	}
+	if !strings.Contains(string(body), `"/api/v0/admin/repository-retirements"`) {
+		t.Errorf("v1 spec body lacks the retirement family path, want the native family section")
 	}
 }

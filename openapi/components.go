@@ -6,13 +6,14 @@ package openapi
 // components is the minimal shared block for the dest-served spec:
 // exactly the schemas and responses the landed family fragments
 // reference, nothing more. Entry bytes are ported from the pinned core
-// commit 428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5:
+// commits 428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5 (sign-in-policy lane)
+// and ebaf4dfa0de672851bbec7a427e28fdb41344380 (retirement lane):
 //
 //   - AdminSignInPolicy, AdminSignInPolicyUpdateRequest: schemas from
 //     go/internal/query/openapi/components_sign_in_policy.go.
 //   - ErrorResponse: schema from go/internal/query/openapi/components.go.
-//   - Forbidden, InternalError, ServiceUnavailable: responses from
-//     go/internal/query/openapi/components_responses.go.
+//   - BadRequest, Forbidden, Conflict, InternalError, ServiceUnavailable:
+//     responses from go/internal/query/openapi/components_responses.go.
 //
 // A new family lane extends this block with the entries its fragment
 // references; TestSpec_LocalRefsResolve fails closed on a dangling $ref.
@@ -58,8 +59,24 @@ const components = `  "components": {
       }
     },
     "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
       "Forbidden": {
         "description": "Permission denied",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Ambiguous request or conflicting scope",
         "content": {
           "application/json": {
             "schema": {"$ref": "#/components/schemas/ErrorResponse"}

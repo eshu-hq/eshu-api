@@ -49,10 +49,40 @@ func TestSpec_ServesSignInPolicyFamily(t *testing.T) {
 	}
 }
 
+// TestSpec_ServesRetirementFamily pins the native-spec contract for the
+// retirement family (satellite-design Decision 5(c)): the assembled
+// document is valid JSON, carries the family path, and embeds the ported
+// fragment losslessly.
+func TestSpec_ServesRetirementFamily(t *testing.T) {
+	t.Parallel()
+
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(Spec()), &doc); err != nil {
+		t.Fatalf("Spec() is not valid JSON: %v", err)
+	}
+
+	paths, ok := doc["paths"].(map[string]any)
+	if !ok {
+		t.Fatalf("Spec() paths = %T, want object", doc["paths"])
+	}
+
+	retire, ok := paths["/api/v0/admin/repository-retirements"].(map[string]any)
+	if !ok {
+		t.Fatalf("paths lacks /api/v0/admin/repository-retirements: %v", keys(paths))
+	}
+	post, ok := retire["post"].(map[string]any)
+	if !ok {
+		t.Fatalf("retirement path lacks post: %v", retire)
+	}
+	if got := post["summary"]; got != "Retire repositories: mark, fence, then purge their indexed state" {
+		t.Errorf("retirement post summary = %q, want the pinned summary", got)
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
-// family path objects equal the ported fragment's parsed path objects, so
-// the only reviewed delta to the pinned core fragment is the fragment file
-// itself (gated byte-identical by scripts/check-parity.sh).
+// family path objects equal the ported fragments' parsed path objects, so
+// the only reviewed delta to the pinned core fragments is the fragment files
+// themselves (gated byte-identical by scripts/check-parity.sh).
 func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 	t.Parallel()
 
@@ -62,6 +92,7 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 	for _, path := range []string{
 		"/api/v0/auth/sign-in-policy",
 		"/api/v0/auth/admin/sign-in-policy",
+		"/api/v0/admin/repository-retirements",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -159,8 +190,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 }
 
 // TestSpec_VersionPinned pins the native-spec contract version: v0 serves
-// exactly the families whose fragments have landed (sign-in-policy first).
-// It advances as family lanes port their fragments.
+// exactly the families whose fragments have landed (sign-in-policy first,
+// retirement second). It advances as family lanes port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 
@@ -181,6 +212,14 @@ func operationID(pathItem map[string]any, method string) string {
 	op, _ := pathItem[method].(map[string]any)
 	id, _ := op["operationId"].(string)
 	return id
+}
+
+func keys(pathItem map[string]any) []string {
+	out := make([]string, 0, len(pathItem))
+	for key := range pathItem {
+		out = append(out, key)
+	}
+	return out
 }
 
 func decodePaths(t *testing.T, raw string) map[string]any {
@@ -215,12 +254,4 @@ func jsonEqual(left, right any) bool {
 	leftCanon, _ := json.Marshal(leftNorm)
 	rightCanon, _ := json.Marshal(rightNorm)
 	return string(leftCanon) == string(rightCanon)
-}
-
-func keys(object map[string]any) []string {
-	names := make([]string, 0, len(object))
-	for name := range object {
-		names = append(names, name)
-	}
-	return names
 }

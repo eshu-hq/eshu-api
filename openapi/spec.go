@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	"github.com/eshu-hq/eshu-api/openapi/paths/auth"
+	"github.com/eshu-hq/eshu-api/openapi/paths/status"
 )
 
 // SpecVersion names the native-spec contract: v0 serves exactly the
 // families whose OpenAPI fragments have landed in this repository
-// (sign-in-policy first). It advances as family lanes port their
-// fragments; the served family set is pinned by the Spec tests.
+// (sign-in-policy first, retirement second). It advances as family lanes
+// port their fragments; the served family set is pinned by the Spec tests.
 const SpecVersion = "v0"
 
 // specPrefix opens the served document: the protocol version, the
@@ -24,7 +25,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy first); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -41,7 +42,8 @@ const specPrefix = `{
     }
   ],
   "tags": [
-    {"name": "auth", "description": "Browser session and CSRF-safe dashboard authentication routes"}
+    {"name": "auth", "description": "Browser session and CSRF-safe dashboard authentication routes"},
+    {"name": "admin", "description": "Operator administration routes"}
   ],
   "paths": {
 `
@@ -49,11 +51,12 @@ const specPrefix = `{
 // familyPaths renders the landed path fragments and closes the open
 // "paths" object. Every fragment file ends its last entry with a
 // separator comma for the next fragment in concatenation order (the core
-// convention), so the single-family assembly trims that trailing comma
-// before the close. A fragment that stops ending in a comma breaks the
-// served JSON and the Spec tests fail closed.
+// convention), so only the final fragment in landing order has its
+// trailing comma trimmed before the close. A fragment that stops ending
+// in a comma breaks the served JSON and the Spec tests fail closed.
 func familyPaths() string {
-	return strings.TrimSuffix(strings.TrimSpace(auth.SignInPolicy), ",") + "\n"
+	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
+		strings.TrimSuffix(strings.TrimSpace(status.RepositoryRetirement), ",") + "\n"
 }
 
 // Spec returns the dest-assembled OpenAPI 3.0 document for the landed
