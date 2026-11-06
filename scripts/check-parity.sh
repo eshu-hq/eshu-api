@@ -116,6 +116,44 @@ check_file_at() {
   echo "OK: ${dest_rel} byte-identical to ${src_path} at ${sha}"
 }
 
+check_fragment_subset_at() {
+  local sha="$1" src_path="$2" dest_rel="$3" want_hash="$4"
+  local fetched
+  fetched="$(fetch_at "$sha" "$src_path")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "$want_hash" ]]; then
+    echo "FAIL: ${src_path} at ${sha} hash ${got_hash} != recorded ${want_hash}" >&2
+    exit 1
+  fi
+  # The payload is the const string body: every line after the
+  # `const NAME = `` opener up to the closing backtick. Each payload
+  # line must appear verbatim in the pinned core file.
+  local in_payload=0
+  while IFS= read -r line; do
+    if [[ "$line" == 'const AdminProviderConfigMutations = `' ]]; then
+      in_payload=1
+      continue
+    fi
+    if [[ "$in_payload" != "1" ]]; then
+      continue
+    fi
+    if [[ "$line" == '`' ]]; then
+      break
+    fi
+    [[ -z "$line" ]] && continue
+    if ! grep -qFx -- "$line" "$fetched"; then
+      echo "FAIL: fragment line missing from ${src_path} at ${sha}: ${line}" >&2
+      exit 1
+    fi
+  done < "${REPO_ROOT}/${dest_rel}"
+  if [[ "$in_payload" != "1" ]]; then
+    echo "FAIL: ${dest_rel} carries no AdminProviderConfigMutations payload" >&2
+    exit 1
+  fi
+  echo "OK: ${dest_rel} lines all verbatim in ${src_path} at ${sha}"
+}
+
 check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/retirement/admission_contract_test.go" \
   "contracts/upstream/retirement_admission_contract_test.go" \
   "8ade12f13bd24786ee348c27807b223e24a685abe7d114b46abfeff1ebe926dd"
@@ -159,6 +197,19 @@ check_file_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/admin/provider/config
 check_file_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/admin/provider/config/read_admission_contract_test.go" \
   "contracts/upstream/read_admission_contract_test.go" \
   "51d80f84961ea7b8e25e51c69b5c406b38f00ed77edfafd31c419450bfc4886d"
+
+# Native spec (Decision 5(c)): the provider-config mutation OpenAPI
+# fragment is a line-verbatim subset of the pinned core file. Core ships
+# reads and mutations in one file, so no whole-file identity port can
+# serve mutations only; the gate pins the core file's sha256 and proves
+# every payload line of the dest fragment (the const string body, which
+# is the only JSON the assembly consumes) appears verbatim in the pinned
+# core file. The create/update POSTs share path keys with the family
+# GETs, so per the core OpenAPI convention they stay in the unported
+# reads fragment; the reads-split follow-up ports them.
+check_fragment_subset_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/openapi/paths/auth/admin_provider_configs.go" \
+  "openapi/paths/auth/admin_provider_config_mutations.go" \
+  "afa45de81720f466b8b9f66949605564be21e9efa8ddb8c62e71600b127824ef"
 
 check_file_at "$SRC_SHA_AUTHLOGIN" "go/internal/query/oidc_login_admission_contract_test.go" \
   "contracts/upstream/oidc_login_admission_contract_test.go" \
@@ -257,7 +308,8 @@ check_excerpt_at "$SRC_SHA_SETUP" "contracts/upstream/setup-wire-shapes.txt" \
 check_excerpt_at "$SRC_SHA_PROVIDERCONFIG" "contracts/upstream/provider-config-wire-shapes.txt" \
   "go/internal/query/admin/provider/config/admission.go" \
   "go/internal/query/admin/provider/config/types.go" \
-  "go/internal/query/admin/provider/config/mutations.go"
+  "go/internal/query/admin/provider/config/mutations.go" \
+  "go/internal/query/admin/provider/config/audit.go"
 
 check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/oidc-login-wire-shapes.txt" \
   "go/internal/query/oidc_login_handler.go" \

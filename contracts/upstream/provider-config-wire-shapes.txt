@@ -74,3 +74,7 @@ func (h *MutationHandler) Mount(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v0/auth/admin/provider-configs/{provider_config_id}/disable", h.handleDisable)
 	mux.HandleFunc("POST /api/v0/auth/admin/provider-configs/{provider_config_id}/test-connection", h.handleTestConnection)
 }
+		querycontract.WriteError(w, http.StatusServiceUnavailable, "admin provider config mutation store is unavailable")
+		querycontract.WriteError(w, http.StatusForbidden, "all-scope admin authentication is required")
+		querycontract.WriteError(w, http.StatusForbidden, "admin tenant scope is required")
+		querycontract.WriteError(w, http.StatusConflict, "the provider config's active revision changed since it was tested; run test-connection again and retry enable")

@@ -6,10 +6,13 @@
 // under /api/v0/auth/... (SignInPolicy); for the admin-identity
 // mutation family: the invitation revoke, role-assignment revoke, and
 // mapping delete routes whose path keys are unique to the mutation
-// surface (AdminMutations); and for the admin-identity reads family:
-// the tenant-scoped admin reads whose path keys carry the family GETs
+// surface (AdminMutations); for the admin-identity reads family: the
+// tenant-scoped admin reads whose path keys carry the family GETs
 // (plus the grant and create POSTs that share those keys, per the core
-// OpenAPI convention) (AdminReads).
+// OpenAPI convention) (AdminReads); and for the admin provider-config
+// mutation family: the revert, enable, disable, and test-connection
+// routes whose path keys are unique to the mutation surface
+// (AdminProviderConfigMutations).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other

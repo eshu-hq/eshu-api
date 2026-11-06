@@ -172,11 +172,24 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
 		mux.Handle(route+"/", s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
 	}
+	// Native dispatch, AdminProviderConfigMutations (tier C-b): the six
+	// admin provider-config mutation routes have their explicit
+	// per-family routes with the AllScopes authorizer, ahead of the
+	// generic proxy. Each trailing-slash spelling stays on the native
+	// route for the same never-split reason; the family's reads and
+	// every other family still cross the byte-relay below. The create
+	// and update POSTs share path keys with the family list/detail
+	// GETs, but Go matches method and path together, so the POSTs ride
+	// the native route while those GETs stay relayed.
+	for _, route := range providerConfigRoutes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.providerConfigWriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.providerConfigWriteThrough))))
+	}
 	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
-	// terminal-failure, and admin-identity fragments landed in openapi/,
-	// so the assembled document is served from compiled constants ahead
-	// of the generic proxy — no core fetch, served even with no core
-	// origin configured.
+	// terminal-failure, admin-identity, and provider-config fragments
+	// landed in openapi/, so the assembled document is served from
+	// compiled constants ahead of the generic proxy — no core fetch,
+	// served even with no core origin configured.
 	// It stays inside RequireAuth like every dest /api/* route (core
 	// serves it public; dest adds no new public surface here). The
 	// document serves exactly the landed families; the rest still relay
