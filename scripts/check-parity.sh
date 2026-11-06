@@ -18,6 +18,7 @@ SRC_SHA_SETUP="fd326f35c9fb497eec0abefad197a5d4b137b823"
 SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
 SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
 SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"
+SRC_SHA_RECOVERY="7c60583996d9a3ccc46288f40a38f614a4f28ea8"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -154,6 +155,93 @@ check_fragment_subset_at() {
   echo "OK: ${dest_rel} lines all verbatim in ${src_path} at ${sha}"
 }
 
+check_fragment_subset_named_at() {
+  local sha="$1" src_path="$2" dest_rel="$3" want_hash="$4" const_name="$5"
+  local fetched
+  fetched="$(fetch_at "$sha" "$src_path")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "$want_hash" ]]; then
+    echo "FAIL: ${src_path} at ${sha} hash ${got_hash} != recorded ${want_hash}" >&2
+    exit 1
+  fi
+  # The payload is the const string body: every line after the
+  # `const NAME = `` opener up to the closing backtick. Each payload
+  # line must appear verbatim in the pinned core file. The const name
+  # is a parameter (unlike check_fragment_subset_at above) so later
+  # lanes reuse this gate without copying it.
+  local in_payload=0
+  while IFS= read -r line; do
+    if [[ "$line" == "const ${const_name} = \`" ]]; then
+      in_payload=1
+      continue
+    fi
+    if [[ "$in_payload" != "1" ]]; then
+      continue
+    fi
+    if [[ "$line" == '`' ]]; then
+      break
+    fi
+    [[ -z "$line" ]] && continue
+    if ! grep -qFx -- "$line" "$fetched"; then
+      echo "FAIL: fragment line missing from ${src_path} at ${sha}: ${line}" >&2
+      exit 1
+    fi
+  done < "${REPO_ROOT}/${dest_rel}"
+  if [[ "$in_payload" != "1" ]]; then
+    echo "FAIL: ${dest_rel} carries no ${const_name} payload" >&2
+    exit 1
+  fi
+  echo "OK: ${dest_rel} lines all verbatim in ${src_path} at ${sha}"
+}
+
+check_recovery_schemas_at() {
+  local sha="$1"
+  local admin_comp="${tmpdir}/admin_components.go"
+  local recovery_comp="${tmpdir}/recovery_components.go"
+  curl -fsSL --retry 3 "https://raw.githubusercontent.com/${SRC_REPO}/${sha}/go/internal/query/openapi/components.go" -o "$admin_comp" || {
+    echo "FAIL: fetch go/internal/query/openapi/components.go at ${sha}" >&2
+    exit 1
+  }
+  curl -fsSL --retry 3 "https://raw.githubusercontent.com/${SRC_REPO}/${sha}/go/internal/query/openapi/components_recovery.go" -o "$recovery_comp" || {
+    echo "FAIL: fetch go/internal/query/openapi/components_recovery.go at ${sha}" >&2
+    exit 1
+  }
+  # The three lane schemas form one contiguous block in
+  # openapi/components.go: from the SkippedScopesReport opener through
+  # the third six-space closer (SkippedScopesReport, then
+  # DeltaActiveScopesReport, then ReindexRequestsWrittenReport). The
+  # last closer carries no trailing comma — the lane block is the last
+  # entry of the schemas object — so the match tolerates it.
+  local block
+  block="$(awk '/^      "SkippedScopesReport": \{$/{flag=1} flag{print} flag && /^      \},?$/ && ++closes==3{exit}' "${REPO_ROOT}/openapi/components.go")"
+  if [[ -z "$block" ]]; then
+    echo "FAIL: no recovery schema block in openapi/components.go" >&2
+    exit 1
+  fi
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if grep -qFx -- "$line" "$admin_comp" || grep -qFx -- "$line" "$recovery_comp"; then
+      continue
+    fi
+    # The DeltaActiveScopesReport opener rides the Go const line in
+    # core, so no whole line matches; the substring must be present and
+    # the served-spec LocalRefsResolve test independently requires it.
+    if [[ "$line" == '      "DeltaActiveScopesReport": {' ]] && grep -qF -- '"DeltaActiveScopesReport": {' "$recovery_comp"; then
+      continue
+    fi
+    # The lane block is the last entry of the schemas object, so its
+    # final closer drops the comma core carries (more entries follow
+    # there); the comma form must be present.
+    if [[ "$line" == '      }' ]] && grep -qFx -- '      },' "$recovery_comp"; then
+      continue
+    fi
+    echo "FAIL: recovery schema line missing from pinned component sources at ${sha}: ${line}" >&2
+    exit 1
+  done <<< "$block"
+  echo "OK: recovery schema block lines all verbatim in pinned component sources at ${sha}"
+}
+
 check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/retirement/admission_contract_test.go" \
   "contracts/upstream/retirement_admission_contract_test.go" \
   "8ade12f13bd24786ee348c27807b223e24a685abe7d114b46abfeff1ebe926dd"
@@ -222,6 +310,33 @@ check_file_at "$SRC_SHA_AUTHLOGIN" "go/internal/query/github_login_admission_con
 check_file_at "$SRC_SHA_SAMLLOGIN" "go/internal/query/saml_login_admission_contract_test.go" \
   "contracts/upstream/saml_login_admission_contract_test.go" \
   "bc04787bd208bf07428f4a9bc4660946342c7e4f3b60121202cb7f0a070556d0"
+
+check_file_at "$SRC_SHA_RECOVERY" "go/internal/query/admin/recovery_admission_contract_test.go" \
+  "contracts/upstream/recovery_admission_contract_test.go" \
+  "50dd78f3dc9bde8fdc67d7f818e0b2fdfdeb22fa7ce62d8650c361345826af24"
+
+# Native spec (Decision 5(c)): the admin-recovery OpenAPI fragment is a
+# line-verbatim subset of the pinned core file. Core ships the lane
+# entries and the relay-only routes in one file, so no whole-file
+# identity port can serve this lane only; the gate pins the core file's
+# sha256 and proves every payload line of the dest fragment (the const
+# string body, which is the only JSON the assembly consumes) appears
+# verbatim in the pinned core file. The relay-only four keep their own
+# path keys there and stay out of this fragment, so no served key
+# duplicates a relayed route.
+check_fragment_subset_named_at "$SRC_SHA_RECOVERY" "go/internal/query/openapi/paths/status/admin.go" \
+  "openapi/paths/status/admin_recovery.go" \
+  "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
+  "AdminRecovery"
+
+# Recovery schemas (Decision 5(c)): the three lane schemas form one
+# contiguous block in openapi/components.go, from the SkippedScopesReport
+# opener through the ReindexRequestsWrittenReport closer. Every line of
+# that block must appear verbatim in one of the two pinned component
+# sources — except the DeltaActiveScopesReport opener, which rides the
+# Go const line in core (verified as a substring instead), and which
+# the served-spec LocalRefsResolve test independently requires.
+check_recovery_schemas_at "$SRC_SHA_RECOVERY"
 
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
@@ -323,6 +438,10 @@ check_excerpt_at "$SRC_SHA_SAMLLOGIN" "contracts/upstream/saml-login-wire-shapes
   "go/internal/query/saml_admission.go" \
   "go/internal/query/saml_handler.go"
 
+check_excerpt_at "$SRC_SHA_RECOVERY" "contracts/upstream/recovery-wire-shapes.txt" \
+  "go/internal/query/admin/recovery_admission.go" \
+  "go/internal/query/admin/handler.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -337,6 +456,7 @@ grep -qF 'ProviderConfigReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contr
 grep -qF 'OIDCLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/oidc-login-wire-shapes.txt"
 grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/github-login-wire-shapes.txt"
 grep -qF 'SAMLLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/saml-login-wire-shapes.txt"
+grep -qF 'RecoveryAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/recovery-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the

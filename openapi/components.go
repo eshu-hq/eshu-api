@@ -8,8 +8,9 @@ package openapi
 // reference, nothing more. Entry bytes are ported from the pinned core
 // commits 428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5 (sign-in-policy lane)
 // and ebaf4dfa0de672851bbec7a427e28fdb41344380 (retirement,
-// terminal-failure, and admin-identity lanes), and
-// 99381691b1ac49254e813e5a013cfb654d432491 (provider-config lane).
+// terminal-failure, and admin-identity lanes),
+// 99381691b1ac49254e813e5a013cfb654d432491 (provider-config lane),
+// and 7c60583996d9a3ccc46288f40a38f614a4f28ea8 (recovery lane).
 // The terminal-failure lane adds no entries: its fragment references
 // only ErrorResponse plus the five responses above (gated in
 // check-parity.sh):
@@ -21,6 +22,13 @@ package openapi
 //     reads lane: the audit-summary fragment response counts by it).
 //   - AdminProviderConfigWriteResult: schema from
 //     go/internal/query/openapi/components_provider_configs.go.
+//   - SkippedScopesReport: schema from
+//     go/internal/query/openapi/components.go (recovery lane: the
+//     refinalize and recover-generations entries reference it, and no
+//     relay-only route does).
+//   - DeltaActiveScopesReport, ReindexRequestsWrittenReport: schemas
+//     from go/internal/query/openapi/components_recovery.go (same
+//     lane, same two entries, no relay-only reference).
 //   - ErrorResponse: schema from go/internal/query/openapi/components.go.
 //   - BadRequest, NotFound, Forbidden, Conflict, InternalError,
 //     ServiceUnavailable: responses from
@@ -86,6 +94,52 @@ const components = `  "components": {
             "name": {"type": "string"},
             "count": {"type": "integer"}
           }
+        }
+      },
+      "SkippedScopesReport": {
+        "type": "object",
+        "description": "Scopes a refinalize (POST /api/v0/admin/recover-generations, POST /api/v0/admin/refinalize) considered but did not re-enqueue, by reason. Always present in a performed recovery, with empty objects when nothing was skipped, so a partial graph rebuild is visible to the operator (#7116).",
+        "required": ["total", "by_reason", "sample_scope_ids"],
+        "properties": {
+          "total": {"type": "integer", "description": "Scopes skipped across every reason."},
+          "by_reason": {
+            "type": "object",
+            "description": "Exact skip count per reason. Reasons: no_recoverable_generation (failed scope with no non-superseded generation; only a fresh collection heals it), newest_generation_not_failed (failed scope whose newest non-superseded generation is pending and carries its own projector work), no_active_generation (scope neither active nor failed, for example a first generation still pending), unknown_scope (a named scope id with no ingestion_scopes row).",
+            "additionalProperties": {"type": "integer"}
+          },
+          "sample_scope_ids": {
+            "type": "object",
+            "description": "Up to 10 skipped scope ids per reason, ascending, so an operator can find the scopes to look at without an unbounded response.",
+            "additionalProperties": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      },
+      "DeltaActiveScopesReport": {
+        "type": "object",
+        "description": "Re-enqueued scopes whose re-projected generation is a delta (POST /api/v0/admin/recover-generations, POST /api/v0/admin/refinalize). A delta generation carries only the files that changed since its baseline, so re-projecting it onto an empty graph restores only those files: the graph for these scopes is incomplete until a full generation activates (#7797). Always present in a performed refinalize, with empty objects and an empty detail when no re-projected generation was a delta.",
+        "required": ["total", "by_outcome", "sample_scope_ids", "detail"],
+        "properties": {
+          "total": {"type": "integer", "description": "Scopes re-projected through a delta generation across every outcome."},
+          "by_outcome": {
+            "type": "object",
+            "description": "Exact count per outcome. Outcomes: reindex_requested (a git default-branch repository scope; the refinalize recorded a per-repository reindex watermark in the same transaction; a git ingester's scheduled selection forces a full re-parse when it next syncs the repository, at most ESHU_REPO_RECONCILE_MAX_PER_CYCLE per cycle and later while an in-flight or recently failed full holds the scope, and a webhook-only ingester forces it only when a webhook triggers that repository), reindex_unsupported (a git ref scope or another collector's scope; no reindex watermark can force it, so only that collector's next full generation repairs the graph).",
+            "additionalProperties": {"type": "integer"}
+          },
+          "sample_scope_ids": {
+            "type": "object",
+            "description": "Up to 10 delta-active scope ids per outcome, ascending.",
+            "additionalProperties": {"type": "array", "items": {"type": "string"}}
+          },
+          "detail": {"type": "string", "description": "Operator message stating that the graph is incomplete for these scopes until a full generation activates. Empty when total is 0."}
+        }
+      },
+      "ReindexRequestsWrittenReport": {
+        "type": "object",
+        "description": "Per-repository reindex watermarks this refinalize wrote to repository_reindex_requests in its own transaction, one per delta-active git default-branch scope (#7797). The same rows POST /api/v0/admin/reindex with scope repository writes. A git ingester's scheduled selection honors a row when it next syncs the repository, at most ESHU_REPO_RECONCILE_MAX_PER_CYCLE per cycle and subject to the in-flight and retry-backoff throttle; a webhook-only ingester honors it only for a repository a webhook triggers. A row is satisfied when a full generation ingested at or after its requested_at activates.",
+        "required": ["count", "scope_ids"],
+        "properties": {
+          "count": {"type": "integer", "description": "Exact number of scopes that got a reindex watermark."},
+          "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Up to 10 of those scope ids, ascending. Never null."}
         }
       }
     },

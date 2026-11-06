@@ -14,6 +14,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (provider-config) | `99381691b1ac49254e813e5a013cfb654d432491` (merge of `eshu-hq/eshu#9870`; mutation 5 + read 3 methods, frozen at v0) |
 | Source commit (oidc-login, github-login) | `1e03478614fc54882b9616d37ea9103ea5ada6f4` (merge of `eshu-hq/eshu#9863`; 2 + 2 service methods, frozen at v0) |
 | Source commit (saml-login) | `aac271ad78e328462dabc7518d5f7e5739bdc651` (merge of `eshu-hq/eshu#9897`; 5 store methods, frozen at v0, with the lister carve-out) |
+| Source commit (recovery) | `7c60583996d9a3ccc46288f40a38f614a4f28ea8` (merge of `eshu-hq/eshu#10245`; RecoveryAdmission v0 over RecoveryService, frozen at v0, with the replay/reopen/refinalize/recover-generations Mount; openapi admin.go + recovery components at the same commit) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -28,6 +29,7 @@ preparation only; nothing here carries cutover authority.
 | `OIDCLoginAdmissionContractVersion` | `v0` |
 | `GitHubLoginAdmissionContractVersion` | `v0` |
 | `SAMLLoginAdmissionContractVersion` | `v0` |
+| `RecoveryAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -65,6 +67,10 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/github_login_handler.go` (version, alias, `GitHubLoginService`, request/response shapes, `Mount`) + `go/cmd/api/github_login.go` (adapter, 503) at `1e034786` | `contracts/upstream/github-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/saml_login_admission_contract_test.go` at `aac271ad` | `contracts/upstream/saml_login_admission_contract_test.go` | `bc04787bd208bf07428f4a9bc4660946342c7e4f3b60121202cb7f0a070556d0` | verbatim |
 | `go/internal/query/saml_admission.go` (versions, alias) + `saml_handler.go` (`SAMLStore`, `SAMLProviderConfig`, `SAMLRequestCreateRecord`, `SAMLProviderIDLister`, `Mount`) at `aac271ad` | `contracts/upstream/saml-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/recovery_admission_contract_test.go` at `7c605839` | `contracts/upstream/recovery_admission_contract_test.go` | `50dd78f3dc9bde8fdc67d7f818e0b2fdfdeb22fa7ce62d8650c361345826af24` | verbatim |
+| `go/internal/query/admin/recovery_admission.go` (version, alias) + `handler.go` (`RecoveryService`, the four lane `Mount` lines) at `7c605839` | `contracts/upstream/recovery-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/openapi/paths/status/admin.go` (replay, reopen, refinalize, recover-generations entries only) at `7c605839` | `openapi/paths/status/admin_recovery.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim subset) | verbatim subset |
+| `go/internal/query/openapi/components.go` (`SkippedScopesReport`) + `components_recovery.go` (`DeltaActiveScopesReport`, `ReindexRequestsWrittenReport`) at `7c605839` | `openapi/components.go` (three lane schemas) | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 
