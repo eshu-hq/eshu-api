@@ -154,6 +154,47 @@ func TestLeafBGated_UnauthenticatedIs401(t *testing.T) {
 	}
 }
 
+// TestLeafBGated_JunkCookieIs401WithoutCoreContact pins the
+// auth-gate-overreach fix (eshu-api#51): a Cookie header with no
+// session-cookie-shaped credential (a junk tracking cookie) is a
+// credential-less caller — it keeps the standing dest 401 with zero
+// core contact. Only a session-named cookie relays explicitly for
+// core judgment; the companion relay cases live in
+// TestLeafBWaveRelayExplicitForUnresolvableIdentities.
+func TestLeafBGated_JunkCookieIs401WithoutCoreContact(t *testing.T) {
+	t.Parallel()
+
+	core := &stubCore{status: http.StatusOK, body: `{"ok":true}`}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
+
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	for _, cookie := range []string{
+		"tracking_id=abc123",
+		"eshu_session=",
+		"session=Bearer " + skeletonTestKey,
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v0/capabilities", nil)
+		req.Header.Set("Cookie", cookie)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Cookie %q: status = %d, want 401 (no session credential, no relay)", cookie, rec.Code)
+		}
+		if got := rec.Header().Get("WWW-Authenticate"); got != "Bearer" {
+			t.Errorf("Cookie %q: WWW-Authenticate = %q, want bare Bearer", cookie, got)
+		}
+	}
+	if core.hits != 0 {
+		t.Errorf("upstream hits = %d, want 0 (junk cookies never reach the core)", core.hits)
+	}
+}
+
 // TestLeafBGated_UnconfiguredOriginFailsClosed pins the fail-closed
 // origin on the terminated path: without a valid core origin every
 // wave-gated call answers the permanent local 503 (no Retry-After) in

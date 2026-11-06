@@ -109,6 +109,37 @@ func (s *Server) serveLeafBPublicRead(w http.ResponseWriter, r *http.Request) {
 // dest cannot resolve and dest invents no failure for it; a
 // credential-less request gets the standing dest 401 with zero core
 // contact. An empty configured key fails closed like RequireAuth.
+// Session relay stays name-matched (hasLeafBSessionCookie) until the
+// D8 session resolver lands and dest can resolve the class itself.
+// leafbSessionCookieNames are the session-cookie names core sets on
+// the browser-session credential class. The names are not secrets —
+// they are the wire contract core's Set-Cookie uses — so the gate
+// matches on name, never on value. The bare eshu_session spelling is
+// the pre-__Host name the conformance suite pins alongside the
+// current __Host- names.
+var leafbSessionCookieNames = map[string]struct{}{
+	"__Host-eshu_session": {},
+	"__Host-eshu_csrf":    {},
+	"eshu_session":        {},
+}
+
+// hasLeafBSessionCookie reports whether r carries a
+// session-cookie-shaped credential: a cookie with a session name and
+// a non-empty value. Anything else — no Cookie header, a junk
+// tracking cookie, a session-named cookie with an empty value, a
+// smuggled Bearer in a wrong-named cookie — is not a credential the
+// core could judge, so the gate treats it as credential-less. The
+// parse uses net/http cookie splitting; an unparsable Cookie header
+// yields no session cookie and fails closed below.
+func hasLeafBSessionCookie(r *http.Request) bool {
+	for _, c := range r.Cookies() {
+		if _, ok := leafbSessionCookieNames[c.Name]; ok && c.Value != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Server) leafbWaveGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.apiKey == "" {
@@ -125,7 +156,7 @@ func (s *Server) leafbWaveGate(next http.Handler) http.Handler {
 			s.leafbRelayExplicit(w, r)
 			return
 		}
-		if r.Header.Get("Cookie") != "" {
+		if hasLeafBSessionCookie(r) {
 			// A session cookie without a Bearer is a browser-session
 			// caller: relay explicitly so core judges it.
 			s.leafbRelayExplicit(w, r)

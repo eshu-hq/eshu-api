@@ -25,14 +25,20 @@ Hermetic stub-core comparison, same binary, same caller shape:
   double fetch, a retry, a body re-read) exceeds it loudly while
   scheduling noise does not.
 
-## Numbers (local, 2026-11-06)
+## Numbers (local, 2026-11-06 re-run)
 
-Shared host, in-process stub core (`go test` benchmarks, 2000x5):
+Shared host, in-process stub core (`go test` benchmarks, 2000x5).
+Re-run on 2026-11-06 via `bash scripts/measure-leafb-latency.sh`
+(eshu-api#51 evidence-overclaim follow-up: the PR description had
+quoted POST 0.98 while this doc committed 1.03 from the earlier run —
+both under budget, but the figures disagreed). The earlier run's POST
+ratio was 1.03 (GET 0.99); the fresh numbers below supersede it, and
+future quotes must cite the latest committed run.
 
 | Leg | Terminated (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| GET | 91268 | 92650 | 0.99 | ≤ 1.50 |
-| POST | 99994 | 96971 | 1.03 | ≤ 1.50 |
+| GET | 290807 | 277588 | 1.05 | ≤ 1.50 |
+| POST | 341354 | 370461 | 0.92 | ≤ 1.50 |
 
 No measurable overhead: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment

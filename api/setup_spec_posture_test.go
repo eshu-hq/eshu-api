@@ -99,6 +99,7 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 	// security marker only on the permanently-public login-picker
 	// entry. The next lane that ports another public-marked fragment
 	// revisits this test again.
+	providersMarked := false
 	for path, item := range paths {
 		rawItem, _ := json.Marshal(item)
 		if !strings.Contains(string(rawItem), `"security"`) {
@@ -106,6 +107,11 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 		}
 		if path != "/api/v0/auth/providers" {
 			t.Errorf("served spec entry %s carries a security marker, want markers only on the public login-picker entry", path)
+			continue
 		}
+		providersMarked = true
+	}
+	if !providersMarked {
+		t.Errorf("served spec entry /api/v0/auth/providers carries no security marker, want core's truthful public-route marker intact (stripping it would lie about the route's posture)")
 	}
 }
