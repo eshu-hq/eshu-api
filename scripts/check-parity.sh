@@ -127,6 +127,13 @@ check_file_at "$SRC_SHA_MAIN" "go/internal/query/openapi/paths/status/repository
   "openapi/paths/status/repository_retirement.go" \
   "d576e641f9bf9e95ea3f5e81d73b6b185ee88bb54fe9c64301524b7f801c3fef"
 
+# Native spec (Decision 5(c)): the admin-identity mutation OpenAPI
+# fragment is a byte-identical port of the pinned core file, gated here
+# like the upstream evidence above.
+check_file_at "$SRC_SHA_MAIN" "go/internal/query/openapi/paths/auth/admin_mutations.go" \
+  "openapi/paths/auth/admin_mutations.go" \
+  "c36f06548db46242940cd7f2661f22f8148706e6e554df61133031e84878f886"
+
 check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/identity/admission_contract_test.go" \
   "contracts/upstream/admin_identity_admission_contract_test.go" \
   "1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559"
@@ -231,7 +238,8 @@ check_excerpt_at "$SRC_SHA_MAIN" "contracts/upstream/retirement-wire-shapes.txt"
 
 check_excerpt_at "$SRC_SHA_MAIN" "contracts/upstream/admin-identity-wire-shapes.txt" \
   "go/internal/query/admin/identity/admission.go" \
-  "go/internal/query/admin/identity/types.go"
+  "go/internal/query/admin/identity/types.go" \
+  "go/internal/query/admin/identity/mutations.go"
 
 check_excerpt_at "$SRC_SHA_SETUP" "contracts/upstream/setup-wire-shapes.txt" \
   "go/internal/query/setup_types.go"

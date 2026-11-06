@@ -49,3 +49,93 @@ until the list is deliberately updated; bump
 `AdminIdentityAdmissionContractVersion` alongside (manually — the bump is
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
+
+## Native dispatch (tier C-b: HTTP write-through)
+
+The five admin identity mutations are the tier C-b native-dispatch
+lane: `api/adminidentity.go` registers the explicit routes inside
+`RequireAuth` ahead of the generic proxy —
+
+- `POST /api/v0/auth/local/invitations/{invite_id}/revoke`,
+- `POST /api/v0/auth/admin/role-assignments{,/revoke}`,
+- `POST /api/v0/auth/admin/idp-group-mappings`,
+- `DELETE /api/v0/auth/admin/idp-group-mappings/{mapping_ref}`
+
+— each with the AllScopes family authorizer (plus the trailing-slash
+twin on the same handler, so the family is never split across dispatch
+paths), and forwards to the same core route with method, path, query,
+headers (including the original `Authorization` header), and body
+relayed; core bytes come back unmodified and core re-judges every
+forwarded call as backstop. The family's reads stay on the generic
+relay. `TestAdminIdentityNative_AuthorizerRejectsNonAllScopes` pins the
+helper; see Scope honesty below for what is and is not live. Label the
+family native-dispatch (not native auth termination) until the dest
+scoped resolver lands.
+
+Scope honesty: dest holds the AllScopes authorizer per the dispatch
+ruling, but with no scoped/session resolver the deny branch is
+unreachable on the live routes until one lands — the live 403s on these
+routes are core's, which re-judges all-scope admin, the admin tenant
+scope (`admin tenant scope is required`), the workspace match
+(`workspace_id must match the caller's workspace`), and the
+`identity_admin` / `roles_grants` permission catalog as backstop. Core
+is the sole writer. The deny-shape test pins the contract for the
+resolver-landing day, not a live path.
+
+Idempotent-retry parity: every mutation is idempotent under retry at the
+active-row conflict keys — a revoked/accepted/expired invitation revoke,
+a reactivated grant or mapping (`changed=false`, `created=false`), and
+a missing mapping delete (`deleted=false`) are safe no-ops, while a
+stale 32-hex MD5 `mapping_ref` answers 409 (`mapping_ref is stale; list
+group mappings again and use the current ref`). Dest never retries a
+forwarded mutation (the 409 test pins exactly one upstream hit), so a
+client retry crosses core exactly once per attempt and observes core's
+idempotent outcome.
+
+Audit parity: governance audit stays core-side on forwarded requests.
+Like sign-in-policy, the in-tree identity mutation handlers at the
+provenance pin DO emit audit — `EventTypeRoleGrantChange` for
+invitation and role decisions, `EventTypeIDPConfigChange` for mapping
+decisions, for the allowed outcome and every denied outcome including
+the idempotency-conflict answers — and they emit from inside the core
+handlers that still run on every forwarded request, so write-through
+keeps every audit event core-side with no gap. Dest emits none. A
+family whose handlers emit audit must never be re-implemented dest-side
+without a versioned audit-append contract; this lane re-implements
+nothing. `scripts/check-parity.sh` gates the lane with the
+no-core-import proof (`go list -deps` over the runtime packages must
+show no `eshu-hq/eshu` import) alongside the family route, 403/503, and
+409 wire-shape excerpts.
+
+OpenAPI: native since this lane (satellite-design Decision 5(c),
+overriding the `docs/parity.md` deferral for this family). The
+mutation-only fragment moved row-for-row from the pinned core commit
+`ebaf4dfa` —
+`go/internal/query/openapi/paths/auth/admin_mutations.go` into dest
+`openapi/paths/auth/admin_mutations.go`, byte-identical (operationIds
+`revokeAdminInvitation`, `revokeAdminRoleAssignment`,
+`deleteAdminIdPGroupMapping` preserved; `scripts/check-parity.sh` gates
+the identity). Only the routes whose path keys are unique to the
+mutation surface move: the grant and create POSTs share path keys with
+the family GETs, so per the core OpenAPI convention they live in the
+reads fragment, which this lane does not port — reads stay relay. The
+fragment needs one new shared-block entry, `NotFound`, ported from
+`components_responses.go` at the same pin. The dest assembly
+(`openapi/spec.go`, extended minimal shared block in
+`openapi/components.go`) serves `GET /api/v0/openapi.json` from
+compiled constants ahead of the generic proxy — no core import, no core
+fetch, served even with no core origin configured — inside `RequireAuth`
+like every dest `/api/*` route. `TestSpec_*` pin the family section
+(with the reads-fragment split recorded), lossless assembly, and
+local-$ref resolution; `TestOpenAPINative_*` pin the served route, the
+v1 alias landing, and the key gate.
+
+Scope honesty: the dest document serves exactly the landed families
+(sign-in-policy first, this family fourth). Other families' entries are
+absent until their lanes port their fragments — this endpoint no longer
+relays core's full spec. Core serves the spec public; dest keeps it
+behind the shared key, adding no new public surface in this lane.
+
+Rollback: additive. Revert this lane's dest commit (or re-pin the prior
+digest) and the five mutations fall back to the generic byte-relay with
+the same wire contract — no core change, no migration, no flag.

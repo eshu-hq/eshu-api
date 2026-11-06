@@ -34,3 +34,13 @@ type MutationStore interface {
 	// mapping_ref, tenant-scoped. Idempotent.
 	DeleteAdminIdPGroupMapping(ctx context.Context, req IdPGroupMappingDeleteRequest) (IdPGroupMappingDeleteResult, error)
 }
+
+	mux.HandleFunc("POST /api/v0/auth/local/invitations/{invite_id}/revoke", h.handleRevokeInvitation)
+	mux.HandleFunc("POST /api/v0/auth/admin/role-assignments", h.handleGrantRoleAssignment)
+	mux.HandleFunc("POST /api/v0/auth/admin/role-assignments/revoke", h.handleRevokeRoleAssignment)
+	mux.HandleFunc("POST /api/v0/auth/admin/idp-group-mappings", h.handleCreateIdPGroupMapping)
+	mux.HandleFunc("DELETE /api/v0/auth/admin/idp-group-mappings/{mapping_ref}", h.handleDeleteIdPGroupMapping)
+		querycontract.WriteError(w, http.StatusServiceUnavailable, "admin identity mutation store is unavailable")
+		querycontract.WriteError(w, http.StatusForbidden, "all-scope admin authentication is required")
+		querycontract.WriteError(w, http.StatusForbidden, "admin tenant scope is required")
+		querycontract.WriteError(w, http.StatusConflict, "mapping_ref is stale; list group mappings again and use the current ref")
