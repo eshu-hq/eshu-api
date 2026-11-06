@@ -101,3 +101,13 @@ const GitHubLoginAdmissionContractVersion = "v0"
 // contracts/saml-login-admission.md. Route dispatch over this port
 // lands with core dispatch, not in the skeleton.
 const SAMLLoginAdmissionContractVersion = "v0"
+
+// RecoveryAdmissionContractVersion names the versioned admission port
+// for the core recovery operations (refinalize and replay-failed) the
+// admin recovery mutations admit through. It must move in lockstep
+// with the in-tree RecoveryAdmissionContractVersion; the vendored pin
+// lives in contracts/recovery-admission.md. Route dispatch over this
+// port lands with core dispatch, not in the skeleton. The replay,
+// reopen, and recover-generations routes share the already-pinned
+// ReplayLedgerAdmissionContractVersion for their claim/complete pair.
+const RecoveryAdmissionContractVersion = "v0"

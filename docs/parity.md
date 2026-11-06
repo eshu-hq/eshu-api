@@ -47,9 +47,11 @@ after the move.
   terminal-failure fragment
   (`openapi/paths/status/collector_terminal_failure_acknowledgement.go`,
   #40), the admin-identity mutation fragment
-  (`openapi/paths/auth/admin_mutations.go`, #42), and the
+  (`openapi/paths/auth/admin_mutations.go`, #42), the
   provider-config mutation fragment
-  (`openapi/paths/auth/admin_provider_config_mutations.go`, this lane)
+  (`openapi/paths/auth/admin_provider_config_mutations.go`, #46),
+  and the admin-recovery mutation fragment
+  (`openapi/paths/status/admin_recovery.go`, this lane)
   — per-family fragment moves now land in their family PRs per
   satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 

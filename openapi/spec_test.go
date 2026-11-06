@@ -253,6 +253,39 @@ func TestSpec_ServesProviderConfigFamily(t *testing.T) {
 	}
 }
 
+// TestSpec_ServesAdminRecoveryFamily pins the native-spec contract for
+// the admin recovery mutation family (satellite-design Decision 5(c)):
+// the assembled document is valid JSON and carries the four fragment
+// paths unique to the tier C-c2 lane — the replay, reopen, refinalize,
+// and recover-generations POSTs, pinned by summary (the fragment has
+// no operationIds). The relay-only four keep their own path keys and
+// stay out, so no served key duplicates a relayed route; the
+// lossless-assembly test and check-parity.sh gate the rest.
+func TestSpec_ServesAdminRecoveryFamily(t *testing.T) {
+	t.Parallel()
+
+	served := decodePaths(t, Spec())
+	for path, wantSummary := range map[string]string{
+		"/api/v0/admin/replay":              "Replay failed work items",
+		"/api/v0/admin/reopen":              "Reopen completed work items",
+		"/api/v0/admin/refinalize":          "Refinalize scopes",
+		"/api/v0/admin/recover-generations": "Recover wedged generations",
+	} {
+		item, ok := served[path].(map[string]any)
+		if !ok {
+			t.Errorf("paths lacks %s: %v", path, keys(served))
+			continue
+		}
+		op, _ := item["post"].(map[string]any)
+		if got := op["summary"]; got != wantSummary {
+			t.Errorf("%s post summary = %v, want %q", path, got, wantSummary)
+		}
+		if _, hasOpID := op["operationId"]; hasOpID {
+			t.Errorf("%s post carries operationId %v, want none (the pinned fragment has none)", path, op["operationId"])
+		}
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
 // family path objects equal the ported fragments' parsed path objects, so
 // the only reviewed delta to the pinned core fragments is the fragment files
@@ -284,6 +317,10 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/auth/admin/provider-configs/{provider_config_id}/enable",
 		"/api/v0/auth/admin/provider-configs/{provider_config_id}/disable",
 		"/api/v0/auth/admin/provider-configs/{provider_config_id}/test-connection",
+		"/api/v0/admin/replay",
+		"/api/v0/admin/reopen",
+		"/api/v0/admin/refinalize",
+		"/api/v0/admin/recover-generations",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -307,6 +344,8 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // fragment; NotFound for the admin-identity mutations fragment;
 // AdminAuditCountList for the admin-identity reads fragment; NotFound
 // and AdminProviderConfigWriteResult for the provider-config fragment;
+// SkippedScopesReport, DeltaActiveScopesReport, and
+// ReindexRequestsWrittenReport for the admin-recovery fragment;
 // AdminSignInPolicy schemas for the sign-in-policy family).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
@@ -389,8 +428,9 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 // TestSpec_VersionPinned pins the native-spec contract version: v0 serves
 // exactly the families whose fragments have landed (sign-in-policy first,
 // retirement second, terminal-failure third, admin-identity mutations
-// fourth, admin-identity reads fifth, provider-config sixth). It
-// advances as family lanes port their fragments.
+// fourth, admin-identity reads fifth, provider-config sixth,
+// admin-recovery seventh). It advances as family lanes port their
+// fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 

@@ -119,6 +119,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/saml-login-admission.md", "SAMLLoginAdmissionContractVersion"); got != SAMLLoginAdmissionContractVersion {
 		t.Errorf("contracts/saml-login-admission.md pins %q, constant is %q: move them in the same diff", got, SAMLLoginAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/recovery-admission.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
+		t.Errorf("contracts/recovery-admission.md pins %q, constant is %q: move them in the same diff", got, RecoveryAdmissionContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
 		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
 	}
@@ -167,6 +170,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "SAMLLoginAdmissionContractVersion"); got != SAMLLoginAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins SAML login %q, constant is %q: record the new pin before consuming it", got, SAMLLoginAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins recovery %q, constant is %q: record the new pin before consuming it", got, RecoveryAdmissionContractVersion)
+	}
 }
 
 // TestHealthReportsPinnedContractVersions pins the /health version
@@ -197,6 +203,7 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
 		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
 		"saml_login_admission_contracts":               SAMLLoginAdmissionContractVersion,
+		"recovery_admission_contracts":                 RecoveryAdmissionContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {

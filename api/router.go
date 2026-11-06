@@ -83,6 +83,7 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 		"suppression_admission_contracts":              SuppressionAdmissionContractVersion,
 		"terminal_failure_admission_contracts":         TerminalFailureAdmissionContractVersion,
 		"replay_ledger_admission_contracts":            ReplayLedgerAdmissionContractVersion,
+		"recovery_admission_contracts":                 RecoveryAdmissionContractVersion,
 		"sign_in_policy_admission_contracts":           SignInPolicyAdmissionContractVersion,
 		"retirement_admission_contracts":               RetirementAdmissionContractVersion,
 		"admin_identity_admission_contracts":           AdminIdentityAdmissionContractVersion,
@@ -184,6 +185,18 @@ func (s *Server) routes() *http.ServeMux {
 	for _, route := range providerConfigRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.providerConfigWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.providerConfigWriteThrough))))
+	}
+	// Native dispatch, AdminRecoveryMutations (tier C-c2): the four
+	// admin recovery mutation routes have their explicit per-family
+	// routes with the AllScopes authorizer, ahead of the generic proxy.
+	// Each trailing-slash spelling stays on the native route for the
+	// same never-split reason; the relay-only four (backfill,
+	// dead-letter, reindex, skip) and the family's reads stay on the
+	// generic relay — they have no admission pin and nobody infers them
+	// into this lane.
+	for _, route := range recoveryRoutes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 	}
 	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
 	// terminal-failure, admin-identity, and provider-config fragments
