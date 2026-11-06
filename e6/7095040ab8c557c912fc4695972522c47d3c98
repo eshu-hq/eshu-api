@@ -1,0 +1,94 @@
+.github/workflows/read-latency.yml
+  h_78a442cba0b3e6 1-56
+api/doc.go
+  h_78a442cba0b3e6 4-7
+api/instrument.go
+  h_78a442cba0b3e6 95-99,101,103
+api/leafb_conformance_test.go
+  h_78a442cba0b3e6 1-231
+api/leafb_families_auth_test.go
+  h_78a442cba0b3e6 1-258
+api/leafb_families_parity_test.go
+  h_78a442cba0b3e6 1-203
+api/leafb_latency_test.go
+  h_78a442cba0b3e6 1-93
+api/leafb_openapi_test.go
+  h_78a442cba0b3e6 1-85
+api/leafb_public_test.go
+  h_78a442cba0b3e6 1-184
+api/leafb_terminate.go
+  h_78a442cba0b3e6 1-214
+api/leafb_wave.go
+  h_78a442cba0b3e6 1-79
+api/router.go
+  h_78a442cba0b3e6 205-249
+api/setup_spec_posture_test.go
+  h_78a442cba0b3e6 91-109
+api/telemetry_test.go
+  h_78a442cba0b3e6 125-126,153
+contracts/leafb-native-now.md
+  h_78a442cba0b3e6 1-96
+docs/leafb-latency.md
+  h_78a442cba0b3e6 1-41
+docs/parity.md
+  h_78a442cba0b3e6 66-73,77-89
+docs/provenance.md
+  h_78a442cba0b3e6 19,87-99
+docs/telemetry.md
+  h_78a442cba0b3e6 22,50-57
+openapi/components.go
+  h_78a442cba0b3e6 40-48,77-120,253-268
+openapi/doc.go
+  h_78a442cba0b3e6 8-12
+openapi/paths/auth/admin_provider_config_reads.go
+  h_78a442cba0b3e6 1-184
+openapi/paths/auth/auth_providers.go
+  h_78a442cba0b3e6 1-93
+openapi/paths/auth/doc.go
+  h_78a442cba0b3e6 12,15-20
+openapi/paths/catalog/capabilities.go
+  h_78a442cba0b3e6 1-184
+openapi/paths/catalog/doc.go
+  h_78a442cba0b3e6 1-13
+openapi/paths/cli/capture.go
+  h_78a442cba0b3e6 1-62
+openapi/paths/cli/compose.go
+  h_78a442cba0b3e6 1-49
+openapi/paths/cli/doc.go
+  h_78a442cba0b3e6 1-15
+openapi/paths/cli/render.go
+  h_78a442cba0b3e6 1-49
+openapi/paths/cli/score.go
+  h_78a442cba0b3e6 1-49
+openapi/paths/cli/validate.go
+  h_78a442cba0b3e6 1-47
+openapi/paths/search/ask.go
+  h_78a442cba0b3e6 1-156
+openapi/paths/search/doc.go
+  h_78a442cba0b3e6 1-13
+openapi/paths/service/doc.go
+  h_78a442cba0b3e6 1-14
+openapi/paths/service/intelligence_report.go
+  h_78a442cba0b3e6 1-74
+openapi/paths/status/api_router_openapi.go
+  h_78a442cba0b3e6 1-35
+openapi/spec.go
+  h_78a442cba0b3e6 11-14,23-26,39,68-71,80-91
+openapi/spec_leafb_test.go
+  h_78a442cba0b3e6 1-130
+scripts/check-parity.sh
+  h_78a442cba0b3e6 24,377-519
+scripts/measure-leafb-latency.sh
+  h_78a442cba0b3e6 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e67095040ab8c557c912fc4695972522c47d3c98",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
