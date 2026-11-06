@@ -1,0 +1,40 @@
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 1-40,88-130,132-148,152-155
+api/retirement.go
+  h_78a442cba0b3e6 1-59,61-72
+api/retirement_dispatch_test.go
+  h_78a442cba0b3e6 1-425
+api/router.go
+  h_78a442cba0b3e6 9-10,136-140,145-151
+contracts/retirement-admission.md
+  h_78a442cba0b3e6 45-103
+contracts/upstream/retirement-wire-shapes.txt
+  h_78a442cba0b3e6 22-25
+docs/parity.md
+  h_78a442cba0b3e6 43
+openapi/components.go
+  h_78a442cba0b3e6 1-8,11,15-21,49-110
+openapi/doc.go
+  h_78a442cba0b3e6 1-6,10-12
+openapi/paths/status/doc.go
+  h_78a442cba0b3e6 1-13
+openapi/paths/status/repository_retirement.go
+  h_78a442cba0b3e6 1-44
+openapi/spec.go
+  h_78a442cba0b3e6 1-9,11-15,18-27,29-44,46-53,57,60-82
+openapi/spec_test.go
+  h_78a442cba0b3e6 1-14,52-82,86-91,108-192,195-210,217-246,257
+scripts/check-parity.sh
+  h_78a442cba0b3e6 116-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59c6cf90b7473a8948dbfa718c0da7897b294cd3",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
