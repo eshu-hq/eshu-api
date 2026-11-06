@@ -1,0 +1,22 @@
+openapi/components.go
+  h_78a442cba0b3e6 17-19,66-76
+openapi/paths/auth/admin_reads.go
+  h_78a442cba0b3e6 1-414
+openapi/spec.go
+  h_78a442cba0b3e6 16,19,62,64
+openapi/spec_test.go
+  h_78a442cba0b3e6 138-147,183-194,196-209,230-236,259
+scripts/check-parity.sh
+  h_78a442cba0b3e6 137-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5ee1e31285be683fef42ab53514ce13e4530b5b4",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
