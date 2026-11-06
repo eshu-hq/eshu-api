@@ -1,0 +1,14 @@
+openapi/spec_d4_test.go
+  h_78a442cba0b3e6 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f2de8bffa40892e116aa7e9c027ea4bd944386d",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
