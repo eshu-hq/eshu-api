@@ -49,3 +49,49 @@ until the list is deliberately updated; bump
 `SignInPolicyAdmissionContractVersion` alongside (manually — the bump is
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
+
+## Native dispatch (tier C-a: HTTP write-through)
+
+The admin sign-in policy PATCH is the tier C-a native-dispatch lane:
+`api/signin.go` registers the explicit route inside `RequireAuth` ahead
+of the generic proxy and forwards to the same core route with method,
+path, query, headers (including the original `Authorization` header),
+and body relayed; core bytes come back unmodified and core re-judges
+every forwarded call as backstop. Dest holds the AllScopes family
+authorizer on the route
+(`TestSignInPolicyNative_AuthorizerRejectsNonAllScopes` pins the
+helper); see Scope honesty below for what is and is not live. Label the
+family native-dispatch (not native auth termination) until the dest
+scoped resolver lands.
+
+Scope honesty: dest holds the AllScopes authorizer per the dispatch
+ruling, but with no scoped/session resolver the deny branch is
+unreachable on the live route until one lands — the live 403s on this
+route are core's, which re-judges all-scope admin, admin tenant scope,
+and the `identity_admin.sign_in_policy_update` permission catalog as
+backstop. Core is the sole writer. The deny-shape test pins the
+contract for the resolver-landing day, not a live path.
+
+Audit parity: governance audit stays core-side on forwarded requests.
+Unlike suppression, the in-tree sign-in mutation handler at the
+provenance pin DOES emit audit — `EventTypeIDPConfigChange` for the
+allowed outcome and for every denied outcome, including guardrail
+rejections — and it emits from inside the core handler that still runs
+on every forwarded request, so write-through keeps every audit event
+core-side with no gap. Dest emits none. A family whose handler emits
+audit must never be re-implemented dest-side without a versioned
+audit-append contract; this lane re-implements nothing.
+`scripts/check-parity.sh` gates the lane with the no-core-import proof
+(`go list -deps` over the runtime packages must show no `eshu-hq/eshu`
+import) alongside the family-403/store-503 wire-shape excerpt.
+
+OpenAPI: the fragment move (`paths/auth/sign_in_policy.go` per the
+ownership map) is deferred per `docs/parity.md` — fragments move
+row-for-row in the follow-up extraction PR, and this seed carries only
+the versioned seam. The route is native-dispatch; the spec fragment is
+still served from core until that PR. A spec still served by relay is
+not native.
+
+Rollback: additive. Revert this lane's dest commit (or re-pin the prior
+digest) and the PATCH falls back to the generic byte-relay with the
+same wire contract — no core change, no migration, no flag.

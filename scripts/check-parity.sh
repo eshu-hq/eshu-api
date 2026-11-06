@@ -175,7 +175,8 @@ check_excerpt "contracts/upstream/replay-ledger-wire-shapes.txt" \
   "go/internal/query/admin/acknowledgement/handler.go"
 
 check_excerpt "contracts/upstream/sign-in-wire-shapes.txt" \
-  "go/internal/query/sign_in_policy_types.go"
+  "go/internal/query/sign_in_policy_types.go" \
+  "go/internal/query/sign_in_policy_mutations.go"
 
 check_excerpt_at() {
   local sha="$1" dest_rel="$2"

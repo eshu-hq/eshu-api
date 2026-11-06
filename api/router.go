@@ -123,6 +123,14 @@ func (s *Server) routes() *http.ServeMux {
 	// exact path and decides; dest keeps both spellings on the native
 	// route so the family is never split across dispatch paths).
 	mux.Handle(suppressionRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
+	// Native dispatch, SignInPolicyMutations (tier C-a): the admin
+	// sign-in policy PATCH has its explicit per-family route with the
+	// AllScopes authorizer, ahead of the generic proxy. The trailing
+	// slash stays on the native route for the same never-split reason;
+	// the family's GETs and every other family still cross the
+	// byte-relay below.
+	mux.Handle(signInPolicyRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
+	mux.Handle(signInPolicyRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
 	mux.Handle("/api/", s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch))))
 	return mux
 }

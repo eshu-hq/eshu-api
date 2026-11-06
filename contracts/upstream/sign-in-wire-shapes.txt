@@ -22,3 +22,15 @@ const SignInPolicyAdmissionContractVersion = "v0"
 // narrow mutation store so existing fakes and the core-owned Postgres
 // implementation keep satisfying it unchanged.
 type SignInPolicyAdmission = SignInPolicyMutationStore
+
+	mux.HandleFunc("PATCH /api/v0/auth/admin/sign-in-policy", h.handleUpdate)
+	authCtx, found := AuthContextFromContext(r.Context())
+	authCtx = normalizeAuthContext(authCtx)
+	if !found || !authCtx.AllScopes {
+		WriteError(w, http.StatusForbidden, "all-scope admin authentication is required")
+		return "", false
+	}
+	if h == nil || h.Store == nil {
+		WriteError(w, http.StatusServiceUnavailable, "sign-in policy store is unavailable")
+		return false
+	}
