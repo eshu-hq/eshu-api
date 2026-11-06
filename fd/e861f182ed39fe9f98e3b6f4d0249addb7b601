@@ -1,0 +1,16 @@
+api/setup_spec_posture_test.go
+  h_78a442cba0b3e6 1-94
+contracts/setup-admission.md
+  h_78a442cba0b3e6 141-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fde861f182ed39fe9f98e3b6f4d0249addb7b601",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
