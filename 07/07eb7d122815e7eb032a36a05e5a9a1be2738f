@@ -1,0 +1,27 @@
+api/router.go
+  h_78a442cba0b3e6 111-116,164-174
+api/setup_resilience_test.go
+  h_78a442cba0b3e6 1-252
+  h_78a442cba0b3e6 253-443
+api/family.go
+  h_78a442cba0b3e6 67
+api/setup.go
+  h_78a442cba0b3e6 1-68
+api/telemetry_test.go
+  h_78a442cba0b3e6 36-38
+contracts/setup-admission.md
+  h_78a442cba0b3e6 57-150
+api/setup_dispatch_test.go
+  h_78a442cba0b3e6 1-316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0707eb7d122815e7eb032a36a05e5a9a1be2738f",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
