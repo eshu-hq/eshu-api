@@ -39,3 +39,15 @@ authorizer call around the same single fetch. Absolute deployment
 numbers against a pinned core image ride flip prep (D11); this gate
 runs hermetically on every PR and in CI
 (`.github/workflows/read-latency.yml`).
+
+## Variance note
+
+Repeated runs on this shared host spread widely (GET ratios
+0.55–1.09, POST ratios 0.28–2.74 across three runs; one POST run
+exceeded the budget). The host carried load average 30.8 on 12 cores
+during the runs with a sibling agent's lint running concurrently, and
+the relay leg itself swung 94k–346k ns/op while the terminated leg
+stayed 86k–389k. Both legs do exactly one server-side fetch (pinned
+by the `hits == 1` assertions in the parity suite), so the spread is
+scheduling noise, not lane pathology. CI's clean runner is the
+enforcement point for the 1.50 gate.
