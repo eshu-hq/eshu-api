@@ -81,6 +81,10 @@ func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 		"oidc_login_admission_contracts",
 		"github_login_admission_contracts",
 		"saml_login_admission_contracts",
+		"admin_read_admission_contracts",
+		"admin_identity_read_admission_contracts",
+		"governance_audit_read_admission_contracts",
+		"terminal_failure_read_admission_contracts",
 	} {
 		if health[key] != "v0" {
 			t.Errorf("/health %s = %q, want the pinned v0 version", key, health[key])

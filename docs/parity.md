@@ -19,7 +19,14 @@ after the move.
 
 - Read families (all 228 `read` rows): consumers of the versioned core
   read contracts recorded in `contracts/core-read-contracts.md`. No
-  durable writes travel with them.
+  durable writes travel with them. The D1 read-admission pins (Admin,
+  AdminIdentity, GovernanceAudit, and TerminalFailure reads, Refs
+  `eshu-hq/eshu#9669`) are recorded in
+  `contracts/admin-read-admission.md`,
+  `contracts/admin-identity-admission.md`,
+  `contracts/governance-audit-read-admission.md`, and
+  `contracts/terminal-failure-admission.md`; the reads stay on the
+  generic relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
   admission contract; the versioned in-tree seams are the suppression,
@@ -35,8 +42,9 @@ after the move.
   `contracts/setup-admission.md`,
   `contracts/provider-config-admission.md`,
   `contracts/oidc-login-admission.md`,
-  `contracts/github-login-admission.md`, and
-  `contracts/saml-login-admission.md`.
+  `contracts/github-login-admission.md`,
+  `contracts/saml-login-admission.md`, and
+  `contracts/recovery-admission.md`.
 - OpenAPI contract fragments and the `api/` server, router, auth, v1
   alias, and deprecation middleware: move in the follow-up extraction
   PR, reviewed row-for-row against the ownership map. This seed carries

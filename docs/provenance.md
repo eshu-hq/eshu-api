@@ -15,6 +15,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (oidc-login, github-login) | `1e03478614fc54882b9616d37ea9103ea5ada6f4` (merge of `eshu-hq/eshu#9863`; 2 + 2 service methods, frozen at v0) |
 | Source commit (saml-login) | `aac271ad78e328462dabc7518d5f7e5739bdc651` (merge of `eshu-hq/eshu#9897`; 5 store methods, frozen at v0, with the lister carve-out) |
 | Source commit (recovery) | `7c60583996d9a3ccc46288f40a38f614a4f28ea8` (merge of `eshu-hq/eshu#10245`; RecoveryAdmission v0 over RecoveryService, frozen at v0, with the replay/reopen/refinalize/recover-generations Mount; openapi admin.go + recovery components at the same commit) |
+| Source commit (D1 read pins) | `2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923` (merge of `eshu-hq/eshu#10259`; Admin, AdminIdentity, GovernanceAudit, and TerminalFailure read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -30,6 +31,10 @@ preparation only; nothing here carries cutover authority.
 | `GitHubLoginAdmissionContractVersion` | `v0` |
 | `SAMLLoginAdmissionContractVersion` | `v0` |
 | `RecoveryAdmissionContractVersion` | `v0` |
+| `AdminReadAdmissionContractVersion` | `v0` |
+| `AdminIdentityReadAdmissionContractVersion` | `v0` |
+| `GovernanceAuditReadAdmissionContractVersion` | `v0` |
+| `TerminalFailureReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -69,6 +74,13 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/saml_admission.go` (versions, alias) + `saml_handler.go` (`SAMLStore`, `SAMLProviderConfig`, `SAMLRequestCreateRecord`, `SAMLProviderIDLister`, `Mount`) at `aac271ad` | `contracts/upstream/saml-login-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/admin/recovery_admission_contract_test.go` at `7c605839` | `contracts/upstream/recovery_admission_contract_test.go` | `50dd78f3dc9bde8fdc67d7f818e0b2fdfdeb22fa7ce62d8650c361345826af24` | verbatim |
 | `go/internal/query/admin/recovery_admission.go` (version, alias) + `handler.go` (`RecoveryService`, the four lane `Mount` lines) at `7c605839` | `contracts/upstream/recovery-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/read_admission_contract_test.go` at `2c89a9d8` | `contracts/upstream/admin_read_admission_contract_test.go` | `51148149f97cd6613f6d7349d4f6dbb02ca55de9bf00e23cfcf410491cfe6784` | verbatim |
+| `go/internal/query/admin/read_admission.go` (version, alias) + `handler.go` (`ReadStore`) at `2c89a9d8` | `contracts/upstream/admin-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/identity/read_admission_contract_test.go` at `2c89a9d8` | `contracts/upstream/admin_identity_read_admission_contract_test.go` | `50e02d231061f28f261670bddeacec828e0e01f43269ab4cf9ed6045c217011f` | verbatim |
+| `go/internal/query/admin/identity/governance_audit_read_admission_contract_test.go` at `2c89a9d8` | `contracts/upstream/governance_audit_read_admission_contract_test.go` | `b6b033cfdbdaf9cb788b1e7354e199caeda5b1604c7230e0b58caf97b3b2aef5` | verbatim |
+| `go/internal/query/admin/identity/read_admission.go` (version, alias) + `governance_audit_read_admission.go` (version, alias) + `types.go` (`ReadStore`, `GovernanceAuditReader`) at `2c89a9d8` | `contracts/upstream/admin-identity-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/acknowledgement/terminal_failure_read_admission_contract_test.go` at `2c89a9d8` | `contracts/upstream/terminal_failure_read_admission_contract_test.go` | `c0e86ef4e90ff24e6756f27bd870675782baeeeb9b1c37f9e0551e0cb035f51a` | verbatim |
+| `go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go` (version, alias, `TerminalFailureReader`) at `2c89a9d8` | `contracts/upstream/terminal-failure-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/admin.go` (replay, reopen, refinalize, recover-generations entries only) at `7c605839` | `openapi/paths/status/admin_recovery.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim subset) | verbatim subset |
 | `go/internal/query/openapi/components.go` (`SkippedScopesReport`) + `components_recovery.go` (`DeltaActiveScopesReport`, `ReindexRequestsWrittenReport`) at `7c605839` | `openapi/components.go` (three lane schemas) | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
