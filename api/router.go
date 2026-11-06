@@ -140,15 +140,22 @@ func (s *Server) routes() *http.ServeMux {
 	// every other family still crosses the byte-relay below.
 	mux.Handle(retirementRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
 	mux.Handle(retirementRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
-	// Native spec (Decision 5(c)): the sign-in-policy and retirement
-	// fragments landed in
-	// openapi/, so the assembled document is served from compiled
-	// constants ahead of the generic proxy — no core fetch, served even
-	// with no core origin configured. It stays inside RequireAuth like
-	// every dest /api/* route (core serves it public; dest adds no new
-	// public surface here). The document serves exactly the landed
-	// families; the rest still relay from core only via their own routes,
-	// not via this endpoint.
+	// Native dispatch, AdminTerminalFailure (tier C-a): the operator
+	// collector-failure acknowledgement POST has its explicit per-family
+	// route with the AllScopes authorizer, ahead of the generic proxy.
+	// The trailing slash stays on the native route for the same
+	// never-split reason; the family's query reads and every other
+	// family still cross the byte-relay below.
+	mux.Handle(terminalFailureRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
+	mux.Handle(terminalFailureRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
+	// Native spec (Decision 5(c)): the sign-in-policy, retirement, and
+	// terminal-failure fragments landed in openapi/, so the assembled
+	// document is served from compiled constants ahead of the generic
+	// proxy — no core fetch, served even with no core origin configured.
+	// It stays inside RequireAuth like every dest /api/* route (core
+	// serves it public; dest adds no new public surface here). The
+	// document serves exactly the landed families; the rest still relay
+	// from core only via their own routes, not via this endpoint.
 	mux.Handle("GET /api/v0/openapi.json", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(openapi.ServeSpec))))
 	mux.Handle("/api/", s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch))))
 	return mux

@@ -3,11 +3,15 @@
 
 // Package status holds the ported OpenAPI path fragments for the
 // admin-retirement family: POST /api/v0/admin/repository-retirements
-// (RepositoryRetirement).
+// (RepositoryRetirement); and the terminal-failure family: the
+// acknowledgement POST and its two query POSTs under
+// /api/v0/admin/collector-failures/...
+// (CollectorTerminalFailureAcknowledgement).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other
-// way around. The fragment file is a byte-identical port of the pinned
-// core source (see scripts/check-parity.sh); keep it in lockstep with
-// the handler and contracts/retirement-admission.md.
+// way around. Each fragment file is a byte-identical port of the pinned
+// core source (see scripts/check-parity.sh); keep fragments in lockstep
+// with their handlers and contracts/retirement-admission.md and
+// contracts/terminal-failure-admission.md.
 package status

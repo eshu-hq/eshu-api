@@ -92,6 +92,13 @@ check_file "go/internal/query/openapi/paths/auth/sign_in_policy.go" \
   "openapi/paths/auth/sign_in_policy.go" \
   "8e158762038a0d5e1719b1b75e865b80962be88a92e69872453fc300e0174cf3"
 
+# Native spec (Decision 5(c)): the terminal-failure OpenAPI fragment is a
+# byte-identical port of the pinned core file, gated here like the
+# upstream evidence above.
+check_file "go/internal/query/openapi/paths/status/collector_terminal_failure_acknowledgement.go" \
+  "openapi/paths/status/collector_terminal_failure_acknowledgement.go" \
+  "238401aab7e91208d466cd897beb7257d2be8f845ee4cc5025e35b15746e0121"
+
 check_file_at() {
   local sha="$1" src_path="$2" dest_rel="$3" want_hash="$4"
   local fetched

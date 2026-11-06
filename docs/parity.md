@@ -41,11 +41,13 @@ after the move.
   alias, and deprecation middleware: move in the follow-up extraction
   PR, reviewed row-for-row against the ownership map. This seed carries
   only the versioned seams, not the fragments. Landed since: the
-  sign-in-policy fragment (`openapi/paths/auth/sign_in_policy.go`,
-  #38) and the retirement fragment
-  (`openapi/paths/status/repository_retirement.go`, this lane) —
-  per-family fragment moves now land in their family PRs per
-  satellite-design Decision 5(c) on eshu-hq/eshu#9669.
+  sign-in-policy fragment (`openapi/paths/auth/sign_in_policy.go`, #38),
+  the retirement fragment
+  (`openapi/paths/status/repository_retirement.go`, #39), and the
+  terminal-failure fragment
+  (`openapi/paths/status/collector_terminal_failure_acknowledgement.go`,
+  this lane) — per-family fragment moves now land in their family PRs
+  per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
 ## What stays in the core
 

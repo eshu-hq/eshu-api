@@ -79,6 +79,48 @@ func TestSpec_ServesRetirementFamily(t *testing.T) {
 	}
 }
 
+// TestSpec_ServesTerminalFailureFamily pins the native-spec contract for
+// the terminal-failure family (satellite-design Decision 5(c)): the
+// assembled document is valid JSON and carries all three family paths —
+// the acknowledge POST and its two query POSTs. The pinned core fragment
+// carries no operationId entries (unlike the sign-in-policy fragment),
+// so this test pins the family paths by their summaries; the byte-identity
+// gate in scripts/check-parity.sh is what keeps the fragment lossless,
+// and TestSpec_FamilySectionMatchesFragment pins that the served paths
+// equal the ported fragment.
+func TestSpec_ServesTerminalFailureFamily(t *testing.T) {
+	t.Parallel()
+
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(Spec()), &doc); err != nil {
+		t.Fatalf("Spec() is not valid JSON: %v", err)
+	}
+
+	paths, ok := doc["paths"].(map[string]any)
+	if !ok {
+		t.Fatalf("Spec() paths = %T, want object", doc["paths"])
+	}
+
+	for path, wantSummary := range map[string]string{
+		"/api/v0/admin/collector-failures/acknowledge":            "Acknowledge a collector terminal failure",
+		"/api/v0/admin/collector-failures/acknowledgements/query": "List collector terminal failure acknowledgements",
+		"/api/v0/admin/collector-failures/query":                  "List the failed scopes of one collector instance",
+	} {
+		item, ok := paths[path].(map[string]any)
+		if !ok {
+			t.Errorf("paths lacks %s: %v", path, keys(paths))
+			continue
+		}
+		op, _ := item["post"].(map[string]any)
+		if got := op["summary"]; got != wantSummary {
+			t.Errorf("%s post summary = %v, want %q", path, got, wantSummary)
+		}
+		if _, hasOpID := op["operationId"]; hasOpID {
+			t.Errorf("%s post carries operationId %v, want none (the pinned fragment has none)", path, op["operationId"])
+		}
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
 // family path objects equal the ported fragments' parsed path objects, so
 // the only reviewed delta to the pinned core fragments is the fragment files
@@ -93,6 +135,9 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/auth/sign-in-policy",
 		"/api/v0/auth/admin/sign-in-policy",
 		"/api/v0/admin/repository-retirements",
+		"/api/v0/admin/collector-failures/acknowledge",
+		"/api/v0/admin/collector-failures/acknowledgements/query",
+		"/api/v0/admin/collector-failures/query",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -108,9 +153,12 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 	}
 }
 
-// TestSpec_LocalRefsResolve pins that every local $ref the family fragment
-// emits resolves inside the served document: the minimal components block
-// must carry every schema and response the fragment names.
+// TestSpec_LocalRefsResolve pins that every local $ref the family
+// fragments emit resolves inside the served document: the minimal
+// components block must carry every schema and response the fragments
+// name (ErrorResponse plus BadRequest, Forbidden, Conflict,
+// InternalError, and ServiceUnavailable for the terminal-failure
+// fragment; AdminSignInPolicy schemas for the sign-in-policy family).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
 
@@ -191,7 +239,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 
 // TestSpec_VersionPinned pins the native-spec contract version: v0 serves
 // exactly the families whose fragments have landed (sign-in-policy first,
-// retirement second). It advances as family lanes port their fragments.
+// retirement second, terminal-failure third). It advances as family lanes
+// port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 
