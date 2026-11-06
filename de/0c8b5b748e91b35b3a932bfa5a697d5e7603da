@@ -1,0 +1,50 @@
+api/router.go
+  h_78a442cba0b3e6 96-100
+api/router_test.go
+  h_78a442cba0b3e6 84-87
+api/version.go
+  h_78a442cba0b3e6 114-148
+api/version_test.go
+  h_78a442cba0b3e6 125-136,188-199,231-234
+contracts/admin-identity-admission.md
+  h_78a442cba0b3e6 28-50,75-76
+contracts/admin-read-admission.md
+  h_78a442cba0b3e6 1-45
+contracts/governance-audit-read-admission.md
+  h_78a442cba0b3e6 1-47
+contracts/terminal-failure-admission.md
+  h_78a442cba0b3e6 27-49,70-71
+contracts/upstream/admin-identity-read-wire-shapes.txt
+  h_78a442cba0b3e6 1-102
+contracts/upstream/admin-read-wire-shapes.txt
+  h_78a442cba0b3e6 1-44
+contracts/upstream/admin_identity_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-68
+contracts/upstream/admin_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-69
+contracts/upstream/governance_audit_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-65
+contracts/upstream/terminal-failure-read-wire-shapes.txt
+  h_78a442cba0b3e6 1-41
+contracts/upstream/terminal_failure_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-63
+docs/parity.md
+  h_78a442cba0b3e6 22-29,45-47
+docs/provenance.md
+  h_78a442cba0b3e6 18,34-37,77-83
+docs/skeleton.md
+  h_78a442cba0b3e6 15,18-20
+scripts/check-parity.sh
+  h_78a442cba0b3e6 22,320-337,480-491,507-510
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de0c8b5b748e91b35b3a932bfa5a697d5e7603da",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
