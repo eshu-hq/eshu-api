@@ -1,0 +1,14 @@
+docs/d3-latency.md
+  h_78a442cba0b3e6 42-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "384e4723f480db030cf1fe4dc87e0960b36de12f",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
