@@ -1,0 +1,56 @@
+# eshu-api Leaf B read-latency gate (Refs eshu-hq/eshu#9669, part of
+# eshu-hq/eshu#6707).
+#
+# Owns the read-latency comparison the destination census assigns the
+# satellite: the terminated Native-now wave must not regress past 1.50x
+# of the generic byte-relay on the hermetic stub-core legs
+# (scripts/measure-leafb-latency.sh). The pinned-core-image leg against
+# a real deployment rides flip prep (D11); this gate runs hermetically
+# on every lane-affecting PR, on main pushes, and weekly.
+#
+# Pinned actions (re-verify with git ls-remote when auditing):
+#   actions/checkout v7.0.1              3d3c42e5aac5ba805825da76410c181273ba90b1
+# The Go toolchain comes from the runner with the go.mod toolchain
+# directive resolving the version; no third-party setup action is
+# introduced for one hermetic script.
+
+name: read-latency
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'internal/**'
+      - 'cmd/**'
+      - 'openapi/**'
+      - 'go.mod'
+      - 'scripts/measure-leafb-latency.sh'
+      - '.github/workflows/read-latency.yml'
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # weekly Monday 06:00 UTC, with govulncheck/gosec
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  read-latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Leaf B terminated-vs-relay latency
+        run: |
+          bash scripts/measure-leafb-latency.sh 2>&1 | tee latency.log
+          {
+            echo "## Leaf B latency (stub-core, median ns/op)"
+            echo '```'
+            cat latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

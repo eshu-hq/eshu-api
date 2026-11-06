@@ -202,6 +202,51 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 	}
+	// D2 Leaf B Native-now termination (Refs eshu-hq/eshu#9669): the
+	// 12 wave-gated reads register explicitly inside the wave gate,
+	// ahead of the generic proxy. A valid shared key terminates on the
+	// native lane; a foreign credential class (scoped token, OIDC
+	// bearer, session cookie) relays explicitly on the relay lane so
+	// core judges it; credential-less callers get the standing 401.
+	// Each trailing-slash spelling stays on the wave route for the same
+	// never-split reason. The family's mutations and every other family
+	// still cross their existing lanes.
+	for _, entry := range leafbWave {
+		if entry.Serve != leafbServeGated {
+			continue
+		}
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.leafbWaveGate(http.HandlerFunc(s.serveLeafBTerminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
+	// D2 wave-public carve-out (core-public parity): the four routes
+	// core serves pre-auth register explicitly OUTSIDE any gate, ahead
+	// of the generic proxy. Docs and redoc serve compiled shells with
+	// no core fetch; the login-picker data reads forward whatever
+	// credential arrived (or none) and relay core bytes on the native
+	// lane. Each trailing-slash spelling stays on the carve-out for
+	// the same never-split reason (the static shells answer the slash
+	// spelling dest-side while core 404s it — disclosed in
+	// contracts/leafb-native-now.md). No other /api/* route leaves the
+	// gate in this lane: the carve-out is exactly these four.
+	for _, entry := range leafbWave {
+		if entry.Serve != leafbServePublic {
+			continue
+		}
+		var public http.Handler
+		switch entry.Path {
+		case "/api/v0/docs":
+			public = s.instrumented(viaNative, serveLeafBDocUI(leafbSwaggerUIShell))
+		case "/api/v0/redoc":
+			public = s.instrumented(viaNative, serveLeafBDocUI(leafbReDocShell))
+		default:
+			public = s.instrumented(viaNative, http.HandlerFunc(s.serveLeafBPublicRead))
+		}
+		pattern := entry.Method + " " + entry.Path
+		mux.Handle(pattern, public)
+		mux.Handle(pattern+"/", public)
+	}
 	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
 	// terminal-failure, admin-identity, and provider-config fragments
 	// landed in openapi/, so the assembled document is served from

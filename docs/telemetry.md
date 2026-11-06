@@ -19,7 +19,7 @@ cardinality is bounded by (families x classes x lanes x outcomes).
 | `eshu_api_request_duration_seconds` | `family` | Dest-side latency per family (end to end). |
 | `eshu_api_dispatch_total` | `family`, `via` (`native`, `relay`), `outcome` | Which lane served it, and what happened: `core_ok`, `core_503`, `core_retryable_503`, `local_503`, `denied`. |
 | `eshu_api_core_latency_seconds` | `family`, `via` | Core-side latency. Compare with the request duration to split core-slow from dest-slow. |
-| `eshu_api_authorizer_total` | `family`, `decision` (`allow`, `deny`) | Family authorizer judgments. The suppression deny branch is unreachable in production today (shared key maps to AllScopes), so a `deny` here is the canary for the scoped-resolver day. |
+| `eshu_api_authorizer_total` | `family`, `decision` (`allow`, `deny`) | Family authorizer judgments. The deny branch is unreachable in production today (shared key maps to AllScopes), so a `deny` here is the canary for the scoped-resolver day. |
 | `eshu_api_audit_drops_total`, `eshu_api_audit_dropped_events_total` | none | Swallowed audit-append failures observed through the Leaf A drop-observer hook. Dest emits no audits today, so these rest at zero until the audit-append port lands. |
 
 Outcome semantics follow the read-transport error rules: a `local_503`
@@ -47,6 +47,11 @@ the versioned `backend_unavailable` 503.
 Prefixes live in `api/family.go`, longest match wins, everything else
 is `other`. Route evidence: `contracts/upstream/*-wire-shapes.txt`
 for the mutation families, the read-transport Native-now wave for the
-read families. Today's native lane is the suppression upsert only;
-every other family crosses the relay lane until its native route
-lands, and the `via` label tells the two apart.
+read families. The native lane carries the tier-C dispatch families
+plus the D2 Native-now wave (capabilities, CLI support, ask, service
+intelligence, auth providers, sign-in-policy reads, provider-config
+reads, doc UI, served spec); every other family crosses the relay
+lane until its native route lands, and the `via` label tells the two
+apart. Wave-gated routes that relay explicitly for unresolvable
+identity classes file on `via="relay"` with their wave family, so the
+lane always names who served the bytes.

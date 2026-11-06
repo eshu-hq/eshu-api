@@ -122,8 +122,8 @@ func TestTelemetry_RequestCountsPerFamily(t *testing.T) {
 }
 
 // TestTelemetry_StatusClasses pins status-class recording across the
-// gate and the relay: 401s from the auth gate, relayed core statuses,
-// and the local 503 each land in their class row.
+// gate and the lanes: 401s from the auth gate, core statuses (relayed
+// or terminated), and the local 503 each land in their class row.
 func TestTelemetry_StatusClasses(t *testing.T) {
 	t.Parallel()
 
@@ -150,7 +150,7 @@ func TestTelemetry_StatusClasses(t *testing.T) {
 
 	snap := tel.snapshot()
 	if snap.requests["capabilities"]["4xx"] != 2 {
-		t.Errorf("requests[capabilities][4xx] = %d, want 2 (401 + relayed 418)", snap.requests["capabilities"]["4xx"])
+		t.Errorf("requests[capabilities][4xx] = %d, want 2 (401 + terminated 418)", snap.requests["capabilities"]["4xx"])
 	}
 	if snap.requests["ask"]["5xx"] != 1 {
 		t.Errorf("requests[ask][5xx] = %d, want 1 (local 503)", snap.requests["ask"]["5xx"])

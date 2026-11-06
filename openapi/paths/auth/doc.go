@@ -9,10 +9,15 @@
 // surface (AdminMutations); for the admin-identity reads family: the
 // tenant-scoped admin reads whose path keys carry the family GETs
 // (plus the grant and create POSTs that share those keys, per the core
-// OpenAPI convention) (AdminReads); and for the admin provider-config
+// OpenAPI convention) (AdminReads); for the admin provider-config
 // mutation family: the revert, enable, disable, and test-connection
 // routes whose path keys are unique to the mutation surface
-// (AdminProviderConfigMutations).
+// (AdminProviderConfigMutations); for the auth providers family: the
+// pre-auth login-picker discovery GET (AuthProviders, D2 Leaf B wave);
+// and for the admin provider-config reads family: the list, detail,
+// and revisions GETs plus the create and update POSTs that share the
+// list/detail path keys, per the same convention
+// (AdminProviderConfigReads, D2 Leaf B wave).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other
