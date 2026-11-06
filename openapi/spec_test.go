@@ -286,6 +286,31 @@ func TestSpec_ServesAdminRecoveryFamily(t *testing.T) {
 	}
 }
 
+// TestSpec_ServesSuppressionFamily pins the native-spec contract for
+// the suppression family (satellite-design Decision 5(c)): the assembled
+// document is valid JSON and carries the single suppression upsert path
+// with its pinned operationId. The route itself stays on its existing
+// tier-C write-through dispatch — this lane ports the fragment only, no
+// route moves. The lossless-assembly test below pins that the served
+// path equals the ported fragment, and scripts/check-parity.sh gates its
+// line-verbatim provenance.
+func TestSpec_ServesSuppressionFamily(t *testing.T) {
+	t.Parallel()
+
+	served := decodePaths(t, Spec())
+	item, ok := served["/api/v0/supply-chain/impact/suppressions"].(map[string]any)
+	if !ok {
+		t.Fatalf("paths lacks /api/v0/supply-chain/impact/suppressions: %v", keys(served))
+	}
+	op, _ := item["post"].(map[string]any)
+	if got := op["operationId"]; got != "createVulnerabilitySuppression" {
+		t.Errorf("suppressions post operationId = %v, want createVulnerabilitySuppression", got)
+	}
+	if got := op["summary"]; got != "Create or update an operator-authored vulnerability suppression" {
+		t.Errorf("suppressions post summary = %v, want the pinned summary", got)
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
 // family path objects equal the ported fragments' parsed path objects, so
 // the only reviewed delta to the pinned core fragments is the fragment files
@@ -321,6 +346,7 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/admin/reopen",
 		"/api/v0/admin/refinalize",
 		"/api/v0/admin/recover-generations",
+		"/api/v0/supply-chain/impact/suppressions",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -346,7 +372,8 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // and AdminProviderConfigWriteResult for the provider-config fragment;
 // SkippedScopesReport, DeltaActiveScopesReport, and
 // ReindexRequestsWrittenReport for the admin-recovery fragment;
-// AdminSignInPolicy schemas for the sign-in-policy family).
+// AdminSignInPolicy schemas for the sign-in-policy family; the shared
+// ServiceUnavailable response for the suppression fragment).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
 
@@ -429,8 +456,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 // exactly the families whose fragments have landed (sign-in-policy first,
 // retirement second, terminal-failure third, admin-identity mutations
 // fourth, admin-identity reads fifth, provider-config sixth,
-// admin-recovery seventh). It advances as family lanes port their
-// fragments.
+// admin-recovery seventh, suppression eighth). It advances as family
+// lanes port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 

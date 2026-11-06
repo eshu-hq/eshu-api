@@ -19,6 +19,7 @@ SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
 SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
 SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"
 SRC_SHA_RECOVERY="7c60583996d9a3ccc46288f40a38f614a4f28ea8"
+SRC_SHA_D0="ec1643d67f"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -328,6 +329,21 @@ check_fragment_subset_named_at "$SRC_SHA_RECOVERY" "go/internal/query/openapi/pa
   "openapi/paths/status/admin_recovery.go" \
   "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
   "AdminRecovery"
+
+# Native spec (Decision 5(c)): the suppression OpenAPI fragment is a
+# line-verbatim subset port of the pinned core file. Core ships the
+# payload under the unexported const suppressionMutation, so the
+# dest-owned exported wrapper differs by the const line only; the gate
+# pins the core file's sha256 and proves every payload line of the dest
+# fragment (the const string body, which is the only JSON the assembly
+# consumes) appears verbatim in the pinned core file. The file carries
+# the lane's single path key, so no served key duplicates a relayed
+# route; the fragment only closes the Decision 5(c) gap the C-b ruling
+# left open for the pilot family.
+check_fragment_subset_named_at "$SRC_SHA_D0" "go/internal/query/openapi/paths/supply/chain/suppression_mutation.go" \
+  "openapi/paths/supply/chain/suppression_mutation.go" \
+  "5eb2b02ad1bdf49118d758853dbb51afe26ec87604f59d1ca2399ee571e95172" \
+  "SuppressionMutation"
 
 # Recovery schemas (Decision 5(c)): the three lane schemas form one
 # contiguous block in openapi/components.go, from the SkippedScopesReport

@@ -46,7 +46,7 @@ replay-ledger, and sign-in admissions (all currently `v0`).
 
 Dispatch lands in this increment; cutover authority does not. The route
 census this work builds on is `go/cmd/api/CUTOVER_OWNERSHIP.md` in `eshu`
-(277 rows at `origin/main`: 227 reads, 50 mutations; the seed parity
+(278 rows at `origin/main`: 228 reads, 50 mutations; the seed parity
 basis recorded 270/220 at the pinned commit — see `docs/provenance.md`).
 This increment serves health, readiness, and the auth-gated `/api/*` chain
 (401 envelope, v1 rewrite, v0 deprecation headers, byte-for-byte dispatch

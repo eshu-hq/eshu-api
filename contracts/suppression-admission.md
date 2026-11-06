@@ -75,3 +75,27 @@ until a versioned audit-append contract exists. `scripts/check-parity.sh`
 gates the pilot with the no-core-import proof (`go list -deps` over the
 runtime packages must show no `eshu-hq/eshu` import) alongside the
 403/503 wire-shape excerpt.
+
+## Native spec, D0 backfill (satellite-design Decision 5(c))
+
+The suppression OpenAPI fragment
+(`openapi/paths/supply/chain/suppression_mutation.go`, const
+`SuppressionMutation`) ports the lane's single path key
+(`POST /api/v0/supply-chain/impact/suppressions`, operationId
+`createVulnerabilitySuppression`) and is unioned into the served
+`openapi.json` after the admin-recovery fragment. It is a line-verbatim
+subset port of the pinned core file
+`go/internal/query/openapi/paths/supply/chain/suppression_mutation.go`
+at `ec1643d67f` (core ships the payload under the unexported const, so
+only the const wrapper is dest-owned); `scripts/check-parity.sh` gates
+every payload line against the pinned core sha256, and the served-spec
+lossless-assembly test pins the served path object equal to the
+fragment. This closes the Decision 5(c) gap the C-b ruling left open for
+the pilot family. No route moves in this lane: the upsert stays on its
+existing tier-C write-through dispatch, and the served-spec change is
+documentation of the already-dispatched shape.
+
+Rollback: delete the fragment file, its `doc.go` package, the
+`familyPaths`/`specPrefix` entries, and the `check-parity.sh` stanza;
+the served spec drops the suppression path and the gate goes back to
+seven fragments, with no dispatch change.
