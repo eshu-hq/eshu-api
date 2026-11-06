@@ -33,9 +33,27 @@ package openapi
 //   - BadRequest, NotFound, Forbidden, Conflict, InternalError,
 //     ServiceUnavailable: responses from
 //     go/internal/query/openapi/components_responses.go.
+//   - RepoId: parameter from go/internal/query/openapi/components.go
+//     (D4 Native-next wave: the served repository entries address
+//     their routes by it).
+//   - CollectorReadinessEnvelope, Repository, RepositoryRef,
+//     CatalogWorkload, InvestigationEvidencePacket, Relationship:
+//     schemas from go/internal/query/openapi/components.go (D4 wave:
+//     referenced by the served CI/CD, repository, evidence, and
+//     investigation entries).
+//   - ActiveWorkSource: schema from
+//     go/internal/query/openapi/components_active_work_source.go (D4
+//     wave: referenced by the served evidence bundle entry).
+//   - GatewayTimeout: response from
+//     go/internal/query/openapi/components_responses.go (D4 wave:
+//     answered by the served cloud, infra, repository,
+//     package-registry, and evidence-route entries).
 //
 // A new family lane extends this block with the entries its fragment
 // references; TestSpec_LocalRefsResolve fails closed on a dangling $ref.
+// Every D4 entry is line-verbatim in its pinned source at commit
+// 17feac86e0 (gated by check_d4_components_at in
+// scripts/check-parity.sh).
 const components = `  "components": {
     "parameters": {
       "ServiceName": {
@@ -44,6 +62,13 @@ const components = `  "components": {
         "required": true,
         "schema": {"type": "string"},
         "description": "Service name"
+      },
+      "RepoId": {
+        "name": "repo_id",
+        "in": "path",
+        "required": true,
+        "schema": {"type": "string"},
+        "description": "Repository ID"
       }
     },
     "schemas": {
@@ -194,6 +219,159 @@ const components = `  "components": {
           "count": {"type": "integer", "description": "Exact number of scopes that got a reindex watermark."},
           "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Up to 10 of those scope ids, ascending. Never null."}
         }
+      },
+      "CollectorReadinessEnvelope": {
+        "type": "object",
+        "description": "Per-collector readiness signal for a gated supply-chain list response. It distinguishes an empty page produced by an unconfigured feeding collector (not_configured) from a genuinely empty page produced by a configured-but-zero collector (ready_zero_results), so an empty page is never ambiguous. readiness_unavailable means the configured probe itself failed; the page is still returned but its emptiness cannot be classified.",
+        "properties": {
+          "readiness_state": {"type": "string", "enum": ["not_configured", "ready_zero_results", "ready_with_results", "readiness_unavailable"], "description": "not_configured: no enabled instance of the feeding collector is registered. ready_zero_results: the collector is enabled but the bounded query returned no rows. ready_with_results: the page returned at least one row. readiness_unavailable: the configured probe failed."},
+          "collector_kind": {"type": "string", "description": "Feeding collector family for the gated tool, such as sbom_attestation, package_registry, oci_registry, or ci_cd_run."},
+          "counts": {
+            "type": "object",
+            "properties": {
+              "results_returned": {"type": "integer"},
+              "results_truncated": {"type": "boolean"}
+            },
+            "required": ["results_returned", "results_truncated"]
+          }
+        },
+        "required": ["readiness_state", "collector_kind", "counts"]
+      },
+      "Repository": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "path": {"type": "string"},
+          "local_path": {"type": "string"},
+          "remote_url": {"type": "string"},
+          "repo_slug": {"type": "string"},
+          "has_remote": {"type": "boolean"},
+          "is_dependency": {"type": "boolean", "description": "True when at least one other repository depends on this one, i.e. it is the target of an admitted Repository-[:DEPENDS_ON]->Repository edge."},
+          "group_key": {"type": "string", "description": "Source-backed repository group label. Empty when grouping evidence is missing."},
+          "group_source": {"type": "string", "enum": ["dependency_cluster", "repository_dependency_flag", "repo_slug_namespace", "remote_url_owner", "missing_evidence"], "description": "Evidence source used for grouping. dependency_cluster is the highest-precedence source and is set when the repository participates in a (:Repository)-[:DEPENDS_ON]->(:Repository) connected component."},
+          "group_truth": {"type": "string", "description": "Per-row grouping truth label, e.g. derived or missing_evidence."},
+          "group_kind": {"type": "string", "enum": ["cluster", "source", "dependency", "unknown"], "description": "Repository grouping kind. cluster is set when group_source is dependency_cluster."},
+          "group_reason": {"type": "string", "description": "Human-readable reason explaining the group assignment or missing evidence."},
+          "selection": {
+            "type": "object",
+            "description": "Collector selection aggregate for the repository scope (#7625, #8454): the same block the freshness read renders. Always present; state is unknown when no selector row is live. When reason is not_listed, classification and successor_slug carry the upstream probe verdict.",
+            "properties": {
+              "state": {"type": "string", "enum": ["selected", "not_selected", "pending_confirmation", "excluded_still_ingested", "unknown"]},
+              "reason": {"type": "string", "nullable": true, "enum": ["not_listed", "archived_excluded", "rule_excluded", null]},
+              "state_since": {"type": "string", "format": "date-time", "nullable": true},
+              "last_listed_at": {"type": "string", "format": "date-time", "nullable": true},
+              "evaluated_at": {"type": "string", "format": "date-time", "nullable": true},
+              "live_selector_count": {"type": "integer"},
+              "classification": {"type": "string", "nullable": true, "enum": ["transferred", "renamed", "still_present", "not_found_or_inaccessible", null], "description": "Upstream probe verdict for a Confirmed not_listed scope (#8454); null otherwise."},
+              "successor_slug": {"type": "string", "nullable": true, "description": "Probe full_name for a renamed or transferred verdict (#8454); null otherwise."},
+              "successor_selected": {"type": "boolean", "description": "Whether the successor slug resolves to a selected scope, decided at read time (#8454)."}
+            }
+          },
+          "index_state": {"type": "string", "enum": ["indexed", "stub", "retiring", "retired"], "description": "Bounded retirement label (#7766): retiring marks an open non-complete tombstone, retired a complete one; otherwise indexed marks canonical projector evidence and stub the absence of it. Retiring and retired rows stay in the list, never dropped."},
+          "retirement": {
+            "type": "object",
+            "nullable": true,
+            "description": "Bounded tombstone evidence (#7766) for retiring and retired rows; null otherwise. Counts and lifecycle timestamps stay on the admin readback.",
+            "properties": {
+              "state": {"type": "string", "description": "Tombstone state (pending, running, blocked, repairing_graph, complete, failed)."},
+              "retirement_id": {"type": "string", "description": "Tombstone key."},
+              "retired_at": {"type": "string", "format": "date-time", "nullable": true, "description": "Completion timestamp; null until the tombstone is complete."}
+            }
+          }
+        }
+      },
+      "RepositoryRef": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "path": {"type": "string"},
+          "remote_url": {"type": "string"},
+          "has_remote": {"type": "boolean"}
+        }
+      },
+      "CatalogWorkload": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "kind": {"type": "string"},
+          "repo_id": {"type": "string"},
+          "repo_name": {"type": "string"},
+          "environments": {"type": "array", "items": {"type": "string"}},
+          "instance_count": {"type": "integer"},
+          "same_name_siblings": {"type": "integer", "description": "SAME_NAME sibling workloads admitted by the caller grant (Decision D2, #5385); 0 when no admitted sibling shares the name."},
+          "materialization_status": {"type": "string"}
+        }
+      },
+      "InvestigationEvidencePacket": {
+        "type": "object",
+        "description": "Portable investigation_evidence_packet.v2 artifact. The packet separates source facts, reducer decisions, graph/query answers, missing evidence, reproduce handles, bounds, redaction, and validation state.",
+        "properties": {
+          "schema": {"type": "string", "enum": ["investigation_evidence_packet.v2"]},
+          "packet_id": {"type": "string"},
+          "identity": {"type": "object"},
+          "truth": {"type": "object", "nullable": true, "description": "Truth envelope: level, capability, profile, basis, backend, freshness, reason, and omissions. omissions (absent when the response carries every section in full) lists {section, detail, total} for each section a route withheld (detail omitted) or reduced to identity handles (detail handles), such as trace-deployment-chain under evidence_detail handles or an explicit sections list."},
+          "freshness": {"type": "object"},
+          "answer": {"type": "object"},
+          "source_facts": {"type": "array", "items": {"type": "object"}},
+          "reducer_decisions": {"type": "array", "items": {"type": "object"}},
+          "graph_answers": {"type": "array", "items": {"type": "object"}},
+          "citations": {"type": "array", "items": {"type": "object"}},
+          "missing_evidence": {"type": "array", "items": {"type": "object"}},
+          "semantic_observations": {"type": "array", "items": {"type": "object"}},
+          "reproduce": {"type": "array", "items": {"type": "object"}},
+          "bounds": {"type": "object"},
+          "redaction": {"type": "object"},
+          "validation": {"type": "object"},
+          "refusal": {"type": "string"}
+        }
+      },
+      "ActiveWorkSource": {
+        "type": "object",
+        "description": "Where the queue, stage, backlog, blockage, and latest-failure sections of a status report came from, and how old they are. A stored summary row is counted at its as_of and its ages are advanced to the read; the live statement is true at the snapshot clock. The other sections of the report are always live, so one report can mix both. Absent when the status reader reports no source.",
+        "properties": {
+          "source": {"type": "string", "enum": ["model", "live", "live_fallback"], "description": "model: a stored summary row that passed every fence. live: the stored-summary reader is off, so the live statement ran. live_fallback: the stored row could not be served, so the live statement answered the whole section; reason says why."},
+          "reason": {"type": "string", "enum": ["fresh", "flag_off", "missing", "not_installed", "version", "row_count", "stale", "decode"], "description": "fresh: served from the row. flag_off: the reader is off. missing: no row yet. not_installed: the table does not exist yet. version: the row was written by another schema or statement version. row_count: the stored row_count disagrees with its payload. stale: the row is older than the configured stale limit. decode: the row could not be decoded."},
+          "as_of": {"type": "string", "format": "date-time", "description": "The time the active-work counts are true at: the stored row's as_of for source model, otherwise the snapshot clock; a read that shared another read's live statement reports the clock that statement ran at."},
+          "age_seconds": {"type": "number", "description": "How old the served active-work data was at the read, from the database clock; 0 for a live read."},
+          "stale": {"type": "boolean", "description": "true when the served active-work data is older than the configured limit. A stored row that is too old is never served: the live statement answers and reason says stale, so this is false on every route that reads through the stored-summary reader; it is reserved for the runtime /metrics scrape."}
+        }
+      },
+      "Relationship": {
+        "type": "object",
+        "properties": {
+          "type": {"type": "string"},
+          "target_name": {"type": "string"},
+          "target_id": {"type": "string"},
+          "source_name": {"type": "string"},
+          "source_id": {"type": "string"},
+          "source_repo_id": {"type": "string"},
+          "source_repo_name": {"type": "string"},
+          "source_file_path": {"type": "string"},
+          "source_language": {"type": "string"},
+          "source_type": {"type": "string"},
+          "source_start_line": {"type": "integer"},
+          "source_end_line": {"type": "integer"},
+          "target_repo_id": {"type": "string"},
+          "target_repo_name": {"type": "string"},
+          "target_file_path": {"type": "string"}, "target_language": {"type": "string"}, "target_type": {"type": "string"},
+          "target_start_line": {"type": "integer"}, "target_end_line": {"type": "integer"}, "confidence": {"type": "number"},
+          "confidence_basis": {"type": "string", "description": "Correlation edge confidence basis: evidence_constant, evidence_aggregate, or assertion_override. Code CALLS/REFERENCES edges use resolution_method instead."},
+          "reason": {"type": "string"}, "resolution_source": {"type": "string"}, "evidence_type": {"type": "string"},
+          "evidence_kinds": {"type": "array", "items": {"type": "string"}}, "resolution_method": {"type": "string"},
+          "provenance": {"type": "object", "description": "Uniform per-relationship provenance block for API and MCP relationship-story rows.", "properties": {
+            "confidence": {"type": "number"}, "confidence_state": {"type": "string", "enum": ["reported", "unsupported"]},
+            "confidence_tier": {"type": "string", "enum": ["high", "medium", "low", "unsupported"], "description": "Named tier derived from confidence (high >= 0.9, medium >= 0.7, else low; unsupported when the edge carries no confidence). Presentation derivation only; never upgrades truth_state."},
+            "method": {"type": "string", "description": "Code resolution_method, value-flow evidence_source, correlation confidence_basis/resolution_source, or unsupported when unavailable."},
+            "source_family": {"type": "string", "enum": ["code_edge", "value_flow_edge", "correlation_edge", "unsupported"]}, "reason": {"type": "string"},
+            "truth_state": {"type": "string", "enum": ["derived", "heuristic", "unsupported"]},
+            "why_trail": {"type": "array", "description": "Bounded ordered value-flow trail for TAINT_FLOWS_TO evidence, when available.", "items": {"type": "object"}}, "why_trail_truncated": {"type": "boolean"},
+            "derived": {"type": "boolean"}, "heuristic": {"type": "boolean"}, "unsupported": {"type": "boolean"}
+          }},
+          "centrality": {"type": "integer", "description": "Bounded centrality: the neighbor's degree within the resolved result set. Relationship story rows are ordered by this value, descending, with deterministic tie-breaking."}
+        }
       }
     },
     "responses": {
@@ -261,6 +439,14 @@ const components = `  "components": {
       },
       "NotImplemented": {
         "description": "Capability is not available in the current runtime profile",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "GatewayTimeout": {
+        "description": "Backend operation exceeded its deadline",
         "content": {
           "application/json": {
             "schema": {"$ref": "#/components/schemas/ErrorResponse"}

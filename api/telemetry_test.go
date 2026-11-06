@@ -59,7 +59,22 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/openapi.json", "api_router"},
 		{"/api/v0/docs", "api_router"},
 		{"/api/v0/redoc", "api_router"},
-		{"/api/v0/repositories", "other"},
+		{"/api/v0/catalog", "repositories"},
+		{"/api/v0/ci-cd/run-correlations", "cicd"},
+		{"/api/v0/ci-cd/run-correlations/count", "cicd"},
+		{"/api/v0/cloud/resources", "infra"},
+		{"/api/v0/documentation/findings", "documentation"},
+		{"/api/v0/ecosystem/overview", "infra"},
+		{"/api/v0/evidence/bundle", "evidence"},
+		{"/api/v0/evidence/relationships/res-1", "evidence"},
+		{"/api/v0/infra/resources/count", "infra"},
+		{"/api/v0/investigation-workflows", "investigation_workflows"},
+		{"/api/v0/investigations/deployable-unit/packet", "evidence"},
+		{"/api/v0/package-registry/packages", "package_registry"},
+		{"/api/v0/query-playbooks", "playbooks"},
+		{"/api/v0/relationships/catalog", "infra"},
+		{"/api/v0/repositories", "repositories"},
+		{"/api/v0/repositories/repo-1/tree", "repositories"},
 		{"/api/v0/some/future/route/with/param-123", "other"},
 		{"/api/v1/supply-chain/impact/suppressions", "suppression"},
 		{"/api/v0", "other"},
@@ -94,7 +109,9 @@ func TestStatusClass_ClosedVocabulary(t *testing.T) {
 
 // TestTelemetry_RequestCountsPerFamily pins per-family request counting:
 // one relayed read and one native suppression upsert land in their own
-// family rows with the right status class.
+// family rows with the right status class. The relayed leg uses the
+// dependencies read: the repositories read it replaced terminated
+// natively in the D4 wave (it now files under repositories, not other).
 func TestTelemetry_RequestCountsPerFamily(t *testing.T) {
 	t.Parallel()
 
@@ -108,7 +125,7 @@ func TestTelemetry_RequestCountsPerFamily(t *testing.T) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/repositories?limit=5"))
+	handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/dependencies?limit=5"))
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, authedRequest("POST", "/api/v0/supply-chain/impact/suppressions"))
 
@@ -187,14 +204,16 @@ func TestTelemetry_DurationHistogram(t *testing.T) {
 
 // TestTelemetry_DispatchOutcomes pins the dispatch-outcome matrix: relay
 // vs native, core answers vs the local permanent 503, and relayed
-// retryable 503s (Retry-After preserved) vs relayed plain 503s.
+// retryable 503s (Retry-After preserved) vs relayed plain 503s. The
+// relay legs use the dependencies read, which still crosses the generic
+// proxy (the D4 wave terminated the repositories probe they replaced).
 func TestTelemetry_DispatchOutcomes(t *testing.T) {
 	t.Parallel()
 
 	t.Run("relay core_ok", func(t *testing.T) {
 		t.Parallel()
 		tel, handler := telemetryWithCore(t, &stubCore{status: http.StatusOK, body: `{}`}, "https://core.invalid")
-		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/repositories"))
+		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/dependencies"))
 		if got := tel.snapshot().dispatches["other"]["relay"]["core_ok"]; got != 1 {
 			t.Errorf("dispatches[other][relay][core_ok] = %d, want 1", got)
 		}
@@ -209,7 +228,7 @@ func TestTelemetry_DispatchOutcomes(t *testing.T) {
 		}
 		tel, handler := telemetryWithCore(t, stub, "https://core.invalid")
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/repositories"))
+		handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/dependencies"))
 		if got := rec.Header().Get("Retry-After"); got != "30" {
 			t.Errorf("Retry-After = %q, want the relayed core value '30'", got)
 		}
@@ -221,7 +240,7 @@ func TestTelemetry_DispatchOutcomes(t *testing.T) {
 	t.Run("relay core_503 without Retry-After", func(t *testing.T) {
 		t.Parallel()
 		tel, handler := telemetryWithCore(t, &stubCore{status: http.StatusServiceUnavailable, body: `{}`}, "https://core.invalid")
-		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/repositories"))
+		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/dependencies"))
 		if got := tel.snapshot().dispatches["other"]["relay"]["core_503"]; got != 1 {
 			t.Errorf("dispatches[other][relay][core_503] = %d, want 1", got)
 		}
@@ -252,7 +271,7 @@ func TestTelemetry_DispatchOutcomes(t *testing.T) {
 		srv := NewServer("", skeletonTestKey)
 		srv.telemetry = tel
 		handler := srv.Handler(DefaultV0Sunset)
-		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/repositories"))
+		handler.ServeHTTP(httptest.NewRecorder(), authedRequest("GET", "/api/v0/dependencies"))
 		if got := tel.snapshot().dispatches["other"]["relay"]["local_503"]; got != 1 {
 			t.Errorf("dispatches[other][relay][local_503] = %d, want 1", got)
 		}

@@ -1,0 +1,398 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package repository
+
+// RepositoryRoutes documents the Repositories read routes: the catalog
+// and repository list, language, content, context, and tree GETs.
+//
+// The mux-health entry is excluded: dest serves /health from its own
+// probe with a dest-owned shape, so the core health entry must not
+// ride the served document. The story entry is excluded: it
+// interpolates the shared schema.EvidenceBoundaries helper, which has
+// no line-verbatim port without a core import (forbidden). The story
+// route terminates natively regardless; only its served spec entry
+// waits for the helper to port as a component.
+//
+// Provenance: every payload line below is verbatim from the pinned core
+// file go/internal/query/openapi/paths/repository/routes.go
+// at commit 17feac86e0 (sha256
+// 3641f905c313023876d92fce558219284e0cc76c886b6b6ecd07527ae65,
+// the D2 wave pin). This subset keeps the line-verbatim property
+// instead of a whole-file port (gated by scripts/check-parity.sh).
+const RepositoryRoutes = `
+    "/api/v0/repositories": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "List repositories",
+        "description": "Returns a bounded page of indexed repositories. This route also serves the inventory (empty-selector) form of get_repository_stats, so the response carries an additive result_limits drilldown block and an explicit partial_reasons slot alongside the existing truncated paging field.",
+        "operationId": "listRepositories",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 100, "minimum": 1, "maximum": 500}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "default": 0, "minimum": 0, "maximum": 10000}}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of repositories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "repositories": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Repository"}
+                    },
+                    "count": {"type": "integer", "description": "Number of repositories returned in this page."},
+                    "total": {"type": "integer", "description": "True total repository count independent of page size. Use this field — not count — to display the overall repository count on dashboards and sidebars."},
+                    "limit": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "truncated": {"type": "boolean"},
+                    "result_limits": {"type": "object", "description": "Additive drilldown block for the inventory form of get_repository_stats: bounded page limit/offset, deterministic ordering, repository count, truncation flag, and the get_repository_stats drilldown plus inventory context path.", "additionalProperties": true},
+                    "partial_reasons": {"type": "array", "description": "Explicit reasons the response is partial. repository_inventory_truncated means more repositories exist beyond this page (mirrors truncated above). repository_group_evidence_missing means at least one returned repository has no source-backed grouping evidence. dependency_marker_evidence_incomplete means the bounded DEPENDS_ON edge read backing each repository's is_dependency field (and its dependency-cluster grouping) failed or was truncated for this request; is_dependency may be under-reported (false where evidence was actually true) on affected rows, and this reason is independent of truncated -- it never means more repositories exist beyond the page. Always present (possibly empty) so the envelope shape is stable.", "items": {"type": "string"}}
+                  }
+                }
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/repositories/by-language": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "List repositories by language",
+        "description": "Returns aggregate counts and a bounded page of repositories that contain files for a language family. Language aliases such as typescript include tsx, javascript includes jsx, and terraform includes hcl and tfvars. Scoped tokens receive counts and rows intersected with the caller's granted repositories/ingestion scopes; a scoped caller with no grants receives an empty page without a query.",
+        "operationId": "listRepositoriesByLanguage",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {"name": "language", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 100, "minimum": 0, "maximum": 500}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "default": 0, "minimum": 0, "maximum": 10000}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Repository language count and page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "language": {"type": "string"},
+                    "normalized_languages": {"type": "array", "items": {"type": "string"}},
+                    "repository_count": {"type": "integer"},
+                    "file_count": {"type": "integer"},
+                    "last_indexed_at": {"type": "string", "format": "date-time"},
+                    "repositories": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {"$ref": "#/components/schemas/Repository"},
+                          {
+                            "type": "object",
+                            "properties": {
+                              "file_count": {"type": "integer"},
+                              "languages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "language": {"type": "string"},
+                                    "file_count": {"type": "integer"}
+                                  }
+                                }
+                              },
+                              "last_indexed_at": {"type": "string", "format": "date-time"}
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "limit": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "truncated": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      }
+    },
+    "/api/v0/repositories/language-inventory": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "List repository language inventory",
+        "description": "Returns aggregate repository and file counts for indexed language buckets without fetching per-repository coverage. Scoped tokens receive counts intersected with the caller's granted repositories/ingestion scopes; a scoped caller with no grants receives an empty page without a query.",
+        "operationId": "getRepositoryLanguageInventory",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 100, "minimum": 1, "maximum": 500}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "default": 0, "minimum": 0, "maximum": 10000}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Language inventory aggregates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "languages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "language": {"type": "string"},
+                          "repository_count": {"type": "integer"},
+                          "file_count": {"type": "integer"},
+                          "last_indexed_at": {"type": "string", "format": "date-time"}
+                        }
+                      }
+                    },
+                    "limit": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "truncated": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      }
+    },
+    "/api/v0/catalog": {
+      "get": {
+        "tags": ["catalog"],
+        "summary": "List catalog entities",
+        "description": "Returns bounded repository, workload, and service handles for catalog navigation. Scoped tokens receive rows intersected with the caller's granted repositories; same-name sibling counts exclude workloads outside the grant.",
+        "operationId": "listCatalog",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "integer", "default": 2000, "maximum": 5000},
+            "description": "Maximum rows returned per entity collection."
+          }
+        ],
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Catalog entity handles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "repositories": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Repository"}
+                    },
+                    "workloads": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/CatalogWorkload"}
+                    },
+                    "services": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/CatalogWorkload"}
+                    },
+                    "counts": {"type": "object"},
+                    "count": {"type": "integer"},
+                    "limit": {"type": "integer"},
+                    "truncated": {"type": "boolean", "description": "True when any catalog collection (repositories or workloads/services) is itself a bounded partial page, i.e. more rows exist beyond limit. A degraded is_dependency read (see limitations) never sets this: the repository/workload rows returned are complete even when the auxiliary dependency marker on them is not."},
+                    "workloads_truncated": {"type": "boolean", "description": "True only when the workload and service collections are a bounded partial page; repository-only truncation does not set this field."},
+                    "limitations": {"type": "array", "description": "Explicit caveats about this response's completeness or truth basis. dependency_marker_evidence_incomplete means the bounded DEPENDS_ON edge read backing each repository's is_dependency field failed or was truncated for this request; is_dependency may be under-reported (false where evidence was actually true) on affected rows. \"workload and service catalog rows require an authoritative graph backend\" appears when no graph backend is configured. Distinct from truncated, which is about row-count paging, not evidence completeness.", "items": {"type": "string"}}
+                  }
+                }
+              }
+            }
+          },
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/repositories/{repo_id}/context": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "Get repository context",
+        "description": "Returns repository metadata with graph statistics. File count and languages use a content-files-only summary when available. A file-derived infrastructure overview beyond 5,000 files is explicitly marked partial. Scoped tokens receive the same shape; a repository outside the caller's grant 404s like sibling repository routes.",
+        "operationId": "getRepositoryContext",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/RepoId"}
+        ],
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Repository context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "repository": {"$ref": "#/components/schemas/RepositoryRef"},
+                    "file_count": {"type": "integer"},
+                    "workload_count": {"type": "integer"},
+                    "platform_count": {"type": "integer"},
+                    "dependency_count": {"type": "integer"},
+                    "relationships": {
+                      "type": "array",
+                      "description": "Outgoing repository relationships.",
+                      "items": {"type": "object"}
+                    },
+                    "relationship_overview": {
+                      "type": "object",
+                      "description": "Incoming and outgoing typed repository relationships with lightweight evidence pointers."
+                    },
+                    "api_surface": {
+                      "type": "object",
+                      "description": "Graph-backed API endpoint surface exposed by this repository."
+                    },
+                    "deployment_evidence": {
+                      "type": "object",
+                      "description": "Deployment, CI, and environment evidence pointers. Artifacts include source_location plus resolved_id/generation_id for Postgres evidence drilldown; evidence_index groups those pointers by relationship type, artifact family, and evidence kind."
+                    },
+                    "consumers": {
+                      "type": "array",
+                      "description": "Repositories with incoming relationships to this repository.",
+                      "items": {"type": "object"}
+                    },
+                    "language_breakdown": {
+                      "type": "object",
+                      "description": "Per-language file counts for this repository, derived from indexed File nodes. Omitted when no language data is available. Keys are language names (e.g. go, python, yaml); values are integer file counts.",
+                      "additionalProperties": {"type": "integer"}
+                    },
+                    "source_tool_breakdown": {
+                      "type": "object",
+                      "description": "Per-source_tool outgoing relationship-edge counts for this repository. Omitted when no edges carry a source_tool property. Keys are canonical source_tool tokens (e.g. terraform, helm, ansible); values are integer edge counts.",
+                      "additionalProperties": {"type": "integer"}
+                    },
+                    "partial_reasons": {
+                      "type": "array",
+                      "description": "Explicit reasons the response is partial, e.g. infrastructure_read_degraded when the auxiliary infrastructure graph read failed but the rest of the context still answers 200, relationships_read_degraded or consumers_read_degraded when one of the other auxiliary graph reads failed (each read has its own <read>_read_degraded value), or infrastructure_truncated when a healthy infrastructure read landed past its bound. repository_context_file_read_truncated_at_5000 means file-derived infrastructure and deployment-artifact overviews use only the first 5,000 files; repository_context_file_read_degraded means that file list failed and those overviews may be omitted; repository_context_content_coverage_degraded means the content-file summary failed and graph file counts/languages were used. deployment_artifacts_read_degraded means a content or graph read of the deployment-artifact stage failed, so deployment_artifacts and infrastructure_overview hold the artifacts from the loads that succeeded and lack the artifacts of the load that failed. deployment_artifacts_candidates_budget_reached means the request budget of 12,000 config-artifact candidates beyond the per-repository floor of 50 ran out, so at least one related repository had candidates inside its 5,000-file window that were not read and the config rows are a lower bound; deployment_artifacts_related_file_list_truncated_at_5000 means at least one related repository has more than 5,000 files, so its candidates past the window are unknown. Always present so the envelope shape is stable.",
+                      "items": {"type": "string"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/repositories/{repo_id}/tree": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "Get repository file tree",
+        "description": "Lists one directory level (or the full subtree with recursive=true) reconstructed from the content-store file index. The 50,000-file cap applies after path and language selection; truncated means the matching subtree exceeds the cap. Returns directory and file entries; child_count on a directory is the number of descendant files. The ref reflects the indexed commit SHA the tree was built from. When ref is supplied, it must resolve to the indexed commit; known but unindexed refs return 409 instead of silently falling back. Scoped tokens receive the same shape; a repository outside the caller's grant 404s like sibling repository routes.",
+        "operationId": "getRepositoryTree",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/RepoId"},
+          {"name": "path", "in": "query", "required": false, "schema": {"type": "string"}, "description": "Directory subpath to list, relative to the repository root. An exact file path returns 404, including with a language filter."},
+          {"name": "ref", "in": "query", "required": false, "schema": {"type": "string"}, "description": "Branch name or commit SHA selector. The request succeeds only when the selector resolves to the indexed commit; unavailable or unindexed refs return an error."},
+          {"name": "recursive", "in": "query", "required": false, "schema": {"type": "boolean"}, "description": "When true, return the full subtree instead of a single directory level."},
+          {"name": "language", "in": "query", "required": false, "schema": {"type": "string"}, "description": "Filter the listing to files of this language/source-type (e.g. go, python, hcl, yaml). Aliases expand to a family: typescript also matches tsx; terraform also matches hcl/tfvars. A path with no matching files returns an empty listing, not 404."}
+        ],
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Repository file tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {"type": "string"},
+                    "path": {"type": "string"},
+                    "truncated": {"type": "boolean"},
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {"type": "string"},
+                          "type": {"type": "string", "enum": ["dir", "file"]},
+                          "path": {"type": "string"},
+                          "size": {"type": "integer"},
+                          "language": {"type": "string"},
+                          "child_count": {"type": "integer"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "409": {"$ref": "#/components/responses/Conflict"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/repositories/{repo_id}/content": {
+      "get": {
+        "tags": ["repositories"],
+        "summary": "Get repository file content",
+        "description": "Returns the indexed bytes of a single repository file from the content store. Text is returned as utf-8; non-UTF-8 bytes are base64-encoded. size is the original byte length and truncated=true signals the byte cap was reached. When ref is supplied, it must resolve to the indexed commit; known but unindexed refs return 409 instead of silently falling back. The endpoint never returns content the collectors redact.",
+        "operationId": "getRepositoryContent",
+        "parameters": [
+          {"$ref": "#/components/parameters/RepoId"},
+          {"name": "path", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Repository-relative file path to read."},
+          {"name": "ref", "in": "query", "required": false, "schema": {"type": "string"}, "description": "Branch name or commit SHA selector. The request succeeds only when the selector resolves to the indexed commit; unavailable or unindexed refs return an error."}
+        ],
+        "responses": {
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Repository file content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {"type": "string"},
+                    "ref": {"type": "string"},
+                    "encoding": {"type": "string", "enum": ["utf-8", "base64"]},
+                    "content": {"type": "string"},
+                    "size": {"type": "integer"},
+                    "language": {"type": "string"},
+                    "truncated": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "409": {"$ref": "#/components/responses/Conflict"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+`

@@ -2,10 +2,11 @@
 # eshu-hq/eshu#6707).
 #
 # Owns the read-latency comparison the destination census assigns the
-# satellite: the terminated Native-now wave (D2) and the terminated
-# admin/identity/recovery reads (D3) must not regress past 1.50x
-# of the generic byte-relay on the hermetic stub-core legs
-# (scripts/measure-leafb-latency.sh, scripts/measure-d3-latency.sh).
+# satellite: the terminated Native-now wave (D2), the terminated
+# admin/identity/recovery reads (D3), and the terminated Native-next
+# reads (D4) must not regress past 1.50x of the generic byte-relay on
+# the hermetic stub-core legs (scripts/measure-leafb-latency.sh,
+# scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -28,6 +29,7 @@ on:
       - 'go.mod'
       - 'scripts/measure-leafb-latency.sh'
       - 'scripts/measure-d3-latency.sh'
+      - 'scripts/measure-d4-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -64,5 +66,14 @@ jobs:
             echo "## D3 latency (stub-core, median ns/op)"
             echo '```'
             cat d3-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: D4 terminated-vs-relay latency
+        run: |
+          bash scripts/measure-d4-latency.sh 2>&1 | tee d4-latency.log
+          {
+            echo "## D4 latency (stub-core, median ns/op)"
+            echo '```'
+            cat d4-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

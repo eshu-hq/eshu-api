@@ -9,7 +9,12 @@ import (
 
 	"github.com/eshu-hq/eshu-api/openapi/paths/auth"
 	"github.com/eshu-hq/eshu-api/openapi/paths/catalog"
+	"github.com/eshu-hq/eshu-api/openapi/paths/cicd"
 	"github.com/eshu-hq/eshu-api/openapi/paths/cli"
+	"github.com/eshu-hq/eshu-api/openapi/paths/cloud"
+	"github.com/eshu-hq/eshu-api/openapi/paths/evidence"
+	"github.com/eshu-hq/eshu-api/openapi/paths/infrastructure"
+	"github.com/eshu-hq/eshu-api/openapi/paths/repository"
 	"github.com/eshu-hq/eshu-api/openapi/paths/search"
 	"github.com/eshu-hq/eshu-api/openapi/paths/service"
 	"github.com/eshu-hq/eshu-api/openapi/paths/status"
@@ -26,7 +31,9 @@ import (
 // provider-config reads, and the served-spec self entry, then the D3
 // admin/identity/recovery reads wave: the admin query POSTs and the
 // invitations list GET that shares its key with the relay-only create
-// POST).
+// POST, then the D4 Native-next wave: CICD, Documentation, Infra,
+// PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
+// Playbooks).
 // It advances as family lanes port their fragments; the served family
 // set is pinned by the Spec tests.
 const SpecVersion = "v0"
@@ -39,7 +46,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -71,7 +78,11 @@ const specPrefix = `{
 // The D2 Leaf B wave appends the Native-now fragments after the
 // suppression lane in wave-table order (capabilities, CLI support, ask,
 // service intelligence, auth providers, provider-config reads, then the
-// served-spec self entry last); the self entry keeps the trim.
+// served-spec self entry last); the D4 Native-next wave appends after
+// the provider-config reads in ruling family order (CICD,
+// Documentation, Infra, PackageRegistry, Repositories, Evidence,
+// InvestigationWorkflows, Playbooks), and the served-spec self entry
+// keeps the trim last.
 func familyPaths() string {
 	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
 		strings.TrimSpace(status.RepositoryRetirement) + "\n" +
@@ -93,6 +104,24 @@ func familyPaths() string {
 		strings.TrimSpace(service.IntelligenceReport) + "\n" +
 		strings.TrimSpace(auth.AuthProviders) + "\n" +
 		strings.TrimSpace(auth.AdminProviderConfigReads) + "\n" +
+		strings.TrimSpace(cicd.Routes) + "\n" +
+		strings.TrimSpace(cicd.RunCorrelationAggregate) + "\n" +
+		strings.TrimSpace(evidence.Documentation) + "\n" +
+		strings.TrimSpace(evidence.DocumentationFindingAggregate) + "\n" +
+		strings.TrimSpace(cloud.Routes) + "\n" +
+		strings.TrimSpace(infrastructure.Routes) + "\n" +
+		strings.TrimSpace(infrastructure.ResourceAggregate) + "\n" +
+		strings.TrimSpace(repository.PackageRegistry) + "\n" +
+		strings.TrimSpace(repository.PackageRegistryAggregate) + "\n" +
+		strings.TrimSpace(repository.Branches) + "\n" +
+		strings.TrimSpace(repository.StatsAndCoverage) + "\n" +
+		strings.TrimSpace(repository.Freshness) + "\n" +
+		strings.TrimSpace(repository.RepositoryRoutes) + "\n" +
+		strings.TrimSpace(evidence.EvidenceRoutes) + "\n" +
+		strings.TrimSpace(evidence.Bundle) + "\n" +
+		strings.TrimSpace(evidence.DeployableUnitPacket) + "\n" +
+		strings.TrimSpace(evidence.InvestigationWorkflows) + "\n" +
+		strings.TrimSpace(catalog.Playbooks) + "\n" +
 		strings.TrimSuffix(strings.TrimSpace(status.OpenAPISpec), ",") + "\n"
 }
 

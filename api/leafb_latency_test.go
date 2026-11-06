@@ -65,13 +65,15 @@ func BenchmarkLeafBTerminatedRead(b *testing.B) {
 
 // BenchmarkLeafBRelayRead measures the generic relay path for the
 // same caller and stub shape: the before leg the lane must not
-// regress.
+// regress. The relay legs use the dependencies and code-bundle reads,
+// which still cross the generic proxy (the D4 wave terminated the
+// repositories legs they replaced).
 func BenchmarkLeafBRelayRead(b *testing.B) {
 	_, srv := leafbBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/repositories")
-	post := authedRequest(http.MethodPost, "/api/v0/repositories/search")
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
 	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
 
 	b.Run("get", func(b *testing.B) {

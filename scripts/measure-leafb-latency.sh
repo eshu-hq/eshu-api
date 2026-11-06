@@ -17,6 +17,11 @@
 # so any real pathology — a double fetch, a retry, a body re-read —
 # exceeds it loudly while scheduling noise does not).
 #
+# Relay-route disclosure (D4 moved the legs): the relay GET is
+# /api/v0/dependencies and the relay POST is /api/v0/code/bundles —
+# both still cross the generic proxy (the pre-D4 repositories legs
+# terminate natively since the D4 wave).
+#
 # Usage: bash scripts/measure-leafb-latency.sh
 # Needs: go (version in go.mod).
 set -euo pipefail
