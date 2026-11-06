@@ -1,0 +1,59 @@
+api/recovery_resilience_test.go
+  h_78a442cba0b3e6 1-290
+api/recovery.go
+  h_78a442cba0b3e6 1-116
+api/version_test.go
+  h_78a442cba0b3e6 122-124,173-175,206
+openapi/components.go
+  h_78a442cba0b3e6 11-13,25-31,98-143
+docs/parity.md
+  h_78a442cba0b3e6 50,52-54
+contracts/upstream/recovery_admission_contract_test.go
+  h_78a442cba0b3e6 1-60
+openapi/spec_test.go
+  h_78a442cba0b3e6 256-288,320-323,347-348,431-433
+api/recovery_dispatch_test.go
+  h_78a442cba0b3e6 1-223,268-338
+  h_78a442cba0b3e6 224-267
+api/recovery_ledger_generations_test.go
+  h_78a442cba0b3e6 1-152
+api/version.go
+  h_78a442cba0b3e6 104-113
+openapi/doc.go
+  h_78a442cba0b3e6 9-10
+scripts/check-parity.sh
+  h_78a442cba0b3e6 21,158-244,314-340,441-444,459
+openapi/paths/status/doc.go
+  h_78a442cba0b3e6 6,9-12,18-20
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 279-330
+contracts/upstream/recovery-wire-shapes.txt
+  h_78a442cba0b3e6 1-29
+openapi/paths/status/admin_recovery.go
+  h_78a442cba0b3e6 1-240
+api/telemetry_test.go
+  h_78a442cba0b3e6 29-32
+docs/provenance.md
+  h_78a442cba0b3e6 17,32,70-73
+openapi/spec.go
+  h_78a442cba0b3e6 18-20,31,66-67
+contracts/recovery-admission.md
+  h_78a442cba0b3e6 1-182
+api/router.go
+  h_78a442cba0b3e6 86,189-200
+api/recovery_ledger_test.go
+  h_78a442cba0b3e6 1-479
+api/family.go
+  h_78a442cba0b3e6 63-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d14d7a8b826116947acb1770cfef0921cdf23699",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
