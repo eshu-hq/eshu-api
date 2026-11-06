@@ -28,16 +28,19 @@ const apiKeyEnvVar = "ESHU_API_KEY"
 type server struct {
 	coreBaseURL string
 	apiKey      string
+	log         *slog.Logger
 }
 
-func newServer(coreBaseURL, apiKey string) *server {
-	return &server{coreBaseURL: coreBaseURL, apiKey: apiKey}
+func newServer(coreBaseURL, apiKey string, log *slog.Logger) *server {
+	return &server{coreBaseURL: coreBaseURL, apiKey: apiKey, log: log}
 }
 
 // handler returns the production middleware chain over the dispatch
-// routes, with the sunset date read from the environment.
+// routes, with the sunset date read from the environment. The request
+// log flows through log, so binary output carries the per-request
+// structured lines.
 func (s *server) handler() http.Handler {
-	return api.NewServer(s.coreBaseURL, s.apiKey).Handler(api.V0SunsetFromEnv(os.Getenv))
+	return api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log)).Handler(api.V0SunsetFromEnv(os.Getenv))
 }
 
 func run(args []string, logOut *slog.Logger) error {
@@ -53,7 +56,7 @@ func run(args []string, logOut *slog.Logger) error {
 	if *coreBaseURL == "" {
 		return fmt.Errorf("eshu-api: --core-base-url is required")
 	}
-	srv := newServer(*coreBaseURL, key)
+	srv := newServer(*coreBaseURL, key, logOut)
 	logOut.Info("eshu-api serving",
 		"core_read_contracts", api.CoreReadContractsVersion,
 		"admission_contracts", api.SuppressionAdmissionContractVersion,

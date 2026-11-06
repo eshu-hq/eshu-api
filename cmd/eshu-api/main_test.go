@@ -19,7 +19,7 @@ import (
 func TestHandlerServesHealth(t *testing.T) {
 	t.Parallel()
 
-	srv := newServer("https://core:8443", "key")
+	srv := newServer("https://core:8443", "key", slog.New(slog.NewTextHandler(io.Discard, nil)))
 	handler := srv.handler()
 
 	for _, path := range []string{"/health", "/readyz"} {
@@ -58,7 +58,7 @@ func TestHandlerServesHealth(t *testing.T) {
 func TestHandlerGatesAPIWithoutKey(t *testing.T) {
 	t.Parallel()
 
-	srv := newServer("https://core:8443", "")
+	srv := newServer("https://core:8443", "", slog.New(slog.NewTextHandler(io.Discard, nil)))
 	handler := srv.handler()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/repositories", nil)
