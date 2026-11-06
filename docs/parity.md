@@ -63,9 +63,29 @@ after the move.
   suppression fragment
   (`openapi/paths/supply/chain/suppression_mutation.go`, D0 lane —
   line-verbatim subset port closing the Decision 5(c) gap the C-b
-  ruling left open for the pilot family)
+  ruling left open for the pilot family),
+  and the D2 Leaf B Native-now wave (this lane): the capabilities,
+  CLI support (score/render/capture/validate/compose), ask, service
+  intelligence, auth providers, provider-config reads, and served-spec
+  self-entry fragments (whole-file ports plus three line-verbatim
+  subsets), with the shared components block extended by the
+  ServiceName parameter, AdminProviderConfig/WriteRequest schemas, and
+  Unauthorized/NotImplemented responses the wave entries reference
   — per-family fragment moves now land in their family PRs per
   satellite-design Decision 5(c) on eshu-hq/eshu#9669.
+
+## Native-now termination (D2)
+
+The frozen 18 routes / 8 families terminate natively per
+`contracts/leafb-native-now.md`: explicit per-route registrations
+ahead of the generic relay, the shared-key family authorizer with the
+documented deny shape, byte-parity dispatch/conformance proof vs the
+relayed reference, extended `viaNative`/`viaRelay` telemetry, and the
+satellite-owned read-latency gate (`docs/leafb-latency.md`). Data
+still comes from the versioned core read API (dest holds no
+table/queue handle); identity classes dest cannot resolve relay
+explicitly. Termination claims stay provisional until the arbiter
+re-reviews the D0 evidence (blocker B1).
 
 ## What stays in the core
 

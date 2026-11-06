@@ -88,7 +88,24 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 			t.Errorf("served spec contains %s, want core-side only (eshu-api#44)", path)
 		}
 	}
-	if strings.Contains(string(raw), `"security"`) {
-		t.Errorf("served spec contains a security marker, want none (public posture stays in prose, not overrides)")
+	// D2 Leaf B revisit (recorded, not silent): the auth-providers
+	// entry truthfully carries core's `"security": []` public-route
+	// marker — the login-picker GET is permanently public pre-auth and
+	// this lane terminates it publicly, so stripping the marker would
+	// make the served spec lie about the route's posture. That differs
+	// from the setup fragment (#44): the wizard is a temporary
+	// first-run flow whose docs stay core-side entirely. The posture
+	// rule is therefore per-entry now: no setup path keys, and a
+	// security marker only on the permanently-public login-picker
+	// entry. The next lane that ports another public-marked fragment
+	// revisits this test again.
+	for path, item := range paths {
+		rawItem, _ := json.Marshal(item)
+		if !strings.Contains(string(rawItem), `"security"`) {
+			continue
+		}
+		if path != "/api/v0/auth/providers" {
+			t.Errorf("served spec entry %s carries a security marker, want markers only on the public login-picker entry", path)
+		}
 	}
 }

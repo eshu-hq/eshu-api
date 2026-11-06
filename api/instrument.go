@@ -92,9 +92,14 @@ func (s *Server) instrumented(via string, next http.Handler) http.Handler {
 		next.ServeHTTP(sw, r.WithContext(context.WithValue(r.Context(), dispatchRecordKey{}, rec)))
 		duration := time.Since(start)
 		tel.observeRequest(family, statusClass(sw.status), duration)
+		// The lane comes from the record, not the wrap: a gate inside
+		// next (the D2 wave gate) may flip the record lane when the
+		// request relays explicitly instead of terminating. The wrap
+		// value seeds the record at creation, so every path without a
+		// gate still files the wrap lane unchanged.
 		if rec.outcome != "" {
-			tel.observeDispatch(family, via, rec.outcome, rec.coreLatency)
+			tel.observeDispatch(family, rec.via, rec.outcome, rec.coreLatency)
 		}
-		tel.logRequest(r, family, via, correlationID, rec, sw.status, duration)
+		tel.logRequest(r, family, rec.via, correlationID, rec, sw.status, duration)
 	})
 }

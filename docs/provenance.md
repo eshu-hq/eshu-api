@@ -16,6 +16,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (saml-login) | `aac271ad78e328462dabc7518d5f7e5739bdc651` (merge of `eshu-hq/eshu#9897`; 5 store methods, frozen at v0, with the lister carve-out) |
 | Source commit (recovery) | `7c60583996d9a3ccc46288f40a38f614a4f28ea8` (merge of `eshu-hq/eshu#10245`; RecoveryAdmission v0 over RecoveryService, frozen at v0, with the replay/reopen/refinalize/recover-generations Mount; openapi admin.go + recovery components at the same commit) |
 | Source commit (D1 read pins) | `2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923` (merge of `eshu-hq/eshu#10259`; Admin, AdminIdentity, GovernanceAudit, and TerminalFailure read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
+| Source commit (D2 Leaf B wave) | `17feac86e089a6da208fe6c93b5d89b8fb7ef3cc` (`origin/main` at the D2 lane base; wave fragments, doc-UI shells, and wave components entries, frozen at v0) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -83,6 +84,19 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go` (version, alias, `TerminalFailureReader`) at `2c89a9d8` | `contracts/upstream/terminal-failure-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/admin.go` (replay, reopen, refinalize, recover-generations entries only) at `7c605839` | `openapi/paths/status/admin_recovery.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim subset) | verbatim subset |
 | `go/internal/query/openapi/components.go` (`SkippedScopesReport`) + `components_recovery.go` (`DeltaActiveScopesReport`, `ReindexRequestsWrittenReport`) at `7c605839` | `openapi/components.go` (three lane schemas) | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/openapi/paths/catalog/capabilities.go` at `17feac86e089` | `openapi/paths/catalog/capabilities.go` | `e29adb2cc78925212cc8e4c2882b063f2bcf15ff867b03a72a2febd2e8937229` | verbatim |
+| `go/internal/query/openapi/paths/cli/score.go` at `17feac86e089` | `openapi/paths/cli/score.go` | `2cf44ef41567879b6ffc7f3cdc8468b51beaaf2e3ffcf528161c8fd65f954570` | verbatim |
+| `go/internal/query/openapi/paths/cli/render.go` at `17feac86e089` | `openapi/paths/cli/render.go` | `6cdc25b8204c86417dd8659f2416561e2032a5792424659aa50516563e7bbba2` | verbatim |
+| `go/internal/query/openapi/paths/cli/capture.go` at `17feac86e089` | `openapi/paths/cli/capture.go` | `9760b71696292fb8d83b79580d4e65bf9cc1dde0537e63e9f51c173f199b5aab` | verbatim |
+| `go/internal/query/openapi/paths/cli/validate.go` at `17feac86e089` | `openapi/paths/cli/validate.go` | `159f8c031d1dbf8579a951a452648d3f7a52ec753ca538e8121b7ff4ec339b7f` | verbatim |
+| `go/internal/query/openapi/paths/cli/compose.go` at `17feac86e089` | `openapi/paths/cli/compose.go` | `ef7a8b98c253956ee5bb8575e73d9af05373d3cf899e59221eed5feb370421c6` | verbatim |
+| `go/internal/query/openapi/paths/search/ask.go` at `17feac86e089` | `openapi/paths/search/ask.go` | `6d1640ad03ddfa351a4df611d6faee451b3403dc39d02dee893d7115a8eb5740` | verbatim |
+| `go/internal/query/openapi/paths/service/intelligence_report.go` at `17feac86e089` | `openapi/paths/service/intelligence_report.go` | `d7f43593264272966a11be43855a83595dc863545790e2f08711aa4a4472a747` | verbatim |
+| `go/internal/query/openapi/paths/auth/routes.go` (AuthProviders entry only) at `17feac86e089` | `openapi/paths/auth/auth_providers.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim AuthProviders subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/admin_provider_configs.go` (AdminProviderConfigReads entry only) at `99381691b1ac` | `openapi/paths/auth/admin_provider_config_reads.go` | `afa45de81720f466b8b9f66949605564be21e9efa8ddb8c62e71600b127824ef` (whole file; this fragment is the line-verbatim AdminProviderConfigReads subset) | verbatim subset |
+| `go/internal/query/openapi/paths/status/routes.go` (OpenAPISpec entry only) at `17feac86e089` | `openapi/paths/status/api_router_openapi.go` | `24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61` (whole file; this fragment is the line-verbatim OpenAPISpec subset) | verbatim subset |
+| `go/internal/query/openapi/spec.go` (swaggerUIHTML, redocHTML shells only) at `17feac86e089` | `api/leafb_terminate.go` (leafbSwaggerUIShell, leafbReDocShell consts) | block-identical (whole-shell compare, see `check_docui_shell_at`) | verbatim subset |
+| `go/internal/query/openapi/components.go` (ServiceName parameter) + `components_responses.go` (Unauthorized, NotImplemented) at `17feac86e089`, `components_provider_configs.go` (AdminProviderConfig, AdminProviderConfigWriteRequest) at `99381691b1ac` | `openapi/components.go` (D2 block) | excerpt (line-presence at pin, see `check_leafb_components_at`) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 

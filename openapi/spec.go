@@ -8,6 +8,10 @@ import (
 	"strings"
 
 	"github.com/eshu-hq/eshu-api/openapi/paths/auth"
+	"github.com/eshu-hq/eshu-api/openapi/paths/catalog"
+	"github.com/eshu-hq/eshu-api/openapi/paths/cli"
+	"github.com/eshu-hq/eshu-api/openapi/paths/search"
+	"github.com/eshu-hq/eshu-api/openapi/paths/service"
 	"github.com/eshu-hq/eshu-api/openapi/paths/status"
 	supplychain "github.com/eshu-hq/eshu-api/openapi/paths/supply/chain"
 )
@@ -16,7 +20,10 @@ import (
 // families whose OpenAPI fragments have landed in this repository
 // (sign-in-policy first, retirement second, terminal-failure third,
 // admin-identity mutations fourth, admin-identity reads fifth,
-// provider-config sixth, admin-recovery seventh, suppression eighth).
+// provider-config mutations sixth, admin-recovery seventh, suppression
+// eighth, then the D2 Leaf B Native-now wave: capabilities, CLI
+// support, ask, service intelligence, auth providers,
+// provider-config reads, and the served-spec self entry).
 // It advances as family lanes port their fragments; the served family
 // set is pinned by the Spec tests.
 const SpecVersion = "v0"
@@ -29,7 +36,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config, admin-recovery, suppression); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -58,6 +65,10 @@ const specPrefix = `{
 // convention), so only the final fragment in landing order has its
 // trailing comma trimmed before the close. A fragment that stops ending
 // in a comma breaks the served JSON and the Spec tests fail closed.
+// The D2 Leaf B wave appends the Native-now fragments after the
+// suppression lane in wave-table order (capabilities, CLI support, ask,
+// service intelligence, auth providers, provider-config reads, then the
+// served-spec self entry last); the self entry keeps the trim.
 func familyPaths() string {
 	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
 		strings.TrimSpace(status.RepositoryRetirement) + "\n" +
@@ -66,7 +77,18 @@ func familyPaths() string {
 		strings.TrimSpace(auth.AdminReads) + "\n" +
 		strings.TrimSpace(auth.AdminProviderConfigMutations) + "\n" +
 		strings.TrimSpace(status.AdminRecovery) + "\n" +
-		strings.TrimSuffix(strings.TrimSpace(supplychain.SuppressionMutation), ",") + "\n"
+		strings.TrimSpace(supplychain.SuppressionMutation) + "\n" +
+		strings.TrimSpace(catalog.Capabilities) + "\n" +
+		strings.TrimSpace(cli.Score) + "\n" +
+		strings.TrimSpace(cli.Render) + "\n" +
+		strings.TrimSpace(cli.Capture) + "\n" +
+		strings.TrimSpace(cli.Validate) + "\n" +
+		strings.TrimSpace(cli.Compose) + "\n" +
+		strings.TrimSpace(search.Ask) + "\n" +
+		strings.TrimSpace(service.IntelligenceReport) + "\n" +
+		strings.TrimSpace(auth.AuthProviders) + "\n" +
+		strings.TrimSpace(auth.AdminProviderConfigReads) + "\n" +
+		strings.TrimSuffix(strings.TrimSpace(status.OpenAPISpec), ",") + "\n"
 }
 
 // Spec returns the dest-assembled OpenAPI 3.0 document for the landed

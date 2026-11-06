@@ -21,6 +21,7 @@ SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"
 SRC_SHA_RECOVERY="7c60583996d9a3ccc46288f40a38f614a4f28ea8"
 SRC_SHA_D1="2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923"
 SRC_SHA_D0="ec1643d67f"
+SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -372,6 +373,149 @@ check_fragment_subset_named_at "$SRC_SHA_D0" "go/internal/query/openapi/paths/su
 # Go const line in core (verified as a substring instead), and which
 # the served-spec LocalRefsResolve test independently requires.
 check_recovery_schemas_at "$SRC_SHA_RECOVERY"
+
+# D2 Leaf B Native-now wave (Decision 5(c)): the wave fragments are
+# byte-identical ports (whole-file) or line-verbatim subsets of the
+# pinned core files at SRC_SHA_WAVE — except the provider-config reads
+# subset, which reuses the provider-config lane pin (the file is
+# byte-identical at both pins, hash afa45de8...). The doc-UI shells are
+# line-verbatim subsets of the pinned core openapi/spec.go.
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/catalog/capabilities.go" \
+  "openapi/paths/catalog/capabilities.go" \
+  "e29adb2cc78925212cc8e4c2882b063f2bcf15ff867b03a72a2febd2e8937229"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cli/score.go" \
+  "openapi/paths/cli/score.go" \
+  "2cf44ef41567879b6ffc7f3cdc8468b51beaaf2e3ffcf528161c8fd65f954570"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cli/render.go" \
+  "openapi/paths/cli/render.go" \
+  "6cdc25b8204c86417dd8659f2416561e2032a5792424659aa50516563e7bbba2"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cli/capture.go" \
+  "openapi/paths/cli/capture.go" \
+  "9760b71696292fb8d83b79580d4e65bf9cc1dde0537e63e9f51c173f199b5aab"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cli/validate.go" \
+  "openapi/paths/cli/validate.go" \
+  "159f8c031d1dbf8579a951a452648d3f7a52ec753ca538e8121b7ff4ec339b7f"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/cli/compose.go" \
+  "openapi/paths/cli/compose.go" \
+  "ef7a8b98c253956ee5bb8575e73d9af05373d3cf899e59221eed5feb370421c6"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/search/ask.go" \
+  "openapi/paths/search/ask.go" \
+  "6d1640ad03ddfa351a4df611d6faee451b3403dc39d02dee893d7115a8eb5740"
+
+check_file_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/service/intelligence_report.go" \
+  "openapi/paths/service/intelligence_report.go" \
+  "d7f43593264272966a11be43855a83595dc863545790e2f08711aa4a4472a747"
+
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/auth_providers.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "AuthProviders"
+
+check_fragment_subset_named_at "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/openapi/paths/auth/admin_provider_configs.go" \
+  "openapi/paths/auth/admin_provider_config_reads.go" \
+  "afa45de81720f466b8b9f66949605564be21e9efa8ddb8c62e71600b127824ef" \
+  "AdminProviderConfigReads"
+
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/status/routes.go" \
+  "openapi/paths/status/api_router_openapi.go" \
+  "24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61" \
+  "OpenAPISpec"
+
+# The doc-UI shells ride their const openers (`const swaggerUIHTML =
+# `<!doctype html>` in core): no standalone doctype line exists to
+# line-match, so this gate compares the whole shell block instead. The
+# dest const name is dest-owned; the block bytes after the opener must
+# equal the pinned core block bytes exactly.
+check_docui_shell_at() {
+  local sha="$1" core_const="$2" dest_rel="$3" dest_const="$4"
+  local fetched
+  fetched="$(fetch_at "$sha" "go/internal/query/openapi/spec.go")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "6d721a03c27feb55720381ae3db8b40f8f4cc53f267a3830ff7cbcaff201ad80" ]]; then
+    echo "FAIL: go/internal/query/openapi/spec.go at ${sha} hash ${got_hash} != recorded 6d721a03c27feb55720381ae3db8b40f8f4cc53f267a3830ff7cbcaff201ad80" >&2
+    exit 1
+  fi
+  block_of() { # file, const opener: payload lines after the opener to the closing backtick
+    awk -v c="$1" 'index($0, c)==1{flag=1; sub(/^[^\x60]*\x60/, ""); print; next} flag{print} flag && /^\x60$/ {exit}' "$2"
+  }
+  if ! cmp -s <(block_of "const ${core_const} = " "$fetched") <(block_of "const ${dest_const} = " "${REPO_ROOT}/${dest_rel}"); then
+    echo "FAIL: ${dest_rel} ${dest_const} block differs from ${core_const} at ${sha}" >&2
+    diff <(block_of "const ${core_const} = " "$fetched") <(block_of "const ${dest_const} = " "${REPO_ROOT}/${dest_rel}") >&2 || true
+    exit 1
+  fi
+  echo "OK: ${dest_rel} ${dest_const} block identical to ${core_const} at ${sha}"
+}
+
+check_docui_shell_at "$SRC_SHA_WAVE" "swaggerUIHTML" \
+  "api/leafb_terminate.go" "leafbSwaggerUIShell"
+
+check_docui_shell_at "$SRC_SHA_WAVE" "redocHTML" \
+  "api/leafb_terminate.go" "leafbReDocShell"
+
+# Wave components (Decision 5(c)): every ported line of the D2 block in
+# openapi/components.go — the parameters/ServiceName entry, the
+# AdminProviderConfig and AdminProviderConfigWriteRequest schemas, and
+# the Unauthorized and NotImplemented responses — must appear verbatim
+# in its pinned component source. The served-spec LocalRefsResolve
+# test independently requires the entries.
+check_leafb_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.go" >&2
+      return 1
+    fi
+    # The block's first line rides the Go const opener in core (no
+    # standalone line exists there), so it matches as a substring;
+    # every following line must match whole-line. The served-spec
+    # validity and LocalRefsResolve tests independently pin the entry
+    # name and shape.
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"ServiceName"' "$SRC_SHA_WAVE" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"AdminProviderConfig"' "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/openapi/components_provider_configs.go" \
+    || fail=1
+  check_block '"AdminProviderConfigWriteRequest"' "$SRC_SHA_PROVIDERCONFIG" "go/internal/query/openapi/components_provider_configs.go" \
+    || fail=1
+  check_block '"Unauthorized"' "$SRC_SHA_WAVE" "go/internal/query/openapi/components_responses.go" \
+    || fail=1
+  check_block '"NotImplemented"' "$SRC_SHA_WAVE" "go/internal/query/openapi/components_responses.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: wave components lines all verbatim in pinned component sources"
+}
+
+check_leafb_components_at
 
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,

@@ -1,7 +1,10 @@
 // Package api owns the eshu-api HTTP surface: routing, the shared-key
 // auth gate, the v1 alias rewrite, the v0 deprecation headers, and the
 // byte-for-byte dispatch of the authenticated /api/* subtree to the
-// configured core origin. It also owns the Leaf E telemetry registry:
+// configured core origin. The D2 Leaf B Native-now wave terminates 18
+// routes natively ahead of that relay (see leafb_wave.go and
+// contracts/leafb-native-now.md); every other family still crosses the
+// relay lane. It also owns the Leaf E telemetry registry:
 // per-family request, dispatch, authorizer, and audit-drop signals on
 // the public /metrics exposition plus the structured per-request log
 // (see docs/telemetry.md).
