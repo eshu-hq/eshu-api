@@ -138,10 +138,22 @@ key (misrepresenting the documented security posture) or open the
 spec endpoint (widening the public surface beyond the four approved
 routes). The served dest spec therefore still covers exactly the
 previously landed families; setup routes stay relayed-from-core for
-spec purposes until a later lane moves the fragment with a matching
-public-spec posture (tracked in eshu-hq/eshu-api#44, due at or before
-the flip/removal review). `TestSpec_*` and `TestOpenAPINative_*` are
-accordingly untouched.
+spec purposes permanently: the eshu-hq/eshu-api#44 follow-up resolves
+the posture question in favor of core-side (no later lane moves the
+fragment, no expiry review). The four core operations all carry
+`"security": []`, while `GET /api/v0/openapi.json` stays inside
+`RequireAuth` (`api/router.go`, pinned by
+`TestOpenAPINative_UnauthenticatedIs401`): porting the fragment would
+either gate public-route docs behind the shared key (a reader must
+present the key to fetch a document that claims no key is needed) or
+open a fifth public spec route beyond the four arbiter-approved C-c1
+routes (`api/setup.go` `setupRoutes`). Wizard clients never read the
+dest spec — `setupWriteThrough` is pure HTTP write-through — so the
+fragment is discoverability-only. Pinned by
+`TestSetupSpecPosture_StaysCoreSide`: the four setup routes answer
+without a credential while the spec answers 401 to the same caller,
+and the authed document carries no setup path keys and no
+`"security"` markers.
 
 Rollback: additive. Revert this lane's dest commit (or re-pin the
 prior digest) and the four setup routes fall back to the generic
