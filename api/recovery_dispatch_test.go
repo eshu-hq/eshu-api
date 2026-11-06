@@ -302,11 +302,13 @@ func TestRecoveryNative_RelayOnlyStaysProxy(t *testing.T) {
 	}
 }
 
-// TestRecoveryNative_ReadsStillProxy pins that the native recovery
-// routes change nothing for the family's reads: the replay-events,
-// work-items, and dead-letters query POSTs still cross the generic
-// byte-relay with path, method, and body intact.
-func TestRecoveryNative_ReadsStillProxy(t *testing.T) {
+// TestRecoveryNative_D3ReadsForwardIntact pins that the D3 lane moves
+// these reads without changing the forwarding: the replay-events,
+// work-items, and dead-letters query POSTs terminate natively since D3
+// (api/d3_wave.go, family admin) with exactly one upstream hit, path,
+// method, and body intact on the native lane. The relay-only four
+// (backfill, dead-letter, reindex, skip) are unaffected above.
+func TestRecoveryNative_D3ReadsForwardIntact(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{
@@ -320,7 +322,8 @@ func TestRecoveryNative_ReadsStillProxy(t *testing.T) {
 		upstream := httptest.NewServer(mux)
 		defer upstream.Close()
 
-		srv := NewServer(upstream.URL, skeletonTestKey)
+		tel := NewTelemetry(nil)
+		srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 		handler := srv.Handler(DefaultV0Sunset)
 
 		req := authedRequest(http.MethodPost, path)
@@ -328,11 +331,14 @@ func TestRecoveryNative_ReadsStillProxy(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 
 		if core.hits != 1 || core.lastPath != path || core.lastMethod != http.MethodPost {
-			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the generic proxy to the read route",
+			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the terminated read forwarded once untouched",
 				path, core.hits, core.lastMethod, core.lastPath)
 		}
 		if rec.Code != http.StatusOK {
 			t.Errorf("path %q: status = %d, want 200", path, rec.Code)
+		}
+		if got := tel.snapshot().dispatches["admin"][viaNative][outcomeCoreOK]; got != 1 {
+			t.Errorf("path %q: admin native core_ok = %d, want 1 (D3 terminated lane)", path, got)
 		}
 	}
 }

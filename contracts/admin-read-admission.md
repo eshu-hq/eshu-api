@@ -28,12 +28,25 @@ frozen method set is `frozenAdminReadAdmission` in
 
 ## Read surface
 
-The reads stay on the generic relay until the D3 lane lands; no native
-route moves in this record. The seam is read-only on purpose: the
+The seam is read-only on purpose: the
 aliased interface carries bounded list methods and no mutation
 surface, so a dest consumer implementing only this contract can serve
 admin reads but cannot acquire a write it did not bargain for through
 it.
+
+## Native termination (D3)
+
+The six query POSTs (`admin/work-items/query`, `decisions/query`,
+`dead-letters/query`, `input-invalid-facts/query`,
+`changed-since/poisoned-links/query`, `replay-events/query`)
+terminate natively since the D3 lane (`api/d3_wave.go`, family
+`admin`): explicit gated routes ahead of the relay, the shared-key
+family authorizer, byte-parity dispatch/conformance proof vs the
+relayed reference, and the line-verbatim spec subset
+(`openapi/paths/status/admin_reads.go`, gated byte-identical by
+`scripts/check-parity.sh`). See `contracts/d3-admin-reads.md` for the
+termination record and rollback. The 3 unpinned Admin GETs stay relay:
+their readers carry no versioned pin.
 
 ## Enforcement
 

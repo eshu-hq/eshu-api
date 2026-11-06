@@ -9,7 +9,10 @@
 // (CollectorTerminalFailureAcknowledgement); and the admin-recovery
 // family: the replay, reopen, refinalize, and recover-generations
 // POSTs whose path keys are unique to the tier C-c2 lane
-// (AdminRecovery, a line-verbatim subset of the pinned core file).
+// (AdminRecovery, a line-verbatim subset of the pinned core file);
+// and the operator admin read family: the six query POSTs whose path
+// keys are unique to the D3 lane (AdminReads, a line-verbatim subset
+// of the same pinned core file).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other

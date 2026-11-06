@@ -40,12 +40,25 @@ port, and the compile assertion. The frozen method set is
 `contracts/upstream/terminal_failure_read_admission_contract_test.go`
 (2 methods: `ListTerminalFailureAcks`, `ListTerminalFailures`).
 
-The reads stay on the generic relay until the D3 lane lands; no
-native route moves in this record. The acknowledgement mutation
+The acknowledgement mutation
 surface (`ResolveTarget`, `Acknowledge`) stays on
 `TerminalFailureAdmission`; a dest consumer implementing only this
 contract can serve the reads but cannot mark a failure known and
 expected through it.
+
+## Native termination (D3, reads)
+
+The two query POSTs (`admin/collector-failures/query`,
+`acknowledgements/query`) terminate natively since the D3 lane
+(`api/d3_wave.go`, family `terminal_failure`): explicit gated routes
+ahead of the relay, the shared-key family authorizer, byte-parity
+dispatch/conformance proof vs the relayed reference, and the served
+spec entries (already ported whole-file in
+`openapi/paths/status/collector_terminal_failure_acknowledgement.go`).
+See `contracts/d3-admin-reads.md` for the termination record and
+rollback. The tier C-a acknowledgement POST above stays on the HTTP
+write-through lane; reads and the mutation share nothing but the path
+prefix.
 
 ## HTTP shape
 

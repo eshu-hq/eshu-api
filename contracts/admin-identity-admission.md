@@ -42,11 +42,28 @@ method set is `frozenAdminIdentityReadAdmission` in
 `ListAdminRoles`, `ListAdminIdPProviders`,
 `ListAdminIdPGroupMappings`, `ListAdminAPITokens`).
 
-The reads stay on the generic relay until the D3 lane lands; no
-native route moves in this record. Every method is scoped strictly to
+Every method is scoped strictly to
 the caller's tenant (and workspace where applicable) and none returns
 a secret, hash, invite code, credential handle, or external group
 hash.
+
+## Native termination (D3, reads)
+
+The six tenant-scoped identity GETs (`auth/admin/api-tokens`,
+`idp-group-mappings`, `idp-providers`, `role-assignments`, `roles`,
+and `auth/local/invitations`) terminate natively since the D3 lane
+(`api/d3_wave.go`, family `admin_identity`): explicit gated routes
+ahead of the relay, the shared-key family authorizer, byte-parity
+dispatch/conformance proof vs the relayed reference, and the served
+spec entries — the five `auth/admin/*` GETs ride the already-ported
+whole-file `openapi/paths/auth/admin_reads.go`, while the invitations
+GET rides the new line-verbatim subset
+(`openapi/paths/auth/admin_invitations.go`, gated byte-identical by
+`scripts/check-parity.sh`; get-only, because the create POST sharing
+its key stays relay until D8). See `contracts/d3-admin-reads.md` for
+the termination record and rollback. The five tier C-b mutation routes
+above stay on the HTTP write-through lane; reads and mutations share
+nothing but path keys.
 
 ## HTTP shape
 

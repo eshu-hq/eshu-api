@@ -177,10 +177,12 @@ func TestTerminalFailureNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 	}
 }
 
-// TestTerminalFailureNative_QueryReadsStillProxy pins that the native
-// acknowledge route changes nothing for the family's reads: both query
-// POSTs still cross the generic byte-relay with path and method intact.
-func TestTerminalFailureNative_QueryReadsStillProxy(t *testing.T) {
+// TestTerminalFailureNative_D3ReadsForwardIntact pins that the D3 lane
+// moves these reads without changing the forwarding: both query POSTs
+// terminate natively since D3 (api/d3_wave.go, family terminal_failure)
+// with exactly one upstream hit, path intact, on the native lane. The
+// native acknowledge route above is unaffected.
+func TestTerminalFailureNative_D3ReadsForwardIntact(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{
@@ -193,7 +195,8 @@ func TestTerminalFailureNative_QueryReadsStillProxy(t *testing.T) {
 		upstream := httptest.NewServer(mux)
 		defer upstream.Close()
 
-		srv := NewServer(upstream.URL, skeletonTestKey)
+		tel := NewTelemetry(nil)
+		srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 		handler := srv.Handler(DefaultV0Sunset)
 
 		req := authedRequest(http.MethodPost, path)
@@ -201,10 +204,13 @@ func TestTerminalFailureNative_QueryReadsStillProxy(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 
 		if core.hits != 1 || core.lastPath != path {
-			t.Errorf("path %s: hits = %d lastPath = %q, want the generic relay to forward untouched", path, core.hits, core.lastPath)
+			t.Errorf("path %s: hits = %d lastPath = %q, want the terminated read forwarded once untouched", path, core.hits, core.lastPath)
 		}
 		if rec.Code != http.StatusOK {
-			t.Errorf("path %s: status = %d, want relayed 200", path, rec.Code)
+			t.Errorf("path %s: status = %d, want 200", path, rec.Code)
+		}
+		if got := tel.snapshot().dispatches["terminal_failure"][viaNative][outcomeCoreOK]; got != 1 {
+			t.Errorf("path %s: terminal_failure native core_ok = %d, want 1 (D3 terminated lane)", path, got)
 		}
 	}
 }
