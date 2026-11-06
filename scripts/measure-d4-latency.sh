@@ -24,7 +24,7 @@
 # same still-relaying routes in this lane, so every lane gates
 # terminated-vs-relay again instead of terminated-vs-terminated.
 #
-# Usage: bash scripts/measure-d3-latency.sh
+# Usage: bash scripts/measure-d4-latency.sh
 # Needs: go (version in go.mod).
 set -euo pipefail
 

@@ -12,8 +12,9 @@ import (
 )
 
 // D4 Native-next reads conformance (Refs eshu-hq/eshu#9669, part of
-// #6707). TDD record: this suite is RED as committed — the frozen wave
-// below mirrors go/cmd/api/CUTOVER_OWNERSHIP.md (CICD, Documentation,
+// #6707). TDD record: this suite failed RED before the implementation
+// landed (frozen wave asserted first) and is green with it — the frozen
+// wave below mirrors go/cmd/api/CUTOVER_OWNERSHIP.md (CICD, Documentation,
 // Infra, PackageRegistry, Repositories, Evidence,
 // InvestigationWorkflows, Playbooks; Compare deferred to D6) and the
 // behavior tests require every wave route to terminate natively for
