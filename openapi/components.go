@@ -14,6 +14,9 @@ package openapi
 //
 //   - AdminSignInPolicy, AdminSignInPolicyUpdateRequest: schemas from
 //     go/internal/query/openapi/components_sign_in_policy.go.
+//   - AdminAuditCountList: schema from
+//     go/internal/query/openapi/components_local_identity.go (admin-identity
+//     reads lane: the audit-summary fragment response counts by it).
 //   - ErrorResponse: schema from go/internal/query/openapi/components.go.
 //   - BadRequest, NotFound, Forbidden, Conflict, InternalError,
 //     ServiceUnavailable: responses from
@@ -59,6 +62,17 @@ const components = `  "components": {
           "message": {"type": "string"},
           "correlation_id": {"type": "string"},
           "details": {"type": "object"}
+        }
+      },
+      "AdminAuditCountList": {
+        "type": "array",
+        "description": "Low-cardinality aggregate counts. Each entry is a name and an integer count; never an individual event identifier.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "count": {"type": "integer"}
+          }
         }
       }
     },

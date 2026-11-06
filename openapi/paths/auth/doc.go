@@ -3,10 +3,13 @@
 
 // Package auth holds the ported OpenAPI path fragments for the
 // sign-in-policy family: the public pre-auth GET and the admin GET/PATCH
-// under /api/v0/auth/... (SignInPolicy); and for the admin-identity
+// under /api/v0/auth/... (SignInPolicy); for the admin-identity
 // mutation family: the invitation revoke, role-assignment revoke, and
 // mapping delete routes whose path keys are unique to the mutation
-// surface (AdminMutations).
+// surface (AdminMutations); and for the admin-identity reads family:
+// the tenant-scoped admin reads whose path keys carry the family GETs
+// (plus the grant and create POSTs that share those keys, per the core
+// OpenAPI convention) (AdminReads).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other

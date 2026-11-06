@@ -134,6 +134,16 @@ check_file_at "$SRC_SHA_MAIN" "go/internal/query/openapi/paths/auth/admin_mutati
   "openapi/paths/auth/admin_mutations.go" \
   "c36f06548db46242940cd7f2661f22f8148706e6e554df61133031e84878f886"
 
+# Native spec (Decision 5(c)): the admin-identity reads OpenAPI
+# fragment is a byte-identical port of the pinned core file, gated here
+# like the upstream evidence above. Reads stay relay (no native routes
+# added — fragment only); the grant and create POSTs share path keys
+# with the family GETs, so they live in this reads fragment rather than
+# the mutations fragment.
+check_file_at "$SRC_SHA_MAIN" "go/internal/query/openapi/paths/auth/admin_reads.go" \
+  "openapi/paths/auth/admin_reads.go" \
+  "ce77d72fdd6b448b8a42e9b15981fbdc2053beeadbecd46ba61dbd427365da6e"
+
 check_file_at "$SRC_SHA_MAIN" "go/internal/query/admin/identity/admission_contract_test.go" \
   "contracts/upstream/admin_identity_admission_contract_test.go" \
   "1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559"
