@@ -17,7 +17,10 @@
 // and for the admin provider-config reads family: the list, detail,
 // and revisions GETs plus the create and update POSTs that share the
 // list/detail path keys, per the same convention
-// (AdminProviderConfigReads, D2 Leaf B wave).
+// (AdminProviderConfigReads, D2 Leaf B wave); and the admin
+// invitations list GET whose path key it shares with the relay-only
+// LocalIdentity create POST (AdminInvitations, D3 wave, a
+// line-verbatim subset of the pinned core file).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other

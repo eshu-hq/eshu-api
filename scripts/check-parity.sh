@@ -427,6 +427,26 @@ check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/
   "24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61" \
   "OpenAPISpec"
 
+# D3 admin/identity/recovery reads (Decision 5(c)): the six admin
+# query POSTs are a line-verbatim subset of the pinned core admin.go
+# (same file and pin as the recovery lane — admin.go is byte-identical
+# at both pins, hash 26c76697...), and the invitations list GET is a
+# line-verbatim subset of the pinned core routes.go (same file and pin
+# as the D2 auth-providers subset). The 3 unpinned Admin GETs, the
+# relay-only mutations, and the invitations create POST keep their own
+# path keys there and stay out of these fragments, so no served key
+# duplicates a relayed route — except the invitations key, which the
+# served document carries get-only until D8 ports the POST.
+check_fragment_subset_named_at "$SRC_SHA_RECOVERY" "go/internal/query/openapi/paths/status/admin.go" \
+  "openapi/paths/status/admin_reads.go" \
+  "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
+  "AdminReads"
+
+check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/admin_invitations.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "AdminInvitations"
+
 # The doc-UI shells ride their const openers (`const swaggerUIHTML =
 # `<!doctype html>` in core): no standalone doctype line exists to
 # line-match, so this gate compares the whole shell block instead. The

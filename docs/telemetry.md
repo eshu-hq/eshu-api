@@ -50,7 +50,9 @@ for the mutation families, the read-transport Native-now wave for the
 read families. The native lane carries the tier-C dispatch families
 plus the D2 Native-now wave (capabilities, CLI support, ask, service
 intelligence, auth providers, sign-in-policy reads, provider-config
-reads, doc UI, served spec); every other family crosses the relay
+reads, doc UI, served spec) plus the D3 admin/identity/recovery reads
+wave (admin query POSTs, admin identity GETs, governance-audit GETs,
+terminal-failure query POSTs); every other family crosses the relay
 lane until its native route lands, and the `via` label tells the two
 apart. Wave-gated routes that relay explicitly for unresolvable
 identity classes file on `via="relay"` with their wave family, so the

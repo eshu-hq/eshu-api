@@ -25,8 +25,11 @@ after the move.
   `contracts/admin-read-admission.md`,
   `contracts/admin-identity-admission.md`,
   `contracts/governance-audit-read-admission.md`, and
-  `contracts/terminal-failure-admission.md`; the reads stay on the
-  generic relay until their D waves land.
+  `contracts/terminal-failure-admission.md`; the D3 scope (16 routes
+  across those four pins, minus the families D2 already terminated
+  and the 3 unpinned Admin GETs) terminates natively per
+  `contracts/d3-admin-reads.md` and the rest stay on the generic
+  relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
   admission contract; the versioned in-tree seams are the suppression,
@@ -70,8 +73,12 @@ after the move.
   self-entry fragments (whole-file ports plus three line-verbatim
   subsets), with the shared components block extended by the
   ServiceName parameter, AdminProviderConfig/WriteRequest schemas, and
-  Unauthorized/NotImplemented responses the wave entries reference
-  — per-family fragment moves now land in their family PRs per
+  Unauthorized/NotImplemented responses the wave entries reference,
+  and the D3 admin/identity/recovery reads wave: the six admin query
+  POSTs (`openapi/paths/status/admin_reads.go`, line-verbatim subset)
+  and the invitations list GET
+  (`openapi/paths/auth/admin_invitations.go`, line-verbatim get-only
+  subset) — per-family fragment moves now land in their family PRs per
   satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
 ## Native-now termination (D2)
@@ -86,6 +93,20 @@ still comes from the versioned core read API (dest holds no
 table/queue handle); identity classes dest cannot resolve relay
 explicitly. Termination claims stay provisional until the arbiter
 re-reviews the D0 evidence (blocker B1).
+
+## Native termination (D3)
+
+The 16 D1-pinned admin/identity/recovery read routes terminate
+natively per `contracts/d3-admin-reads.md`: explicit gated routes
+ahead of the generic relay, the shared-key family authorizer with the
+documented deny shape (plus the D2 follow-up cookie lesson — only
+session-cookie-shaped credentials relay, junk cookies stay dest-401),
+byte-parity dispatch/conformance proof vs the relayed reference,
+extended `viaNative`/`viaRelay` telemetry, and the satellite-owned
+read-latency gate (`docs/d3-latency.md`: GET 0.55x, POST 0.79x vs the
+1.50 budget). Data still comes from the versioned core read API (dest
+holds no table/queue handle). Termination claims stay provisional
+until the arbiter re-reviews the D0 evidence (blocker B1).
 
 ## What stays in the core
 

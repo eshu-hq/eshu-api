@@ -31,11 +31,20 @@ frozen method set is `frozenGovernanceAuditReadAdmission` in
 
 ## Read surface
 
-The reads stay on the generic relay until the D3 lane (tenant-admin
-audit links) and the D6 lane (Status + SupplyChain reads, which need
-the D1 audit-read pin) land; no native route moves in this record. A
-dest consumer implementing only this contract can serve audit reads
-but cannot append an event or acquire a mutation through it.
+A dest consumer implementing only this contract can serve audit
+reads but cannot append an event or acquire a mutation through it.
+
+## Native termination (D3, tenant-admin links)
+
+The two tenant-admin audit GETs (`auth/admin/audit/events`,
+`audit/summary`) terminate natively since the D3 lane
+(`api/d3_wave.go`, family `governance_audit`): explicit gated routes
+ahead of the relay, the shared-key family authorizer, byte-parity
+dispatch/conformance proof vs the relayed reference, and the served
+spec entries (already ported whole-file in
+`openapi/paths/auth/admin_reads.go`). See
+`contracts/d3-admin-reads.md` for the termination record and rollback.
+The D6 lane reuses this pin for the Status + SupplyChain reads.
 
 ## Enforcement
 

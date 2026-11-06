@@ -201,10 +201,11 @@ func TestAdminIdentityNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 	}
 }
 
-// TestAdminIdentityNative_ReadsStillProxy pins that the native mutation
-// routes change nothing for the family's reads: the list GETs still
-// cross the generic byte-relay with path, method, and query intact.
-func TestAdminIdentityNative_ReadsStillProxy(t *testing.T) {
+// TestAdminIdentityNative_D3ReadsForwardIntact pins that the family
+// reads now terminate natively since D3 without changing the
+// forwarding: the list GETs forward once with path, method, and query
+// intact on the native lane (family admin_identity).
+func TestAdminIdentityNative_D3ReadsForwardIntact(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{
@@ -220,7 +221,8 @@ func TestAdminIdentityNative_ReadsStillProxy(t *testing.T) {
 		upstream := httptest.NewServer(mux)
 		defer upstream.Close()
 
-		srv := NewServer(upstream.URL, skeletonTestKey)
+		tel := NewTelemetry(nil)
+		srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 		handler := srv.Handler(DefaultV0Sunset)
 
 		req := authedRequest(http.MethodGet, path)
@@ -229,11 +231,14 @@ func TestAdminIdentityNative_ReadsStillProxy(t *testing.T) {
 
 		wantPath := strings.SplitN(path, "?", 2)[0]
 		if core.hits != 1 || core.lastPath != wantPath || core.lastMethod != http.MethodGet {
-			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the generic proxy to the read route",
+			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the terminated read forwarded once untouched",
 				path, core.hits, core.lastMethod, core.lastPath)
 		}
 		if rec.Code != http.StatusOK {
 			t.Errorf("path %q: status = %d, want 200", path, rec.Code)
+		}
+		if got := tel.snapshot().dispatches["admin_identity"][viaNative][outcomeCoreOK]; got != 1 {
+			t.Errorf("path %q: admin_identity native core_ok = %d, want 1 (D3 terminated lane)", path, got)
 		}
 	}
 }

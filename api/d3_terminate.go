@@ -1,0 +1,163 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package api
+
+import (
+	"crypto/subtle"
+	"net/http"
+)
+
+// D3 admin/identity/recovery reads termination engine (Refs
+// eshu-hq/eshu#9669, part of #6707). The wave table lives in
+// d3_wave.go; this file owns the serving contract: the wave gate, the
+// terminated reader, and the session-cookie shape check.
+//
+// Lane rule (arbiter D-wave ruling, decision 4, via the D2 wave):
+// shared-key callers terminate natively; credential classes dest
+// cannot resolve (scoped tokens, OIDC bearers, browser sessions) relay
+// explicitly — core judges, core bytes come back untouched, dest
+// invents no 401, 403, 404, or 500 for them; credential-less callers
+// get the standing dest 401. The only dest-synthesized errors on the
+// terminated path are the gate 401, the future-resolver family 403,
+// and the permanent local 503 when no core origin is configured
+// (never Retry-After).
+//
+// Cookie rule (D2 follow-up lesson): only session-cookie-shaped
+// credentials relay. A Cookie header carrying the eshu_session (or
+// __Host-eshu_session) member names a browser-session caller and
+// relays explicitly; any other Cookie (junk) is not a credential and
+// stays dest-401 with zero core contact, exactly like a
+// credential-less caller.
+
+// authorizeD3SharedKey reports whether an identity carrying
+// allScopes may terminate a D3 read natively. The only identity dest
+// can construct today is the shared-key holder, which core maps to
+// AllScopes, so the wave gate passes true and core re-judges every
+// forwarded call as backstop (tenant scope, permission catalog,
+// governance mode — which is also where the live 403s and
+// mode-dependent denials come from). The false branch is the hookup
+// point for the day dest gains a scoped/session resolver; until then
+// it stays a plain deny (no invented reason codes, no audit
+// widening). One shared authorizer covers all 16 D3 wave routes: they
+// share the shared-key trust root until D8 resolves per-class
+// handling, and the contract record (contracts/d3-admin-reads.md)
+// carries the scope-honesty label for each family.
+func authorizeD3SharedKey(allScopes bool) bool {
+	return allScopes
+}
+
+// d3FamilyDenyMessage is the documented family-403 text the dest
+// authorizer adds on the unreachable-until-D8 deny branch.
+const d3FamilyDenyMessage = "all-scopes operator authorization is required"
+
+// serveD3Terminated terminates one D3 read for a shared-key caller:
+// the family authorizer runs first, then the call crosses the versioned
+// port transport (forwardToCore on the native lane) with the caller's
+// negotiation headers and credential intact and core bytes come back
+// unmodified.
+func (s *Server) serveD3Terminated(w http.ResponseWriter, r *http.Request) {
+	s.serveD3TerminatedAs(w, r, true)
+}
+
+// serveD3TerminatedAs is the testable core of the terminated reader:
+// allScopes is the resolved caller scope. The wave gate always passes
+// true today (the shared key maps to AllScopes in core); the false
+// branch is the hookup point for the day dest gains a
+// scoped/session resolver, and it stays a plain deny until then. Like
+// dispatch, it fails closed with the permanent 503 when no core origin
+// is configured, so a native route can never dereference an
+// unconfigured origin.
+func (s *Server) serveD3TerminatedAs(w http.ResponseWriter, r *http.Request, allScopes bool) {
+	if s.core == nil {
+		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
+			"eshu-api: core origin is not configured; no core routes are served")
+		return
+	}
+	// The family authorizer judgment counts on both branches, so the
+	// unreachable deny branch stays observable from dest signals. A deny
+	// never dispatches: it files the denied outcome on the native lane.
+	family := classifyFamily(r.URL.Path)
+	if !authorizeD3SharedKey(allScopes) {
+		if tel := s.telemetry; tel != nil {
+			tel.observeAuthorizer(family, decisionDeny)
+		}
+		s.dispatchOutcome(r, viaNative, outcomeDenied, 0, false)
+		writeError(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden),
+			d3FamilyDenyMessage)
+		return
+	}
+	if tel := s.telemetry; tel != nil {
+		tel.observeAuthorizer(family, decisionAllow)
+	}
+	forwardToCore(s, w, r, viaNative)
+}
+
+// hasSessionCookie reports whether r carries a session-cookie-shaped
+// credential: a Cookie member named eshu_session (or its __Host-
+// prefixed form, the two names the core caller-credential reader
+// accepts). Any other Cookie content is junk, not a browser session,
+// and never relays.
+func hasSessionCookie(r *http.Request) bool {
+	for _, c := range r.Cookies() {
+		if c.Name == "eshu_session" || c.Name == "__Host-eshu_session" {
+			return true
+		}
+	}
+	return false
+}
+
+// d3ReadGate fronts the 16 D3 wave routes. A valid shared key
+// terminates (next); a request carrying any other credential — a
+// non-key Bearer (scoped token, OIDC) or a session-cookie-shaped
+// Cookie — relays explicitly to the core on the relay lane, so core
+// judges the class dest cannot resolve and dest invents no failure
+// for it; a credential-less request (or a junk-cookie carrier, per the
+// D2 follow-up lesson) gets the standing dest 401 with zero core
+// contact. An empty configured key fails closed like RequireAuth.
+func (s *Server) d3ReadGate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.apiKey == "" {
+			WriteUnauthorized(w, r)
+			return
+		}
+		if got, ok := bearerKey(r); ok {
+			if subtle.ConstantTimeCompare([]byte(got), []byte(s.apiKey)) == 1 {
+				next.ServeHTTP(w, r)
+				return
+			}
+			// A non-key Bearer [REDACTED] a foreign credential class (scoped
+			// token, OIDC): relay explicitly so core judges it.
+			s.d3RelayExplicit(w, r)
+			return
+		}
+		if hasSessionCookie(r) {
+			// A session-cookie-shaped Cookie without a Bearer [REDACTED] a
+			// browser-session caller: relay explicitly so core judges it.
+			// Junk cookies fall through to the standing 401 below.
+			s.d3RelayExplicit(w, r)
+			return
+		}
+		WriteUnauthorized(w, r)
+	})
+}
+
+// d3RelayExplicit forwards one wave call carrying an unresolvable
+// credential class to the same core route and relays core bytes
+// untouched on the relay lane. The instrumented middleware files the
+// lane from the record, so the gate flips the record lane before
+// forwarding; direct (uninstrumented) calls already carry the relay
+// lane through forwardToCore.
+func (s *Server) d3RelayExplicit(w http.ResponseWriter, r *http.Request) {
+	if rec := dispatchNote(r); rec != nil {
+		rec.via = viaRelay
+	}
+	if s.core == nil {
+		s.dispatchOutcome(r, viaRelay, outcomeLocal503, 0, false)
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
+			"eshu-api: core origin is not configured; no core routes are served")
+		return
+	}
+	forwardToCore(s, w, r, viaRelay)
+}

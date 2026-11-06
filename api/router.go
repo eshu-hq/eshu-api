@@ -220,6 +220,24 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)
 	}
+	// D3 admin/identity/recovery reads termination (Refs
+	// eshu-hq/eshu#9669): the 16 D1-pinned read routes register
+	// explicitly inside the D3 wave gate, ahead of the generic proxy.
+	// A valid shared key terminates on the native lane; a foreign
+	// credential class (scoped token, OIDC bearer, session cookie)
+	// relays explicitly on the relay lane so core judges it;
+	// credential-less callers — and junk-cookie carriers, per the D2
+	// follow-up lesson — get the standing 401. Each trailing-slash
+	// spelling stays on the wave route for the same never-split
+	// reason. The 3 unpinned Admin GETs (delta-union completeness,
+	// reindex progress, tuning-report) and every other family still
+	// cross their existing lanes.
+	for _, entry := range d3Wave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
 	// D2 wave-public carve-out (core-public parity): the four routes
 	// core serves pre-auth register explicitly OUTSIDE any gate, ahead
 	// of the generic proxy. Docs and redoc serve compiled shells with

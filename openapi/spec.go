@@ -23,7 +23,10 @@ import (
 // provider-config mutations sixth, admin-recovery seventh, suppression
 // eighth, then the D2 Leaf B Native-now wave: capabilities, CLI
 // support, ask, service intelligence, auth providers,
-// provider-config reads, and the served-spec self entry).
+// provider-config reads, and the served-spec self entry, then the D3
+// admin/identity/recovery reads wave: the admin query POSTs and the
+// invitations list GET that shares its key with the relay-only create
+// POST).
 // It advances as family lanes port their fragments; the served family
 // set is pinned by the Spec tests.
 const SpecVersion = "v0"
@@ -36,7 +39,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -75,8 +78,10 @@ func familyPaths() string {
 		strings.TrimSpace(status.CollectorTerminalFailureAcknowledgement) + "\n" +
 		strings.TrimSpace(auth.AdminMutations) + "\n" +
 		strings.TrimSpace(auth.AdminReads) + "\n" +
+		strings.TrimSpace(auth.AdminInvitations) + "\n" +
 		strings.TrimSpace(auth.AdminProviderConfigMutations) + "\n" +
 		strings.TrimSpace(status.AdminRecovery) + "\n" +
+		strings.TrimSpace(status.AdminReads) + "\n" +
 		strings.TrimSpace(supplychain.SuppressionMutation) + "\n" +
 		strings.TrimSpace(catalog.Capabilities) + "\n" +
 		strings.TrimSpace(cli.Score) + "\n" +
