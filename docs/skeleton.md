@@ -11,7 +11,7 @@ handle crosses the boundary.
 
 - `go.mod`: module `github.com/eshu-hq/eshu-api`, stdlib only. No import
   of a core implementation package exists anywhere in this tree.
-- `api/`: the HTTP surface. `version.go` pins `CoreReadContractsVersion`
+- `api/`: the HTTP surface, plus the Leaf E telemetry registry (`family.go`, `telemetry.go`, `exposition.go`, `instrument.go`; see `docs/telemetry.md`): per-family request/dispatch/authorizer/audit-drop signals on public `GET /metrics`, one structured log line per dispatch request keyed on the echoed-or-minted correlation ID, trace-context propagation to the core. `version.go` pins `CoreReadContractsVersion`
   and the twelve admission versions (`Suppression`, `TerminalFailure`,
   `ReplayLedger`, `SignInPolicy`, `Retirement`, `AdminIdentity`,
   `Setup`, `ProviderConfigMutation`, `ProviderConfigRead`, `OIDCLogin`,
@@ -53,7 +53,7 @@ still open (see NOT_CHECKED); the shared-key gate is the only resolver.
   are clean.
 - `bash scripts/check-parity.sh` still passes: the contract surface is
   unchanged by this increment.
-- The built binary serves `/health` and `/readyz` without a credential;
+- The built binary serves `/health`, `/readyz`, and `/metrics` without a credential; probes stay public and unchanged;
   `/api/v0/*` without one 401s with the live envelope shape and the v0
   deprecation headers; `/api/v1/*` 401s without them; authed calls relay
   the stub core's status, headers, and body byte-for-byte in tests, and a

@@ -13,25 +13,38 @@ import (
 // subtree to the configured core origin (see dispatch.go). The server
 // carries no credential: the key gates requests and crosses to the core
 // only in the Authorization header, never in logs or health output.
+// Telemetry (see telemetry.go) records per-family request, dispatch,
+// authorizer, and audit-drop signals plus the structured request log.
 type Server struct {
 	coreBaseURL string
 	apiKey      string
 	core        *url.URL
 	httpClient  *http.Client
+	telemetry   *Telemetry
 }
 
 // NewServer builds a Server that dispatches to coreBaseURL and gates
 // /api/* behind apiKey. An empty apiKey fails closed: every /api/*
 // request is denied until a key is configured. An empty or unparsable
 // origin fails closed too: dispatch answers the local 503 until a valid
-// origin is configured.
+// origin is configured. Telemetry defaults to a log-silent registry;
+// use WithTelemetry to attach a logging one.
 func NewServer(coreBaseURL, apiKey string) *Server {
 	return &Server{
 		coreBaseURL: coreBaseURL,
 		apiKey:      apiKey,
 		core:        parseCoreOrigin(coreBaseURL),
 		httpClient:  dispatchClient(),
+		telemetry:   NewTelemetry(nil),
 	}
+}
+
+// WithTelemetry attaches tel as this server's signal registry and
+// returns the server for chaining. The binary wires its structured
+// logger here; tests attach capturing or discard registries.
+func (s *Server) WithTelemetry(tel *Telemetry) *Server {
+	s.telemetry = tel
+	return s
 }
 
 // writeError writes a status-coded JSON error in the caller's negotiated
@@ -91,23 +104,26 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-// routes registers the dispatch surface. Health and readiness are
-// public; the /api/* subtree is auth-gated and dispatched to the core
-// origin byte-for-byte (see dispatch.go).
+// routes registers the dispatch surface. Health, readiness, and the
+// metrics exposition are public; the /api/* subtree is auth-gated and
+// dispatched to the core origin byte-for-byte (see dispatch.go). Every
+// dispatch handler runs inside the telemetry middleware (outside the
+// auth gate, so gate denials count per family too); probes never do.
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /readyz", s.ready)
+	mux.HandleFunc("GET /metrics", s.metrics)
 	// Native-dispatch pilot: the suppression upsert has its explicit
 	// per-family route with the AllScopes authorizer. It is registered
 	// ahead of the generic proxy; every other family still crosses the
 	// byte-relay below.
-	mux.Handle(suppressionRoute, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough)))
+	mux.Handle(suppressionRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
 	// The trailing-slash spelling is the same upsert (core mounts the
 	// exact path and decides; dest keeps both spellings on the native
 	// route so the family is never split across dispatch paths).
-	mux.Handle(suppressionRoute+"/", RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough)))
-	mux.Handle("/api/", RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
+	mux.Handle(suppressionRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
+	mux.Handle("/api/", s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch))))
 	return mux
 }
 

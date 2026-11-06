@@ -29,12 +29,13 @@ replay-ledger, and sign-in admissions (all currently `v0`).
 
 | Path | What it holds |
 | --- | --- |
-| `api/` | HTTP surface: router, auth gate, v1 alias, v0 deprecation, core dispatch |
+| `api/` | HTTP surface: router, auth gate, v1 alias, v0 deprecation, core dispatch, per-family telemetry (`family.go`, `telemetry.go`, `exposition.go`, `instrument.go`; see `docs/telemetry.md`) |
 | `internal/readclient/` | Versioned HTTP read-contract client (no core imports) |
-| `cmd/eshu-api/` | Binary: health/readyz plus dispatched `/api/*` |
+| `cmd/eshu-api/` | Binary: health/readyz plus dispatched `/api/*`; wires the structured request log |
 | `contracts/` | Versioned contract surface and byte-exact upstream copies |
 | `contracts/upstream/` | Verbatim source copies; parity-checked, not build inputs (nested module marker keeps the toolchain out) |
 | `docs/provenance.md` | Source pins, file mapping, reproduction commands |
+| `docs/telemetry.md` | Operator guide: metrics, labels, family table, log fields |
 | `docs/parity.md` | What moves, what stays, compatibility policy, open proofs |
 | `docs/skeleton.md` | What this increment serves, credential posture, NOT_CHECKED |
 | `scripts/check-parity.sh` | Parity gate: re-fetches pinned sources, compares bytes |

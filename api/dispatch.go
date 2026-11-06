@@ -73,11 +73,29 @@ func stripHopHeaders(header http.Header) {
 // core does answer crosses unmodified.
 func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 	if s.core == nil {
+		s.dispatchOutcome(r, viaRelay, outcomeLocal503, 0, false)
 		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
 			"eshu-api: core origin is not configured; no core routes are served")
 		return
 	}
-	forwardToCore(s, w, r)
+	forwardToCore(s, w, r, viaRelay)
+}
+
+// dispatchOutcome files one dispatch step. Inside the instrumented
+// chain it notes the outcome on the middleware record (which files the
+// row and the log line after next returns); on a direct call with no
+// record it files the row immediately. Either way the family comes
+// from the request path and the labels stay in the closed vocabulary.
+func (s *Server) dispatchOutcome(r *http.Request, via, outcome string, coreLatency time.Duration, retryAfter bool) {
+	if rec := dispatchNote(r); rec != nil {
+		rec.outcome = outcome
+		rec.coreLatency = coreLatency
+		rec.retryAfter = retryAfter
+		return
+	}
+	if s.telemetry != nil {
+		s.telemetry.observeDispatch(classifyFamily(r.URL.Path), via, outcome, coreLatency)
+	}
 }
 
 // forwardToCore proxies one call to the configured core origin and
@@ -86,22 +104,37 @@ func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 // answers the permanent 503 backend_unavailable. A core-marked retryable
 // 503 keeps the Retry-After the core sent: relayed core bytes cross
 // unmodified and this function never invents headers.
-func forwardToCore(s *Server, w http.ResponseWriter, r *http.Request) {
+//
+// Trace context crosses untouched: traceparent/tracestate are not
+// hop-by-hop headers, so the clone carries them. The correlation ID is
+// guaranteed upstream: the caller's value when supplied, the minted one
+// otherwise. Dest invents no truth levels or error codes here.
+//
+// The dispatch step notes its outcome and core latency on the telemetry
+// record the middleware attached (nil outside the instrumented chain,
+// e.g. direct unit calls) without changing the relayed bytes.
+func forwardToCore(s *Server, w http.ResponseWriter, r *http.Request, via string) {
+	fail := func(message string) {
+		s.dispatchOutcome(r, via, outcomeLocal503, 0, false)
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode, message)
+	}
 	target := strings.TrimRight(s.coreBaseURL, "/") + r.URL.RequestURI()
 	upstream, err := http.NewRequestWithContext(r.Context(), r.Method, target, r.Body)
 	if err != nil {
-		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core is unavailable")
+		fail("eshu-api: core is unavailable")
 		return
 	}
 	upstream.Header = r.Header.Clone()
 	stripHopHeaders(upstream.Header)
+	if upstream.Header.Get(correlationHeader) == "" {
+		upstream.Header.Set(correlationHeader, CorrelationID(r))
+	}
 	upstream.Host = s.core.Host
 
+	coreStart := time.Now()
 	resp, err := s.httpClient.Do(upstream)
 	if err != nil {
-		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core is unavailable")
+		fail("eshu-api: core is unavailable")
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -117,6 +150,16 @@ func forwardToCore(s *Server, w http.ResponseWriter, r *http.Request) {
 	// this hop's Content-Length itself, so a relayed length can never
 	// disagree with the bytes written.
 	relayed.Del("Content-Length")
+	retryAfter := resp.StatusCode == http.StatusServiceUnavailable &&
+		resp.Header.Get("Retry-After") != ""
+	outcome := outcomeCoreOK
+	switch {
+	case retryAfter:
+		outcome = outcomeCoreRetryable
+	case resp.StatusCode == http.StatusServiceUnavailable:
+		outcome = outcomeCore503
+	}
+	s.dispatchOutcome(r, via, outcome, time.Since(coreStart), retryAfter)
 	w.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(w, resp.Body)
 }

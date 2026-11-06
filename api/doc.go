@@ -1,7 +1,10 @@
 // Package api owns the eshu-api HTTP surface: routing, the shared-key
 // auth gate, the v1 alias rewrite, the v0 deprecation headers, and the
 // byte-for-byte dispatch of the authenticated /api/* subtree to the
-// configured core origin.
+// configured core origin. It also owns the Leaf E telemetry registry:
+// per-family request, dispatch, authorizer, and audit-drop signals on
+// the public /metrics exposition plus the structured per-request log
+// (see docs/telemetry.md).
 //
 // Every behavior here is ported from the versioned core contracts pinned
 // under contracts/ (CoreReadContractsVersion, currently v0) and the
