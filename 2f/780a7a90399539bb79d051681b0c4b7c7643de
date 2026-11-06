@@ -1,0 +1,18 @@
+api/leafb_families_auth_test.go
+  h_78a442cba0b3e6 180-181
+api/leafb_terminate.go
+  h_78a442cba0b3e6 114-121
+docs/leafb-latency.md
+  h_78a442cba0b3e6 14-19,35,39-41,45-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2f780a7a90399539bb79d051681b0c4b7c7643de",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
