@@ -1,0 +1,42 @@
+api/adminidentity.go
+  h_78a442cba0b3e6 1-100
+api/adminidentity_dispatch_test.go
+  h_78a442cba0b3e6 1-239
+api/adminidentity_resilience_test.go
+  h_78a442cba0b3e6 1-290
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 177-225,256-258
+api/router.go
+  h_78a442cba0b3e6 151-165
+contracts/admin-identity-admission.md
+  h_78a442cba0b3e6 52-141
+contracts/upstream/admin-identity-wire-shapes.txt
+  h_78a442cba0b3e6 37-46
+docs/parity.md
+  h_78a442cba0b3e6 46,49-52
+openapi/components.go
+  h_78a442cba0b3e6 10-13,18-20,74-81
+openapi/doc.go
+  h_78a442cba0b3e6 8-11
+openapi/paths/auth/admin_mutations.go
+  h_78a442cba0b3e6 1-130
+openapi/paths/auth/doc.go
+  h_78a442cba0b3e6 6-9
+openapi/spec.go
+  h_78a442cba0b3e6 16-18,29,61-62
+openapi/spec_test.go
+  h_78a442cba0b3e6 124-165,183-185,206-207,288-289
+scripts/check-parity.sh
+  h_78a442cba0b3e6 130-136,241-242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "44949150dbca7d7b5ab9840835ee89c483c83e10",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
