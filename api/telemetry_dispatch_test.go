@@ -23,12 +23,14 @@ func TestTelemetry_AuditDropObserver(t *testing.T) {
 	// The method value must satisfy the Leaf A observer shape from
 	// eshu go/internal/query/governance_audit_admission.go:
 	// GovernanceAuditDropObserver func(ctx context.Context, err error, eventCount int).
-	// Blank-identifier pin: keeps the explicit shape assertion without
-	// tripping ST1023 (CI: lanes/lint).
-	var _ func(context.Context, error, int) = tel.ObserveAuditDrop
+	// Inferred type must satisfy the Leaf A observer shape from
+	// eshu go/internal/query/governance_audit_admission.go:
+	// GovernanceAuditDropObserver func(ctx context.Context, err error, eventCount int).
+	// The calls below pin the signature: a wrong method shape fails to compile.
+	observer := tel.ObserveAuditDrop
 
-	tel.ObserveAuditDrop(context.Background(), errors.New("sink unavailable"), 3)
-	tel.ObserveAuditDrop(context.Background(), errors.New("sink unavailable"), 2)
+	observer(context.Background(), errors.New("sink unavailable"), 3)
+	observer(context.Background(), errors.New("sink unavailable"), 2)
 
 	snap := tel.snapshot()
 	if snap.auditDrops != 2 {
