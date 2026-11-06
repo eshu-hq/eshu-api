@@ -5,8 +5,9 @@
 // ported family path fragments under openapi/paths/ and the minimal
 // shared components block. Only families whose fragments have landed are
 // served natively (sign-in-policy first, retirement second,
-// terminal-failure third, admin-identity fourth, per satellite-design
-// Decision 5(c)); every other family is still relayed from core until
-// its lane ports its fragment. The concatenation order is the
-// compatibility surface the destination owns.
+// terminal-failure third, admin-identity fourth, provider-config fifth,
+// per satellite-design Decision 5(c)); every other family is still
+// relayed from core until its lane ports its fragment. The
+// concatenation order is the compatibility surface the destination
+// owns.
 package openapi

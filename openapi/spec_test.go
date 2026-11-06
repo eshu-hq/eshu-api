@@ -207,6 +207,52 @@ func assertServedPaths(t *testing.T, want map[string]map[string]string) {
 	}
 }
 
+// TestSpec_ServesProviderConfigFamily pins the native-spec contract for
+// the admin provider-config mutation family (satellite-design Decision
+// 5(c)): the assembled document is valid JSON and carries the four
+// fragment paths whose keys are unique to the mutation surface — the
+// revert, enable, disable, and test-connection POSTs — with their pinned
+// operationIds. The create and update POSTs share path keys with the
+// family list/detail GETs, so per the core OpenAPI convention they live
+// in the reads fragment, which this lane does not port (reads stay
+// relay); the lossless-assembly test below pins that the served paths
+// equal the ported fragment, and scripts/check-parity.sh gates its
+// line-verbatim provenance (a whole-file identity port is impossible:
+// core ships reads and mutations in one file, so this lane ports the
+// unique-key mutation path objects as a line-verbatim subset).
+func TestSpec_ServesProviderConfigFamily(t *testing.T) {
+	t.Parallel()
+
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(Spec()), &doc); err != nil {
+		t.Fatalf("Spec() is not valid JSON: %v", err)
+	}
+
+	paths, ok := doc["paths"].(map[string]any)
+	if !ok {
+		t.Fatalf("Spec() paths = %T, want object", doc["paths"])
+	}
+
+	for path, want := range map[string]map[string]string{
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/revert":          {"post": "revertAdminProviderConfig"},
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/enable":          {"post": "enableAdminProviderConfig"},
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/disable":         {"post": "disableAdminProviderConfig"},
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/test-connection": {"post": "testAdminProviderConfigConnection"},
+	} {
+		item, ok := paths[path].(map[string]any)
+		if !ok {
+			t.Errorf("paths lacks %s: %v", path, keys(paths))
+			continue
+		}
+		for operation, wantID := range want {
+			op, _ := item[operation].(map[string]any)
+			if got := op["operationId"]; got != wantID {
+				t.Errorf("%s %s operationId = %v, want %s", path, operation, got, wantID)
+			}
+		}
+	}
+}
+
 // TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
 // family path objects equal the ported fragments' parsed path objects, so
 // the only reviewed delta to the pinned core fragments is the fragment files
@@ -234,6 +280,10 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/auth/admin/api-tokens",
 		"/api/v0/auth/admin/audit/events",
 		"/api/v0/auth/admin/audit/summary",
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/revert",
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/enable",
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/disable",
+		"/api/v0/auth/admin/provider-configs/{provider_config_id}/test-connection",
 	} {
 		want, ok := fragment[path]
 		if !ok {
@@ -255,7 +305,8 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // name (ErrorResponse plus BadRequest, Forbidden, Conflict,
 // InternalError, and ServiceUnavailable for the terminal-failure
 // fragment; NotFound for the admin-identity mutations fragment;
-// AdminAuditCountList for the admin-identity reads fragment;
+// AdminAuditCountList for the admin-identity reads fragment; NotFound
+// and AdminProviderConfigWriteResult for the provider-config fragment;
 // AdminSignInPolicy schemas for the sign-in-policy family).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
@@ -338,8 +389,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 // TestSpec_VersionPinned pins the native-spec contract version: v0 serves
 // exactly the families whose fragments have landed (sign-in-policy first,
 // retirement second, terminal-failure third, admin-identity mutations
-// fourth, admin-identity reads fifth). It advances as family lanes port
-// their fragments.
+// fourth, admin-identity reads fifth, provider-config sixth). It
+// advances as family lanes port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 

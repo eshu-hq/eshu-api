@@ -46,10 +46,12 @@ after the move.
   (`openapi/paths/status/repository_retirement.go`, #39), the
   terminal-failure fragment
   (`openapi/paths/status/collector_terminal_failure_acknowledgement.go`,
-  #40), and the admin-identity mutation fragment
-  (`openapi/paths/auth/admin_mutations.go`, this lane) — per-family
-  fragment moves now land in their family PRs per satellite-design
-  Decision 5(c) on eshu-hq/eshu#9669.
+  #40), the admin-identity mutation fragment
+  (`openapi/paths/auth/admin_mutations.go`, #42), and the
+  provider-config mutation fragment
+  (`openapi/paths/auth/admin_provider_config_mutations.go`, this lane)
+  — per-family fragment moves now land in their family PRs per
+  satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
 ## What stays in the core
 

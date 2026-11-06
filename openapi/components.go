@@ -8,15 +8,19 @@ package openapi
 // reference, nothing more. Entry bytes are ported from the pinned core
 // commits 428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5 (sign-in-policy lane)
 // and ebaf4dfa0de672851bbec7a427e28fdb41344380 (retirement,
-// terminal-failure, and admin-identity lanes). The terminal-failure
-// lane adds no entries: its fragment references only ErrorResponse
-// plus the five responses above (gated in check-parity.sh):
+// terminal-failure, and admin-identity lanes), and
+// 99381691b1ac49254e813e5a013cfb654d432491 (provider-config lane).
+// The terminal-failure lane adds no entries: its fragment references
+// only ErrorResponse plus the five responses above (gated in
+// check-parity.sh):
 //
 //   - AdminSignInPolicy, AdminSignInPolicyUpdateRequest: schemas from
 //     go/internal/query/openapi/components_sign_in_policy.go.
 //   - AdminAuditCountList: schema from
 //     go/internal/query/openapi/components_local_identity.go (admin-identity
 //     reads lane: the audit-summary fragment response counts by it).
+//   - AdminProviderConfigWriteResult: schema from
+//     go/internal/query/openapi/components_provider_configs.go.
 //   - ErrorResponse: schema from go/internal/query/openapi/components.go.
 //   - BadRequest, NotFound, Forbidden, Conflict, InternalError,
 //     ServiceUnavailable: responses from
@@ -51,6 +55,15 @@ const components = `  "components": {
           "require_mfa_for_all_users": {"type": "boolean"},
           "idle_timeout_seconds": {"type": "integer", "minimum": 0, "description": "0 means \"use the process default\"; any other value must be at least 60 seconds."},
           "absolute_timeout_seconds": {"type": "integer", "minimum": 0, "description": "0 means \"use the process default\"; any other value must be at least 60 seconds and not less than idle_timeout_seconds when both are set."}
+        }
+      },
+      "AdminProviderConfigWriteResult": {
+        "type": "object",
+        "properties": {
+          "provider_config_id": {"type": "string"},
+          "revision_id": {"type": "string"},
+          "status": {"type": "string"},
+          "changed": {"type": "boolean"}
         }
       },
       "ErrorResponse": {

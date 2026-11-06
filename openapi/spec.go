@@ -14,8 +14,8 @@ import (
 // SpecVersion names the native-spec contract: v0 serves exactly the
 // families whose OpenAPI fragments have landed in this repository
 // (sign-in-policy first, retirement second, terminal-failure third,
-// admin-identity mutations fourth, admin-identity reads fifth). It
-// advances as family lanes port their
+// admin-identity mutations fourth, admin-identity reads fifth,
+// provider-config sixth). It advances as family lanes port their
 // fragments; the served family set is pinned by the Spec tests.
 const SpecVersion = "v0"
 
@@ -27,7 +27,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -61,7 +61,8 @@ func familyPaths() string {
 		strings.TrimSpace(status.RepositoryRetirement) + "\n" +
 		strings.TrimSpace(status.CollectorTerminalFailureAcknowledgement) + "\n" +
 		strings.TrimSpace(auth.AdminMutations) + "\n" +
-		strings.TrimSuffix(strings.TrimSpace(auth.AdminReads), ",") + "\n"
+		strings.TrimSpace(auth.AdminReads) + "\n" +
+		strings.TrimSuffix(strings.TrimSpace(auth.AdminProviderConfigMutations), ",") + "\n"
 }
 
 // Spec returns the dest-assembled OpenAPI 3.0 document for the landed
