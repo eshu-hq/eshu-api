@@ -133,7 +133,15 @@ func (s *Server) routes() *http.ServeMux {
 	// byte-relay below.
 	mux.Handle(signInPolicyRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
 	mux.Handle(signInPolicyRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
-	// Native spec (Decision 5(c)): the sign-in-policy fragment landed in
+	// Native dispatch, AdminRetirement (tier C-a): the operator
+	// retirement trigger has its explicit per-family route with the
+	// AllScopes authorizer, ahead of the generic proxy. The trailing
+	// slash stays on the native route for the same never-split reason;
+	// every other family still crosses the byte-relay below.
+	mux.Handle(retirementRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
+	mux.Handle(retirementRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
+	// Native spec (Decision 5(c)): the sign-in-policy and retirement
+	// fragments landed in
 	// openapi/, so the assembled document is served from compiled
 	// constants ahead of the generic proxy — no core fetch, served even
 	// with no core origin configured. It stays inside RequireAuth like

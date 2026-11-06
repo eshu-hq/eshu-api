@@ -19,3 +19,7 @@ type RetirementAdmission = Triggerer
 type Triggerer interface {
 	TriggerRetirement(ctx context.Context, req TriggerRequest) (TriggerResult, error)
 }
+
+	mux.HandleFunc("POST /api/v0/admin/repository-retirements", h.retireRepository)
+		querycontract.WriteError(w, http.StatusServiceUnavailable, "repository retirement handler not configured")
+		querycontract.WriteError(w, http.StatusForbidden, "repository retirement requires an admin (all-scopes) token")
