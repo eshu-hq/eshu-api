@@ -1,0 +1,24 @@
+api/router.go
+  h_78a442cba0b3e6 110-117
+api/signin.go
+  h_78a442cba0b3e6 1-76
+api/signin_dispatch_test.go
+  h_78a442cba0b3e6 1-454
+contracts/sign-in-admission.md
+  h_78a442cba0b3e6 52-97
+contracts/upstream/sign-in-wire-shapes.txt
+  h_78a442cba0b3e6 25-36
+scripts/check-parity.sh
+  h_78a442cba0b3e6 178-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "50729e3e1c072f64b1b5c729119512d40434b8f2",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
