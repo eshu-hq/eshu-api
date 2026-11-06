@@ -1,0 +1,32 @@
+README.md
+  h_78a442cba0b3e6 49
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 175-213
+contracts/setup-admission.md
+  h_78a442cba0b3e6 112
+contracts/suppression-admission.md
+  h_78a442cba0b3e6 78-101
+docs/parity.md
+  h_78a442cba0b3e6 9-10,13,20,54-58
+openapi/paths/supply/chain/doc.go
+  h_78a442cba0b3e6 1-16
+openapi/paths/supply/chain/suppression_mutation.go
+  h_78a442cba0b3e6 1-136
+openapi/spec.go
+  h_78a442cba0b3e6 12,19-21,32,68-69
+openapi/spec_test.go
+  h_78a442cba0b3e6 289-313,349,375-376,459-460
+scripts/check-parity.sh
+  h_78a442cba0b3e6 22,333-347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0cc3be1e4d8955748271a242ada3f466578f78e0",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
