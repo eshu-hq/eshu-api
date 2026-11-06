@@ -11,7 +11,11 @@ terminated reads are not slower than the relay they replace.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkD3RelayRead`),
-  shared-key GET + POST through the full production chain.
+  shared-key GET (`/api/v0/repositories`) + POST
+  (`/api/v0/repositories/search`) through the full production chain.
+  The legs compare different routes by necessity (the D3 paths now
+  terminate); both do exactly one server-side fetch, so the 1.50 bound
+  stays a real pathology check.
 - After leg: the terminated D3 reads (`BenchmarkD3TerminatedRead`),
   shared-key identity GET (`/api/v0/auth/admin/roles`) + admin query
   POST (`/api/v0/admin/work-items/query`) through the full production
