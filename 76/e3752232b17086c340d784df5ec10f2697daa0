@@ -1,0 +1,44 @@
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 1-114
+api/router.go
+  h_78a442cba0b3e6 9-10,112-124
+api/terminalfailure.go
+  h_78a442cba0b3e6 1-86
+api/terminalfailure_dispatch_test.go
+  h_78a442cba0b3e6 1-473
+api/terminalfailure_ledger_test.go
+  h_78a442cba0b3e6 1-368
+contracts/replay-ledger-admission.md
+  h_78a442cba0b3e6 51-83
+contracts/terminal-failure-admission.md
+  h_78a442cba0b3e6 52-129
+docs/parity.md
+  h_78a442cba0b3e6 43-48
+docs/provenance.md
+  h_78a442cba0b3e6 50
+openapi/components.go
+  h_78a442cba0b3e6 1-82
+openapi/doc.go
+  h_78a442cba0b3e6 1-11
+openapi/paths/status/collector_terminal_failure_acknowledgement.go
+  h_78a442cba0b3e6 1-215
+openapi/paths/status/doc.go
+  h_78a442cba0b3e6 1-14
+openapi/spec.go
+  h_78a442cba0b3e6 1-79
+openapi/spec_test.go
+  h_78a442cba0b3e6 1-229
+scripts/check-parity.sh
+  h_78a442cba0b3e6 88-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76e3752232b17086c340d784df5ec10f2697daa0",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
