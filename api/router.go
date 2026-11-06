@@ -108,9 +108,12 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 
 // routes registers the dispatch surface. Health, readiness, and the
 // metrics exposition are public; the /api/* subtree is auth-gated and
-// dispatched to the core origin byte-for-byte (see dispatch.go). Every
-// dispatch handler runs inside the telemetry middleware (outside the
-// auth gate, so gate denials count per family too); probes never do.
+// dispatched to the core origin byte-for-byte (see dispatch.go), with
+// exactly one exception: the four tier C-c1 setup wizard routes, which
+// are public pre-auth at the core and register outside RequireAuth
+// below. Every dispatch handler runs inside the telemetry middleware
+// (outside the auth gate, so gate denials count per family too);
+// probes never do.
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
@@ -157,6 +160,17 @@ func (s *Server) routes() *http.ServeMux {
 	for _, route := range adminIdentityRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
+	}
+	// Native dispatch, Setup (tier C-c1): the four pre-auth first-run
+	// wizard routes are the strict arbiter-approved carve-out (C-c1
+	// APPROVED on eshu-hq/eshu#9669): registered explicitly OUTSIDE
+	// RequireAuth, ahead of the generic proxy, on the same native-public
+	// handler. Each trailing-slash spelling stays on the native route
+	// for the same never-split reason. No other /api/* route leaves
+	// RequireAuth in this lane: the carve-out is exactly these four.
+	for _, route := range setupRoutes {
+		mux.Handle(route, s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
+		mux.Handle(route+"/", s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
 	}
 	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
 	// terminal-failure, and admin-identity fragments landed in openapi/,

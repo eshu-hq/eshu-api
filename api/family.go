@@ -64,6 +64,7 @@ var familyPrefixes = []struct {
 	{"/auth/admin/sign-in-policy", "sign_in_policy"},
 	{"/auth/sign-in-policy", "sign_in_policy"},
 	{"/auth/setup-state", "setup"},
+	{"/auth/setup/", "setup"},
 	{"/auth/oidc/", "oidc_login"},
 	{"/auth/github/", "github_login"},
 	{"/auth/saml/", "saml_login"},
