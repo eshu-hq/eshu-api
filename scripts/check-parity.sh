@@ -24,6 +24,7 @@ SRC_SHA_D0="ec1643d67f"
 SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
+SRC_SHA_D8="91f2df28dbe9ec4e5fb8c5df59a76475a304d84"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -393,6 +394,69 @@ check_fragment_subset_named_at "$SRC_SHA_D7" "go/internal/query/openapi/paths/st
   "openapi/paths/status/admin_d7.go" \
   "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
   "AdminD7"
+
+# D8 session-resolver pins (satellite D8 wave, arbiter
+# APPROVED-WITH-CONDITIONS): the four v0 admission pins
+# (SessionResolver, BrowserSession, LocalIdentity, APIToken), unwired
+# seams, recorded byte-identical satellite-side first (D7 #57
+# precedent).
+check_file_at "$SRC_SHA_D8" "go/internal/query/session_admission.go" \
+  "contracts/upstream/session_admission.go" \
+  "11d1dd3415a7a925a181016eb8aefbb4dedccbd542a2798c729972c06062676d"
+
+check_file_at "$SRC_SHA_D8" "go/internal/query/session_admission_contract_test.go" \
+  "contracts/upstream/session_admission_contract_test.go" \
+  "209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d4a2496b341"
+
+# D8 session-resolver wave (Decision 5(c)): the browser-session
+# lifecycle, session-list, profile, and local-identity entries are
+# line-verbatim subsets of the pinned core routes.go (routes.go is
+# byte-identical at the D2 wave pin and the D8 pin, hash 709fe6b3…,
+# so the D8 gates below and the D2/D3 gates above pin the same bytes
+# from their own lane pins). The invitations POST merges into the D3
+# fragment key; every lane's path keys stay unique.
+check_fragment_subset_named_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/browser_sessions.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "BrowserSessions"
+
+check_fragment_subset_named_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/session_list.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "SessionList"
+
+check_fragment_subset_named_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/auth_profile.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "AuthProfile"
+
+check_fragment_subset_named_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/local_identity.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "LocalIdentity"
+
+check_fragment_subset_named_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/admin_invitations.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "AdminInvitations"
+
+# D8 session-resolver wave (Decision 5(c)): the API-token and TOTP
+# entries are whole-file byte-identical ports of the pinned core
+# files (each file carries only its lane's path keys).
+check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/tokens.go" \
+  "openapi/paths/auth/api_tokens.go" \
+  "465aae5df7bc4cc938c4ecbf5800ed704c20447111a9c115f6c07c87393aec59"
+
+check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/totp.go" \
+  "openapi/paths/auth/totp.go" \
+  "702ab2b220717202910c39a792fb7b9da465d75e38101dc9212d9322a7238"
+
+# D8 session-resolver wave (Decision 5(c)): the 11 schemas the lane
+# entries reference, ported line-verbatim into the shared components
+# block — nine LocalIdentity schemas from components_local_identity.go
+# plus BrowserSessionAuth and BrowserSessionResponse from
+# components_workload_session.go.
+check_d8_components_at "$SRC_SHA_D8"
 
 # Native spec (Decision 5(c)): the suppression OpenAPI fragment is a
 # line-verbatim subset port of the pinned core file. Core ships the
@@ -854,6 +918,63 @@ check_d6_components_at() {
 
 check_d6_components_at
 
+check_d8_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.go" >&2
+      return 1
+    fi
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"LocalIdentityBootstrapRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityLoginRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityInvitationRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityInvitationAcceptanceRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityPasswordRotationRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityBreakGlassRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityAPITokenCreateRequest": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentityAPITokenResponse": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"LocalIdentitySessionResponse": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_local_identity.go" \
+    || fail=1
+  check_block '"BrowserSessionAuth": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_workload_session.go" \
+    || fail=1
+  check_block '"BrowserSessionResponse": {' "$SRC_SHA_D8" "go/internal/query/openapi/components_workload_session.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: D8 components lines all verbatim in pinned component sources"
+}
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -998,6 +1119,10 @@ grep -qF 'GovernanceAuditReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/cont
 grep -qF 'TerminalFailureReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terminal-failure-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
+grep -qF 'SessionResolverAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
+grep -qF 'BrowserSessionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
+grep -qF 'LocalIdentityAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
+grep -qF 'APITokenAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
 echo "OK: version pins v0 present"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the

@@ -19,6 +19,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D2 Leaf B wave) | `17feac86e089a6da208fe6c93b5d89b8fb7ef3cc` (`origin/main` at the D2 lane base; wave fragments, doc-UI shells, and wave components entries, frozen at v0; the D4 Native-next fragments and components entries reuse this pin — every D4 file is byte-identical there and at `origin/main`, so no new source pin is minted) |
 | Source commit (D6 read pins) | `6b66e6b23efe226970b4571c955aed1dc42f987a` (merge of `eshu-hq/eshu#10303`; Status and SupplyChain read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Source commit (D7 admin-four pins) | `19de7346d11a184bf88d8f307b5d7a9ced0a4657` (merge of `eshu-hq/eshu#10312`; Backfill, DeadLetter, Reindex, and Skip admissions v0, unwired-seam style: version constant + narrow port + frozen method-set test per pin; arbiter APPROVED-WITH-CONDITIONS) |
+| Source commit (D8 session-resolver pins) | `91f2df28dbe9ec4e5fb8c5df59a76475a304d84` (merge of `eshu-hq/eshu#10317`; SessionResolver, BrowserSession, LocalIdentity, and APIToken admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin; satellite D8 wave arbiter APPROVED-WITH-CONDITIONS) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -44,6 +45,10 @@ preparation only; nothing here carries cutover authority.
 | `DeadLetterAdmissionContractVersion` | `v0` |
 | `ReindexAdmissionContractVersion` | `v0` |
 | `SkipAdmissionContractVersion` | `v0` |
+| `SessionResolverAdmissionContractVersion` | `v0` |
+| `BrowserSessionAdmissionContractVersion` | `v0` |
+| `LocalIdentityAdmissionContractVersion` | `v0` |
+| `APITokenAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -104,7 +109,7 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/openapi/paths/auth/admin_provider_configs.go` (AdminProviderConfigReads entry only) at `99381691b1ac` | `openapi/paths/auth/admin_provider_config_reads.go` | `afa45de81720f466b8b9f66949605564be21e9efa8ddb8c62e71600b127824ef` (whole file; this fragment is the line-verbatim AdminProviderConfigReads subset) | verbatim subset |
 | `go/internal/query/openapi/paths/status/routes.go` (OpenAPISpec entry only) at `17feac86e089` | `openapi/paths/status/api_router_openapi.go` | `24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61` (whole file; this fragment is the line-verbatim OpenAPISpec subset) | verbatim subset |
 | `go/internal/query/openapi/paths/status/admin.go` (the six query-POST entries only) at `7c605839` (admin.go is byte-identical at `7c605839` and `17feac86e089`) | `openapi/paths/status/admin_reads.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim AdminReads subset) | verbatim subset |
-| `go/internal/query/openapi/paths/auth/routes.go` (invitations GET entry only) at `17feac86e089` | `openapi/paths/auth/admin_invitations.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim get-only AdminInvitations subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/routes.go` (invitations GET entry only) at `17feac86e089` | `openapi/paths/auth/admin_invitations.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this row records the D3 get-only state — D8 merges the invitations POST into the same key, see the D8 row) | verbatim subset |
 | `go/internal/query/openapi/spec.go` (swaggerUIHTML, redocHTML shells only) at `17feac86e089` | `api/leafb_terminate.go` (leafbSwaggerUIShell, leafbReDocShell consts) | block-identical (whole-shell compare, see `check_docui_shell_at`) | verbatim subset |
 | `go/internal/status/read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/status_read_admission_contract_test.go` | `83f8a4a15c24aa93c3d82dc14da1880470be58301aeac10f4944f28f57a90233` | verbatim |
 | `go/internal/query/supply/chain/supply_read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/supply_read_admission_contract_test.go` | `8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367` | verbatim |
@@ -112,6 +117,16 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/dead_letter_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/dead_letter_admission_contract_test.go` | `9c583e7ce8c06384b8c6642f1fea0c1d4581b40d84ca7dae3f94f2f192a56ddb` | verbatim |
 | `go/internal/query/admin/reindex_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/reindex_admission_contract_test.go` | `061092ea83a6447af59298e3df5d49ff7878eff0df72bc43e3b7c8fafef44767` | verbatim |
 | `go/internal/query/admin/skip_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/skip_admission_contract_test.go` | `0486124e708486faaa0dafd9e00fb387a03f228ea8676e9c82ca63c60d67eaae` | verbatim |
+| `go/internal/query/session_admission.go` at `91f2df28db` | `contracts/upstream/session_admission.go` | `11d1dd3415a7a925a181016eb8aefbb4dedccbd542a2798c729972c06062676d` | verbatim |
+| `go/internal/query/session_admission_contract_test.go` at `91f2df28db` | `contracts/upstream/session_admission_contract_test.go` | `209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d4a2496b341` | verbatim |
+| `go/internal/query/openapi/paths/auth/routes.go` (the two browser-session plus context entries only) at `91f2df28db` (routes.go is byte-identical at `17feac86e089` and `91f2df28db`) | `openapi/paths/auth/browser_sessions.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim BrowserSessions subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/routes.go` (the sessions entry only) at `91f2df28db` | `openapi/paths/auth/session_list.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim SessionList subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/routes.go` (the profile entry only) at `91f2df28db` | `openapi/paths/auth/auth_profile.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim AuthProfile subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/routes.go` (the nine local-identity entries only) at `91f2df28db` | `openapi/paths/auth/local_identity.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim LocalIdentity subset) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/routes.go` (the invitations create POST entry only) at `91f2df28db` | `openapi/paths/auth/admin_invitations.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim invitations-POST merge into the D3 key) | verbatim subset |
+| `go/internal/query/openapi/paths/auth/tokens.go` at `91f2df28db` | `openapi/paths/auth/api_tokens.go` | `465aae5df7bc4cc938c4ecbf5800ed704c20447111a9c115f6c07c87393aec59` | verbatim |
+| `go/internal/query/openapi/paths/auth/totp.go` at `91f2df28db` | `openapi/paths/auth/totp.go` | `702ab2b220717202910c39a792fb7b9da465d75e38101dc9212d9322a7238` | verbatim |
+| `go/internal/query/openapi/components_local_identity.go` (the nine LocalIdentity schemas) + `components_workload_session.go` (`BrowserSessionAuth`, `BrowserSessionResponse`) at `91f2df28db` | `openapi/components.go` (eleven D8 lane schemas) | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/admin.go` (the four admin-four entries only) at `19de7346d1` | `openapi/paths/status/admin_d7.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim AdminD7 subset) | verbatim subset |
 | `go/internal/status/read_admission.go` (version, alias) + `go/internal/status/report.go` (`Reader`) at `6b66e6b2` | `contracts/upstream/status-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/supply/chain/supply_read_admission.go` (version, embedded ports) at `6b66e6b2` | `contracts/upstream/supply-chain-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |

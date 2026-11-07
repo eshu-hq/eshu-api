@@ -207,6 +207,45 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.d7WriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.d7WriteThrough))))
 	}
+	// Native dispatch, SessionResolver tier-C clones (D8): the 18
+	// authed session/token-lifecycle routes cross the D8
+	// credential-class gate — a valid shared key rides the native
+	// write-through with the family authorizer; a foreign credential
+	// class (scoped token, OIDC bearer, session cookie) relays
+	// explicitly on the relay lane so core judges it;
+	// credential-less callers keep the standing 401. Each
+	// trailing-slash spelling stays on the native route for the same
+	// never-split reason. See api/d8.go and
+	// contracts/d8-session-resolver.md: tier-C dispatch only, not
+	// termination.
+	for _, route := range d8GatedRoutes {
+		gated := s.instrumented(viaNative, s.d8Gate(http.HandlerFunc(s.d8WriteThrough)))
+		mux.Handle(route, gated)
+		// The two d8SlashSkip entries skip the slash double: their
+		// slash subtree would panic against the
+		// invitations/{invite_id}/revoke wildcard sibling. Those
+		// spellings stay on the generic relay.
+		if !d8SlashSkip[route] {
+			mux.Handle(route+"/", gated)
+		}
+	}
+	// Native dispatch, SessionResolver public carve-out (D8, C-c1
+	// grade): the 4 pre-auth public routes register exactly those
+	// paths outside every gate, ahead of the generic proxy, on the
+	// public write-through handler. No other D8 route leaves the gate
+	// in this lane: the carve-out is exactly these four exact paths.
+	// Credential bodies cross as opaque bytes; the dest shared key is
+	// never injected here.
+	for _, route := range d8PublicRoutes {
+		public := s.instrumented(viaNative, http.HandlerFunc(s.d8PublicWriteThrough))
+		// Exact paths only: a trailing-slash twin would be a
+		// subtree pattern swallowing /login/* past the auth
+		// bypass, and the carve-out is exactly these four paths.
+		// The slash spellings stay on the generic relay (keyless
+		// callers keep the standing 401 there; keyed callers get
+		// core's answer for the spelled path).
+		mux.Handle(route, public)
+	}
 	for _, route := range recoveryRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
