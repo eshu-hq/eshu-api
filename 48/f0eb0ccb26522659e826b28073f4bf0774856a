@@ -1,0 +1,30 @@
+contracts/admin-identity-admission.md
+  h_78a442cba0b3e6 167
+contracts/provider-config-admission.md
+  h_78a442cba0b3e6 165
+contracts/retirement-admission.md
+  h_78a442cba0b3e6 85
+contracts/sign-in-admission.md
+  h_78a442cba0b3e6 96
+contracts/terminal-failure-admission.md
+  h_78a442cba0b3e6 154
+docs/provenance.md
+  h_78a442cba0b3e6 99,129,151-152,171
+openapi/components.go
+  h_78a442cba0b3e6 8-11,78-82
+openapi/components.json
+  h_78a442cba0b3e6 1-557
+scripts/check-parity.sh
+  h_78a442cba0b3e6 217,223,225,475,677,689,691,735,748,750,885,887,926,928
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48f0eb0ccb26522659e826b28073f4bf0774856a",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
