@@ -250,8 +250,8 @@ func (s *Server) routes() *http.ServeMux {
 	// the 2 pre-auth public GETs register exactly those paths
 	// outside every gate, ahead of the generic proxy, on the public
 	// write-through handler. No other login route leaves the gate in
-	// this lane: SAML stays relay-only for its own sequential lane
-	// (GitHub rides d9GitHubRoutes below), and non-GET spellings of
+	// this lane: GitHub rides d9GitHubRoutes below and SAML rides
+	// its own landed lane (d9SAMLRoutes), and non-GET spellings of
 	// these paths keep the standing 401. Credential query values
 	// cross as opaque bytes; the dest shared key is never injected
 	// here. See api/d9.go and contracts/d9-oidc-login.md: tier-C
@@ -271,7 +271,7 @@ func (s *Server) routes() *http.ServeMux {
 	// paths outside every gate, ahead of the generic proxy, on the
 	// public write-through handler. No other login route leaves the
 	// gate in this lane: OIDC stays on its own landed lane and SAML
-	// stays relay-only for its own sequential lane, and non-GET
+	// rides its own landed lane (d9SAMLRoutes), and non-GET
 	// spellings of these paths keep the standing 401. Credential
 	// query values cross as opaque bytes; the dest shared key is
 	// never injected here. See api/d9github.go and
@@ -282,6 +282,28 @@ func (s *Server) routes() *http.ServeMux {
 		// Exact paths only: a trailing-slash twin would be a
 		// subtree pattern swallowing past the auth bypass, and the
 		// carve-out is exactly these two paths. The slash
+		// spellings stay on the generic relay (keyless callers keep
+		// the standing 401 there; keyed callers get core's answer
+		// for the spelled path).
+		mux.Handle(route, public)
+	}
+	// Native dispatch, SAML-login public carve-out (D9 SAML lane,
+	// C-c1 grade): the 2 pre-auth public GETs plus the pre-auth
+	// public ACS POST register exactly those paths outside every
+	// gate, ahead of the generic proxy, on the public write-through
+	// handler. No other login route leaves the gate in this lane:
+	// OIDC and GitHub stay on their own landed lanes, and non-GET
+	// spellings of the metadata/login paths (plus non-POST spellings
+	// of the ACS path) keep the standing 401. The provider path
+	// value, the return_to query value, and the IdP form fields
+	// cross as opaque bytes; the dest shared key is never injected
+	// here. See api/d9saml.go and contracts/d9-saml-login.md:
+	// tier-C dispatch only, not termination.
+	for _, route := range d9SAMLRoutes {
+		public := s.instrumented(viaNative, http.HandlerFunc(s.d9SAMLPublicWriteThrough))
+		// Exact paths only: a trailing-slash twin would be a
+		// subtree pattern swallowing past the auth bypass, and the
+		// carve-out is exactly these three paths. The slash
 		// spellings stay on the generic relay (keyless callers keep
 		// the standing 401 there; keyed callers get core's answer
 		// for the spelled path).

@@ -27,6 +27,7 @@ SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
 SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
 SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
 SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
+SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -490,6 +491,25 @@ check_fragment_subset_named_at "$SRC_SHA_D9_GITHUB" "go/internal/query/openapi/p
   "openapi/paths/auth/github_login.go" \
   "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
   "GitHubLogin"
+
+# D9 SAML-login wave (satellite D9 SAML lane, arbiter
+# APPROVED-WITH-CONDITIONS): the v0 admission pin re-anchored at the
+# fresh wave SHA (byte-identical to the stale SRC_SHA_SAMLLOGIN pin,
+# same sha256 — re-anchor, no content change; the wave SHA is unchanged
+# from the GitHub lane because `git diff aac271ad..8c23246933` over the
+# 5 SAML files is empty), the wire-shapes excerpt re-anchored at the
+# same SHA, and the SAML metadata + login + ACS entries as a
+# line-verbatim subset of the pinned core routes.go (byte-identical to
+# the OIDC/GitHub wave file, same sha256). The D9 wave is complete with
+# this lane.
+check_file_at "$SRC_SHA_D9_SAML" "go/internal/query/saml_login_admission_contract_test.go" \
+  "contracts/upstream/saml_login_admission_contract_test.go" \
+  "bc04787bd208bf07428f4a9bc4660946342c7e4f3b60121202cb7f0a070556d0"
+
+check_fragment_subset_named_at "$SRC_SHA_D9_SAML" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/saml_login.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "SAMLLogin"
 
 # D8 session-resolver wave (Decision 5(c)): the 11 schemas the lane
 # entries reference, ported line-verbatim into the shared components
@@ -1130,6 +1150,12 @@ check_excerpt_at "$SRC_SHA_SAMLLOGIN" "contracts/upstream/saml-login-wire-shapes
   "go/internal/query/saml_admission.go" \
   "go/internal/query/saml_handler.go"
 
+# D9 SAML-login wave: the same excerpt re-anchored at the fresh wave
+# SHA (byte-identical sources — re-anchor, no content change).
+check_excerpt_at "$SRC_SHA_D9_SAML" "contracts/upstream/saml-login-wire-shapes.txt" \
+  "go/internal/query/saml_admission.go" \
+  "go/internal/query/saml_handler.go"
+
 check_excerpt_at "$SRC_SHA_RECOVERY" "contracts/upstream/recovery-wire-shapes.txt" \
   "go/internal/query/admin/recovery_admission.go" \
   "go/internal/query/admin/handler.go"
@@ -1179,6 +1205,28 @@ grep -qF 'BrowserSessionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts
 grep -qF 'LocalIdentityAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
 grep -qF 'APITokenAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
 echo "OK: version pins v0 present"
+
+# D9 SAML-login wave: no dest-side client on the lane (arbiter ruling
+# decision 3, binding). api/d9saml.go must name no dest-side client
+# type, interface, or import — no store, no provider config, no
+# verifier, no keyring, no client library — and must contain no form or
+# body read: the ACS form crosses opaquely inside the shared streaming
+# forward. Fails closed on any match (the in-suite source tests
+# TestD9SAMLNative_NoDestSideFormReads and
+# TestD9SAMLNative_NoDestSideClientSymbols prove the same list).
+for symbol in SAMLStore SAMLProviderConfig ServiceProviderConfig samlauth secretcrypto keyring; do
+  if grep -qF "$symbol" "${REPO_ROOT}/api/d9saml.go"; then
+    echo "FAIL: api/d9saml.go names ${symbol}: no dest-side SAML client on this lane" >&2
+    exit 1
+  fi
+done
+for call in ParseForm FormValue PostForm MultipartForm 'ReadAll(' MaxBytesReader; do
+  if grep -qF "$call" "${REPO_ROOT}/api/d9saml.go"; then
+    echo "FAIL: api/d9saml.go contains ${call}: no dest-side form/body read on this lane" >&2
+    exit 1
+  fi
+done
+echo "OK: api/d9saml.go carries no dest-side client or form/body read"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core

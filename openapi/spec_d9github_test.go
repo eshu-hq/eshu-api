@@ -14,7 +14,7 @@ import (
 // schemas. Byte identity of every ported line rides
 // scripts/check-parity.sh; these tests pin the served assembly around
 // those bytes. The OIDC keys stay in their own lane tests and the SAML
-// keys stay out until their own sequential lane.
+// keys ride their own landed lane tests (spec_d9saml_test.go).
 
 // TestSpec_ServesD9GitHubFamilies pins the native-spec contract for the
 // D9 GitHub-login family: the assembled document is valid JSON and
