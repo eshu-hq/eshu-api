@@ -1,0 +1,20 @@
+api/d9_openapi_test.go
+  h_78a442cba0b3e6 24-26
+api/d9github_openapi_test.go
+  h_78a442cba0b3e6 25-26
+openapi/spec_d9_test.go
+  h_78a442cba0b3e6 16-17
+openapi/spec_d9github_test.go
+  h_78a442cba0b3e6 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e87841746b6cb6281ce2b7378eaee9abf6c70b0b",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
