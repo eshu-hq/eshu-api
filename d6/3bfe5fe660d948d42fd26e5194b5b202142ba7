@@ -1,0 +1,14 @@
+scripts/check-parity.sh
+  h_78a442cba0b3e6 27,409,452
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d63bfe5fe660d948d42fd26e5194b5b202142ba7",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
