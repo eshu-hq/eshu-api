@@ -17,6 +17,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (recovery) | `7c60583996d9a3ccc46288f40a38f614a4f28ea8` (merge of `eshu-hq/eshu#10245`; RecoveryAdmission v0 over RecoveryService, frozen at v0, with the replay/reopen/refinalize/recover-generations Mount; openapi admin.go + recovery components at the same commit) |
 | Source commit (D1 read pins) | `2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923` (merge of `eshu-hq/eshu#10259`; Admin, AdminIdentity, GovernanceAudit, and TerminalFailure read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Source commit (D2 Leaf B wave) | `17feac86e089a6da208fe6c93b5d89b8fb7ef3cc` (`origin/main` at the D2 lane base; wave fragments, doc-UI shells, and wave components entries, frozen at v0; the D4 Native-next fragments and components entries reuse this pin — every D4 file is byte-identical there and at `origin/main`, so no new source pin is minted) |
+| Source commit (D6 read pins) | `6b66e6b23efe226970b4571c955aed1dc42f987a` (merge of `eshu-hq/eshu#10303`; Status and SupplyChain read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -36,6 +37,8 @@ preparation only; nothing here carries cutover authority.
 | `AdminIdentityReadAdmissionContractVersion` | `v0` |
 | `GovernanceAuditReadAdmissionContractVersion` | `v0` |
 | `TerminalFailureReadAdmissionContractVersion` | `v0` |
+| `StatusReadAdmissionContractVersion` | `v0` |
+| `SupplyChainReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -98,6 +101,29 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/openapi/paths/status/admin.go` (the six query-POST entries only) at `7c605839` (admin.go is byte-identical at `7c605839` and `17feac86e089`) | `openapi/paths/status/admin_reads.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim AdminReads subset) | verbatim subset |
 | `go/internal/query/openapi/paths/auth/routes.go` (invitations GET entry only) at `17feac86e089` | `openapi/paths/auth/admin_invitations.go` | `709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a` (whole file; this fragment is the line-verbatim get-only AdminInvitations subset) | verbatim subset |
 | `go/internal/query/openapi/spec.go` (swaggerUIHTML, redocHTML shells only) at `17feac86e089` | `api/leafb_terminate.go` (leafbSwaggerUIShell, leafbReDocShell consts) | block-identical (whole-shell compare, see `check_docui_shell_at`) | verbatim subset |
+| `go/internal/status/read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/status_read_admission_contract_test.go` | `83f8a4a15c24aa93c3d82dc14da1880470be58301aeac10f4944f28f57a90233` | verbatim |
+| `go/internal/query/supply/chain/supply_read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/supply_read_admission_contract_test.go` | `8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367` | verbatim |
+| `go/internal/status/read_admission.go` (version, alias) + `go/internal/status/report.go` (`Reader`) at `6b66e6b2` | `contracts/upstream/status-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/supply/chain/supply_read_admission.go` (version, embedded ports) at `6b66e6b2` | `contracts/upstream/supply-chain-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/openapi/paths/status/collector_readiness.go` at `6b66e6b2` | `openapi/paths/status/collector_readiness.go` | `12f2e23ec324531f83c960eb9dc429c1da11f749cdce000e14b659d476da6f2f` | verbatim |
+| `go/internal/query/openapi/paths/status/operator_control_plane.go` at `6b66e6b2` | `openapi/paths/status/operator_control_plane.go` | `fc58c514a42d02b56bd879f1b74678c3ee3c494bf8be49ef129525abda0f28c9` | verbatim |
+| `go/internal/query/openapi/paths/status/semantic.go` at `6b66e6b2` | `openapi/paths/status/semantic.go` | `c50a5391e3d765cdf3d40f9999eae33ffa1e1a299df455f81903af63272578da` | verbatim |
+| `go/internal/query/openapi/paths/freshness/causality.go` at `6b66e6b2` | `openapi/paths/freshness/causality.go` | `6409c05ee4b9c5078a7acabb12c3b783a297e2505a316f9b71d3bb2db5b0d3c2` | verbatim |
+| `go/internal/query/openapi/paths/status/routes.go` (the seven lane entries only) at `6b66e6b2` | `openapi/paths/status/status_reads.go` | `24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61` (whole file; this fragment is the line-verbatim StatusReads subset) | verbatim subset |
+| `go/internal/query/openapi/paths/supply/chain/runtime_context.go` at `6b66e6b2` | `openapi/paths/supply/chain/runtime_context.go` | `ec83120edab5d9b4d75622cc748d24c8f88f06036f8bc23e377a8b9830e6b83b` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/advisory_catalog.go` at `6b66e6b2` | `openapi/paths/supply/chain/advisory_catalog.go` | `2316253e4c20862081a21778f2c6619bb4e1e35ba63de7c603a8b4069e122d3b` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/advisory_evidence.go` at `6b66e6b2` | `openapi/paths/supply/chain/advisory_evidence.go` | `4a69d35575e23d8e8f7ed4453dbbd14c453688579e1f8edb320e35d74609d212` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/container_images.go` at `6b66e6b2` | `openapi/paths/supply/chain/container_images.go` | `29ca221b684f1f3f1b88042121090f5f7ce136dae6812f8071e5dc911d1c42a1` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/container_image_identity_aggregate.go` at `6b66e6b2` | `openapi/paths/supply/chain/container_image_identity_aggregate.go` | `457eaadc8b6c325b96bb399610577c2145fd7d77ba4e9902b8286f71b7b07600` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/impact_explain.go` (payload only) at `6b66e6b2` | `openapi/paths/supply/chain/impact_explain.go` | `7b64a8ce69cc2802157303f1fd50a2914a5cd2c9693743368da0889639852f3e` (whole file; this fragment is the line-verbatim ImpactExplain subset) | verbatim subset |
+| `go/internal/query/openapi/paths/supply/chain/impact_findings.go` (payload only) at `6b66e6b2` | `openapi/paths/supply/chain/impact_findings.go` | `0b0adcf656d2d14b8c470c3e46511d3e8d800a74dde92e68c4ffdde7278dce67` (whole file; this fragment is the line-verbatim ImpactFindings subset) | verbatim subset |
+| `go/internal/query/openapi/paths/supply/chain/impact_aggregate.go` at `6b66e6b2` | `openapi/paths/supply/chain/impact_aggregate.go` | `9bcd0f907ab0012d86a79ee1a82339c16fd39a2535dec58d138cf625e61fec21` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/sbom_attestations.go` at `6b66e6b2` | `openapi/paths/supply/chain/sbom_attestations.go` | `9571183b1fd617e39ecf214e5b9a679dcb73342b0b7f8c68c7a380f151fa710b` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/sbom_attestation_attachment_aggregate.go` at `6b66e6b2` | `openapi/paths/supply/chain/sbom_attestation_attachment_aggregate.go` | `c8aad4c90a5a1f0973b542c172e9e492582ef82ae2112614a7170f34962cf856` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/security_alerts.go` at `6b66e6b2` | `openapi/paths/supply/chain/security_alerts.go` | `3f8431bd296d43ab284ee97f3ba084bafcf2ae55f12d06ff3b7bf0473840b491` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/security_alert_aggregate.go` at `6b66e6b2` | `openapi/paths/supply/chain/security_alert_aggregate.go` | `8a5709e57dd25f9263274828c4a470baa24236abf00a5de331a518a46dfd5088` | verbatim |
+| `go/internal/query/openapi/paths/supply/chain/vulnerability_scanner_contract.go` at `6b66e6b2` | `openapi/paths/supply/chain/vulnerability_scanner_contract.go` | `3dbfbc45e39e80ba183ee7f0a45acd40cf1cd0de596fdd99dff63420326a6ca8` | verbatim |
+| `go/internal/query/openapi/components_active_work_source.go` (`CoordinatorSource`, `TerraformStateSource`) at `6b66e6b2` | `openapi/components.go` (two D6 schemas) | excerpt (line-presence at pin, see `check_d6_components_at`) | verbatim excerpt |
 | `go/internal/query/openapi/components.go` (ServiceName parameter) + `components_responses.go` (Unauthorized, NotImplemented) at `17feac86e089`, `components_provider_configs.go` (AdminProviderConfig, AdminProviderConfigWriteRequest) at `99381691b1ac` | `openapi/components.go` (D2 block) | excerpt (line-presence at pin, see `check_leafb_components_at`) | verbatim excerpt |
 | `go/internal/query/openapi/paths/cicd/routes.go` at `17feac86e089` | `openapi/paths/cicd/routes.go` | `ddf2537b643884319ef98554f883a37a58f88bcab026ad94c32b34b747e07167` | verbatim |
 | `go/internal/query/openapi/paths/cicd/run_correlation_aggregate.go` at `17feac86e089` | `openapi/paths/cicd/run_correlation_aggregate.go` | `f69d8339a3fa2a926ec5173f0655ac1bf1f3411b13438e310cff3f221bdb409d` | verbatim |

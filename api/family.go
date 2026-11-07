@@ -107,6 +107,13 @@ var familyPrefixes = []struct {
 	{"/investigations/deployable-unit", "evidence"},
 	{"/investigation-workflows", "investigation_workflows"},
 	{"/query-playbooks", "playbooks"},
+	{"/status", "status"},
+	{"/collectors", "status"},
+	{"/collector-readiness", "status"},
+	{"/ingesters", "status"},
+	{"/index-status", "status"},
+	{"/supply-chain", "supply_chain"},
+	{"/investigations/supply-chain", "supply_chain"},
 }
 
 // classifyFamily maps a request path to its closed family label. The

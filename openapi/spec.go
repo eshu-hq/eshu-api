@@ -13,6 +13,7 @@ import (
 	"github.com/eshu-hq/eshu-api/openapi/paths/cli"
 	"github.com/eshu-hq/eshu-api/openapi/paths/cloud"
 	"github.com/eshu-hq/eshu-api/openapi/paths/evidence"
+	"github.com/eshu-hq/eshu-api/openapi/paths/freshness"
 	"github.com/eshu-hq/eshu-api/openapi/paths/infrastructure"
 	"github.com/eshu-hq/eshu-api/openapi/paths/repository"
 	"github.com/eshu-hq/eshu-api/openapi/paths/search"
@@ -33,7 +34,10 @@ import (
 // invitations list GET that shares its key with the relay-only create
 // POST, then the D4 Native-next wave: CICD, Documentation, Infra,
 // PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
-// Playbooks).
+// Playbooks, then the D6 Status + SupplyChain reads wave: the
+// snapshot-pure Status GETs and the 17 SupplyChain read GETs (Compare,
+// extra-port Status aspects, the impact packet, and the suppressions
+// mutation stay relay).
 // It advances as family lanes port their fragments; the served family
 // set is pinned by the Spec tests.
 const SpecVersion = "v0"
@@ -46,7 +50,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks, plus the D6 Status + SupplyChain reads wave: the snapshot-pure Status GETs and the 17 SupplyChain read GETs); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -81,7 +85,9 @@ const specPrefix = `{
 // served-spec self entry last); the D4 Native-next wave appends after
 // the provider-config reads in ruling family order (CICD,
 // Documentation, Infra, PackageRegistry, Repositories, Evidence,
-// InvestigationWorkflows, Playbooks), and the served-spec self entry
+// InvestigationWorkflows, Playbooks); the D6 Status + SupplyChain
+// reads wave appends after the D4 entries in wave-table order (Status
+// reads, then SupplyChain reads), and the served-spec self entry
 // keeps the trim last.
 func familyPaths() string {
 	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
@@ -122,6 +128,23 @@ func familyPaths() string {
 		strings.TrimSpace(evidence.DeployableUnitPacket) + "\n" +
 		strings.TrimSpace(evidence.InvestigationWorkflows) + "\n" +
 		strings.TrimSpace(catalog.Playbooks) + "\n" +
+		strings.TrimSpace(status.StatusReads) + "\n" +
+		strings.TrimSpace(status.CollectorReadiness) + "\n" +
+		strings.TrimSpace(freshness.Causality) + "\n" +
+		strings.TrimSpace(status.OperatorControlPlane) + "\n" +
+		strings.TrimSpace(status.Semantic) + "\n" +
+		strings.TrimSpace(supplychain.AdvisoryCatalog) + "\n" +
+		strings.TrimSpace(supplychain.AdvisoryEvidence) + "\n" +
+		strings.TrimSpace(supplychain.ContainerImages) + "\n" +
+		strings.TrimSpace(supplychain.ContainerImageIdentityAggregate) + "\n" +
+		strings.TrimSpace(supplychain.ImpactFindings) + "\n" +
+		strings.TrimSpace(supplychain.ImpactExplain) + "\n" +
+		strings.TrimSpace(supplychain.ImpactAggregate) + "\n" +
+		strings.TrimSpace(supplychain.SBOMAttestations) + "\n" +
+		strings.TrimSpace(supplychain.SBOMAttestationAttachmentAggregate) + "\n" +
+		strings.TrimSpace(supplychain.SecurityAlerts) + "\n" +
+		strings.TrimSpace(supplychain.SecurityAlertAggregate) + "\n" +
+		strings.TrimSpace(supplychain.VulnerabilityScannerContract) + "\n" +
 		strings.TrimSuffix(strings.TrimSpace(status.OpenAPISpec), ",") + "\n"
 }
 
