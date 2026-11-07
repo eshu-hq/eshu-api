@@ -18,6 +18,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D1 read pins) | `2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923` (merge of `eshu-hq/eshu#10259`; Admin, AdminIdentity, GovernanceAudit, and TerminalFailure read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Source commit (D2 Leaf B wave) | `17feac86e089a6da208fe6c93b5d89b8fb7ef3cc` (`origin/main` at the D2 lane base; wave fragments, doc-UI shells, and wave components entries, frozen at v0; the D4 Native-next fragments and components entries reuse this pin — every D4 file is byte-identical there and at `origin/main`, so no new source pin is minted) |
 | Source commit (D6 read pins) | `6b66e6b23efe226970b4571c955aed1dc42f987a` (merge of `eshu-hq/eshu#10303`; Status and SupplyChain read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
+| Source commit (D7 admin-four pins) | `19de7346d11a184bf88d8f307b5d7a9ced0a4657` (merge of `eshu-hq/eshu#10312`; Backfill, DeadLetter, Reindex, and Skip admissions v0, unwired-seam style: version constant + narrow port + frozen method-set test per pin; arbiter APPROVED-WITH-CONDITIONS) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -39,6 +40,10 @@ preparation only; nothing here carries cutover authority.
 | `TerminalFailureReadAdmissionContractVersion` | `v0` |
 | `StatusReadAdmissionContractVersion` | `v0` |
 | `SupplyChainReadAdmissionContractVersion` | `v0` |
+| `BackfillAdmissionContractVersion` | `v0` |
+| `DeadLetterAdmissionContractVersion` | `v0` |
+| `ReindexAdmissionContractVersion` | `v0` |
+| `SkipAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -103,6 +108,11 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/openapi/spec.go` (swaggerUIHTML, redocHTML shells only) at `17feac86e089` | `api/leafb_terminate.go` (leafbSwaggerUIShell, leafbReDocShell consts) | block-identical (whole-shell compare, see `check_docui_shell_at`) | verbatim subset |
 | `go/internal/status/read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/status_read_admission_contract_test.go` | `83f8a4a15c24aa93c3d82dc14da1880470be58301aeac10f4944f28f57a90233` | verbatim |
 | `go/internal/query/supply/chain/supply_read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/supply_read_admission_contract_test.go` | `8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367` | verbatim |
+| `go/internal/query/admin/backfill_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/backfill_admission_contract_test.go` | `50fb9462a3aa2d4869bf43cab7e8af69a92dc5a7a9625339fd6b86be34b5efbe` | verbatim |
+| `go/internal/query/admin/dead_letter_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/dead_letter_admission_contract_test.go` | `9c583e7ce8c06384b8c6642f1fea0c1d4581b40d84ca7dae3f94f2f192a56ddb` | verbatim |
+| `go/internal/query/admin/reindex_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/reindex_admission_contract_test.go` | `061092ea83a6447af59298e3df5d49ff7878eff0df72bc43e3b7c8fafef44767` | verbatim |
+| `go/internal/query/admin/skip_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/skip_admission_contract_test.go` | `0486124e708486faaa0dafd9e00fb387a03f228ea8676e9c82ca63c60d67eaae` | verbatim |
+| `go/internal/query/openapi/paths/status/admin.go` (the four admin-four entries only) at `19de7346d1` | `openapi/paths/status/admin_d7.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim AdminD7 subset) | verbatim subset |
 | `go/internal/status/read_admission.go` (version, alias) + `go/internal/status/report.go` (`Reader`) at `6b66e6b2` | `contracts/upstream/status-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/supply/chain/supply_read_admission.go` (version, embedded ports) at `6b66e6b2` | `contracts/upstream/supply-chain-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/collector_readiness.go` at `6b66e6b2` | `openapi/paths/status/collector_readiness.go` | `12f2e23ec324531f83c960eb9dc429c1da11f749cdce000e14b659d476da6f2f` | verbatim |

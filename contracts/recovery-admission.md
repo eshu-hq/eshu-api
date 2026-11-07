@@ -44,9 +44,11 @@ put it (`contracts/replay-ledger-admission.md`,
 `CompleteReplayIdempotency`); this lane consumes it unchanged.
 
 Out of contract by design: backfill, dead-letter, reindex, and skip
-have no `RecoveryAdmission` or `ReplayLedgerAdmission` pin and stay on
-the generic relay — nobody infers them into this lane. They move only
-with their own admission pins in later admin-mutation lanes.
+have no `RecoveryAdmission` or `ReplayLedgerAdmission` pin and were on
+the generic relay when this lane landed — nobody inferred them into
+this lane. They moved with their own admission pins (Backfill,
+DeadLetter, Reindex, Skip v0, `eshu-hq/eshu#10312`) in the D7 tier-C
+clone lane; see `contracts/d7-admin-four.md`.
 
 ## HTTP shape
 
@@ -109,9 +111,10 @@ twin on the same handler, so the family is never split across dispatch
 paths), and forwards to the same core route with method, path, query,
 headers (including the original `Authorization` header), and body
 relayed; core bytes come back unmodified and core re-judges every
-forwarded call as backstop. The relay-only four and the family's reads
-stay on the generic relay (`TestRecoveryNative_RelayOnlyStaysProxy`,
-`TestRecoveryNative_ReadsStillProxy`).
+forwarded call as backstop. The admin-four moved to the D7 tier-C clone
+lane (`TestRecoveryNative_AdminFourMovedToD7Lane`,
+contracts/d7-admin-four.md); the family's reads stay on the generic
+relay (`TestRecoveryNative_ReadsStillProxy`).
 
 Scope honesty: dest holds the AllScopes authorizer per the dispatch
 ruling, but with no scoped/session resolver the deny branch is
@@ -168,12 +171,12 @@ the only shared `$ref`s (`SkippedScopesReport`,
 `DeltaActiveScopesReport`, `ReindexRequestsWrittenReport`) are
 referenced solely by the refinalize and recover-generations entries,
 so this lane ports the entries plus exactly those three schemas and
-nothing the relay-only routes document. Assembly adds the schemas this
+nothing the D7 lane routes document. Assembly adds the schemas this
 lane's entries reference; `TestSpec_LocalRefsResolve` fails closed on
 a dangling `$ref`. The served dest spec therefore covers exactly the
-landed families; backfill, dead-letter, reindex, and skip stay
-relayed-from-core for spec purposes until their lanes move their
-entries.
+landed families; backfill, dead-letter, reindex, and skip are served
+for spec purposes since the D7 lane moved their entries
+(`openapi/paths/status/admin_d7.go`).
 
 Rollback: additive. Revert this lane's dest commit (or re-pin the
 prior digest) and the four recovery routes fall back to the generic

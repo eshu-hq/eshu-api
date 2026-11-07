@@ -116,7 +116,10 @@ after the move.
   sibling), and the impact findings and impact explain entries (two
   line-verbatim subsets sharing that sibling), with the shared
   components block extended by the CoordinatorSource and
-  TerraformStateSource schemas the status entries reference —
+  TerraformStateSource schemas the status entries reference,
+  and the D7 admin-four tier-C clone lane: the backfill, dead-letter,
+  reindex, and skip entries (`openapi/paths/status/admin_d7.go`, one
+  line-verbatim subset, no new schemas) —
   per-family fragment moves now land in their
   family PRs per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
@@ -192,6 +195,33 @@ later pin, the status reads fragment ports only the seven lane keys,
 and the D2-D4 relay legs moved to the still-relaying dependencies
 route. Termination claims stay provisional until the arbiter
 re-reviews the D0 evidence (blocker B1).
+
+## Tier-C dispatch clones (D7)
+
+The four D7-pinned admin-four mutations (backfill, dead-letter,
+reindex, skip) cross as tier-C dispatch clones per
+`contracts/d7-admin-four.md`: explicit routes inside `RequireAuth`
+ahead of the generic relay with the AllScopes family authorizer,
+method, path, query, headers, and body forwarded to the same core
+route, core bytes relayed back unmodified. Dest mints no idempotency
+key, keeps no ledger row, appends no audit event, and runs no
+finalize — the claim/complete pair (where the core handler has one)
+runs core-side on every forwarded request. Proof per clone:
+failing-first conformance, idempotency-key bytes forwarded untouched
+(validity stays core's judgment), zero dest retries with the
+unstable-core matrix (500, retryable and permanent 503s, dead core,
+pre-cancel and mid-flight cancel — exactly one upstream hit each),
+response-envelope parity vs the legacy relay (byte-identical status,
+headers, body across the outcome matrix in both shapes), duplicate
+deliveries no worse than direct core (2 hits, recorded outcome
+replayed; backfill records a second row — not even state-idempotent,
+disclosed), no-core-import, the contract with revert-to-relay
+rollback, and the satellite-owned clone-latency gate
+(`docs/d7-latency.md`: dead-letter 0.91x, reindex 0.90x vs the 1.50
+budget). Scope honesty: tier-C dispatch only — not termination, not
+removal readiness. The ledger deficit stays open; serialization
+dest-side is not a substitute for it. Termination stays last among
+mutations on D0-proven transport.
 
 ## What stays in the core
 

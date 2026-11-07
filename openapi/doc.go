@@ -7,7 +7,8 @@
 // served natively (sign-in-policy first, retirement second,
 // terminal-failure third, admin-identity fourth, provider-config
 // mutations fifth, admin-recovery sixth, suppression seventh, per
-// satellite-design Decision 5(c), then the D2 Leaf B Native-now wave:
+// satellite-design Decision 5(c), then the D7 admin-four tier-C clone
+// lane (AdminD7), then the D2 Leaf B Native-now wave:
 // capabilities, CLI support, ask, service intelligence, auth providers,
 // provider-config reads, and the served-spec self entry); every
 // other family is still

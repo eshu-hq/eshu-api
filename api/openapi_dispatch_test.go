@@ -320,11 +320,11 @@ func TestOpenAPINative_ServesProviderConfigFamily(t *testing.T) {
 // (satellite-design Decision 5(c)): the native route answers 200 with
 // the fragment's four unique-path-key mutation paths and pinned
 // summaries, and it answers from compiled constants — no core fetch,
-// so an unconfigured origin still serves the spec. The relay-only
-// four keep their own path keys in the pinned core file and stay out
-// of this fragment (reads and relay-only mutations stay relay). The
-// pinned fragment carries no operationId entries, so the paths are
-// pinned by summary here.
+// so an unconfigured origin still serves the spec. The admin-four keep
+// their own path keys in the pinned core file on the D7 lane
+// (openapi/paths/status/admin_d7.go) and stay out of this fragment;
+// the reads stay relay. The pinned fragment carries no operationId
+// entries, so the paths are pinned by summary here.
 func TestOpenAPINative_ServesAdminRecoveryFamily(t *testing.T) {
 	t.Parallel()
 
