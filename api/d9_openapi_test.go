@@ -21,8 +21,9 @@ import (
 
 // d9WaveSpecKeys maps every D9 OIDC lane path key to the methods the
 // served document must carry for it. Both keys carry exactly the GET
-// operation their fragment documents; the GitHub/SAML keys stay out
-// until their own sequential lanes.
+// operation their fragment documents; the GitHub/SAML keys ride
+// their own landed lane tables (d9GitHubWaveSpecKeys,
+// d9SAMLWaveSpecKeys).
 var d9WaveSpecKeys = map[string][]string{
 	"/api/v0/auth/oidc/login":    {"get"},
 	"/api/v0/auth/oidc/callback": {"get"},

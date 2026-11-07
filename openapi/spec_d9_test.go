@@ -13,8 +13,8 @@ import (
 // BrowserSessionResponse schema the D8 lane already ported — no new
 // schemas. Byte identity of every ported line rides
 // scripts/check-parity.sh; these tests pin the served assembly around
-// those bytes. GitHub rides its own lane tests and the SAML keys stay
-// out until their own sequential lane.
+// those bytes. GitHub rides its own lane tests and the SAML keys ride
+// their own landed lane tests (spec_d9saml_test.go).
 
 // TestSpec_ServesD9Families pins the native-spec contract for the D9
 // OIDC-login family: the assembled document is valid JSON and carries
