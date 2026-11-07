@@ -23,6 +23,7 @@ SRC_SHA_D1="2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923"
 SRC_SHA_D0="ec1643d67f"
 SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
+SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -347,6 +348,24 @@ check_file_at "$SRC_SHA_D6" "go/internal/query/supply/chain/supply_read_admissio
   "contracts/upstream/supply_read_admission_contract_test.go" \
   "8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367"
 
+# D7 admin-four pins (eshu-hq/eshu#10312, unwired seams): the four
+# frozen method-set tests, byte-identical to the pinned core commit.
+check_file_at "$SRC_SHA_D7" "go/internal/query/admin/backfill_admission_contract_test.go" \
+  "contracts/upstream/backfill_admission_contract_test.go" \
+  "50fb9462a3aa2d4869bf43cab7e8af69a92dc5a7a9625339fd6b86be34b5efbe"
+
+check_file_at "$SRC_SHA_D7" "go/internal/query/admin/dead_letter_admission_contract_test.go" \
+  "contracts/upstream/dead_letter_admission_contract_test.go" \
+  "9c583e7ce8c06384b8c6642f1fea0c1d4581b40d84ca7dae3f94f2f192a56ddb"
+
+check_file_at "$SRC_SHA_D7" "go/internal/query/admin/reindex_admission_contract_test.go" \
+  "contracts/upstream/reindex_admission_contract_test.go" \
+  "061092ea83a6447af59298e3df5d49ff7878eff0df72bc43e3b7c8fafef44767"
+
+check_file_at "$SRC_SHA_D7" "go/internal/query/admin/skip_admission_contract_test.go" \
+  "contracts/upstream/skip_admission_contract_test.go" \
+  "0486124e708486faaa0dafd9e00fb387a03f228ea8676e9c82ca63c60d67eaae"
+
 # Native spec (Decision 5(c)): the admin-recovery OpenAPI fragment is a
 # line-verbatim subset of the pinned core file. Core ships the lane
 # entries and the relay-only routes in one file, so no whole-file
@@ -360,6 +379,20 @@ check_fragment_subset_named_at "$SRC_SHA_RECOVERY" "go/internal/query/openapi/pa
   "openapi/paths/status/admin_recovery.go" \
   "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
   "AdminRecovery"
+
+# Native spec (Decision 5(c)): the admin-four OpenAPI fragment is a
+# line-verbatim subset of the pinned core file at the D7 merge. The D7
+# merge leaves admin.go byte-identical to the recovery pin (same
+# sha256), so the gate pins that same whole-file hash at the D7 commit
+# and proves every payload line of the dest fragment appears verbatim
+# in it. The four lane path keys (backfill, dead-letter, reindex,
+# skip) are unique to this lane and separable from the C-c2, D3, and
+# relay keys sharing that file, so no served key duplicates another
+# lane's route.
+check_fragment_subset_named_at "$SRC_SHA_D7" "go/internal/query/openapi/paths/status/admin.go" \
+  "openapi/paths/status/admin_d7.go" \
+  "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
+  "AdminD7"
 
 # Native spec (Decision 5(c)): the suppression OpenAPI fragment is a
 # line-verbatim subset port of the pinned core file. Core ships the

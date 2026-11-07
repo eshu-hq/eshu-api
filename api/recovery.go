@@ -13,10 +13,11 @@ import (
 // replay, reopen, refinalize, and recover-generations under
 // /api/v0/admin. They are registered explicitly inside RequireAuth,
 // ahead of the generic /api/ proxy, with the AllScopes family
-// authorizer; the relay-only four (backfill, dead-letter, reindex,
-// skip) and the family's reads stay on the byte-relay. Route
-// registration has no path-key collision: the four native paths share
-// no prefix with the relay-only four beyond /api/v0/admin, and Go
+// authorizer; the admin-four (backfill, dead-letter, reindex, skip)
+// ride the D7 tier-C clone lane (api/d7.go) and the family's reads stay
+// on the byte-relay. Route registration has no path-key collision: the
+// four native paths share no prefix with the admin-four beyond
+// /api/v0/admin, and Go
 // matches method and path together, so the POSTs ride the native route
 // while every other method and every other path stays relayed. The
 // OpenAPI fragment is a line-verbatim subset of the pinned core file

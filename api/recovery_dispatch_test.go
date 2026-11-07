@@ -15,7 +15,7 @@ import (
 // request paths: replay, reopen, refinalize, and recover-generations.
 // backfill, dead-letter, reindex, and skip have no RecoveryAdmission or
 // ReplayLedgerAdmission pin and stay on the generic relay (pinned by
-// TestRecoveryNative_RelayOnlyStaysProxy below); nobody infers them
+// TestRecoveryNative_AdminFourMovedToD7Lane below); nobody infers them
 // into this lane.
 var recoveryNativeCases = []struct {
 	name   string
@@ -265,40 +265,47 @@ func TestRecoveryNative_DispatchViaIsNative(t *testing.T) {
 	}
 }
 
-// TestRecoveryNative_RelayOnlyStaysProxy pins that the relay-only
-// four change nothing in this lane: backfill, dead-letter, reindex,
-// and skip POSTs still cross the generic byte-relay with method, path,
-// and body intact. They have no RecoveryAdmission or ReplayLedger
-// pin; a native route for any of them would misrepresent the posture.
-func TestRecoveryNative_RelayOnlyStaysProxy(t *testing.T) {
+// TestRecoveryNative_AdminFourMovedToD7Lane pins the D7 handoff: the
+// admin-four (backfill, dead-letter, reindex, skip) no longer cross
+// the generic byte-relay — they ride the D7 tier-C clone lane
+// (api/d7.go) with their own pins (eshu-hq/eshu#10312). Each POST
+// still forwards once with method, path, and body intact, but files
+// via="native" under the admin family instead of the relay lane.
+// See TestD7Native_RegisteredAheadOfRelay for the via proof; this
+// test pins that the recovery lane's own posture is unchanged by the
+// move.
+func TestRecoveryNative_AdminFourMovedToD7Lane(t *testing.T) {
 	t.Parallel()
 
-	for _, path := range []string{
+	tel := NewTelemetry(discardLogger())
+	core := &stubCore{status: http.StatusOK, body: `{"status":"accepted"}`}
+	upstream := httptest.NewServer(core.handler())
+	defer upstream.Close()
+
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	srv.telemetry = tel
+	handler := srv.Handler(DefaultV0Sunset)
+
+	for i, path := range []string{
 		"/api/v0/admin/backfill",
 		"/api/v0/admin/dead-letter",
 		"/api/v0/admin/reindex",
 		"/api/v0/admin/skip",
 	} {
-		core := &stubCore{status: http.StatusOK, body: `{"status":"accepted"}`}
-		mux := http.NewServeMux()
-		mux.Handle("/", core.handler())
-		upstream := httptest.NewServer(mux)
-		defer upstream.Close()
-
-		srv := NewServer(upstream.URL, skeletonTestKey)
-		handler := srv.Handler(DefaultV0Sunset)
-
 		req := authedRequest(http.MethodPost, path)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		if core.hits != 1 || core.lastPath != path || core.lastMethod != http.MethodPost {
-			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the generic proxy to the relay-only route",
+		if core.hits != i+1 || core.lastPath != path || core.lastMethod != http.MethodPost {
+			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want one forward per route",
 				path, core.hits, core.lastMethod, core.lastPath)
 		}
 		if rec.Code != http.StatusOK {
 			t.Errorf("path %q: status = %d, want 200", path, rec.Code)
 		}
+	}
+	if got := tel.snapshot().dispatches["admin"][viaNative][outcomeCoreOK]; got != 4 {
+		t.Errorf("admin native core_ok = %d, want 4 (the admin-four ride the D7 native lane)", got)
 	}
 }
 
@@ -306,8 +313,9 @@ func TestRecoveryNative_RelayOnlyStaysProxy(t *testing.T) {
 // these reads without changing the forwarding: the replay-events,
 // work-items, and dead-letters query POSTs terminate natively since D3
 // (api/d3_wave.go, family admin) with exactly one upstream hit, path,
-// method, and body intact on the native lane. The relay-only four
-// (backfill, dead-letter, reindex, skip) are unaffected above.
+// method, and body intact on the native lane. The admin-four
+// (backfill, dead-letter, reindex, skip) moved to the D7 clone lane;
+// they are unaffected above.
 func TestRecoveryNative_D3ReadsForwardIntact(t *testing.T) {
 	t.Parallel()
 

@@ -194,10 +194,19 @@ func (s *Server) routes() *http.ServeMux {
 	// admin recovery mutation routes have their explicit per-family
 	// routes with the AllScopes authorizer, ahead of the generic proxy.
 	// Each trailing-slash spelling stays on the native route for the
-	// same never-split reason; the relay-only four (backfill,
-	// dead-letter, reindex, skip) and the family's reads stay on the
-	// generic relay — they have no admission pin and nobody infers them
-	// into this lane.
+	// same never-split reason; the admin-four (backfill, dead-letter,
+	// reindex, skip) ride the D7 tier-C clone lane below and the
+	// family's reads stay on the generic relay.
+	// Native dispatch, AdminFourMutations (tier C, D7): the four
+	// admin-four mutation routes have their explicit per-family routes
+	// with the AllScopes authorizer, ahead of the generic proxy. Each
+	// trailing-slash spelling stays on the native route for the same
+	// never-split reason. See api/d7.go and contracts/d7-admin-four.md:
+	// tier-C dispatch only, not termination.
+	for _, route := range d7Routes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.d7WriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.d7WriteThrough))))
+	}
 	for _, route := range recoveryRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
