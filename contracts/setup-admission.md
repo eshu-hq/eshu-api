@@ -121,7 +121,12 @@ termination proof box in `api/setup_terminate_test.go`:
   `TestSetupTerminated_V1AliasTerminates`). The caller `Accept`
   value crosses on the anonymous fetch (forwarded, never judged:
   core answers the fixed two-key shape regardless), and the parity
-  test asserts it arrives.
+  test asserts it arrives. Envelope negotiation (eshu-hq/eshu-api#66)
+  does not apply to this synthesized 200: dest renders the flat
+  two-key shape exactly like the core `handleState` it replaces (core
+  `WriteJSON`, no negotiation), in both negotiated shapes
+  (`TestEnvelopeNegotiation_SetupStateFlatBothShapes`). Dest never
+  wraps it into `{data, truth}` — same rule as every native lane.
 - Deep-path disclosure: the Go trailing-slash twin is a subtree
   pattern, so deeper spellings (e.g. `/setup-state/extra`) also
   terminate with a synthesized 200 from the canonical fetch rather
