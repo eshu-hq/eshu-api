@@ -42,7 +42,8 @@ const (
 
 // d9Routes lists every native-dispatch route of the D9 OIDC lane in
 // registration order: exactly the two pre-auth public carve-out GETs.
-// No GitHub or SAML route rides this lane.
+// No SAML route rides this lane; GitHub rides its own landed lane
+// table (d9GitHubRoutes).
 var d9Routes = []string{
 	d9OIDCLogin,
 	d9OIDCCallback,

@@ -26,6 +26,7 @@ SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
 SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
 SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
+SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -472,6 +473,23 @@ check_fragment_subset_named_at "$SRC_SHA_D9" "go/internal/query/openapi/paths/au
   "openapi/paths/auth/oidc_login.go" \
   "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
   "OIDCLogin"
+
+# D9 GitHub-login wave (satellite D9 GitHub lane, arbiter
+# APPROVED-WITH-CONDITIONS): the v0 admission pin re-anchored at the
+# fresh wave SHA (byte-identical to the stale SRC_SHA_AUTHLOGIN pin,
+# same sha256 — re-anchor, no content change), the wire-shapes excerpt
+# re-anchored at the same SHA, and the GitHub login + callback entries
+# as a line-verbatim subset of the pinned core routes.go (byte-identical
+# to the OIDC wave file, same sha256). The SAML pin stays at its stale
+# anchor until its own sequential lane.
+check_file_at "$SRC_SHA_D9_GITHUB" "go/internal/query/github_login_admission_contract_test.go" \
+  "contracts/upstream/github_login_admission_contract_test.go" \
+  "f6a7fc9920176c76c8cf6e5ec223e881323564405b5931770d43db9f7256889c"
+
+check_fragment_subset_named_at "$SRC_SHA_D9_GITHUB" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/github_login.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "GitHubLogin"
 
 # D8 session-resolver wave (Decision 5(c)): the 11 schemas the lane
 # entries reference, ported line-verbatim into the shared components
@@ -1096,6 +1114,13 @@ check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/oidc-login-wire-shapes
 check_excerpt_at "$SRC_SHA_D9" "contracts/upstream/oidc-login-wire-shapes.txt" \
   "go/internal/query/oidc_login_handler.go" \
   "go/cmd/api/oidc_login.go"
+
+# D9 GitHub-login wave: the same excerpt re-anchored at the fresh wave
+# SHA (byte-identical sources — re-anchor, no content change). The SAML
+# excerpt stays at its stale anchor until its own sequential lane.
+check_excerpt_at "$SRC_SHA_D9_GITHUB" "contracts/upstream/github-login-wire-shapes.txt" \
+  "go/internal/query/github_login_handler.go" \
+  "go/cmd/api/github_login.go"
 
 check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/github-login-wire-shapes.txt" \
   "go/internal/query/github_login_handler.go" \

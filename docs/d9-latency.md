@@ -1,10 +1,10 @@
 # D9 clone-latency evidence
 
-D9 latency record for the OIDC-login tier-C clone lane (Refs
-`eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`). The census assigns
-the satellite this gate: core keeps the contract-registry and
-static-contract gates; this repo proves the tier-C clones are not
-slower than the relay they replace.
+D9 latency record for the OIDC-login and GitHub-login tier-C clone
+lanes (Refs `eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`). The
+census assigns the satellite this gate: core keeps the
+contract-registry and static-contract gates; this repo proves the
+tier-C clones are not slower than the relay they replace.
 
 ## Method
 
@@ -55,3 +55,22 @@ match around the same single fetch, with no gate and no authorizer on
 the public carve-out. Absolute deployment numbers against a pinned
 core image ride flip prep (D11); this gate runs hermetically on every
 PR and in CI.
+
+## GitHub lane numbers (local, 2026-11-07)
+
+Shared host, in-process stub core (`go test` benchmarks, 2000x5 via
+`bash scripts/measure-d9github-latency.sh` against
+`BenchmarkD9GitHubPublicLogin` / `BenchmarkD9GitHubPublicCallback`):
+
+| Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
+| --- | --- | --- | --- | --- |
+| Login-start GET, bare | 79306 | 87099 | 0.91 | ≤ 1.50 |
+| Login-start GET, full query | 79339 | 87099 | 0.91 | ≤ 1.50 |
+| Callback GET, state + code | 86436 | 87099 | 0.99 | ≤ 1.50 |
+| Login-start GET vs relay POST | 79339 | 88167 | 0.90 | ≤ 1.50 |
+| Callback GET vs relay POST | 86436 | 88167 | 0.98 | ≤ 1.50 |
+
+Within budget on all five legs, same hermetic method as the OIDC
+lane: the GitHub clones add the explicit route match around the same
+single fetch, with no gate and no authorizer on the public
+carve-out.

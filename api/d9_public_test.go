@@ -60,8 +60,8 @@ func TestD9Public_CarveOutServesKeyless(t *testing.T) {
 // to the keyed generic relay and keep the standing 401 for
 // credential-less callers with zero core contact; non-GET spellings of
 // the carved paths are not carved out either (core's bypass is
-// GET-only); and the GitHub/SAML login paths stay gated for their own
-// sequential lanes.
+// GET-only); GitHub rides its own landed lane (d9GitHubRoutes) and the
+// SAML login paths stay gated for their own sequential lane.
 func TestD9Public_CarveOutIsExactlyTwo(t *testing.T) {
 	t.Parallel()
 
@@ -80,8 +80,6 @@ func TestD9Public_CarveOutIsExactlyTwo(t *testing.T) {
 		"POST /api/v0/auth/oidc/login",
 		"POST /api/v0/auth/oidc/callback",
 		"GET /api/v0/auth/oidc/callback/extra",
-		"GET /api/v0/auth/github/login",
-		"GET /api/v0/auth/github/callback",
 		"GET /api/v0/auth/saml/providers/p1/login",
 	} {
 		method, path, _ := strings.Cut(target, " ")
@@ -211,13 +209,14 @@ func TestD9Native_V1AliasOrderingUnchanged(t *testing.T) {
 	}
 }
 
-// TestD9Native_NeighborLanesStillRelay pins that the GitHub and SAML
-// login routes are unaffected by the OIDC registrations: a keyless
-// GitHub login keeps the standing 401 with zero core contact (its lane
-// has not landed), and a keyed one rides the generic relay with
-// exactly one upstream hit. The OIDC paths share no registration key
-// with those lanes beyond /api/v0/auth, and Go matches method and
-// path together, so the lanes never merge.
+// TestD9Native_NeighborLanesStillRelay pins that the SAML login routes
+// are unaffected by the OIDC registrations: a keyless SAML login keeps
+// the standing 401 with zero core contact (its lane has not landed),
+// and a keyed one rides the generic relay with exactly one upstream
+// hit. GitHub rides its own landed lane (d9GitHubRoutes): a keyless
+// GitHub login forwards once natively now. The OIDC paths share no
+// registration key with those lanes beyond /api/v0/auth, and Go matches
+// method and path together, so the lanes never merge.
 func TestD9Native_NeighborLanesStillRelay(t *testing.T) {
 	t.Parallel()
 
@@ -230,25 +229,36 @@ func TestD9Native_NeighborLanesStillRelay(t *testing.T) {
 	srv := NewServer(upstream.URL, skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	keyless := httptest.NewRequest(http.MethodGet, "/api/v0/auth/github/login", nil)
+	github := httptest.NewRequest(http.MethodGet, "/api/v0/auth/github/login", nil)
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, keyless)
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("keyless github login: status = %d, want the standing 401", rec.Code)
-	}
-	if core.hits != 0 {
-		t.Errorf("keyless github login: upstream hits = %d, want 0", core.hits)
-	}
-
-	keyed := authedRequest(http.MethodGet, "/api/v0/auth/github/login")
-	rec = httptest.NewRecorder()
-	handler.ServeHTTP(rec, keyed)
+	handler.ServeHTTP(rec, github)
 	if core.hits != 1 || core.lastPath != "/api/v0/auth/github/login" {
-		t.Errorf("keyed github login: hits = %d path = %q, want the generic relay to forward once untouched",
+		t.Errorf("keyless github login: hits = %d path = %q, want the landed GitHub lane to forward once untouched",
 			core.hits, core.lastPath)
 	}
 	if rec.Code != http.StatusOK {
-		t.Errorf("keyed github login: status = %d, want 200", rec.Code)
+		t.Errorf("keyless github login: status = %d, want 200", rec.Code)
+	}
+
+	keyless := httptest.NewRequest(http.MethodGet, "/api/v0/auth/saml/providers/p1/login", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, keyless)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("keyless saml login: status = %d, want the standing 401", rec.Code)
+	}
+	if core.hits != 1 {
+		t.Errorf("keyless saml login: upstream hits = %d, want 1 (only the GitHub forward above)", core.hits)
+	}
+
+	keyed := authedRequest(http.MethodGet, "/api/v0/auth/saml/providers/p1/login")
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, keyed)
+	if core.hits != 2 || core.lastPath != "/api/v0/auth/saml/providers/p1/login" {
+		t.Errorf("keyed saml login: hits = %d path = %q, want the generic relay to forward once untouched",
+			core.hits, core.lastPath)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("keyed saml login: status = %d, want 200", rec.Code)
 	}
 }
 

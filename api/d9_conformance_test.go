@@ -26,13 +26,15 @@ import (
 // readiness. The D9 pin (OIDCLoginAdmission v0 at eshu 40e88be1) is
 // the recorded precondition; the dest-side state store, replay cache,
 // session mint, and finalize/audit stack stay termination obligations
-// for a later lane. GitHub and SAML routes stay relay-only here.
+// for a later lane. GitHub rides its own landed lane (d9GitHubRoutes);
+// SAML routes stay relay-only here.
 
 // TestD9RoutesFrozen pins the exact D9 OIDC surface the satellite
 // clones. A route added, removed, or renamed fails here until the pin
 // contract, the spec fragment, and this mirror move together. GitHub
-// and SAML routes must never appear here: they ride their own
-// sequential lanes.
+// and SAML routes must never appear here: SAML rides its own
+// sequential lane, and GitHub rides its landed lane table
+// (d9GitHubRoutes).
 func TestD9RoutesFrozen(t *testing.T) {
 	t.Parallel()
 
