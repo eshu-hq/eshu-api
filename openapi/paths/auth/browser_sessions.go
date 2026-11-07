@@ -1,0 +1,128 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package auth
+
+// BrowserSessions documents the D8 browser-session lifecycle lane
+// (Refs eshu-hq/eshu#9669): the create/read/revoke ops plus the
+// workspace-context switch PATCH (tier-C dispatch clones, not
+// termination). Each payload line below is verbatim from the pinned core
+// file go/internal/query/openapi/paths/auth/routes.go
+// at commit 91f2df28dbe9e64ecf5812c5f89a76475a304d84 (sha256
+// 709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a,
+// byte-identical there and at the D2 wave pin). Core ships the lane
+// entries and the D9 login-family entries in one file, so no whole-file
+// byte-identical port can serve this lane only; this subset keeps the
+// line-verbatim property instead, gated by scripts/check-parity.sh.
+const BrowserSessions = `
+    "/api/v0/auth/browser-session": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Create a dashboard browser session",
+        "description": "Exchanges an already-authenticated explicit API credential for a server-managed dashboard browser session. The raw session secret is only sent in the __Host-eshu_session cookie, which is HttpOnly, Secure, SameSite=Strict, Path=/. The server persists only SHA-256 hashes for the session and CSRF secrets. The response returns the CSRF secret and also sets __Host-eshu_csrf as a readable Secure SameSite=Strict cookie so browser clients can send X-Eshu-CSRF on unsafe cookie-authenticated requests. Existing browser sessions cannot mint new browser sessions from this route; CLI, MCP, and automation clients should keep using explicit bearer tokens.",
+        "operationId": "createBrowserSession",
+        "x-scoped-token-support": true,
+        "responses": {
+          "201": {
+            "description": "Browser session created; Set-Cookie includes __Host-eshu_session and __Host-eshu_csrf.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "__Host-eshu_session is HttpOnly/Secure/SameSite=Strict; __Host-eshu_csrf is readable by the browser client and must be echoed in X-Eshu-CSRF for unsafe requests.",
+                "schema": {"type": "string"}
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/BrowserSessionResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"$ref": "#/components/responses/Unauthorized"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      },
+      "get": {
+        "tags": ["auth"],
+        "summary": "Read the current dashboard browser session",
+        "description": "Returns the auth context attached to the current browser session cookie. This route requires cookie authentication and does not reveal the raw session secret or CSRF secret.",
+        "operationId": "getBrowserSession",
+        "x-browser-session-only": true,
+        "responses": {
+          "200": {
+            "description": "Current browser session context.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/BrowserSessionResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"$ref": "#/components/responses/Unauthorized"}
+        }
+      },
+      "delete": {
+        "tags": ["auth"],
+        "summary": "Revoke the current dashboard browser session",
+        "description": "Revokes the current browser session by its server-side hash and clears both browser-session cookies. Because it is an unsafe cookie-authenticated request, callers must include X-Eshu-CSRF with the CSRF secret bound to the session.",
+        "operationId": "deleteBrowserSession",
+        "x-browser-session-only": true,
+        "responses": {
+          "204": {
+            "description": "Browser session revoked and cookies cleared.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Clears __Host-eshu_session and __Host-eshu_csrf.",
+                "schema": {"type": "string"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"$ref": "#/components/responses/Unauthorized"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      }
+    },
+    "/api/v0/auth/browser-session/context": {
+      "patch": {
+        "tags": ["auth"],
+        "summary": "Switch the current dashboard session tenant/workspace",
+        "description": "Moves the current active all-scopes browser session to another active tenant/workspace boundary. Scoped sessions cannot switch workspaces until the identity/grant UX can model cross-workspace grants explicitly. The session remains revocable by its original session hash. Because it is an unsafe cookie-authenticated request, callers must include X-Eshu-CSRF with the CSRF secret bound to the session.",
+        "operationId": "switchBrowserSessionContext",
+        "x-browser-session-only": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tenant_id", "workspace_id"],
+                "properties": {
+                  "tenant_id": {"type": "string"},
+                  "workspace_id": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated browser session context.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/BrowserSessionResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"$ref": "#/components/responses/Unauthorized"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      }
+    },
+`

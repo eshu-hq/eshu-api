@@ -151,7 +151,7 @@ byte-identical (the pinned fragment carries no operationId entries, so
 there are none to preserve or invent; `scripts/check-parity.sh` gates
 the identity). It documents the acknowledge POST plus the family's two
 query POSTs; the dest assembly (`openapi/spec.go`, minimal shared
-block in `openapi/components.go`: `ErrorResponse` and the
+block in `openapi/components.json`: `ErrorResponse` and the
 `BadRequest`/`Forbidden`/`Conflict`/`InternalError`/`ServiceUnavailable`
 responses the fragment references) serves `GET /api/v0/openapi.json`
 from compiled constants ahead of the generic proxy — no core import,

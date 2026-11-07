@@ -119,7 +119,14 @@ after the move.
   TerraformStateSource schemas the status entries reference,
   and the D7 admin-four tier-C clone lane: the backfill, dead-letter,
   reindex, and skip entries (`openapi/paths/status/admin_d7.go`, one
-  line-verbatim subset, no new schemas) —
+  line-verbatim subset, no new schemas),
+  and the D8 session-resolver tier-C clone lane: the browser-session
+  lifecycle, session-list, profile, and local-identity entries (five
+  line-verbatim `routes.go` subsets, one merged into the D3
+  invitations key) plus the API-token and TOTP entries (two
+  whole-file ports), with the shared components block extended by the
+  nine LocalIdentity schemas and the BrowserSessionAuth and
+  BrowserSessionResponse schemas the lane entries reference —
   per-family fragment moves now land in their
   family PRs per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
@@ -223,6 +230,41 @@ removal readiness. The ledger deficit stays open; serialization
 dest-side is not a substitute for it. Termination stays last among
 mutations on D0-proven transport.
 
+## Tier-C dispatch clones (D8)
+
+The 22 D8-pinned session/token-lifecycle routes (BrowserSessions 4,
+SessionList, Profile, LocalIdentity 16) cross as tier-C dispatch
+clones per `contracts/d8-session-resolver.md`: the 18 authed routes
+inside the credential-class gate ahead of the generic relay with the
+family authorizer (shared-key callers ride the native write-through;
+scoped tokens, OIDC bearers, and session-cookie carriers relay
+explicitly so core judges them; credential-less callers keep the
+standing 401), and the 4 pre-auth public routes (local login,
+invitations accept, break-glass session, password rotate) on exact
+paths outside every gate with credential bodies crossing as opaque
+bytes. Method, path, query, headers, and body forward to the same
+core route; core bytes come back unmodified. Dest holds no session,
+identity, token, or TOTP state, mints nothing, keeps no ledger,
+appends no audit, and runs no finalize. Proof per family:
+failing-first conformance, the credential-class gate (foreign
+credentials relay, junk cookies stay 401), per-exact-route
+public-carve-out proof (only the four paths leave the gate; no
+shared-key injection; slash spellings stay relayed), the bootstrap
+per-route review (gated half, operator seal stays core-side),
+zero dest retries with the unstable-core matrix (500, retryable and
+permanent 503s, dead core, pre-cancel and mid-flight cancel —
+exactly one upstream hit each), response-envelope parity vs the
+legacy relay (byte-identical status, headers, body across the outcome
+matrix in both shapes), duplicate deliveries no worse than direct
+core (2 hits, matching landed statuses), no-core-import, the
+contract with revert-to-relay rollback, and the satellite-owned
+clone-latency gate (`docs/d8-latency.md`: five legs 0.98–1.01x vs
+the 1.50 budget). Scope honesty: tier-C dispatch only — not
+termination, not removal readiness. The resolver, ledger,
+client-stable keys, and finalize/audit stack stay open termination
+obligations for the later lane. Termination stays last on
+D0-proven transport only.
+
 ## What stays in the core
 
 Fact admission, canonical identity, projection, retraction, recovery,
@@ -243,7 +285,11 @@ globals.
 `AdminIdentityAdmissionContractVersion v0`,
 `SetupAdmissionContractVersion v0`,
 `StatusReadAdmissionContractVersion v0`,
-`SupplyChainReadAdmissionContractVersion v0`). A breaking change to
+`SupplyChainReadAdmissionContractVersion v0`,
+`SessionResolverAdmissionContractVersion v0`,
+`BrowserSessionAdmissionContractVersion v0`,
+`LocalIdentityAdmissionContractVersion v0`,
+`APITokenAdmissionContractVersion v0`). A breaking change to
 any named port fails the frozen-set test next to that port in the source
 (`TestCoreReadContractsVersioned`,
 `TestSuppressionAdmissionContractIsVersioned`,

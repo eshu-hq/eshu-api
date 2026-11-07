@@ -54,7 +54,12 @@ reads, doc UI, served spec) plus the D3 admin/identity/recovery reads
 wave (admin query POSTs, admin identity GETs, governance-audit GETs,
 terminal-failure query POSTs) plus the D7 admin-four tier-C clones
 (backfill, dead-letter, reindex, skip POSTs, family `admin`,
-`via="native"`); every other family crosses the relay lane until its
+`via="native"`) plus the D8 session-resolver tier-C clones
+(browser-session lifecycle `browser_session`, session-list
+`session_list`, profile `profile`, local-identity/token/TOTP
+`local_identity`, and the invitations create/accept routes that keep
+the pre-existing `admin_identity` prefix — all `via="native"`);
+every other family crosses the relay lane until its
 native route lands, and the `via` label tells the two apart. Wave-gated routes that relay explicitly for unresolvable
 identity classes file on `via="relay"` with their wave family, so the
 lane always names who served the bytes.

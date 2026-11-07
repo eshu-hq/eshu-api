@@ -82,9 +82,10 @@ func TestSpec_ServesD3AdminReadsFamily(t *testing.T) {
 		}
 	}
 
-	// The invitations key serves the landed GET only: the create POST
-	// sharing its key stays relay until D8, so the served entry must
-	// not document it.
+	// The invitations key serves the landed GET plus the D8 create POST
+	// sharing its key: D8 ports the relay-only create POST into the
+	// same fragment, so the served entry documents both landed
+	// methods (pinned in full by the D8 spec tests).
 	item, ok := served["/api/v0/auth/local/invitations"].(map[string]any)
 	if !ok {
 		t.Fatalf("paths lacks /api/v0/auth/local/invitations: %v", keys(served))
@@ -93,7 +94,8 @@ func TestSpec_ServesD3AdminReadsFamily(t *testing.T) {
 	if got := get["operationId"]; got != "listAdminInvitations" {
 		t.Errorf("invitations get operationId = %v, want listAdminInvitations", got)
 	}
-	if _, hasPost := item["post"]; hasPost {
-		t.Errorf("invitations entry carries a post operation, want get-only until D8 ports the relay-only create POST")
+	post, _ := item["post"].(map[string]any)
+	if got := post["operationId"]; got != "createLocalIdentityInvitation" {
+		t.Errorf("invitations post operationId = %v, want createLocalIdentityInvitation (D8 merged POST)", got)
 	}
 }

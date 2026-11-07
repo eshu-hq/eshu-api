@@ -69,8 +69,11 @@ func TestD3Native_ServesWaveSpecKeys(t *testing.T) {
 			if op, _ := item["get"].(map[string]any); op["operationId"] != "listAdminInvitations" {
 				t.Errorf("origin %q: invitations operationId = %v, want listAdminInvitations", origin, op["operationId"])
 			}
-			if _, hasPost := item["post"]; hasPost {
-				t.Errorf("origin %q: invitations entry carries post, want get-only until D8", origin)
+			// D8 merges the invitations create POST into the D3
+			// fragment key: the served entry now documents both
+			// landed methods (full pin in the D8 suites).
+			if op, _ := item["post"].(map[string]any); op["operationId"] != "createLocalIdentityInvitation" {
+				t.Errorf("origin %q: invitations post operationId = %v, want createLocalIdentityInvitation (D8 merged POST)", origin, op["operationId"])
 			}
 		}
 	}
