@@ -286,13 +286,16 @@ func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 // (d8WaveSpecKeys, watched by the D8 conformance/openapi/spec suites),
 // and the D9 OIDC tier-C lane claims its 2 served GET keys in its
 // owning table (d9WaveSpecKeys, watched by the D9
+// conformance/openapi/spec suites), and the D9 GitHub tier-C lane
+// claims its 2 served GET keys in its owning table
+// (d9GitHubWaveSpecKeys, watched by the D9 GitHub
 // conformance/openapi/spec suites), so the reverse check unions all
-// four lanes' claim tables; the D2-D4 frozen counts in
+// five lanes' claim tables; the D2-D4 frozen counts in
 // TestD5ProbeFrozen stay untouched.
 func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 	t.Parallel()
 
-	probed := make(map[string]bool, len(d5ProbeGETs)+len(d6WaveSpecKeys)+len(d8WaveSpecKeys)+len(d9WaveSpecKeys))
+	probed := make(map[string]bool, len(d5ProbeGETs)+len(d6WaveSpecKeys)+len(d8WaveSpecKeys)+len(d9WaveSpecKeys)+len(d9GitHubWaveSpecKeys))
 	for _, p := range d5ProbeGETs {
 		probed[p.Path] = true
 	}
@@ -303,6 +306,9 @@ func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 		probed[path] = true
 	}
 	for path := range d9WaveSpecKeys {
+		probed[path] = true
+	}
+	for path := range d9GitHubWaveSpecKeys {
 		probed[path] = true
 	}
 	for _, origin := range []string{"http://core.invalid", ""} {
