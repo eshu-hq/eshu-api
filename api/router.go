@@ -246,6 +246,26 @@ func (s *Server) routes() *http.ServeMux {
 		// core's answer for the spelled path).
 		mux.Handle(route, public)
 	}
+	// Native dispatch, OIDC-login public carve-out (D9, C-c1 grade):
+	// the 2 pre-auth public GETs register exactly those paths
+	// outside every gate, ahead of the generic proxy, on the public
+	// write-through handler. No other login route leaves the gate in
+	// this lane: GitHub and SAML stay relay-only for their own
+	// sequential lanes, and non-GET spellings of these paths keep the
+	// standing 401. Credential query values cross as opaque bytes;
+	// the dest shared key is never injected here. See api/d9.go and
+	// contracts/d9-oidc-login.md: tier-C dispatch only, not
+	// termination.
+	for _, route := range d9Routes {
+		public := s.instrumented(viaNative, http.HandlerFunc(s.d9PublicWriteThrough))
+		// Exact paths only: a trailing-slash twin would be a
+		// subtree pattern swallowing past the auth bypass, and the
+		// carve-out is exactly these two paths. The slash
+		// spellings stay on the generic relay (keyless callers keep
+		// the standing 401 there; keyed callers get core's answer
+		// for the spelled path).
+		mux.Handle(route, public)
+	}
 	for _, route := range recoveryRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))

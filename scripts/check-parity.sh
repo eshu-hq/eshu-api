@@ -25,6 +25,7 @@ SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
 SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
+SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -450,6 +451,27 @@ check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/tokens.go" \
 check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/totp.go" \
   "openapi/paths/auth/totp.go" \
   "702ab2b220717202910c39a792fb7b9da465d75e38101dc915c472d9322a7238"
+
+# D9 OIDC-login wave (satellite D9 OIDC lane, arbiter
+# APPROVED-WITH-CONDITIONS): the v0 admission pin re-anchored at the
+# fresh wave SHA (byte-identical to the stale SRC_SHA_AUTHLOGIN pin,
+# same sha256 — re-anchor, no content change), the wire-shapes excerpt
+# re-anchored at the same SHA, and the OIDC login + callback entries
+# as a line-verbatim subset of the pinned core routes.go (byte-identical
+# to the D8 pin file, same sha256). The GitHub/SAML pins stay at their
+# stale anchors until their own sequential lanes.
+check_file_at "$SRC_SHA_D9" "go/internal/query/oidc_login_admission_contract_test.go" \
+  "contracts/upstream/oidc_login_admission_contract_test.go" \
+  "03342f7ad0d28aef72583ce21a7747fe360fe755367fef40660e58361f19d2c0"
+
+# NOTE: the D9 wire-shapes excerpt gate lives with the other
+# check_excerpt_at calls below (that function is defined after this
+# block; calling it here fails with command-not-found).
+
+check_fragment_subset_named_at "$SRC_SHA_D9" "go/internal/query/openapi/paths/auth/routes.go" \
+  "openapi/paths/auth/oidc_login.go" \
+  "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
+  "OIDCLogin"
 
 # D8 session-resolver wave (Decision 5(c)): the 11 schemas the lane
 # entries reference, ported line-verbatim into the shared components
@@ -1064,6 +1086,14 @@ check_excerpt_at "$SRC_SHA_PROVIDERCONFIG" "contracts/upstream/provider-config-w
   "go/internal/query/admin/provider/config/audit.go"
 
 check_excerpt_at "$SRC_SHA_AUTHLOGIN" "contracts/upstream/oidc-login-wire-shapes.txt" \
+  "go/internal/query/oidc_login_handler.go" \
+  "go/cmd/api/oidc_login.go"
+
+# D9 OIDC-login wave: the same excerpt re-anchored at the fresh wave
+# SHA (byte-identical sources — re-anchor, no content change). The
+# GitHub/SAML excerpts stay at their stale anchors until their own
+# sequential lanes.
+check_excerpt_at "$SRC_SHA_D9" "contracts/upstream/oidc-login-wire-shapes.txt" \
   "go/internal/query/oidc_login_handler.go" \
   "go/cmd/api/oidc_login.go"
 

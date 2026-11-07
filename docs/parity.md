@@ -265,6 +265,45 @@ client-stable keys, and finalize/audit stack stay open termination
 obligations for the later lane. Termination stays last on
 D0-proven transport only.
 
+## Tier-C dispatch clones (D9 OIDC)
+
+The 2 D9-pinned OIDC-login routes (login start, callback) cross as
+tier-C dispatch clones per `contracts/d9-oidc-login.md` — the first
+of three sequential family lanes (OIDC, then GitHub, then SAML):
+both pre-auth public GETs on exact paths outside every gate ahead of
+the generic relay, with the credential query values (state, code,
+provider IDs, return_to) crossing as opaque bytes. Method, path,
+query, headers, and (empty) body forward to the same core route;
+core bytes come back unmodified — including the 302/303 redirect
+status with its Location (never followed dest-side), the multiple
+Set-Cookie session cookies, and the 503/400/401/403 error envelopes.
+Dest holds no OIDC state, session, or provider material, mints
+nothing, keeps no ledger, appends no audit, and runs no finalize.
+Proof per family: failing-first conformance, per-exact-route
+public-carve-out proof (only the two GET paths leave the gate; no
+shared-key injection; slash spellings and non-GET spellings stay
+relayed; GitHub/SAML stay gated for their own lanes), the
+redirect-unfollowed pin (dispatchClient ErrUseLastResponse, proved by
+a Location that points back at the stub with exactly one hit), zero
+dest retries with the unstable-core matrix (500, retryable and
+permanent 503s, dead core, pre-cancel and mid-flight cancel —
+exactly one upstream hit each; these GETs are census mutations, so
+one forward is the whole exactly-once story dest-side),
+response-envelope parity vs the legacy relay (byte-identical status,
+headers, body across the outcome matrix in both shapes), duplicate
+deliveries no worse than direct core (2 hits, matching landed
+statuses), the disabled-provider row (core conditionally mounts —
+the relay carries core's real unmounted 404, synthesizing nothing),
+credential-hygiene proof (dest reads no query values; no RequestURI,
+Location, or Set-Cookie value in logs, metrics, or spans),
+no-core-import, the contract with revert-to-relay rollback, and the
+satellite-owned clone-latency gate (`docs/d9-latency.md`: five legs
+0.73–0.95x vs the 1.50 budget). Scope honesty: tier-C dispatch only
+— not termination, not removal readiness. The state store, replay
+cache, session mint, and finalize/audit stack stay open termination
+obligations for a later lane. Termination stays last on D0-proven
+transport only.
+
 ## What stays in the core
 
 Fact admission, canonical identity, projection, retraction, recovery,
