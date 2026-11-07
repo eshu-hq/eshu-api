@@ -10,7 +10,7 @@ preparation only; nothing here carries cutover authority.
 | Source repository | `eshu-hq/eshu` |
 | Source commit | `428790ab3ac0bff2eb28e50a26b3746a9b7dc8c5` (`origin/main` at the replay-ledger merge; covers the suppression, terminal-failure, sign-in, and replay-ledger admission seams) |
 | Source commit (retirement, admin-identity) | `ebaf4dfa0de672851bbec7a427e28fdb41344380` (`origin/main` at the admin-identity merge; covers both seams, byte-identical since) |
-| Source commit (setup) | `fd326f35c9fb497eec0abefad197a5d4b137b823` (merge of `eshu-hq/eshu#9853`; method set frozen at v0) |
+| Source commit (setup) | `ba038ecaf20352f7dacac2fc6b5ace66497cfff1` (`origin/main` at the D10 setup lane base; SetupAdmission v0 re-anchored byte-identical from the stale `fd326f35c9fb497eec0abefad197a5d4b137b823` pin — re-anchor, no content change; satellite D10 setup wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669`) |
 | Source commit (provider-config) | `99381691b1ac49254e813e5a013cfb654d432491` (merge of `eshu-hq/eshu#9870`; mutation 5 + read 3 methods, frozen at v0) |
 | Source commit (oidc-login, github-login) | `1e03478614fc54882b9616d37ea9103ea5ada6f4` (merge of `eshu-hq/eshu#9863`; 2 + 2 service methods, frozen at v0) |
 | Source commit (saml-login) | `aac271ad78e328462dabc7518d5f7e5739bdc651` (merge of `eshu-hq/eshu#9897`; 5 store methods, frozen at v0, with the lister carve-out) |
@@ -78,8 +78,8 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/retirement/admission.go` (version, alias) + `handler.go` (`Triggerer`) at `ebaf4dfa0d` | `contracts/upstream/retirement-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/admin/identity/admission_contract_test.go` at `ebaf4dfa0d` | `contracts/upstream/admin_identity_admission_contract_test.go` | `1dcf3c4cb97170cbd0c3a33d65539e3a1472ff66381e2a9762e9a60c96826559` | verbatim |
 | `go/internal/query/admin/identity/admission.go` (version, alias) + `types.go` (`MutationStore`) at `ebaf4dfa0d` | `contracts/upstream/admin-identity-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
-| `go/internal/query/setup_admission_contract_test.go` at `1b35b907ee` | `contracts/upstream/setup_admission_contract_test.go` | `b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea` | verbatim |
-| `go/internal/query/setup_types.go` (version, alias, `SetupStore`, input/owner/response shapes) at `1b35b907ee` | `contracts/upstream/setup-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/setup_admission_contract_test.go` at `ba038eca` (byte-identical to the stale `fd326f35` and `1b35b907ee` pins, same sha256 — re-anchor, no content change) | `contracts/upstream/setup_admission_contract_test.go` | `b5dc9640b1683fd0cd259343483201ecd3c0c5a5d68262205fa65c3cb827a0ea` | verbatim |
+| `go/internal/query/setup_types.go` (version, alias, `SetupStore`, input/owner/response shapes) at `ba038eca` (byte-identical to the stale pins — re-anchor, no content change) | `contracts/upstream/setup-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/admin/provider/config/mutation_admission_contract_test.go` at `99381691` | `contracts/upstream/mutation_admission_contract_test.go` | `15bd3551a50b503919a065da7fa8e077a0ac7179b3f3a9e8160673592f4d0e3b` | verbatim |
 | `go/internal/query/admin/provider/config/read_admission_contract_test.go` at `99381691` | `contracts/upstream/read_admission_contract_test.go` | `51d80f84961ea7b8e25e51c69b5c406b38f00ed77edfafd31c419450bfc4886d` | verbatim |
 | `go/internal/query/admin/provider/config/admission.go` (versions, aliases) + `types.go` (`MutationStore`, `ReadStore`) + `mutations.go` (`Mount`) at `99381691` | `contracts/upstream/provider-config-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
