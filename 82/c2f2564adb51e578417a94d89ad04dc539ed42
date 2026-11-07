@@ -1,0 +1,24 @@
+api/router.go
+  h_78a442cba0b3e6 117-120
+api/setup_latency_test.go
+  h_78a442cba0b3e6 119-120,148-163
+api/setup_terminate.go
+  h_78a442cba0b3e6 56,76,87-93,99,142-144,214
+api/setup_terminate_test.go
+  h_78a442cba0b3e6 86-89
+contracts/setup-admission.md
+  h_78a442cba0b3e6 121-130
+docs/setup-latency.md
+  h_78a442cba0b3e6 56-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82c2f2564adb51e578417a94d89ad04dc539ed42",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
