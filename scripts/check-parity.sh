@@ -456,8 +456,6 @@ check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/totp.go" \
 # block — nine LocalIdentity schemas from components_local_identity.go
 # plus BrowserSessionAuth and BrowserSessionResponse from
 # components_workload_session.go.
-check_d8_components_at "$SRC_SHA_D8"
-
 # Native spec (Decision 5(c)): the suppression OpenAPI fragment is a
 # line-verbatim subset port of the pinned core file. Core ships the
 # payload under the unexported const suppressionMutation, so the
@@ -974,6 +972,8 @@ check_d8_components_at() {
   fi
   echo "OK: D8 components lines all verbatim in pinned component sources"
 }
+
+check_d8_components_at
 
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
