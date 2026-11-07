@@ -343,6 +343,58 @@ readiness. The state store, replay cache, session mint, and
 finalize/audit stack stay open termination obligations for a later
 lane. Termination stays last on D0-proven transport only.
 
+## Tier-C dispatch clones (D9 SAML)
+
+The 3 D9-pinned SAML-login routes (metadata GET, login-start GET,
+ACS POST) cross as tier-C dispatch clones per
+`contracts/d9-saml-login.md` — the third of three sequential family
+lanes (OIDC, then GitHub, then SAML): the two pre-auth public GETs
+plus the pre-auth public ACS POST on exact paths outside every gate
+ahead of the generic relay, with the provider path value, the
+`return_to` query value, and the IdP-posted form fields
+(`RelayState`, `SAMLResponse`) crossing as opaque bytes. Method,
+path, query, headers, and body forward to the same core route; core
+bytes come back unmodified — including the metadata XML with its
+content type, the 302 login-start redirect with its Location (never
+followed dest-side), the multiple Set-Cookie session cookies, and the
+400/401/404 error envelopes. Dest holds no provider material,
+session, replay reservation, or request record, mints nothing, keeps
+no ledger, appends no audit, runs no finalize, parses no form, and
+applies no body cap of its own. Proof per family: failing-first
+conformance, per-exact-route public-carve-out proof (only the three
+paths leave the gate; no shared-key injection; slash spellings,
+wrong-method spellings, the empty-provider and multi-segment
+spellings, and the escaped-slash agreement row all stay relayed or
+denied with zero core contact; HEAD rows forward once with core
+re-judging; OIDC and GitHub stay on their own landed lanes), the
+redirect-unfollowed pin (dispatchClient ErrUseLastResponse, proved by
+a Location that points back at the stub with exactly one hit), zero
+dest retries with the unstable-core matrix (500, retryable and
+permanent 503s, dead core, pre-cancel and mid-flight cancel — exactly
+one upstream attempt each, including POST ACS on every shape; start
+and ACS are census mutations, so one forward is the whole
+exactly-once story dest-side), response-envelope parity vs the legacy
+relay (byte-identical status, headers, body across the outcome matrix
+in both negotiated shapes, including the metadata content type and
+the ACS form echo), duplicate deliveries no worse than direct core (2
+hits, matching landed statuses), the disabled-provider row (core
+conditionally mounts only `if a.SAML != nil` — the relay carries
+core's real unmounted 404, synthesizing nothing), body-opacity proof
+(near-1MiB and over-1MiB ACS bodies forward byte-intact with one
+attempt each and core's answer relayed unmodified; grep plus source
+tests prove zero form/body reads dest-side; telemetry capture proves
+no `RelayState`, `SAMLResponse`, `Location`, `Set-Cookie`, or
+`RequestURI` in logs, metrics, or spans), key-material absence (the
+no-core-import proof plus the negative grep over the decision-3
+symbols), no-core-import, the contract with revert-to-relay rollback,
+and the satellite-owned clone-latency gate (`docs/d9-latency.md`:
+five legs 0.92–1.00x vs the 1.50 budget, the ACS leg against a
+same-bytes relay POST). Scope honesty: tier-C dispatch only — not
+termination, not removal readiness. The provider-material store,
+replay reservation, session mint, and finalize/audit stack stay open
+termination obligations for a later lane. Termination stays last on
+D0-proven transport only. The D9 wave is complete with this lane.
+
 ## What stays in the core
 
 Fact admission, canonical identity, projection, retraction, recovery,

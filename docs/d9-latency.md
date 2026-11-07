@@ -74,3 +74,27 @@ Within budget on all five legs, same hermetic method as the OIDC
 lane: the GitHub clones add the explicit route match around the same
 single fetch, with no gate and no authorizer on the public
 carve-out.
+
+## SAML lane numbers (local, 2026-11-07)
+
+Shared host, in-process stub core (`go test` benchmarks, 2000x5 via
+`bash scripts/measure-d9saml-latency.sh` against
+`BenchmarkD9SAMLPublicMetadata` / `BenchmarkD9SAMLPublicLogin` /
+`BenchmarkD9SAMLPublicACS`):
+
+| Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
+| --- | --- | --- | --- | --- |
+| Metadata GET | 81474 | 83780 | 0.97 | ≤ 1.50 |
+| Login-start GET, bare | 76695 | 83780 | 0.92 | ≤ 1.50 |
+| Login-start GET, full query | 77837 | 83780 | 0.93 | ≤ 1.50 |
+| ACS POST, large form body (~288KiB) | 456652 | 457065 | 1.00 | ≤ 1.50 |
+| Login-start GET vs relay POST | 77837 | 84669 | 0.92 | ≤ 1.50 |
+
+Within budget on all five legs, same hermetic method as the OIDC and
+GitHub lanes: the SAML clones add the explicit route match around the
+same single fetch, with no gate and no authorizer on the public
+carve-out. The ACS leg compares against same-bytes relay leg
+`BenchmarkD9SAMLRelayLargePost` (a keyed Compare POST carrying the
+identical ~288KiB form through the generic relay): the 1.00 ratio
+proves the streaming forward adds no per-byte dest cost beyond the
+relay itself. The D9 wave is complete with this lane.

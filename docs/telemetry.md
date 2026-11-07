@@ -62,6 +62,8 @@ the pre-existing `admin_identity` prefix — all `via="native"`) plus
 the D9 OIDC-login tier-C clones (login start and callback GETs,
 family `oidc_login`, `via="native"`) plus the D9 GitHub-login tier-C
 clones (login start and callback GETs, family `github_login`,
+`via="native"`) plus the D9 SAML-login tier-C clones (metadata and
+login-start GETs plus the ACS POST, family `saml_login`,
 `via="native"`);
 every other family crosses the relay lane until its
 native route lands, and the `via` label tells the two apart. Wave-gated routes that relay explicitly for unresolvable

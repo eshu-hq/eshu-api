@@ -60,8 +60,8 @@ func TestD9GitHubPublic_CarveOutServesKeyless(t *testing.T) {
 // fall through to the keyed generic relay and keep the standing 401 for
 // credential-less callers with zero core contact; non-GET spellings of
 // the carved paths are not carved out either (core's bypass is
-// GET-only); the OIDC login paths stay on their own landed lane and the
-// SAML login paths stay gated for their own sequential lane.
+// GET-only); the OIDC login paths stay on their own landed lane and
+// SAML rides its own landed lane (d9SAMLRoutes).
 func TestD9GitHubPublic_CarveOutIsExactlyTwo(t *testing.T) {
 	t.Parallel()
 
@@ -80,7 +80,6 @@ func TestD9GitHubPublic_CarveOutIsExactlyTwo(t *testing.T) {
 		"POST /api/v0/auth/github/login",
 		"POST /api/v0/auth/github/callback",
 		"GET /api/v0/auth/github/callback/extra",
-		"GET /api/v0/auth/saml/providers/p1/login",
 	} {
 		method, path, _ := strings.Cut(target, " ")
 		req := httptest.NewRequest(method, path, nil)
@@ -213,12 +212,13 @@ func TestD9GitHubNative_V1AliasOrderingUnchanged(t *testing.T) {
 // TestD9GitHubNative_NeighborLanes pins the lane boundaries around the
 // GitHub registrations: the OIDC login routes stay on their own landed
 // native lane (keyless OIDC login forwards once with the opaque query),
-// and the SAML login routes are unaffected (a keyless SAML login keeps
-// the standing 401 with zero core contact — its lane has not landed —
-// and a keyed one rides the generic relay with exactly one upstream
-// hit). The GitHub paths share no registration key with those lanes
-// beyond /api/v0/auth, and Go matches method and path together, so the
-// lanes never merge.
+// and the SAML login routes stay on their own landed lane (keyless
+// SAML login forwards once natively now — the inverted replacement for
+// the relay-only SAML assertions this suite carried before the SAML
+// lane landed; the full inverted coverage lives in the D9 SAML lane
+// suite, TestD9SAMLNative_NeighborLanes). The GitHub paths share no
+// registration key with those lanes beyond /api/v0/auth, and Go matches
+// method and path together, so the lanes never merge.
 func TestD9GitHubNative_NeighborLanes(t *testing.T) {
 	t.Parallel()
 
@@ -242,18 +242,19 @@ func TestD9GitHubNative_NeighborLanes(t *testing.T) {
 	keyless := httptest.NewRequest(http.MethodGet, "/api/v0/auth/saml/providers/p1/login", nil)
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, keyless)
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("keyless saml login: status = %d, want the standing 401", rec.Code)
+	if core.hits != 2 || core.lastPath != "/api/v0/auth/saml/providers/p1/login" {
+		t.Errorf("keyless saml login: hits = %d path = %q, want the landed SAML lane to forward once untouched",
+			core.hits, core.lastPath)
 	}
-	if core.hits != 1 {
-		t.Errorf("keyless saml login: upstream hits = %d, want 1 (only the OIDC forward above)", core.hits)
+	if rec.Code != http.StatusOK {
+		t.Errorf("keyless saml login: status = %d, want 200", rec.Code)
 	}
 
 	keyed := authedRequest(http.MethodGet, "/api/v0/auth/saml/providers/p1/login")
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, keyed)
-	if core.hits != 2 || core.lastPath != "/api/v0/auth/saml/providers/p1/login" {
-		t.Errorf("keyed saml login: hits = %d path = %q, want the generic relay to forward once untouched",
+	if core.hits != 3 || core.lastPath != "/api/v0/auth/saml/providers/p1/login" {
+		t.Errorf("keyed saml login: hits = %d path = %q, want the landed SAML lane to forward once untouched",
 			core.hits, core.lastPath)
 	}
 	if rec.Code != http.StatusOK {

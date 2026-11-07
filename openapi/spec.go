@@ -101,8 +101,9 @@ const specPrefix = `{
 // AuthProfile, AdminInvitations-carrying-the-invitations-POST,
 // LocalIdentity, Tokens, TOTP); the D9 OIDC-login tier-C clone lane
 // appends after the D8 entries (OIDCLogin); the D9 GitHub-login tier-C
-// clone lane appends after the OIDC entry (GitHubLogin), and the
-// served-spec self entry keeps the trim last.
+// clone lane appends after the OIDC entry (GitHubLogin); the D9
+// SAML-login tier-C clone lane appends after the GitHub entry
+// (SAMLLogin), and the served-spec self entry keeps the trim last.
 func familyPaths() string {
 	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
 		strings.TrimSpace(status.RepositoryRetirement) + "\n" +
@@ -168,6 +169,7 @@ func familyPaths() string {
 		strings.TrimSpace(auth.TOTP) + "\n" +
 		strings.TrimSpace(auth.OIDCLogin) + "\n" +
 		strings.TrimSpace(auth.GitHubLogin) + "\n" +
+		strings.TrimSpace(auth.SAMLLogin) + "\n" +
 		strings.TrimSuffix(strings.TrimSpace(status.OpenAPISpec), ",") + "\n"
 }
 
