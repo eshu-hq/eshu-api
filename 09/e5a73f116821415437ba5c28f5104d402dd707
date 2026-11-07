@@ -1,0 +1,50 @@
+api/d5_wiring_test.go
+  h_78a442cba0b3e6 285-291,295,305-307
+api/d9.go
+  h_78a442cba0b3e6 1-89
+api/d9_conformance_test.go
+  h_78a442cba0b3e6 1-227
+api/d9_dispatch_test.go
+  h_78a442cba0b3e6 1-182
+api/d9_latency_test.go
+  h_78a442cba0b3e6 1-79
+api/d9_openapi_test.go
+  h_78a442cba0b3e6 1-83
+api/d9_public_test.go
+  h_78a442cba0b3e6 1-280
+api/d9_resilience_test.go
+  h_78a442cba0b3e6 1-416
+api/router.go
+  h_78a442cba0b3e6 249-268
+contracts/d9-oidc-login.md
+  h_78a442cba0b3e6 1-188
+docs/d9-latency.md
+  h_78a442cba0b3e6 1-57
+docs/parity.md
+  h_78a442cba0b3e6 268-306
+docs/provenance.md
+  h_78a442cba0b3e6 23,130-132
+docs/telemetry.md
+  h_78a442cba0b3e6 61-63
+openapi/paths/auth/oidc_login.go
+  h_78a442cba0b3e6 1-88
+openapi/spec.go
+  h_78a442cba0b3e6 44-46,59,100-101,166
+openapi/spec_d9_test.go
+  h_78a442cba0b3e6 1-80
+scripts/check-parity.sh
+  h_78a442cba0b3e6 28,455-475,1092-1099
+scripts/measure-d9-latency.sh
+  h_78a442cba0b3e6 1-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09e5a73f116821415437ba5c28f5104d402dd707",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
