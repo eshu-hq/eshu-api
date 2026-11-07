@@ -24,7 +24,7 @@ SRC_SHA_D0="ec1643d67f"
 SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
-SRC_SHA_D8="91f2df28dbe9ec4e5fb8c5df59a76475a304d84"
+SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -406,7 +406,7 @@ check_file_at "$SRC_SHA_D8" "go/internal/query/session_admission.go" \
 
 check_file_at "$SRC_SHA_D8" "go/internal/query/session_admission_contract_test.go" \
   "contracts/upstream/session_admission_contract_test.go" \
-  "209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d4a2496b341"
+  "209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d04a2496b341"
 
 # D8 session-resolver wave (Decision 5(c)): the browser-session
 # lifecycle, session-list, profile, and local-identity entries are
@@ -449,7 +449,7 @@ check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/tokens.go" \
 
 check_file_at "$SRC_SHA_D8" "go/internal/query/openapi/paths/auth/totp.go" \
   "openapi/paths/auth/totp.go" \
-  "702ab2b220717202910c39a792fb7b9da465d75e38101dc9212d9322a7238"
+  "702ab2b220717202910c39a792fb7b9da465d75e38101dc915c472d9322a7238"
 
 # D8 session-resolver wave (Decision 5(c)): the 11 schemas the lane
 # entries reference, ported line-verbatim into the shared components
