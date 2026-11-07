@@ -110,11 +110,35 @@ func TestD8Public_SlashSpellingStaysRelayed(t *testing.T) {
 	for _, path := range []string{
 		"/api/v0/auth/local/login/",
 		"/api/v0/auth/local/invitations/accept/",
+		"/api/v0/auth/local/break-glass/session/",
+		"/api/v0/auth/local/password/rotate/",
 	} {
 		req := authedRequest(http.MethodPost, path)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		if core.hits == 0 {
+			t.Fatalf("POST %s keyed: no upstream hit, want the generic relay to forward", path)
+		}
+		if core.lastPath != path {
+			t.Errorf("POST %s keyed: upstream path = %q, want the spelled path relayed", path, core.lastPath)
+		}
+		if rec.Code != http.StatusOK {
+			t.Errorf("POST %s keyed: status = %d, want relayed 200", path, rec.Code)
+		}
+	}
+
+	// d8SlashSkip spellings are excluded from d8Spellings (mux subtree
+	// conflict), so keyed callers must also fall through to the generic
+	// relay with the spelled path preserved.
+	for _, path := range []string{
+		"/api/v0/auth/local/invitations/",
+		"/api/v0/auth/local/invitations/accept/",
+	} {
+		before := core.hits
+		req := authedRequest(http.MethodPost, path)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if core.hits == before {
 			t.Fatalf("POST %s keyed: no upstream hit, want the generic relay to forward", path)
 		}
 		if core.lastPath != path {

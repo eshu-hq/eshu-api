@@ -12,14 +12,14 @@ Dest holds no session, identity, token, or TOTP state.
 
 ## Pin records (satellite-side, D1/D6/D7 precedent)
 
-Pins minted core-side in `eshu-hq/eshu` at `91f2df28dbe9ec4e5fb8c5df59a76475a304d84`
+Pins minted core-side in `eshu-hq/eshu` at `91f2df28dbe9e64ecf5812c5f89a76475a304d84`
 (unwired seams; arbiter APPROVED-WITH-CONDITIONS on the satellite D8
 wave), recorded here byte-identical under `contracts/upstream/`:
 
 | Core source at pin | Satellite record | sha256 | Treatment |
 | --- | --- | --- | --- |
 | `go/internal/query/session_admission.go` | `contracts/upstream/session_admission.go` | `11d1dd3415a7a925a181016eb8aefbb4dedccbd542a2798c729972c06062676d` | verbatim |
-| `go/internal/query/session_admission_contract_test.go` | `contracts/upstream/session_admission_contract_test.go` | `209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d4a2496b341` | verbatim |
+| `go/internal/query/session_admission_contract_test.go` | `contracts/upstream/session_admission_contract_test.go` | `209a3c2dac30e2060dc8012341f3fa79d2e47ed61f2cc4048645d04a2496b341` | verbatim |
 
 Each file pins all four `*AdmissionContractVersion = "v0"` values plus
 the four frozen method sets:
@@ -44,7 +44,7 @@ the four frozen method sets:
   the four token routes but cannot authenticate, reset, or touch MFA.
 
 `scripts/check-parity.sh` gates both files at `SRC_SHA_D8`
-(`91f2df28dbe9ec4e5fb8c5df59a76475a304d84`).
+(`91f2df28dbe9e64ecf5812c5f89a76475a304d84`).
 
 ## Arbiter binding conditions (satellite D8 wave, APPROVED-WITH-CONDITIONS)
 

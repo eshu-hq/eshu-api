@@ -7,7 +7,7 @@ package auth
 // the caller-identity profile GET (tier-C dispatch clone, not
 // termination). Each payload line below is verbatim from the pinned core
 // file go/internal/query/openapi/paths/auth/routes.go
-// at commit 91f2df28dbe9ec4e5fb8c5df59a76475a304d84 (sha256
+// at commit 91f2df28dbe9e64ecf5812c5f89a76475a304d84 (sha256
 // 709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a,
 // byte-identical there and at the D2 wave pin). Same subset treatment
 // as the BrowserSessions fragment, gated by scripts/check-parity.sh.
