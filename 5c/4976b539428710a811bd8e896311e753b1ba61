@@ -1,0 +1,76 @@
+api/d3_openapi_test.go
+  h_78a442cba0b3e6 72-76
+api/d5_wiring_test.go
+  h_78a442cba0b3e6 285-288,292,299-301
+api/d8.go
+  h_78a442cba0b3e6 1-317
+api/d8_conformance_test.go
+  h_78a442cba0b3e6 1-308
+api/d8_dispatch_test.go
+  h_78a442cba0b3e6 1-258
+api/d8_gate_test.go
+  h_78a442cba0b3e6 1-310
+api/d8_latency_test.go
+  h_78a442cba0b3e6 1-145
+api/d8_openapi_test.go
+  h_78a442cba0b3e6 1-100
+api/d8_public_test.go
+  h_78a442cba0b3e6 1-130
+api/d8_resilience_test.go
+  h_78a442cba0b3e6 1-398
+api/family.go
+  h_78a442cba0b3e6 81-83,85
+api/router.go
+  h_78a442cba0b3e6 210-248
+contracts/d8-session-resolver.md
+  h_78a442cba0b3e6 1-252
+contracts/upstream/session_admission.go
+  h_78a442cba0b3e6 1-182
+contracts/upstream/session_admission_contract_test.go
+  h_78a442cba0b3e6 1-278
+docs/d8-latency.md
+  h_78a442cba0b3e6 1-58
+docs/parity.md
+  h_78a442cba0b3e6 122-129,233-267,288-292
+docs/provenance.md
+  h_78a442cba0b3e6 22,48-51,112,120-129
+docs/telemetry.md
+  h_78a442cba0b3e6 57-62
+openapi/components.go
+  h_78a442cba0b3e6 55-66,195-327
+openapi/paths/auth/admin_invitations.go
+  h_78a442cba0b3e6 6-13,17,19-22,25-40
+openapi/paths/auth/api_tokens.go
+  h_78a442cba0b3e6 1-107
+openapi/paths/auth/auth_profile.go
+  h_78a442cba0b3e6 1-64
+openapi/paths/auth/browser_sessions.go
+  h_78a442cba0b3e6 1-128
+openapi/paths/auth/local_identity.go
+  h_78a442cba0b3e6 1-188
+openapi/paths/auth/session_list.go
+  h_78a442cba0b3e6 1-79
+openapi/paths/auth/totp.go
+  h_78a442cba0b3e6 1-66
+openapi/spec.go
+  h_78a442cba0b3e6 42-44,57,95-99,157-162
+openapi/spec_d3_test.go
+  h_78a442cba0b3e6 85-88,97-99
+openapi/spec_d8_test.go
+  h_78a442cba0b3e6 1-158
+scripts/check-parity.sh
+  h_78a442cba0b3e6 27,398-460,921-977,1122-1125
+scripts/measure-d8-latency.sh
+  h_78a442cba0b3e6 1-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c4976b539428710a811bd8e896311e753b1ba61",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
