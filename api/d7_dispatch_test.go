@@ -153,6 +153,7 @@ func TestD7Native_WriteThroughRelaysCoreBytes(t *testing.T) {
 		{"dead-letter key reuse 409", 1, http.StatusConflict, nil, `{"error":"Conflict","detail":"idempotency_key was already used with different parameters"}`, deadLetterPayload, ""},
 		{"dead-letter in progress 409", 1, http.StatusConflict, nil, `{"error":"Conflict","detail":"a request with this idempotency_key is already in progress"}`, deadLetterPayload, ""},
 		{"reindex fleet 202", 2, http.StatusAccepted, nil, reindexedFleet, reindexFleetPayload, ""},
+		{"reindex fleet force query 202", 2, http.StatusAccepted, nil, reindexedFleet, reindexFleetPayload, "force=true"},
 		{"reindex repository 202", 2, http.StatusAccepted, nil, reindexedRepo, reindexRepoPayload, ""},
 		{"reindex refused 400", 2, http.StatusBadRequest, nil, `{"error":"Bad Request","detail":"unknown repository selector: nope"}`, `{"scope":"repository","repositories":["nope"]}`, ""},
 		{"skip", 3, http.StatusOK, nil, skipped, skipPayload, ""},
