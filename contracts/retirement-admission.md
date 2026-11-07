@@ -82,7 +82,7 @@ fragment moved row-for-row from the pinned core commit `ebaf4dfa` —
 dest `openapi/paths/status/repository_retirement.go`, byte-identical
 (no operationIds on this fragment; `scripts/check-parity.sh` gates the
 identity). The dest assembly (`openapi/spec.go`, minimal shared block
-in `openapi/components.go`: the `ErrorResponse` schema plus the
+in `openapi/components.json`: the `ErrorResponse` schema plus the
 `BadRequest`/`Forbidden`/`Conflict`/`InternalError`/`ServiceUnavailable`
 responses the fragment references) serves `GET /api/v0/openapi.json`
 from compiled constants ahead of the generic proxy — no core import,

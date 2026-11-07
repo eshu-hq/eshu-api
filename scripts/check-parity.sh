@@ -214,15 +214,15 @@ check_recovery_schemas_at() {
     exit 1
   }
   # The three lane schemas form one contiguous block in
-  # openapi/components.go: from the SkippedScopesReport opener through
+  # openapi/components.json: from the SkippedScopesReport opener through
   # the third six-space closer (SkippedScopesReport, then
   # DeltaActiveScopesReport, then ReindexRequestsWrittenReport). The
   # last closer carries no trailing comma — the lane block is the last
   # entry of the schemas object — so the match tolerates it.
   local block
-  block="$(awk '/^      "SkippedScopesReport": \{$/{flag=1} flag{print} flag && /^      \},?$/ && ++closes==3{exit}' "${REPO_ROOT}/openapi/components.go")"
+  block="$(awk '/^      "SkippedScopesReport": \{$/{flag=1} flag{print} flag && /^      \},?$/ && ++closes==3{exit}' "${REPO_ROOT}/openapi/components.json")"
   if [[ -z "$block" ]]; then
-    echo "FAIL: no recovery schema block in openapi/components.go" >&2
+    echo "FAIL: no recovery schema block in openapi/components.json" >&2
     exit 1
   fi
   while IFS= read -r line; do
@@ -472,7 +472,7 @@ check_fragment_subset_named_at "$SRC_SHA_D0" "go/internal/query/openapi/paths/su
   "SuppressionMutation"
 
 # Recovery schemas (Decision 5(c)): the three lane schemas form one
-# contiguous block in openapi/components.go, from the SkippedScopesReport
+# contiguous block in openapi/components.json, from the SkippedScopesReport
 # opener through the ReindexRequestsWrittenReport closer. Every line of
 # that block must appear verbatim in one of the two pinned component
 # sources — except the DeltaActiveScopesReport opener, which rides the
@@ -674,7 +674,7 @@ check_docui_shell_at "$SRC_SHA_WAVE" "redocHTML" \
   "api/leafb_terminate.go" "leafbReDocShell"
 
 # Wave components (Decision 5(c)): every ported line of the D2 block in
-# openapi/components.go — the parameters/ServiceName entry, the
+# openapi/components.json — the parameters/ServiceName entry, the
 # AdminProviderConfig and AdminProviderConfigWriteRequest schemas, and
 # the Unauthorized and NotImplemented responses — must appear verbatim
 # in its pinned component source. The served-spec LocalRefsResolve
@@ -686,9 +686,9 @@ check_leafb_components_at() {
     local fetched
     fetched="$(fetch_at "$sha" "$path")"
     local block
-    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
     if [[ -z "$block" ]]; then
-      echo "FAIL: no $marker block in openapi/components.go" >&2
+      echo "FAIL: no $marker block in openapi/components.json" >&2
       return 1
     fi
     # The block's first line rides the Go const opener in core (no
@@ -732,7 +732,7 @@ check_leafb_components_at() {
 check_leafb_components_at
 
 # D4 wave components (Decision 5(c)): every ported line of the D4 block
-# in openapi/components.go — the RepoId parameter, the
+# in openapi/components.json — the RepoId parameter, the
 # CollectorReadinessEnvelope, Repository, RepositoryRef, CatalogWorkload,
 # InvestigationEvidencePacket, Relationship, and ActiveWorkSource
 # schemas, and the GatewayTimeout response — must appear verbatim in
@@ -745,9 +745,9 @@ check_d4_components_at() {
     local fetched
     fetched="$(fetch_at "$sha" "$path")"
     local block
-    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
     if [[ -z "$block" ]]; then
-      echo "FAIL: no $marker block in openapi/components.go" >&2
+      echo "FAIL: no $marker block in openapi/components.json" >&2
       return 1
     fi
     local first=1
@@ -882,9 +882,9 @@ check_d6_components_at() {
     local fetched
     fetched="$(fetch_at "$sha" "$path")"
     local block
-    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
     if [[ -z "$block" ]]; then
-      echo "FAIL: no $marker block in openapi/components.go" >&2
+      echo "FAIL: no $marker block in openapi/components.json" >&2
       return 1
     fi
     local first=1
@@ -923,9 +923,9 @@ check_d8_components_at() {
     local fetched
     fetched="$(fetch_at "$sha" "$path")"
     local block
-    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
     if [[ -z "$block" ]]; then
-      echo "FAIL: no $marker block in openapi/components.go" >&2
+      echo "FAIL: no $marker block in openapi/components.json" >&2
       return 1
     fi
     local first=1

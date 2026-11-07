@@ -164,7 +164,7 @@ reads fragment, which this lane does not port — reads stay relay. The
 fragment needs one new shared-block entry, `NotFound`, ported from
 `components_responses.go` at the same pin. The dest assembly
 (`openapi/spec.go`, extended minimal shared block in
-`openapi/components.go`) serves `GET /api/v0/openapi.json` from
+`openapi/components.json`) serves `GET /api/v0/openapi.json` from
 compiled constants ahead of the generic proxy — no core import, no core
 fetch, served even with no core origin configured — inside `RequireAuth`
 like every dest `/api/*` route. `TestSpec_*` pin the family section

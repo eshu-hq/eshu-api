@@ -93,7 +93,7 @@ fragment moved row-for-row from the pinned core commit `428790ab` —
 `getPublicSignInPolicy`, `getAdminSignInPolicy`,
 `updateAdminSignInPolicy` preserved; `scripts/check-parity.sh` gates
 the identity). The dest assembly (`openapi/spec.go`, minimal shared
-block in `openapi/components.go`: the two family schemas plus
+block in `openapi/components.json`: the two family schemas plus
 `ErrorResponse` and the `Forbidden`/`InternalError`/`ServiceUnavailable`
 responses the fragment references) serves `GET /api/v0/openapi.json`
 from compiled constants ahead of the generic proxy — no core import,
