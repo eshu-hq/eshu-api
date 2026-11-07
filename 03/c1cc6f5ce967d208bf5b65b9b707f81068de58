@@ -1,0 +1,104 @@
+api/d5_wiring_test.go
+  h_78a442cba0b3e6 283-286,290,294-296
+api/d6_conformance_test.go
+  h_78a442cba0b3e6 1-258
+api/d6_families_auth_test.go
+  h_78a442cba0b3e6 1-144
+api/d6_families_parity_test.go
+  h_78a442cba0b3e6 1-193
+api/d6_latency_test.go
+  h_78a442cba0b3e6 1-81
+api/d6_openapi_test.go
+  h_78a442cba0b3e6 1-147
+api/d6_relay_test.go
+  h_78a442cba0b3e6 1-238
+api/d6_terminate.go
+  h_78a442cba0b3e6 1-151
+api/d6_wave.go
+  h_78a442cba0b3e6 1-105
+api/family.go
+  h_78a442cba0b3e6 110-116
+api/router.go
+  h_78a442cba0b3e6 263-282
+api/telemetry_test.go
+  h_78a442cba0b3e6 76-79
+contracts/d6-status-supplychain.md
+  h_78a442cba0b3e6 1-156
+contracts/status-read-admission.md
+  h_78a442cba0b3e6 1-62
+contracts/supply-chain-read-admission.md
+  h_78a442cba0b3e6 1-80
+contracts/upstream/status-read-wire-shapes.txt
+  h_78a442cba0b3e6 1-64
+contracts/upstream/status_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-64
+contracts/upstream/supply-chain-read-wire-shapes.txt
+  h_78a442cba0b3e6 1-99
+contracts/upstream/supply_read_admission_contract_test.go
+  h_78a442cba0b3e6 1-87
+docs/d6-latency.md
+  h_78a442cba0b3e6 1-54
+docs/parity.md
+  h_78a442cba0b3e6 36-42,109-120,171-195,214-217
+docs/provenance.md
+  h_78a442cba0b3e6 20,40-41,104-126
+openapi/components.go
+  h_78a442cba0b3e6 51-54,60-62,348-369
+openapi/paths/freshness/causality.go
+  h_78a442cba0b3e6 1-59
+openapi/paths/freshness/doc.go
+  h_78a442cba0b3e6 1-14
+openapi/paths/status/collector_readiness.go
+  h_78a442cba0b3e6 1-103
+openapi/paths/status/operator_control_plane.go
+  h_78a442cba0b3e6 1-67
+openapi/paths/status/semantic.go
+  h_78a442cba0b3e6 1-115
+openapi/paths/status/status_reads.go
+  h_78a442cba0b3e6 1-260
+openapi/paths/supply/chain/advisory_catalog.go
+  h_78a442cba0b3e6 1-70
+openapi/paths/supply/chain/advisory_evidence.go
+  h_78a442cba0b3e6 1-141
+openapi/paths/supply/chain/container_image_identity_aggregate.go
+  h_78a442cba0b3e6 1-100
+openapi/paths/supply/chain/container_images.go
+  h_78a442cba0b3e6 1-81
+openapi/paths/supply/chain/impact_aggregate.go
+  h_78a442cba0b3e6 1-142
+openapi/paths/supply/chain/impact_explain.go
+  h_78a442cba0b3e6 1-209
+openapi/paths/supply/chain/impact_findings.go
+  h_78a442cba0b3e6 1-400
+openapi/paths/supply/chain/runtime_context.go
+  h_78a442cba0b3e6 1-23
+openapi/paths/supply/chain/sbom_attestation_attachment_aggregate.go
+  h_78a442cba0b3e6 1-106
+openapi/paths/supply/chain/sbom_attestations.go
+  h_78a442cba0b3e6 1-195
+openapi/paths/supply/chain/security_alert_aggregate.go
+  h_78a442cba0b3e6 1-126
+openapi/paths/supply/chain/security_alerts.go
+  h_78a442cba0b3e6 1-138
+openapi/paths/supply/chain/vulnerability_scanner_contract.go
+  h_78a442cba0b3e6 1-40
+openapi/spec.go
+  h_78a442cba0b3e6 16,37-40,53,88-90,131-147
+openapi/spec_d6_test.go
+  h_78a442cba0b3e6 1-151
+scripts/check-parity.sh
+  h_78a442cba0b3e6 25,340-349,701-823,940-946,966-967
+scripts/measure-d6-latency.sh
+  h_78a442cba0b3e6 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "03c1cc6f5ce967d208bf5b65b9b707f81068de58",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
