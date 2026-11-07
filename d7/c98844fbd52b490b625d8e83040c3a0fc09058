@@ -1,0 +1,58 @@
+api/d5_wiring_test.go
+  h_78a442cba0b3e6 289-291,293,298,311-313
+api/d9.go
+  h_78a442cba0b3e6 45-46
+api/d9_conformance_test.go
+  h_78a442cba0b3e6 29-30,35-37
+api/d9_public_test.go
+  h_78a442cba0b3e6 63-64,212-219,232,234-244,247,249-250,253,256-257,261
+api/d9github.go
+  h_78a442cba0b3e6 1-91
+api/d9github_conformance_test.go
+  h_78a442cba0b3e6 1-218
+api/d9github_dispatch_test.go
+  h_78a442cba0b3e6 1-183
+api/d9github_latency_test.go
+  h_78a442cba0b3e6 1-79
+api/d9github_openapi_test.go
+  h_78a442cba0b3e6 1-84
+api/d9github_public_test.go
+  h_78a442cba0b3e6 1-289
+api/d9github_resilience_test.go
+  h_78a442cba0b3e6 1-417
+api/router.go
+  h_78a442cba0b3e6 253-258,263-283
+contracts/d9-github-login.md
+  h_78a442cba0b3e6 1-199
+docs/d9-latency.md
+  h_78a442cba0b3e6 3-7,58-76
+docs/parity.md
+  h_78a442cba0b3e6 307-345
+docs/provenance.md
+  h_78a442cba0b3e6 24,134-136
+docs/telemetry.md
+  h_78a442cba0b3e6 63-65
+openapi/paths/auth/github_login.go
+  h_78a442cba0b3e6 1-88
+openapi/spec.go
+  h_78a442cba0b3e6 45-47,61,103-105,170
+openapi/spec_d9_test.go
+  h_78a442cba0b3e6 16-17
+openapi/spec_d9github_test.go
+  h_78a442cba0b3e6 1-80
+scripts/check-parity.sh
+  h_78a442cba0b3e6 29,477-493,1118-1124
+scripts/measure-d9github-latency.sh
+  h_78a442cba0b3e6 1-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d7c98844fbd52b490b625d8e83040c3a0fc09058",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
