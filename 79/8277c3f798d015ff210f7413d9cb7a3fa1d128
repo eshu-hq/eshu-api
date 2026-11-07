@@ -1,0 +1,16 @@
+docs/d7-latency.md
+  h_78a442cba0b3e6 42-43,48-51
+docs/parity.md
+  h_78a442cba0b3e6 220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "798277c3f798d015ff210f7413d9cb7a3fa1d128",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
