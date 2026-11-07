@@ -1,0 +1,70 @@
+api/d7.go
+  h_78a442cba0b3e6 1-161
+api/d7_conformance_test.go
+  h_78a442cba0b3e6 1-193
+api/d7_dispatch_test.go
+  h_78a442cba0b3e6 1-452
+api/d7_latency_test.go
+  h_78a442cba0b3e6 1-82
+api/d7_openapi_test.go
+  h_78a442cba0b3e6 1-94
+api/d7_resilience_test.go
+  h_78a442cba0b3e6 1-300
+api/family.go
+  h_78a442cba0b3e6 67-69
+api/openapi_dispatch_test.go
+  h_78a442cba0b3e6 323-327
+api/recovery.go
+  h_78a442cba0b3e6 16-20
+api/recovery_dispatch_test.go
+  h_78a442cba0b3e6 18,268-277,280-289,299-300,307-309,316-318
+api/router.go
+  h_78a442cba0b3e6 197-209
+api/telemetry_test.go
+  h_78a442cba0b3e6 33-37
+contracts/d7-admin-four.md
+  h_78a442cba0b3e6 1-220
+contracts/recovery-admission.md
+  h_78a442cba0b3e6 47-51,114-117,174,177-179
+contracts/upstream/backfill_admission_contract_test.go
+  h_78a442cba0b3e6 1-61
+contracts/upstream/dead_letter_admission_contract_test.go
+  h_78a442cba0b3e6 1-62
+contracts/upstream/reindex_admission_contract_test.go
+  h_78a442cba0b3e6 1-64
+contracts/upstream/skip_admission_contract_test.go
+  h_78a442cba0b3e6 1-59
+docs/d7-latency.md
+  h_78a442cba0b3e6 1-48
+docs/parity.md
+  h_78a442cba0b3e6 119-122,199-225
+docs/provenance.md
+  h_78a442cba0b3e6 21,43-46,111-115
+docs/telemetry.md
+  h_78a442cba0b3e6 55-58
+openapi/doc.go
+  h_78a442cba0b3e6 10-11
+openapi/paths/status/admin_d7.go
+  h_78a442cba0b3e6 1-130
+openapi/paths/status/doc.go
+  h_78a442cba0b3e6 15-18,25-26
+openapi/spec.go
+  h_78a442cba0b3e6 40-42,55,92-94,151
+openapi/spec_d7_test.go
+  h_78a442cba0b3e6 1-85
+scripts/check-parity.sh
+  h_78a442cba0b3e6 26,351-368,383-396
+scripts/measure-d7-latency.sh
+  h_78a442cba0b3e6 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97e59698e1dc6065b04a087da0ca384ff0d5e319",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
