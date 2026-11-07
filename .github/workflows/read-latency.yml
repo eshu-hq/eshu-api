@@ -3,10 +3,11 @@
 #
 # Owns the read-latency comparison the destination census assigns the
 # satellite: the terminated Native-now wave (D2), the terminated
-# admin/identity/recovery reads (D3), and the terminated Native-next
-# reads (D4) must not regress past 1.50x of the generic byte-relay on
-# the hermetic stub-core legs (scripts/measure-leafb-latency.sh,
-# scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh).
+# admin/identity/recovery reads (D3), the terminated Native-next
+# reads (D4), and the D9 SAML-login tier-C clones must not regress
+# past 1.50x of the generic byte-relay on the hermetic stub-core legs
+# (scripts/measure-leafb-latency.sh, scripts/measure-d3-latency.sh,
+# scripts/measure-d4-latency.sh, scripts/measure-d9saml-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -30,6 +31,7 @@ on:
       - 'scripts/measure-leafb-latency.sh'
       - 'scripts/measure-d3-latency.sh'
       - 'scripts/measure-d4-latency.sh'
+      - 'scripts/measure-d9saml-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -75,5 +77,14 @@ jobs:
             echo "## D4 latency (stub-core, median ns/op)"
             echo '```'
             cat d4-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: D9 SAML tier-C clone latency
+        run: |
+          bash scripts/measure-d9saml-latency.sh 2>&1 | tee d9saml-latency.log
+          {
+            echo "## D9 SAML latency (stub-core, median ns/op)"
+            echo '```'
+            cat d9saml-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

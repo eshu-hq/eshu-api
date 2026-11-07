@@ -250,8 +250,8 @@ func (s *Server) routes() *http.ServeMux {
 	// the 2 pre-auth public GETs register exactly those paths
 	// outside every gate, ahead of the generic proxy, on the public
 	// write-through handler. No other login route leaves the gate in
-	// this lane: SAML stays relay-only for its own sequential lane
-	// (GitHub rides d9GitHubRoutes below), and non-GET spellings of
+	// this lane: GitHub rides d9GitHubRoutes below and SAML rides
+	// its own landed lane (d9SAMLRoutes), and non-GET spellings of
 	// these paths keep the standing 401. Credential query values
 	// cross as opaque bytes; the dest shared key is never injected
 	// here. See api/d9.go and contracts/d9-oidc-login.md: tier-C
@@ -271,7 +271,7 @@ func (s *Server) routes() *http.ServeMux {
 	// paths outside every gate, ahead of the generic proxy, on the
 	// public write-through handler. No other login route leaves the
 	// gate in this lane: OIDC stays on its own landed lane and SAML
-	// stays relay-only for its own sequential lane, and non-GET
+	// rides its own landed lane (d9SAMLRoutes), and non-GET
 	// spellings of these paths keep the standing 401. Credential
 	// query values cross as opaque bytes; the dest shared key is
 	// never injected here. See api/d9github.go and

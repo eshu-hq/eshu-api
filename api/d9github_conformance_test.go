@@ -28,13 +28,13 @@ import (
 // at eshu 8c23246933) is the recorded precondition; the dest-side state
 // store, replay cache, session mint, and finalize/audit stack stay
 // termination obligations for a later lane. OIDC stays on its own
-// landed lane; SAML routes stay relay-only here.
+// landed lane and SAML rides its own landed lane (d9SAMLRoutes).
 
 // TestD9GitHubRoutesFrozen pins the exact D9 GitHub surface the
 // satellite clones. A route added, removed, or renamed fails here until
 // the pin contract, the spec fragment, and this mirror move together.
 // OIDC routes stay on their own lane table; SAML routes must never
-// appear here: they ride their own sequential lane.
+// appear here: they ride their own landed lane table (d9SAMLRoutes).
 func TestD9GitHubRoutesFrozen(t *testing.T) {
 	t.Parallel()
 
