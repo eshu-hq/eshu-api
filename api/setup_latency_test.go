@@ -116,8 +116,8 @@ func BenchmarkSetupRelayRead(b *testing.B) {
 
 // TestSetupBenchmarks_ServeShapes pins that the benchmark legs above
 // exercise the intended transports: the state and claim legs reach
-// the stub core exactly once (public, no dest 401), and the relay
-// legs reach it exactly once behind the key.
+// the stub core exactly once (public, no dest 401), and the two
+// relay legs reach it exactly once each behind the key.
 func TestSetupBenchmarks_ServeShapes(t *testing.T) {
 	t.Parallel()
 
@@ -145,7 +145,21 @@ func TestSetupBenchmarks_ServeShapes(t *testing.T) {
 		t.Errorf("setup claim status = %d, want 200", claimRec.Code)
 	}
 
-	if core.hits != 2 {
-		t.Errorf("upstream hits = %d, want 2 (one fetch per setup leg)", core.hits)
+	relayPost := authedRequest(http.MethodPost, "/api/v0/compare/environments")
+	relayPostRec := httptest.NewRecorder()
+	handler.ServeHTTP(relayPostRec, relayPost)
+	if relayPostRec.Code != http.StatusOK {
+		t.Errorf("relay write status = %d, want 200", relayPostRec.Code)
+	}
+
+	relayGet := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	relayGetRec := httptest.NewRecorder()
+	handler.ServeHTTP(relayGetRec, relayGet)
+	if relayGetRec.Code != http.StatusOK {
+		t.Errorf("relay read status = %d, want 200", relayGetRec.Code)
+	}
+
+	if core.hits != 4 {
+		t.Errorf("upstream hits = %d, want 4 (one fetch per benchmark leg)", core.hits)
 	}
 }

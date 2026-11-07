@@ -118,7 +118,16 @@ termination proof box in `api/setup_terminate_test.go`:
   (`TestSetupTerminated_OpenStateSemanticParity`,
   `TestSetupTerminated_SlashTwinUsesCanonicalFetch`,
   `TestSetupTerminated_SlashTwinSubtree`,
-  `TestSetupTerminated_V1AliasTerminates`).
+  `TestSetupTerminated_V1AliasTerminates`). The caller `Accept`
+  value crosses on the anonymous fetch (forwarded, never judged:
+  core answers the fixed two-key shape regardless), and the parity
+  test asserts it arrives.
+- Deep-path disclosure: the Go trailing-slash twin is a subtree
+  pattern, so deeper spellings (e.g. `/setup-state/extra`) also
+  terminate with a synthesized 200 from the canonical fetch rather
+  than the 404 the core `Mount` would answer. Same boolean seal
+  signal, no new route, no new surface — pinned by
+  `TestSetupTerminated_SlashTwinSubtree`.
 - Body-non-logging and telemetry extension without renames: one
   closed-label log line per request, no credential bytes; the family
   files the existing `setup`/`native` lane with the closed outcome
