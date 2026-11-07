@@ -1,0 +1,20 @@
+.github/workflows/read-latency.yml
+  h_78a442cba0b3e6 6-10,34,82-90
+api/d9_conformance_test.go
+  h_78a442cba0b3e6 29-30,35-36
+api/d9github_conformance_test.go
+  h_78a442cba0b3e6 31,37
+api/router.go
+  h_78a442cba0b3e6 253-254,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "033d5836859de25254b68a86bbb1ed34245cdafa",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
