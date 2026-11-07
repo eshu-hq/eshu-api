@@ -1,0 +1,14 @@
+api/d7_dispatch_test.go
+  h_78a442cba0b3e6 156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d978da8d30822649f9c1b9da589dc8123d1ef30",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
