@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package api
+
+// D6 Status + SupplyChain reads termination (Refs eshu-hq/eshu#9669,
+// part of #6707). This file owns the frozen wave table: the 29 routes
+// across the Status and SupplyChain families the satellite terminates
+// after the D4 Native-next lane. It mirrors the CUTOVER_OWNERSHIP rows
+// for the Status reads admitting through StatusReadAdmission v0
+// (status.Reader) and the SupplyChain reads admitting through
+// SupplyChainReadAdmission v0 (the 17 family-owned reader ports); a
+// wave change moves the ownership map, the spec fragments, and this
+// mirror together. The behavior lives in d6_terminate.go; the proofs
+// in d6_conformance_test.go and the per-family suites.
+//
+// Production binding (carried from the D0 shim proof via the D2/D4
+// waves): dest owns each route (caller gate, family authorizer,
+// response mapping) and calls the versioned core read API as its port
+// transport — bounded client, forwarded credential and negotiation
+// headers, no retry, no table/queue handles dest-side. Authz stays
+// atomic core-side: dest allows only the shared-key (AllScopes)
+// identity it can construct and core re-judges every forwarded call as
+// backstop (tenant scope, permission catalog, governance mode).
+// Termination claims stay provisional until the arbiter re-reviews the
+// D0 evidence (blocker B1); the contract record is
+// contracts/d6-status-supplychain.md.
+//
+// Transport pins: StatusReadAdmission v0 (contracts/upstream/
+// status_read_admission_contract_test.go at the D6 pin) covers the 12
+// Status wave rows — every row's snapshot read admits through
+// status.Reader (ReadStatusSnapshot, ReadStatusSnapshotFiltered).
+// SupplyChainReadAdmission v0 (contracts/upstream/
+// supply_read_admission_contract_test.go at the D6 pin) covers the 17
+// SupplyChain wave rows — every row admits through the frozen
+// family-owned reader ports. The minting rule forbids inventing pins
+// beyond these two; Compare needs a deliberate later pin and the
+// suppressions mutation stays out via SuppressionAdmission.
+//
+// Scoping line (hard, from the pin contracts): Status routes also
+// touching Retirements, the GovernanceAudit Summary, LiveActivity,
+// the NarrationPosture override, or Neo4j index counts are NOT fully
+// covered by the Status pin — those six routes stay relay with the
+// reason disclosed per route in the contract (index-status,
+// status/index, governance, operations, answer-narration,
+// hosted-readiness). The investigations impact packet admits through
+// the writer ImpactPacketResponder plus shared graph/content ports the
+// pin explicitly excludes, so it stays relay. Compare
+// (POST /api/v0/compare/environments) admits only through the shared
+// ports and stays relay for its deliberate later pin.
+//
+// D6 satellite serve kind. Every D6 route is wave-gated: shared-key
+// callers terminate, unresolvable credential classes relay explicitly,
+// credential-less callers (and junk-cookie carriers) keep the standing
+// dest 401. There is no public carve-out in this lane — every D6 read
+// is an authed reader-port read.
+const d6ServeGated = "gated"
+
+// d6Route is one frozen D6 wave entry: the exact cross-repo surface
+// this lane terminates. Method+Path+Family mirror the CUTOVER rows;
+// Serve tells the router how this lane serves it; Fragment names the
+// Decision 5(c) fragment that carries the route's spec entry.
+type d6Route struct {
+	Method   string
+	Path     string
+	Family   string
+	Serve    string
+	Fragment string
+}
+
+// d6Wave is the frozen D6 termination target: 12 Status routes plus 17
+// SupplyChain routes. TestD6WaveFrozen pins it entry by entry; a wave
+// change moves the ownership map, the fragments, and this mirror
+// together.
+var d6Wave = []d6Route{
+	{Method: "GET", Path: "/api/v0/collector-readiness", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/collector_readiness.go"},
+	{Method: "GET", Path: "/api/v0/collectors", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/ingesters", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/ingesters/{ingester}", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/collector-readiness", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/collector_readiness.go"},
+	{Method: "GET", Path: "/api/v0/status/collectors", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/freshness-causality", Family: "status", Serve: d6ServeGated, Fragment: "paths/freshness/causality.go"},
+	{Method: "GET", Path: "/api/v0/status/ingesters", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/ingesters/{ingester}", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/operator-control-plane", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/operator_control_plane.go"},
+	{Method: "GET", Path: "/api/v0/status/pipeline", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/semantic-extraction", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/semantic.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/advisories", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/advisory_catalog.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/advisories/evidence", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/advisory_evidence.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/container-images/identities", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/container_images.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/container-images/identities/count", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/container_image_identity_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/container-images/identities/inventory", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/container_image_identity_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/impact/explain", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/impact_explain.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/impact/findings", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/impact_findings.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/impact/findings/count", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/impact_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/impact/inventory", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/impact_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/sbom-attestations/attachments", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/sbom_attestations.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/sbom-attestations/attachments/count", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/sbom_attestation_attachment_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/sbom-attestations/attachments/inventory", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/sbom_attestation_attachment_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/security-alerts/reconciliations", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/security_alerts.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/security-alerts/reconciliations/count", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/security_alert_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/security-alerts/reconciliations/inventory", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/security_alert_aggregate.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/vulnerabilities/{advisory_id}", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/advisory_evidence.go"},
+	{Method: "GET", Path: "/api/v0/supply-chain/vulnerability-scanner/contract", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/vulnerability_scanner_contract.go"},
+}

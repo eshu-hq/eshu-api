@@ -280,13 +280,19 @@ func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 // operation the served document promises maps to a probed terminated
 // GET. A newly landed GET fragment fails here until the probe table
 // claims it — the document can never promise what the probe does not
-// watch.
+// watch. The D6 lane claims its 29 keys in its owning table
+// (d6WaveSpecKeys, watched by the D6 conformance/openapi/spec suites),
+// so the reverse check unions both lanes' claim tables; the D2-D4
+// frozen counts in TestD5ProbeFrozen stay untouched.
 func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 	t.Parallel()
 
-	probed := make(map[string]bool, len(d5ProbeGETs))
+	probed := make(map[string]bool, len(d5ProbeGETs)+len(d6WaveSpecKeys))
 	for _, p := range d5ProbeGETs {
 		probed[p.Path] = true
+	}
+	for _, path := range d6WaveSpecKeys {
+		probed[path] = true
 	}
 	for _, origin := range []string{"http://core.invalid", ""} {
 		paths := d5ServedPaths(t, origin)

@@ -33,8 +33,13 @@ after the move.
   Evidence, InvestigationWorkflows, and Playbooks — Compare deferred
   to D6) terminates natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
-  admission alias; and the rest stay on the generic
-  relay until their D waves land.
+  admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
+  SupplyChain read GETs, with the extra-port Status aspects, the
+  impact packet, Compare, and the suppressions mutation row staying
+  relay by disclosure) terminates natively per
+  `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
+  v0` and `SupplyChainReadAdmission v0` port transports; and the rest
+  stay on the generic relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
   admission contract; the versioned in-tree seams are the suppression,
@@ -101,7 +106,18 @@ after the move.
   CollectorReadinessEnvelope, Repository, RepositoryRef,
   CatalogWorkload, InvestigationEvidencePacket, Relationship, and
   ActiveWorkSource schemas, and the GatewayTimeout response the wave
-  entries reference — per-family fragment moves now land in their
+  entries reference,
+  and the D6 Status + SupplyChain reads wave: the status reads, status
+  collector-readiness, operator-control-plane, semantic-extraction, and
+  freshness causality entries (one line-verbatim status subset plus
+  four whole-file ports), the supply-chain advisory, container-image,
+  impact aggregate, SBOM, security-alert, and vulnerability-scanner
+  contract entries (ten whole-file ports plus the runtime-context
+  sibling), and the impact findings and impact explain entries (two
+  line-verbatim subsets sharing that sibling), with the shared
+  components block extended by the CoordinatorSource and
+  TerraformStateSource schemas the status entries reference —
+  per-family fragment moves now land in their
   family PRs per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
 ## Native-now termination (D2)
@@ -152,6 +168,31 @@ D2/D3 relay legs moved to the still-relaying dependencies and
 code-bundle routes. Termination claims stay provisional until the
 arbiter re-reviews the D0 evidence (blocker B1).
 
+## Native termination (D6)
+
+The 29 pinned Status + SupplyChain read routes (12 snapshot-pure
+Status GETs, 17 SupplyChain read GETs) terminate natively per
+`contracts/d6-status-supplychain.md`: explicit gated routes ahead of
+the generic relay, the shared-key family authorizer with the
+documented deny shape, byte-parity dispatch/conformance proof vs the
+relayed reference, extended `viaNative`/`viaRelay` telemetry, and the
+satellite-owned read-latency gate (`docs/d6-latency.md` with the
+relay-route disclosure). The transport pins are `StatusReadAdmission
+v0` (aliases `status.Reader`, 2 methods) and `SupplyChainReadAdmission
+v0` (embeds the 17 family-owned reader ports, 23 methods). Decision 2
+stays a proven split: parity exercises suppression-state filtering
+(`suppression_state`, `include_suppressed`, `provider_state`,
+`reconciliation_status`), and the suppressions mutation row stays the
+Never-satellite survivor via SuppressionAdmission. Divergences stay
+disclosed in the contract: the six extra-port Status aspects (index,
+governance, operations, answer-narration, hosted-readiness) stay
+relay with per-route reasons, the impact packet stays relay (writer
+responder plus shared ports), Compare stays relay for its deliberate
+later pin, the status reads fragment ports only the seven lane keys,
+and the D2-D4 relay legs moved to the still-relaying dependencies
+route. Termination claims stay provisional until the arbiter
+re-reviews the D0 evidence (blocker B1).
+
 ## What stays in the core
 
 Fact admission, canonical identity, projection, retraction, recovery,
@@ -170,8 +211,10 @@ globals.
 `SignInPolicyAdmissionContractVersion v0`,
 `RetirementAdmissionContractVersion v0`,
 `AdminIdentityAdmissionContractVersion v0`,
-`SetupAdmissionContractVersion v0`). A breaking change to any
-named port fails the frozen-set test next to that port in the source
+`SetupAdmissionContractVersion v0`,
+`StatusReadAdmissionContractVersion v0`,
+`SupplyChainReadAdmissionContractVersion v0`). A breaking change to
+any named port fails the frozen-set test next to that port in the source
 (`TestCoreReadContractsVersioned`,
 `TestSuppressionAdmissionContractIsVersioned`,
 `TestReadStoreContractIsVersioned`,

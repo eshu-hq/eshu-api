@@ -260,6 +260,26 @@ func (s *Server) routes() *http.ServeMux {
 			mux.Handle(pattern+"/", gated)
 		}
 	}
+	// D6 Status + SupplyChain reads termination (Refs
+	// eshu-hq/eshu#9669): the 29 pinned read routes register
+	// explicitly inside the D6 wave gate, ahead of the generic proxy.
+	// A valid shared key terminates on the native lane; a foreign
+	// credential class (scoped token, OIDC bearer, session cookie)
+	// relays explicitly on the relay lane so core judges it;
+	// credential-less callers — and junk-cookie carriers, per the D2
+	// follow-up lesson — get the standing 401. Each trailing-slash
+	// spelling stays on the wave route for the same never-split
+	// reason. The extra-port Status aspects (index, governance,
+	// operations, answer-narration, hosted-readiness), the impact
+	// packet, Compare, and the suppressions mutation still cross
+	// their existing lanes — the pins do not cover them and nobody
+	// infers them into this lane.
+	for _, entry := range d6Wave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.d6ReadGate(http.HandlerFunc(s.serveD6Terminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
 	// D2 wave-public carve-out (core-public parity): the four routes
 	// core serves pre-auth register explicitly OUTSIDE any gate, ahead
 	// of the generic proxy. Docs and redoc serve compiled shells with

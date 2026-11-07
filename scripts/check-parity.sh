@@ -22,6 +22,7 @@ SRC_SHA_RECOVERY="7c60583996d9a3ccc46288f40a38f614a4f28ea8"
 SRC_SHA_D1="2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923"
 SRC_SHA_D0="ec1643d67f"
 SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
+SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -335,6 +336,16 @@ check_file_at "$SRC_SHA_D1" "go/internal/query/admin/identity/governance_audit_r
 check_file_at "$SRC_SHA_D1" "go/internal/query/admin/acknowledgement/terminal_failure_read_admission_contract_test.go" \
   "contracts/upstream/terminal_failure_read_admission_contract_test.go" \
   "c0e86ef4e90ff24e6756f27bd870675782baeeeb9b1c37f9e0551e0cb035f51a"
+
+# D6 read-admission pins (eshu-hq/eshu#10303, unwired seams): the two
+# frozen method-set tests, byte-identical to the pinned core commit.
+check_file_at "$SRC_SHA_D6" "go/internal/status/read_admission_contract_test.go" \
+  "contracts/upstream/status_read_admission_contract_test.go" \
+  "83f8a4a15c24aa93c3d82dc14da1880470be58301aeac10f4944f28f57a90233"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/supply/chain/supply_read_admission_contract_test.go" \
+  "contracts/upstream/supply_read_admission_contract_test.go" \
+  "8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367"
 
 # Native spec (Decision 5(c)): the admin-recovery OpenAPI fragment is a
 # line-verbatim subset of the pinned core file. Core ships the lane
@@ -687,6 +698,129 @@ check_d4_components_at() {
 
 check_d4_components_at
 
+# D6 Status + SupplyChain reads wave (Decision 5(c)): the wave
+# fragments are byte-identical ports (whole-file) or line-verbatim
+# subsets of the pinned core files at SRC_SHA_D6. The two finding
+# fragments ride the dest-owned exported wrappers (ImpactFindings,
+# ImpactExplain) over the core unexported consts, sharing the
+# byte-identical runtime_context.go sibling; the status reads fragment
+# ports only the seven lane entries, never a relayed key.
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/status/collector_readiness.go" \
+  "openapi/paths/status/collector_readiness.go" \
+  "12f2e23ec324531f83c960eb9dc429c1da11f749cdce000e14b659d476da6f2f"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/status/operator_control_plane.go" \
+  "openapi/paths/status/operator_control_plane.go" \
+  "fc58c514a42d02b56bd879f1b74678c3ee3c494bf8be49ef129525abda0f28c9"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/status/semantic.go" \
+  "openapi/paths/status/semantic.go" \
+  "c50a5391e3d765cdf3d40f9999eae33ffa1e1a299df455f81903af63272578da"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/freshness/causality.go" \
+  "openapi/paths/freshness/causality.go" \
+  "6409c05ee4b9c5078a7acabb12c3b783a297e2505a316f9b71d3bb2db5b0d3c2"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/runtime_context.go" \
+  "openapi/paths/supply/chain/runtime_context.go" \
+  "ec83120edab5d9b4d75622cc748d24c8f88f06036f8bc23e377a8b9830e6b83b"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/advisory_catalog.go" \
+  "openapi/paths/supply/chain/advisory_catalog.go" \
+  "2316253e4c20862081a21778f2c6619bb4e1e35ba63de7c603a8b4069e122d3b"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/advisory_evidence.go" \
+  "openapi/paths/supply/chain/advisory_evidence.go" \
+  "4a69d35575e23d8e8f7ed4453dbbd14c453688579e1f8edb320e35d74609d212"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/container_images.go" \
+  "openapi/paths/supply/chain/container_images.go" \
+  "29ca221b684f1f3f1b88042121090f5f7ce136dae6812f8071e5dc911d1c42a1"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/container_image_identity_aggregate.go" \
+  "openapi/paths/supply/chain/container_image_identity_aggregate.go" \
+  "457eaadc8b6c325b96bb399610577c2145fd7d77ba4e9902b8286f71b7b07600"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/impact_aggregate.go" \
+  "openapi/paths/supply/chain/impact_aggregate.go" \
+  "9bcd0f907ab0012d86a79ee1a82339c16fd39a2535dec58d138cf625e61fec21"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/sbom_attestations.go" \
+  "openapi/paths/supply/chain/sbom_attestations.go" \
+  "9571183b1fd617e39ecf214e5b9a679dcb73342b0b7f8c68c7a380f151fa710b"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/sbom_attestation_attachment_aggregate.go" \
+  "openapi/paths/supply/chain/sbom_attestation_attachment_aggregate.go" \
+  "c8aad4c90a5a1f0973b542c172e9e492582ef82ae2112614a7170f34962cf856"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/security_alerts.go" \
+  "openapi/paths/supply/chain/security_alerts.go" \
+  "3f8431bd296d43ab284ee97f3ba084bafcf2ae55f12d06ff3b7bf0473840b491"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/security_alert_aggregate.go" \
+  "openapi/paths/supply/chain/security_alert_aggregate.go" \
+  "8a5709e57dd25f9263274828c4a470baa24236abf00a5de331a518a46dfd5088"
+
+check_file_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/vulnerability_scanner_contract.go" \
+  "openapi/paths/supply/chain/vulnerability_scanner_contract.go" \
+  "3dbfbc45e39e80ba183ee7f0a45acd40cf1cd0de596fdd99dff63420326a6ca8"
+
+check_fragment_subset_named_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/status/routes.go" \
+  "openapi/paths/status/status_reads.go" \
+  "24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61" \
+  "StatusReads"
+
+check_fragment_subset_named_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/impact_explain.go" \
+  "openapi/paths/supply/chain/impact_explain.go" \
+  "7b64a8ce69cc2802157303f1fd50a2914a5cd2c9693743368da0889639852f3e" \
+  "ImpactExplain"
+
+check_fragment_subset_named_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/impact_findings.go" \
+  "openapi/paths/supply/chain/impact_findings.go" \
+  "0b0adcf656d2d14b8c470c3e46511d3e8d800a74dde92e68c4ffdde7278dce67" \
+  "ImpactFindings"
+
+check_d6_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.go")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.go" >&2
+      return 1
+    fi
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"CoordinatorSource": {' "$SRC_SHA_D6" "go/internal/query/openapi/components_active_work_source.go" \
+    || fail=1
+  check_block '"TerraformStateSource": {' "$SRC_SHA_D6" "go/internal/query/openapi/components_active_work_source.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: D6 components lines all verbatim in pinned component sources"
+}
+
+check_d6_components_at
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -803,6 +937,13 @@ check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/admin-identity-read-wire-shap
 check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/terminal-failure-read-wire-shapes.txt" \
   "go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go"
 
+check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/status-read-wire-shapes.txt" \
+  "go/internal/status/read_admission.go" \
+  "go/internal/status/report.go"
+
+check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/supply-chain-read-wire-shapes.txt" \
+  "go/internal/query/supply/chain/supply_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -822,6 +963,8 @@ grep -qF 'AdminReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upst
 grep -qF 'AdminIdentityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
 grep -qF 'GovernanceAuditReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
 grep -qF 'TerminalFailureReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terminal-failure-read-wire-shapes.txt"
+grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
+grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 echo "OK: version pins v0 present"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
