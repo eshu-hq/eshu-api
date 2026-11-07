@@ -53,6 +53,7 @@ type coreSetupStatePort struct {
 	correlation string
 	traceparent string
 	tracestate  string
+	accept      string
 	mode        string
 }
 
@@ -72,6 +73,7 @@ func (p *coreSetupStatePort) SetupNeeded(ctx context.Context) (bool, error) {
 		correlation: p.correlation,
 		traceparent: p.traceparent,
 		tracestate:  p.tracestate,
+		accept:      p.accept,
 	})
 	if err != nil {
 		return false, err
@@ -82,15 +84,19 @@ func (p *coreSetupStatePort) SetupNeeded(ctx context.Context) (bool, error) {
 
 // setupFetchParams carries the inbound request values the anonymous
 // port fetch is allowed to see: the query string, the guaranteed
-// correlation ID, and W3C trace context when the caller sent it.
-// Nothing else crosses — in particular no Authorization header and
-// no caller metadata — so no credential can reach the fetch path and
-// telemetry never observes one.
+// correlation ID, W3C trace context when the caller sent it, and the
+// caller Accept for content negotiation. Nothing else crosses — in
+// particular no Authorization header and no other caller metadata —
+// so no credential can reach the fetch path and telemetry never
+// observes one. Core answers the fixed two-key shape regardless of
+// Accept today; forwarding preserves negotiation end to end the way
+// every other native lane does.
 type setupFetchParams struct {
 	query       string
 	correlation string
 	traceparent string
 	tracestate  string
+	accept      string
 }
 
 // setupStateResult is the terminated answer: the seal signal plus
@@ -133,6 +139,9 @@ func (s *Server) fetchSetupState(ctx context.Context, params setupFetchParams) (
 		return setupStateResult{}, err
 	}
 	upstream.Header.Set(correlationHeader, params.correlation)
+	if params.accept != "" {
+		upstream.Header.Set("Accept", params.accept)
+	}
 	if params.traceparent != "" {
 		upstream.Header.Set("traceparent", params.traceparent)
 	}
@@ -202,6 +211,7 @@ func (s *Server) serveSetupState(w http.ResponseWriter, r *http.Request) {
 		correlation: CorrelationID(r),
 		traceparent: r.Header.Get("traceparent"),
 		tracestate:  r.Header.Get("tracestate"),
+		accept:      r.Header.Get("Accept"),
 	}
 	fetchStart := time.Now()
 	needed, err := port.SetupNeeded(r.Context())

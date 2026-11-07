@@ -53,3 +53,14 @@ the write-through it replaces (no body relay — dest synthesizes the
 transport with the same single fetch. Absolute deployment numbers
 against a pinned core image ride flip prep (D11); this gate runs
 hermetically on every PR and in CI.
+
+## RED/GREEN pair
+
+The gate demonstrates its FAIL path: with a planted 2 ms sleep per
+state-leg iteration (scratch worktree at the merged D10 head, since
+removed), the script reports `leg state: clone=2372372ns
+relay=84278ns ratio=28.15` and exits 1 with `FAIL: clone leg state
+regresses past 1.50x of relay`. On the clean tree the same script
+exits 0 with both legs within budget (table above). A real pathology
+— a double fetch, a retry, a body re-read — exceeds the 1.50 bound
+the same way; scheduling noise does not.

@@ -114,9 +114,10 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 // routes registers the dispatch surface. Health, readiness, and the
 // metrics exposition are public; the /api/* subtree is auth-gated and
 // dispatched to the core origin byte-for-byte (see dispatch.go), with
-// exactly one exception: the four tier C-c1 setup wizard routes, which
-// are public pre-auth at the core and register outside RequireAuth
-// below. Every dispatch handler runs inside the telemetry middleware
+// exactly one exception: the four setup wizard routes (terminated
+// state GET plus three tier-C POSTs), which are public pre-auth at
+// the core and register outside RequireAuth below. Every dispatch
+// handler runs inside the telemetry middleware
 // (outside the auth gate, so gate denials count per family too);
 // probes never do.
 func (s *Server) routes() *http.ServeMux {

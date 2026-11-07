@@ -83,6 +83,10 @@ func TestSetupTerminated_OpenStateSemanticParity(t *testing.T) {
 				t.Errorf("%s Accept %q: upstream Authorization = %q, want empty (no credential crosses)",
 					tc.name, accept, core.lastAuth)
 			}
+			if core.lastAccept != accept {
+				t.Errorf("%s Accept %q: upstream Accept = %q, want the caller negotiation",
+					tc.name, accept, core.lastAccept)
+			}
 		}
 	}
 }
