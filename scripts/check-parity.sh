@@ -14,7 +14,7 @@ RAW="https://raw.githubusercontent.com/${SRC_REPO}/${SRC_SHA}"
 # Per-family pins for seams that merged after SRC_SHA. Each family is
 # fetched at the commit where its vendored files reached final form.
 SRC_SHA_MAIN="ebaf4dfa0de672851bbec7a427e28fdb41344380"
-SRC_SHA_SETUP="fd326f35c9fb497eec0abefad197a5d4b137b823"
+SRC_SHA_SETUP="ba038ecaf20352f7dacac2fc6b5ace66497cfff1"
 SRC_SHA_PROVIDERCONFIG="99381691b1ac49254e813e5a013cfb654d432491"
 SRC_SHA_AUTHLOGIN="1e03478614fc54882b9616d37ea9103ea5ada6f4"
 SRC_SHA_SAMLLOGIN="aac271ad78e328462dabc7518d5f7e5739bdc651"

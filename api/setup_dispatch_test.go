@@ -58,7 +58,10 @@ func TestSetupNative_PublicWithoutCredential(t *testing.T) {
 	t.Parallel()
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
-		core := &stubCore{status: http.StatusOK, body: `{"status":"claimed"}`}
+		// The shared body carries the seal shape: the terminated GET
+		// resolves it while the POST legs assert reachability only
+		// (status plus forward), never body bytes.
+		core := &stubCore{status: http.StatusOK, body: `{"needs_setup":true,"bootstrap_mode":"generated"}`}
 		mux := http.NewServeMux()
 		mux.Handle("/", core.handler())
 		upstream := httptest.NewServer(mux)
@@ -197,11 +200,12 @@ func TestSetupNative_NoSharedKeyInjection(t *testing.T) {
 }
 
 // setupRelayCases covers the pinned core answers the carve-out must
-// relay byte-for-byte: the open/sealed state shapes, the wizard
-// results, the indistinguishable 401, the sealed 410s, and the MFA
-// answer that carries the session cookie plus the one-time recovery
-// codes. Header values the core sets (including Set-Cookie) relay
-// with the body.
+// relay byte-for-byte: the wizard results, the indistinguishable
+// 401, the sealed 410s, and the MFA answer that carries the session
+// cookie plus the one-time recovery codes. Header values the core
+// sets (including Set-Cookie) relay with the body. The setup-state
+// GET is covered separately: it terminates via the SetupNeeded port
+// (see setup_terminate_test.go).
 func TestSetupNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 	t.Parallel()
 
@@ -219,10 +223,9 @@ func TestSetupNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 		header  http.Header
 		body    string
 	}{
-		{
-			"open state", http.MethodGet, "/api/v0/auth/setup-state", "", 200, nil,
-			`{"needs_setup":true,"bootstrap_mode":"generated"}`,
-		},
+		// The setup-state GET is not listed here: it terminates via
+		// the SetupNeeded port (see setup_terminate_test.go), so its
+		// parity is semantic, not byte-for-byte.
 		{
 			"claim", http.MethodPost, "/api/v0/auth/setup/claim",
 			`{"username":"bootstrap-u","password":"bootstrap-p"}`, 200, nil, `{"status":"claimed"}`,
@@ -257,10 +260,6 @@ func TestSetupNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 		{
 			"sealed mfa is 410", http.MethodPost, "/api/v0/auth/setup/mfa",
 			`{"username":"bootstrap-u","password":"bootstrap-p"}`, 410, nil, sealedBody,
-		},
-		{
-			"sealed state reports needs_setup false", http.MethodGet, "/api/v0/auth/setup-state", "", 200, nil,
-			`{"needs_setup":false,"bootstrap_mode":"generated"}`,
 		},
 	}
 

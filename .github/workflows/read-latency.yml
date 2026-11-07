@@ -6,14 +6,16 @@
 # admin/identity/recovery reads (D3), the terminated Native-next
 # reads (D4), the terminated D6 Status + SupplyChain reads, the D7
 # admin-four tier-C clones, the D8 session-resolver tier-C clones,
-# and the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones
+# the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones, and
+# the D10 terminated setup-state GET plus tier-C setup claim POST
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
 # scripts/measure-d6-latency.sh, scripts/measure-d7-latency.sh,
 # scripts/measure-d8-latency.sh, scripts/measure-d9-latency.sh,
 # scripts/measure-d9github-latency.sh,
-# scripts/measure-d9saml-latency.sh).
+# scripts/measure-d9saml-latency.sh,
+# scripts/measure-setup-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -43,6 +45,7 @@ on:
       - 'scripts/measure-d9-latency.sh'
       - 'scripts/measure-d9github-latency.sh'
       - 'scripts/measure-d9saml-latency.sh'
+      - 'scripts/measure-setup-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -142,5 +145,14 @@ jobs:
             echo "## D9 SAML latency (stub-core, median ns/op)"
             echo '```'
             cat d9saml-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: D10 setup termination latency
+        run: |
+          bash scripts/measure-setup-latency.sh 2>&1 | tee setup-latency.log
+          {
+            echo "## D10 setup latency (stub-core, median ns/op)"
+            echo '```'
+            cat setup-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
