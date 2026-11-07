@@ -166,14 +166,21 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
 	}
-	// Native dispatch, Setup (tier C-c1): the four pre-auth first-run
-	// wizard routes are the strict arbiter-approved carve-out (C-c1
-	// APPROVED on eshu-hq/eshu#9669): registered explicitly OUTSIDE
-	// RequireAuth, ahead of the generic proxy, on the same native-public
-	// handler. Each trailing-slash spelling stays on the native route
-	// for the same never-split reason. No other /api/* route leaves
-	// RequireAuth in this lane: the carve-out is exactly these four.
-	for _, route := range setupRoutes {
+	// Native dispatch, Setup (D10: terminated GET plus tier-C POSTs):
+	// the four pre-auth first-run wizard routes are the strict
+	// arbiter-approved carve-out (C-c1 APPROVED on eshu-hq/eshu#9669,
+	// graduated to D8-grade public-route handling on the D10 wave):
+	// registered explicitly OUTSIDE RequireAuth, ahead of the generic
+	// proxy. The setup-state GET terminates dest-side via the
+	// SetupNeeded port (see setup_terminate.go); the three credential
+	// POSTs stay tier-C HTTP write-through on the same native-public
+	// handler (see setup.go). Each trailing-slash spelling stays on
+	// its route's handler for the same never-split reason. No other
+	// /api/* route leaves RequireAuth in this lane: the carve-out is
+	// exactly these four.
+	mux.Handle(setupStateRoute, s.instrumented(viaNative, http.HandlerFunc(s.serveSetupState)))
+	mux.Handle(setupStateRoute+"/", s.instrumented(viaNative, http.HandlerFunc(s.serveSetupState)))
+	for _, route := range setupMutationRoutes {
 		mux.Handle(route, s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
 		mux.Handle(route+"/", s.instrumented(viaNative, http.HandlerFunc(s.setupWriteThrough)))
 	}

@@ -1,0 +1,55 @@
+# Setup latency evidence
+
+D10 latency record for the setup lane (Refs `eshu-hq/eshu#9669`,
+part of `eshu-hq/eshu#6707`). The census assigns the satellite this
+gate: core keeps the contract-registry and static-contract gates;
+this repo proves the terminated setup-state GET and the tier-C setup
+claim POST are not slower than the relay they replace.
+
+## Method
+
+Hermetic stub-core comparison, same binary, same caller shape:
+
+- Before legs: the generic byte-relay write-through the C-c1 lane
+  rode (`BenchmarkSetupState` and `BenchmarkSetupWrite` against the
+  pre-D10 tree, 2000x3).
+- After legs: the terminated setup-state GET (single SetupNeeded
+  port fetch plus the dest-synthesized 200) and the tier-C claim POST
+  (explicit public route plus the write-through forward) through the
+  full production chain (`BenchmarkSetupState` and
+  `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
+  `bash scripts/measure-setup-latency.sh`).
+- Relay legs: the Compare POST (`/api/v0/compare/environments`) for
+  writes and GET `/api/v0/dependencies` for reads, which stay on the
+  generic relay by D6 disclosure. Both legs hit the same
+  in-process stub core, so the numbers isolate dest-side cost, not
+  core or network time.
+- The gate takes the median ns/op and fails when a setup leg exceeds
+  relay by more than 50%. The threshold is generous on purpose: every
+  leg does exactly one server-side fetch, so any real pathology (a
+  double fetch, a retry, a body re-read) exceeds it loudly while
+  scheduling noise does not.
+
+## Relay-route disclosure
+
+The write-relay leg is the Compare POST (the still-relaying write
+the D6 lane disclosed); the read-relay leg is GET
+`/api/v0/dependencies` (the still-relaying read the D6 lane
+disclosed). Both legs do exactly one server-side fetch, so the 1.50
+bound stays a real pathology check.
+
+## Numbers (local, 2026-11-07)
+
+Shared host, in-process stub core (`go test` benchmarks):
+
+| Leg | Before (median ns/op) | After (median ns/op) | Relay (median ns/op) | Ratio (after/relay) | Budget |
+| --- | --- | --- | --- | --- | --- |
+| Setup-state GET | 80898 | 74232 | 84021 | 0.88 | ≤ 1.50 |
+| Claim POST | 85844 | 84379 | 83561 | 1.01 | ≤ 1.50 |
+
+No regression on either route: the terminated GET is faster than
+the write-through it replaces (no body relay — dest synthesizes the
+200 from the single port fetch), and the claim POST is unchanged
+transport with the same single fetch. Absolute deployment numbers
+against a pinned core image ride flip prep (D11); this gate runs
+hermetically on every PR and in CI.

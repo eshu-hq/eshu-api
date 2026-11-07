@@ -7,14 +7,17 @@ import (
 	"net/http"
 )
 
-// Setup native-dispatch routes (tier C-c1): the four pre-auth
-// first-run wizard routes. They are registered explicitly OUTSIDE
-// RequireAuth, ahead of the generic /api/ proxy, because a fresh
-// deployment has no session, bearer, or prior credential to present.
-// Route shapes are confirmed against the in-tree SetupHandler.Mount
-// and go/cmd/api/CUTOVER_OWNERSHIP.md (Setup family, wireAPI) at the
-// provenance pin: the state check plus the claim, admin, and MFA
-// wizard steps under /api/v0/auth/....
+// Setup native-dispatch routes (D10: tier-C POSTs plus a terminated
+// GET): the four pre-auth first-run wizard routes. They are
+// registered explicitly OUTSIDE RequireAuth, ahead of the generic
+// /api/ proxy, because a fresh deployment has no session, bearer, or
+// prior credential to present. Route shapes are confirmed against
+// the in-tree SetupHandler.Mount and go/cmd/api/CUTOVER_OWNERSHIP.md
+// (Setup family, wireAPI) at the provenance pin: the state check
+// plus the claim, admin, and MFA wizard steps under /api/v0/auth/....
+// The state GET terminates via the SetupNeeded port (see
+// setup_terminate.go); the const stays here so the carve-out reads
+// as the same four routes.
 const (
 	setupStateRoute = "GET /api/v0/auth/setup-state"
 	setupClaimRoute = "POST /api/v0/auth/setup/claim"
@@ -22,25 +25,31 @@ const (
 	setupMFARoute   = "POST /api/v0/auth/setup/mfa"
 )
 
-// setupRoutes lists every native-dispatch route of the Setup family
-// in registration order.
-var setupRoutes = []string{
-	setupStateRoute,
+// setupMutationRoutes lists the three tier-C write-through routes of
+// the Setup family in registration order. The setup-state GET is not
+// listed here: it terminates via the SetupNeeded port (see
+// setup_terminate.go). The carve-out stays exactly four public routes
+// (state plus these three, each with its trailing-slash twin).
+var setupMutationRoutes = []string{
 	setupClaimRoute,
 	setupAdminRoute,
 	setupMFARoute,
 }
 
-// setupWriteThrough is the tier C-c1 native dispatch for the setup
-// wizard: each request crosses an explicit public per-family route
-// instead of the generic byte-relay, with no dest-side gate. The
-// shape is HTTP write-through — method, path, query, headers, and
-// body forward to the same core route, and core bytes relay back
-// unmodified — because every trust decision stays core-side: core's
-// AuthMiddleware bypass (publicHTTPPaths) plus the per-request
-// SetupStore re-checks (VerifyBootstrapCredential proof and the
-// permanent SetupNeeded seal that answers 410 once any identity
-// exists) still run on every forwarded request.
+// setupWriteThrough is the tier-C native dispatch for the three
+// setup wizard credential POSTs: each request crosses an explicit
+// public per-family route instead of the generic byte-relay, with no
+// dest-side gate. The shape is HTTP write-through — method, path,
+// query, headers, and body forward to the same core route, and core
+// bytes relay back unmodified — because every trust decision stays
+// core-side: core's AuthMiddleware bypass (publicHTTPPaths) plus the
+// per-request SetupStore re-checks (VerifyBootstrapCredential proof
+// and the permanent SetupNeeded seal that answers 410 once any
+// identity exists) still run on every forwarded request. Terminating
+// these POSTs dest-side would require parsing credential bodies,
+// which is forbidden on this lane: they stay write-through, and the
+// setup-state GET is the only route that terminates (via the
+// SetupNeeded port, never touching a credential).
 //
 // Dest adds no validation and keeps no setup state: no SetupNeeded
 // gate, cache, or synthesized 410. The credential bodies

@@ -136,13 +136,21 @@ func TestSetupNative_CredentialBodyNeverLogged(t *testing.T) {
 	const newPassword = "fresh-secret-16!!-7d4a"
 	const recoveryCode = "rc-one-time-9e55aa"
 
-	core := &stubCore{
-		status: http.StatusOK,
-		body:   `{"status":"completed","recovery_codes":["` + recoveryCode + `"]}`,
-	}
-	mux := http.NewServeMux()
-	mux.Handle("/", core.handler())
-	upstream := httptest.NewServer(mux)
+	// The terminated GET resolves the seal shape while the POST
+	// legs keep their credential bodies: one mux branches by path so
+	// every secret still crosses exactly one carve-out request.
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		if r.Method == http.MethodGet {
+			_, _ = io.WriteString(w, `{"needs_setup":true,"bootstrap_mode":"generated"}`)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/mfa") {
+			_, _ = io.WriteString(w, `{"status":"completed","recovery_codes":["`+recoveryCode+`"]}`)
+			return
+		}
+		_, _ = io.WriteString(w, `{"status":"claimed"}`)
+	}))
 	defer upstream.Close()
 
 	var logs strings.Builder
@@ -362,12 +370,18 @@ func TestSetupNative_Indistinguishable401(t *testing.T) {
 }
 
 // TestSetupNative_BothSpellingsWriteThrough pins that both spellings
-// of every setup path stay on the native route: method and path (as
-// spelled) forward to the same core route without a credential.
+// of every setup credential POST stay on the native route: method
+// and path (as spelled) forward to the same core route without a
+// credential. The setup-state GET spellings terminate instead (see
+// TestSetupTerminated_SlashTwinUsesCanonicalFetch): dest matched the
+// route, so the core always sees the single canonical path.
 func TestSetupNative_BothSpellingsWriteThrough(t *testing.T) {
 	t.Parallel()
 
 	for _, spelling := range setupSpellings() {
+		if spelling.method == http.MethodGet {
+			continue
+		}
 		core := &stubCore{status: http.StatusOK, body: `{"ok":true}`}
 		mux := http.NewServeMux()
 		mux.Handle("/", core.handler())
@@ -377,11 +391,7 @@ func TestSetupNative_BothSpellingsWriteThrough(t *testing.T) {
 		srv := NewServer(upstream.URL, skeletonTestKey)
 		handler := srv.Handler(DefaultV0Sunset)
 
-		var body io.Reader
-		if spelling.method != http.MethodGet {
-			body = strings.NewReader(`{}`)
-		}
-		req := httptest.NewRequest(spelling.method, spelling.path, body)
+		req := httptest.NewRequest(spelling.method, spelling.path, strings.NewReader(`{}`))
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
