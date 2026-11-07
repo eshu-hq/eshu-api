@@ -1,0 +1,38 @@
+.github/workflows/read-latency.yml
+  h_78a442cba0b3e6 9-10,17-18,48,150-158
+api/router.go
+  h_78a442cba0b3e6 169-183
+api/setup.go
+  h_78a442cba0b3e6 10-20,28-33,39-52
+api/setup_dispatch_test.go
+  h_78a442cba0b3e6 61-64,203-208,226-228
+api/setup_latency_test.go
+  h_78a442cba0b3e6 1-151
+api/setup_resilience_test.go
+  h_78a442cba0b3e6 139-153,373-377,382-384,394
+api/setup_terminate.go
+  h_78a442cba0b3e6 1-219
+api/setup_terminate_proof_test.go
+  h_78a442cba0b3e6 1-186
+api/setup_terminate_test.go
+  h_78a442cba0b3e6 1-401
+contracts/setup-admission.md
+  h_78a442cba0b3e6 58,60-64,66-67,70-148,151-171,181-183,189-202,222-226,235-238
+docs/setup-latency.md
+  h_78a442cba0b3e6 1-55
+docs/telemetry.md
+  h_78a442cba0b3e6 67-70
+scripts/measure-setup-latency.sh
+  h_78a442cba0b3e6 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "919b226ddb7ecada8edced22329ef42b9fb6bef4",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
