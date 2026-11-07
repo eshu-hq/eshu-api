@@ -1,0 +1,28 @@
+api/d8_gate_test.go
+  h_78a442cba0b3e6 113-114,129-150
+contracts/d8-session-resolver.md
+  h_78a442cba0b3e6 15,22,47
+docs/provenance.md
+  h_78a442cba0b3e6 22,121,128
+openapi/paths/auth/admin_invitations.go
+  h_78a442cba0b3e6 17
+openapi/paths/auth/auth_profile.go
+  h_78a442cba0b3e6 10
+openapi/paths/auth/browser_sessions.go
+  h_78a442cba0b3e6 11
+openapi/paths/auth/local_identity.go
+  h_78a442cba0b3e6 14
+openapi/paths/auth/session_list.go
+  h_78a442cba0b3e6 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ab13f5865c230048b13859ad73c41711d5cd8af",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
