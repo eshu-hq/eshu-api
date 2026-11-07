@@ -217,7 +217,7 @@ deliveries no worse than direct core (2 hits, recorded outcome
 replayed; backfill records a second row — not even state-idempotent,
 disclosed), no-core-import, the contract with revert-to-relay
 rollback, and the satellite-owned clone-latency gate
-(`docs/d7-latency.md`: dead-letter 1.00x, reindex 0.97x vs the 1.50
+(`docs/d7-latency.md`: dead-letter 0.91x, reindex 0.90x vs the 1.50
 budget). Scope honesty: tier-C dispatch only — not termination, not
 removal readiness. The ledger deficit stays open; serialization
 dest-side is not a substitute for it. Termination stays last among

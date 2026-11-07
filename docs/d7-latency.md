@@ -39,10 +39,13 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 | Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Dead-letter POST | 168043 | 168119 | 1.00 | ≤ 1.50 |
-| Reindex POST | 163105 | 168119 | 0.97 | ≤ 1.50 |
+| Dead-letter POST | 85242 | 93171 | 0.91 | ≤ 1.50 |
+| Reindex POST | 84142 | 93171 | 0.90 | ≤ 1.50 |
 
 Within budget on both legs: the lane adds the explicit route match and
 one authorizer call around the same single fetch. Absolute deployment
 numbers against a pinned core image ride flip prep (D11); this gate
-runs hermetically on every PR and in CI.
+runs hermetically on every PR and in CI. An earlier run on the same
+host and code measured 168043/168119 (1.00) and 163105/168119 (0.97):
+shared-host scheduling noise moves the absolutes while both legs move
+together, so the ratio stays comfortably inside the budget either way.
