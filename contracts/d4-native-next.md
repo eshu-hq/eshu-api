@@ -54,6 +54,16 @@ rollback.
   body unbounded), forwarded credential and negotiation headers,
   guaranteed correlation ID, fail-closed local 503 (permanent, never
   `Retry-After`) when no core origin is configured.
+- Envelope negotiation (eshu-hq/eshu-api#66): success shape stays
+  core-owned. The edge forwards the caller `Accept` verbatim and
+  relays the core bytes verbatim — it never wraps a flat core answer
+  into `{data, truth}`. Where core renders flat (its `WriteJSON`
+  reads), an envelope-negotiated caller still receives the flat shape
+  with truth inline (`result_limits`, pagination, group fields);
+  where core negotiates (its `WriteSuccess` routes), the envelope
+  flows through untouched. Dest invents no truth levels (it holds no
+  read model); dest-synthesized errors stay envelope-aware via
+  `writeError`.
 - Trust model: dest's only constructible identity is the shared key,
   which core maps to AllScopes. The dest authorizer allows it; core
   re-judges every forwarded call as backstop (tenant scope, permission
