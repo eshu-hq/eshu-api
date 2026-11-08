@@ -28,14 +28,17 @@ import (
 // Ten mounted spellings stay out of the document by disclosure, each
 // with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
-// (/api/v0/docs, /api/v0/redoc), the one terminated route whose spec
-// entry waits on its helper port (the repositories story GET), and
-// the four D10 setup-wizard routes whose fragment stays core-side by
-// the recorded eshu-hq/eshu-api#44 posture outcome
-// (contracts/setup-admission.md, pinned by
-// TestSetupSpecPosture_StaysCoreSide). A newly mounted route fails
-// here until its lane ports the fragment and claims it; a newly
-// served operation fails here until its lane mounts the route.
+// (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
+// whose fragment waits on its helper port (the repositories story
+// GET, on the generic-relay stack in d4RelayLegs), and the four D10
+// setup-wizard routes whose fragment stays core-side by the recorded
+// eshu-hq/eshu-api#44 posture outcome (contracts/setup-admission.md,
+// pinned by TestSetupSpecPosture_StaysCoreSide). Only explicitly
+// mounted routes are in scope: catch-all riders (the still-relayed
+// core surface) stay out with the unbounded proxy itself. A newly
+// mounted route fails here until its lane ports the fragment and
+// claims it; a newly served operation fails here until its lane
+// mounts the route.
 
 // specScopeAbsent pins the mounted spellings with no served spec
 // entry, each with the contract that discloses it. A newly absent
@@ -48,19 +51,21 @@ var specScopeAbsent = map[string]string{
 	"GET /metrics":      "Prometheus exposition, public like the probes (docs/telemetry.md)",
 	"GET /api/v0/docs":  "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
 	"GET /api/v0/redoc": "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
-	"GET /api/v0/repositories/{repo_id}/story": "spec entry waits for the schema.EvidenceBoundaries helper port; the route terminates regardless (contracts/d4-native-next.md)",
+	"GET /api/v0/repositories/{repo_id}/story": "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
 	"GET /api/v0/auth/setup-state":             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/claim":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/admin":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/mfa":              "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 }
 
-// specScopeMounted rebuilds every natively mounted Method+Path the
+// specScopeMounted rebuilds every explicitly mounted Method+Path the
 // router registers, trailing-slash twins normalized away (each twin
 // rides its exact spelling's handler for the same never-split
-// reason). The generic /api/ byte-relay catch-all is unbounded and
-// stays out: this proof covers the edge's own mounted scope, not the
-// relayed core surface.
+// reason). That includes the explicitly mounted D4 relay leg
+// (d4RelayLegs): a bounded registration is in scope even though its
+// bytes relay. The generic /api/ byte-relay catch-all is unbounded
+// and stays out: catch-all riders are not listed anywhere, while
+// every bounded registration is.
 func specScopeMounted() []string {
 	mounted := map[string]bool{}
 	add := func(pattern string) {
@@ -112,6 +117,12 @@ func specScopeMounted() []string {
 	}
 	for _, entry := range d4Wave {
 		add(entry.Method + " " + entry.Path)
+	}
+	// The explicitly mounted D4 relay leg is in scope like every
+	// other bounded registration (its absence carries the relay
+	// disclosure below); only the unbounded catch-all stays out.
+	for _, pattern := range d4RelayLegs {
+		add(pattern)
 	}
 	for _, entry := range d6Wave {
 		add(entry.Method + " " + entry.Path)

@@ -20,9 +20,10 @@ import (
 // on any drift the lane contracts do not disclose.
 //
 // TDD record: the strict bijection (every wave GET has a spec get
-// entry, zero carve-outs) ran RED first on exactly the four disclosed
-// absences below (/health, /docs, /redoc mux-level entries, the
-// repositories story omission) with the other 54 GETs present; this
+// entry, zero carve-outs) ran RED first on exactly the disclosed
+// absences below (the /health, /docs, /redoc mux-level entries — the
+// repositories story GET left the wave for the generic relay, so it is
+// no longer a wave GET at all) with the other 54 GETs present; this
 // file pins that outcome. It extends the wave-gated pattern — frozen
 // tables mirrored off the wave tables, behavior proved against the
 // served document — and invents no new pattern: the probe reuses
@@ -48,9 +49,9 @@ type d5ProbeGET struct {
 // the auth-providers picker, and the three provider-config reads), 8
 // D3 reads (six admin-identity GETs plus the two governance-audit
 // GETs), and 37 D4 reads (CICD, Documentation, Infra, PackageRegistry,
-// Repositories, Evidence, InvestigationWorkflows, Playbooks minus the
-// disclosed story omission). Order follows the waves (D2, D3, D4);
-// within D4, ruling family order.
+// Repositories, Evidence, InvestigationWorkflows, Playbooks — the
+// story GET relays, so every D4 wave GET is probed). Order follows the
+// waves (D2, D3, D4); within D4, ruling family order.
 var d5ProbeGETs = []d5ProbeGET{
 	{Path: "/api/v0/openapi.json", OperationID: "getOpenAPISpec"},
 	{Path: "/api/v0/capabilities", OperationID: "listCapabilities"},
@@ -117,7 +118,6 @@ var d5ExpectedAbsent = map[string]string{
 	"GET /health":       "mux-health probe with a dest-owned shape, never an OpenAPI path (contracts/leafb-native-now.md)",
 	"GET /api/v0/docs":  "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md; serving pinned by TestLeafBPublicDocUI)",
 	"GET /api/v0/redoc": "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md; serving pinned by TestLeafBPublicDocUI)",
-	"GET /api/v0/repositories/{repo_id}/story": "spec entry waits for the schema.EvidenceBoundaries helper port; the route terminates regardless (contracts/d4-native-next.md)",
 }
 
 // d5WaveGETs collects every Method+Path GET across the three
@@ -167,23 +167,24 @@ func d5ServedPaths(t *testing.T, origin string) map[string]any {
 	return paths
 }
 
-// TestD5ProbeFrozen pins the probe surface against the wave tables: 58
+// TestD5ProbeFrozen pins the probe surface against the wave tables: 57
 // terminated GETs across D2-D4, of which 54 carry a served spec entry
-// and 4 stay absent by disclosure. A wave change (route added,
-// removed, renamed) fails here until the probe table, the expected
-// absences, and the owning lane move together.
+// and 3 stay absent by disclosure (the story GET relays instead of
+// terminating, so it is no wave GET at all). A wave change (route
+// added, removed, renamed) fails here until the probe table, the
+// expected absences, and the owning lane move together.
 func TestD5ProbeFrozen(t *testing.T) {
 	t.Parallel()
 
 	waveGETs := d5WaveGETs()
-	if len(waveGETs) != 58 {
-		t.Fatalf("wave GETs = %d, want 58 (12 D2 + 8 D3 + 38 D4): move the probe with the owning lane", len(waveGETs))
+	if len(waveGETs) != 57 {
+		t.Fatalf("wave GETs = %d, want 57 (12 D2 + 8 D3 + 37 D4): move the probe with the owning lane", len(waveGETs))
 	}
 	if len(d5ProbeGETs) != 54 {
 		t.Fatalf("probe GETs = %d, want 54: move the probe with the owning lane", len(d5ProbeGETs))
 	}
-	if len(d5ExpectedAbsent) != 4 {
-		t.Fatalf("expected-absent GETs = %d, want 4: each absence needs its disclosing contract", len(d5ExpectedAbsent))
+	if len(d5ExpectedAbsent) != 3 {
+		t.Fatalf("expected-absent GETs = %d, want 3: each absence needs its disclosing contract", len(d5ExpectedAbsent))
 	}
 
 	probed := make(map[string]bool, len(d5ProbeGETs))
@@ -253,9 +254,9 @@ func TestD5Wiring_ServedGETShapes(t *testing.T) {
 }
 
 // TestD5Wiring_ExpectedAbsentStaysAbsent pins the disclosed drift:
-// the mux-level GETs never gain a spec path key, and the story route
-// never gains a spec get-entry, until its helper ports as a component
-// and the probe table claims it.
+// the mux-level GETs never gain a spec path key. (The story route
+// carries no key either, but it is no longer a wave GET — it relays,
+// and TestD4StoryRelayLegOnGenericProxy carries that leg.)
 func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 	t.Parallel()
 
@@ -265,12 +266,6 @@ func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 			path := key[len("GET "):]
 			if _, ok := paths[path]; ok {
 				t.Errorf("origin %q: served spec gained mux-level key %s: claim it in the probe or revert the fragment", origin, path)
-			}
-		}
-		const story = "/api/v0/repositories/{repo_id}/story"
-		if item, ok := paths[story].(map[string]any); ok {
-			if _, has := item["get"]; has {
-				t.Errorf("origin %q: served spec gained the story get-entry: claim it in the probe table", origin)
 			}
 		}
 	}

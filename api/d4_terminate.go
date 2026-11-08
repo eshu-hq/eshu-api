@@ -39,7 +39,7 @@ import (
 // mode-dependent denials come from). The false branch is the hookup
 // point for the day dest gains a scoped/session resolver; until then
 // it stays a plain deny (no invented reason codes, no audit
-// widening). One shared authorizer covers all 46 D4 wave routes: they
+// widening). One shared authorizer covers all 45 D4 wave routes: they
 // share the shared-key trust root until D8 resolves per-class
 // handling, and the contract record (contracts/d4-native-next.md)
 // carries the scope-honesty label for each family.
@@ -94,7 +94,7 @@ func (s *Server) serveD4TerminatedAs(w http.ResponseWriter, r *http.Request, all
 	forwardToCore(s, w, r, viaNative)
 }
 
-// d4ReadGate fronts the 46 D4 wave routes. A valid shared key
+// d4ReadGate fronts the 45 D4 wave routes. A valid shared key
 // terminates (next); a request carrying any other credential — a
 // non-key Bearer (scoped token, OIDC) or a session-cookie-shaped
 // Cookie — relays explicitly to the core on the relay lane, so core

@@ -7,8 +7,8 @@
 // (PackageRegistry, PackageRegistryAggregate) and the catalog,
 // repository list, language, content, context, and tree reads
 // (RepositoryRoutes, a line-verbatim subset of the pinned core file —
-// the mux-health entry and the schema-interpolated story entry stay
-// core-side), plus the branches, stats/coverage, and freshness reads
+// the mux-health entry stays dest-side and the story entry stays out
+// while its route relays), plus the branches, stats/coverage, and freshness reads
 // (Branches, StatsAndCoverage, Freshness — D4 Native-next wave).
 //
 // Each file holds exactly one exported string constant. This package

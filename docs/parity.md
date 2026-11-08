@@ -28,10 +28,11 @@ after the move.
   `contracts/terminal-failure-admission.md`; the D3 scope (16 routes
   across those four pins, minus the families D2 already terminated
   and the 3 unpinned Admin GETs) terminates natively per
-  `contracts/d3-admin-reads.md`; the D4 scope (46 Native-next routes
+  `contracts/d3-admin-reads.md`; the D4 scope (45 Native-next routes
   across CICD, Documentation, Infra, PackageRegistry, Repositories,
   Evidence, InvestigationWorkflows, and Playbooks — Compare deferred
-  to D6) terminates natively per `contracts/d4-native-next.md` on the
+  to D6, the story GET on the generic relay as a relay leg) terminates
+  natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
   SupplyChain read GETs, with the extra-port Status aspects, the
@@ -159,7 +160,7 @@ until the arbiter re-reviews the D0 evidence (blocker B1).
 
 ## Native termination (D4)
 
-The 46 Native-next read routes (CICD, Documentation, Infra,
+The 45 Native-next read routes (CICD, Documentation, Infra,
 PackageRegistry, Repositories, Evidence, InvestigationWorkflows,
 Playbooks) terminate natively per `contracts/d4-native-next.md`:
 explicit gated routes ahead of the generic relay, the shared-key
@@ -169,13 +170,13 @@ dispatch/conformance proof vs the relayed reference, extended
 read-latency gate (`docs/d4-latency.md` with the relay-route
 disclosure). The transport pin is `CoreReadContractsVersion v0` with
 no per-family admission alias — the minting rule forbids inventing
-one, and all 46 rows are reader-port reads. Divergences stay
-disclosed in the contract: the story spec key waits for its schema
-helper, the admission-decisions 501 waits for core to define the
-response, four literals skip the duplicate slash registration (their
-slash spellings still terminate under the parent subtree), and the
-D2/D3 relay legs moved to the still-relaying dependencies and
-code-bundle routes. Termination claims stay provisional until the
+one, and all 45 rows are reader-port reads. The story GET stays on
+the generic relay as a carried leg (its spec entry waits on the
+schema helper port). Divergences stay disclosed in the contract: the
+admission-decisions 501 waits for core to define the response, four
+literals skip the duplicate slash registration (their slash spellings
+still terminate under the parent subtree), and the D2/D3 relay legs
+moved to the still-relaying dependencies and code-bundle routes. Termination claims stay provisional until the
 arbiter re-reviews the D0 evidence (blocker B1).
 
 ## Native termination (D6)
