@@ -50,8 +50,8 @@ terminated GET surface.
 | --- | --- | --- | --- |
 | D2 Leaf B | 12 | 9 (`openapi.json` self, capabilities, service intelligence, providers, 2 sign-in-policy, 3 provider-config) | 3 (`/health` mux probe, `/docs` + `/redoc` compiled shells) |
 | D3 admin/identity/recovery | 8 | 8 (6 admin-identity, 2 governance-audit) | 0 |
-| D4 Native-next | 38 | 37 | 1 (repositories story: entry waits for the `schema.EvidenceBoundaries` helper port) |
-| Total | 58 | 54 | 4 |
+| D4 Native-next | 37 | 37 | 0 (repositories story rides the explicit relay leg; fragment gap carried per `contracts/d4-native-next.md`) |
+| Total | 57 | 54 | 3 |
 
 Every probed entry pins its path key, its `get` method, its promised
 `operationId` (54 pinned values in `d5ProbeGETs`), and a `200`
@@ -64,8 +64,8 @@ Known divergences (disclosed, not hidden — the entire drift the
 probe certifies):
 
 - The served `openapi.json` omits the repositories story key while
-  the story route terminates natively (see
-  `contracts/d4-native-next.md`).
+  the story route rides the explicit relay leg on the generic-relay
+  stack (see `contracts/d4-native-next.md`).
 - The served `openapi.json` carries no `/health`, `/docs`, or
   `/redoc` path keys: `/health` answers the dest probe shape and the
   doc shells serve compiled HTML publicly (see

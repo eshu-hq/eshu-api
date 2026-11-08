@@ -29,7 +29,7 @@ generic relay and its fragment gap is carried as a relay leg below.)
 
 Transport pin: `CoreReadContractsVersion v0`
 (`contracts/upstream/api_boundary.go` at the provenance pin) covers
-every D4 family — all 46 rows are `read`-channel rows on reader ports
+every D4 family — all 45 rows are `read`-channel rows on reader ports
 only (`db.ReadStore`, graph `GraphQuery`, `ContentStore`) per the
 ownership map, so no per-family admission alias is minted or needed
 here (D1 minted family pins for the admin reads only). The minting
@@ -140,6 +140,10 @@ Known divergences (disclosed, not hidden):
   behavior. The D2/D3 relay legs moved to the
   same still-relaying routes in this lane, so every lane gates
   terminated-vs-relay again instead of terminated-vs-terminated.
+  Foreign credential classes (scoped/OIDC bearer, session/junk cookie)
+  on the story path meet the generic-relay key gate (dest 401, zero
+  core contact), restoring the pre-lane posture — pinned by
+  `TestD4StoryRelayLegOnGenericProxy`.
 
 ## Spec posture
 

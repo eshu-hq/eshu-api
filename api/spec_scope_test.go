@@ -164,17 +164,17 @@ func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
 	if got := len(specScopeMounted()); got != 167 {
-		t.Fatalf("mounted native operations = %d, want 167: move the scope with the owning lane", got)
+		t.Fatalf("mounted operations = %d, want 167 (166 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
 	if got := len(specScopeAbsent); got != 10 {
 		t.Fatalf("disclosed-absent operations = %d, want 10: each absence needs its disclosing contract", got)
 	}
 }
 
-// TestSpecScope_MountedHasSpec pins the forward wiring: every
-// natively mounted API operation has its served spec entry, for both
-// a configured and an unconfigured core origin. Only the disclosed
-// absences stay out.
+// TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
+// API operation (166 native + 1 explicit relay leg) has its served spec
+// entry, for both a configured and an unconfigured core origin. Only
+// the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {
 	t.Parallel()
 
@@ -192,9 +192,9 @@ func TestSpecScope_MountedHasSpec(t *testing.T) {
 }
 
 // TestSpecScope_SpecHasMount pins the reverse wiring: every served
-// spec operation maps to a natively mounted route, for both a
-// configured and an unconfigured core origin. The document can never
-// promise what the edge does not mount.
+// spec operation maps to a mounted route (native or explicit relay
+// leg), for both a configured and an unconfigured core origin. The
+// document can never promise what the edge does not mount.
 func TestSpecScope_SpecHasMount(t *testing.T) {
 	t.Parallel()
 
