@@ -65,6 +65,8 @@ var familyPrefixes = []struct {
 	{"/admin/decisions", "admin"},
 	{"/admin/dead-letter", "admin"},
 	{"/admin/backfill", "admin"},
+	{"/admin/delta-union", "admin"},
+	{"/admin/shared-projection", "admin"},
 	{"/admin/reindex", "admin"},
 	{"/admin/skip", "admin"},
 	{"/admin/input-invalid-facts", "admin"},

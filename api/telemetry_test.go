@@ -35,6 +35,8 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/admin/reindex", "admin"},
 		{"/api/v0/admin/skip", "admin"},
 		{"/api/v0/admin/reindex/progress", "admin"},
+		{"/api/v0/admin/delta-union/completeness", "admin"},
+		{"/api/v0/admin/shared-projection/tuning-report", "admin"},
 		{"/api/v0/auth/admin/provider-configs", "provider_config"},
 		{"/api/v0/auth/admin/provider-configs/cfg-123", "provider_config"},
 		{"/api/v0/auth/admin/provider-configs/cfg-123/revisions", "provider_config"},

@@ -28,14 +28,13 @@ package api
 // contracts/d3-admin-reads.md.
 //
 // Scope source: go/cmd/api/CUTOVER_OWNERSHIP.md at the D2 lane base
-// plus the four D1 pins — no guessing. Excluded and staying relay
+// plus the four D1 pins — no guessing. Excluded from THIS wave
 // (disclosed, not silent):
 //
-//   - the 3 Admin GETs (delta-union completeness, reindex progress,
-//     shared-projection tuning-report): their readers carry no
-//     versioned pin (DeltaUnionCompletenessChecker,
-//     ReindexProgressReader, the static tuning report), and the
-//     minting rule admits no blanket pins;
+//   - the 3 Gap 02 Admin GETs (delta-union completeness, reindex
+//     progress, shared-projection tuning-report): pinned separately
+//     by the Gap 02 admissions and terminated by the trio lane in
+//     api/d3trio_wave.go, not by this 16-route wave;
 //   - the families D2 already terminated (provider-config reads, admin
 //     sign-in-policy).
 

@@ -23,6 +23,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D9 OIDC-login wave) | `40e88be128ca876f7333588137af5a780bf31b93` (`origin/main` at the D9 OIDC lane base, a descendant of `91f2df28db`; OIDCLoginAdmission v0 re-anchored byte-identical from the stale `1e034786` pin — re-anchor, no content change; satellite D9 OIDC wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
 | Source commit (D9 GitHub-login wave) | `8c2324693320c8f69ef3e8078c795956b549d7ad` (`origin/main` at the D9 GitHub lane base, a descendant of `40e88be1`; GitHubLoginAdmission v0 re-anchored byte-identical from the stale `1e034786` pin — re-anchor, no content change; satellite D9 GitHub wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
 | Source commit (D9 SAML-login wave) | `8c2324693320c8f69ef3e8078c795956b549d7ad` (unchanged from the D9 GitHub wave SHA: `git diff aac271ad..8c23246933` over the 5 SAML files is empty, arbiter verified; SAMLLoginAdmission v0 re-anchored byte-identical from the stale `aac271ad` pin — re-anchor, no content change; satellite D9 SAML wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
+| Source commit (Gap 02 trio pins) | `4a587431fdf748c0a231b60708131fbaa1f41064` (merge of `eshu-hq/eshu#10412`; DeltaUnionCompleteness, ReindexProgress, and SharedProjectionTuningReport read admissions v0, unwired-seam style: version constant plus frozen method-set/shape contract test per pin; the two whole-file OpenAPI ports and the tuning-report subset ship at the same merge) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -52,6 +53,9 @@ preparation only; nothing here carries cutover authority.
 | `BrowserSessionAdmissionContractVersion` | `v0` |
 | `LocalIdentityAdmissionContractVersion` | `v0` |
 | `APITokenAdmissionContractVersion` | `v0` |
+| `DeltaUnionCompletenessReadAdmissionContractVersion` | `v0` |
+| `ReindexProgressReadAdmissionContractVersion` | `v0` |
+| `SharedProjectionTuningReportContractVersion` | `v0` |
 
 ## Mapping
 
@@ -98,6 +102,16 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/identity/read_admission.go` (version, alias) + `governance_audit_read_admission.go` (version, alias) + `types.go` (`ReadStore`, `GovernanceAuditReader`) at `2c89a9d8` | `contracts/upstream/admin-identity-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/admin/acknowledgement/terminal_failure_read_admission_contract_test.go` at `2c89a9d8` | `contracts/upstream/terminal_failure_read_admission_contract_test.go` | `c0e86ef4e90ff24e6756f27bd870675782baeeeb9b1c37f9e0551e0cb035f51a` | verbatim |
 | `go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go` (version, alias, `TerminalFailureReader`) at `2c89a9d8` | `contracts/upstream/terminal-failure-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/admin/delta_union_completeness_read_admission.go` at `4a587431fd` | `contracts/upstream/delta_union_completeness_read_admission.go` | `36ac5c63dd64c48a3985fd9645a70e3369908b2204d324eaae5ed0481e710c3e` | verbatim |
+| `go/internal/query/admin/delta_union_completeness_read_admission_contract_test.go` at `4a587431fd` | `contracts/upstream/delta_union_completeness_read_admission_contract_test.go` | `dc6fdadc18352cec200e91f8c562e56345e336396c0b9aace560cfcd67996b61` | verbatim |
+| `go/internal/query/admin/reindex_progress_read_admission.go` at `4a587431fd` | `contracts/upstream/reindex_progress_read_admission.go` | `dfdb95b3629722a488e60bf09f76c0dc02c7673905e1a5686ee1de908f520fba` | verbatim |
+| `go/internal/query/admin/reindex_progress_read_admission_contract_test.go` at `4a587431fd` | `contracts/upstream/reindex_progress_read_admission_contract_test.go` | `990d173231923ae7f8789dccab296db9278c77b8cf1ca7cc4baf458d35c631a8` | verbatim |
+| `go/internal/query/admin/shared_projection_tuning_report_read_admission_contract_test.go` at `4a587431fd` | `contracts/upstream/shared_projection_tuning_report_read_admission_contract_test.go` | `ef5b390bf4885124d246fefdeaa651f8a653ce6989a7785fa5952df635c541c4` | verbatim |
+| `go/internal/query/admin/shared_projection_tuning_report_read_admission.go` at `4a587431fd` | `contracts/upstream/shared_projection_tuning_report_read_admission.go` | `c1cc1ed0a10e2bdddc05fa9ca7b11304ed883a9ee5953aa6a227e0b983744d39` | verbatim |
+| `go/internal/query/admin/delta_union_completeness_read_admission.go` (version, interface, `Check`, compile assertion) + `reindex_progress_read_admission.go` (version, alias) + `shared_projection_tuning_report_read_admission.go` (version, `Status`/`Detail` constants) + `handler.go` (tuning constants use) at `4a587431fd` | `contracts/upstream/admin-trio-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/openapi/paths/status/delta_union_completeness.go` at `4a587431fd` | `openapi/paths/status/delta_union_completeness.go` | `c6bfd5a9c663d3c584ecb247798e1407ceb729531d4d5a61098d9114dd582520` | verbatim |
+| `go/internal/query/openapi/paths/status/reindex_progress.go` at `4a587431fd` | `openapi/paths/status/reindex_progress.go` | `d018e6d902873fd22a09a57959dd21124ce194b5c481ee93e9a262af06f10a88` | verbatim |
+| `go/internal/query/openapi/paths/status/admin.go` (the tuning-report entry only) at `4a587431fd` (admin.go is byte-identical at `7c605839` and `4a587431fd`) | `openapi/paths/status/admin_tuning_report.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim tuning-report subset) | verbatim subset |
 | `go/internal/query/openapi/paths/status/admin.go` (replay, reopen, refinalize, recover-generations entries only) at `7c605839` | `openapi/paths/status/admin_recovery.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim subset) | verbatim subset |
 | `go/internal/query/openapi/components.go` (`SkippedScopesReport`) + `components_recovery.go` (`DeltaActiveScopesReport`, `ReindexRequestsWrittenReport`) at `7c605839` | `openapi/components.json` (three lane schemas) | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/catalog/capabilities.go` at `17feac86e089` | `openapi/paths/catalog/capabilities.go` | `e29adb2cc78925212cc8e4c2882b063f2bcf15ff867b03a72a2febd2e8937229` | verbatim |

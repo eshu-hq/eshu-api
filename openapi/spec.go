@@ -32,7 +32,9 @@ import (
 // provider-config reads, and the served-spec self entry, then the D3
 // admin/identity/recovery reads wave: the admin query POSTs and the
 // invitations list GET that shares its key with the relay-only create
-// POST, then the D4 Native-next wave: CICD, Documentation, Infra,
+// POST, then the D3 Gap 02 trio: the delta-union completeness,
+// reindex progress, and shared-projection tuning-report GETs, then
+// the D4 Native-next wave: CICD, Documentation, Infra,
 // PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 // Playbooks, then the D6 Status + SupplyChain reads wave: the
 // snapshot-pure Status GETs and the 17 SupplyChain read GETs (Compare,
@@ -58,7 +60,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks, plus the D6 Status + SupplyChain reads wave: the snapshot-pure Status GETs and the 17 SupplyChain read GETs, plus the D7 admin-four tier-C clone lane: the backfill, dead-letter, reindex, and skip POSTs (dispatch only, not termination), plus the D8 session-resolver tier-C clone lane: the browser-session lifecycle, session-list, profile, local-identity, API-token, and TOTP routes (dispatch only, not termination), plus the D9 OIDC-login tier-C clone lane: the OIDC login start and callback GETs (dispatch only, not termination), plus the D9 GitHub-login tier-C clone lane: the GitHub login start and callback GETs (dispatch only, not termination)); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D3 Gap 02 trio: the delta-union completeness, reindex progress, and shared-projection tuning-report GETs, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks, plus the D6 Status + SupplyChain reads wave: the snapshot-pure Status GETs and the 17 SupplyChain read GETs, plus the D7 admin-four tier-C clone lane: the backfill, dead-letter, reindex, and skip POSTs (dispatch only, not termination), plus the D8 session-resolver tier-C clone lane: the browser-session lifecycle, session-list, profile, local-identity, API-token, and TOTP routes (dispatch only, not termination), plus the D9 OIDC-login tier-C clone lane: the OIDC login start and callback GETs (dispatch only, not termination), plus the D9 GitHub-login tier-C clone lane: the GitHub login start and callback GETs (dispatch only, not termination)); every other family is still relayed from core until its lane ports its fragment.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -114,6 +116,9 @@ func familyPaths() string {
 		strings.TrimSpace(auth.AdminProviderConfigMutations) + "\n" +
 		strings.TrimSpace(status.AdminRecovery) + "\n" +
 		strings.TrimSpace(status.AdminReads) + "\n" +
+		strings.TrimSpace(status.DeltaUnionCompleteness) + "\n" +
+		strings.TrimSpace(status.ReindexProgress) + "\n" +
+		strings.TrimSpace(status.AdminTuningReport) + "\n" +
 		strings.TrimSpace(supplychain.SuppressionMutation) + "\n" +
 		strings.TrimSpace(catalog.Capabilities) + "\n" +
 		strings.TrimSpace(cli.Score) + "\n" +
