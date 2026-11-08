@@ -205,7 +205,9 @@ SuppressionAdmission. Divergences stay disclosed in the contract: the
 three remaining extra-port Status aspects (governance,
 answer-narration, hosted-readiness) stay relay with per-route reasons,
 the impact packet stays relay (writer responder plus shared ports),
-Compare stays relay for its deliberate later pin, the status reads
+Compare stays relay with its deliberate later pin now recorded
+(`CompareReadAdmission v0` in `contracts/compare-read-admission.md`;
+termination lands in a follow-up lane), the status reads
 fragment ports only the seven snapshot lane keys (the phase-2 index
 and operations keys ride their own fragments), and the D2-D4 relay
 legs moved to the still-relaying dependencies route. Termination

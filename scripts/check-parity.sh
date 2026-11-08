@@ -30,6 +30,7 @@ SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
 SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_GAP02="4a587431fdf748c0a231b60708131fbaa1f41064"
+SRC_SHA_COMPARE="3870181f323dbac84496efb87f7498b19afe1bf4"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -665,6 +666,16 @@ check_fragment_subset_named_at "$SRC_SHA_GAP02" "go/internal/query/openapi/paths
   "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
   "AdminTuningReport"
 
+# Gap 04 Compare pin (satellite eshu-hq/eshu-api#72, core
+# eshu-hq/eshu#10425 merge 3870181f): the versioned admission pin
+# (unwired-seam style — version constant + frozen method-set
+# contract test), recorded byte-identical satellite-side first. No
+# termination rides this record: the Compare POST stays relay until
+# the termination lane lands.
+check_file_at "$SRC_SHA_COMPARE" "go/internal/query/compare/read_admission_contract_test.go" \
+  "contracts/upstream/compare_read_admission_contract_test.go" \
+  "0a394ea8c3230c1bc978bc6c4f86d15b058805a607e3d63d60ec9ea6f0521b1a"
+
 # D4 Native-next wave (Decision 5(c)): the CICD, Documentation, Infra,
 # PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 # Playbooks fragments are byte-identical ports (whole-file) or
@@ -1245,6 +1256,11 @@ check_excerpt_at "$SRC_SHA_GAP02" "contracts/upstream/admin-trio-read-wire-shape
   "go/internal/query/admin/shared_projection_tuning_report_read_admission.go" \
   "go/internal/query/admin/handler.go"
 
+# Gap 04 Compare pin (eshu-hq/eshu#10425): the admission shape
+# excerpt, line-verbatim from the pin file at the merge commit.
+check_excerpt_at "$SRC_SHA_COMPARE" "contracts/upstream/compare-read-wire-shapes.txt" \
+  "go/internal/query/compare/read_admission.go"
+
 check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/status-read-wire-shapes.txt" \
   "go/internal/status/read_admission.go" \
   "go/internal/status/report.go"
@@ -1279,6 +1295,7 @@ grep -qF 'TerminalFailureReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/cont
 grep -qF 'DeltaUnionCompletenessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'ReindexProgressReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'SharedProjectionTuningReportContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
+grep -qF 'CompareReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/compare-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"

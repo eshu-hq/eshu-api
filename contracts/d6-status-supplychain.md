@@ -142,8 +142,14 @@ Known divergences (disclosed, not hidden):
   it admits through the writer `ImpactPacketResponder` plus the shared
   graph/content ports the SupplyChain pin explicitly excludes.
 - Compare (`POST /api/v0/compare/environments`) stays relay: it
-  admits only through the shared graph/content ports, never through
-  `status.Reader`; pinning those would be a blanket pin.
+  admitted only through the shared graph/content ports, never through
+  `status.Reader`, until the gap-04 deliberate later pin —
+  `CompareReadAdmission v0`, recorded in
+  `contracts/compare-read-admission.md` at the core merge
+  (`eshu-hq/eshu#10425`) — re-declared the four reads in a
+  Compare-scoped shape with no shared-port pin. No termination rides
+  this record, so the route stays relay until the termination lane
+  lands.
 - The suppressions mutation row stays on its tier-C write-through
   lane via SuppressionAdmission (the Decision 2 survivor, not a read
   port) — never in this read wave.
