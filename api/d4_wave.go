@@ -4,14 +4,16 @@
 package api
 
 // D4 Native-next reads termination (Refs eshu-hq/eshu#9669, part of
-// #6707). This file owns the frozen wave table: the 46 routes across
+// #6707). This file owns the frozen wave table: the 45 routes across
 // the 8 Native-next families the satellite terminates after the D3
-// admin/identity/recovery reads lane. It mirrors the CUTOVER_OWNERSHIP
-// rows for CICD, Documentation, Infra, PackageRegistry, Repositories,
-// Evidence, InvestigationWorkflows, and Playbooks (Compare deferred to
-// D6); a wave change moves the ownership map, the spec fragments, and
-// this mirror together. The behavior lives in d4_terminate.go; the
-// proofs in d4_conformance_test.go and the per-family suites.
+// admin/identity/recovery reads lane (the repositories story GET stays
+// on the generic relay — see the d4Wave comment below). It mirrors
+// the CUTOVER_OWNERSHIP rows for CICD, Documentation, Infra,
+// PackageRegistry, Repositories, Evidence, InvestigationWorkflows,
+// and Playbooks (Compare deferred to D6); a wave change moves the
+// ownership map, the spec fragments, and this mirror together. The
+// behavior lives in d4_terminate.go; the proofs in
+// d4_conformance_test.go and the per-family suites.
 //
 // Production binding (carried from the D0 shim proof via the D2/D3
 // waves): dest owns each route (caller gate, family authorizer,
@@ -27,7 +29,8 @@ package api
 //
 // Transport pin: CoreReadContractsVersion v0 (contracts/upstream/
 // api_boundary.go at the provenance pin) covers every D4 family — all
-// 46 rows are `read`-channel rows on reader ports only
+// 45 rows are `read`-channel rows on reader ports only (the story GET
+// stays on the generic relay until its lane ports the fragment)
 // (db.ReadStore, graph GraphQuery, ContentStore) per the ownership map,
 // so no per-family admission alias is minted or needed here. The
 // minting rule forbids inventing one.
@@ -38,6 +41,19 @@ package api
 // dest 401. There is no public carve-out in this lane — every D4 read
 // is an authed reader-port read.
 const d4ServeGated = "gated"
+
+// d4RelayLegs are the D4 row that stays on the generic relay instead
+// of terminating: the repositories story GET, whose spec fragment
+// waits on the schema.EvidenceBoundaries helper port. The registration
+// is explicit (not the bare catch-all) because the list route's slash
+// twin ("GET /api/v0/repositories/", kept for the never-split rule)
+// would otherwise swallow the story path back under the D4 gate: the
+// explicit wildcard shadows the subtree and restores true relay
+// behavior. TestD4StoryRelayLegOnGenericProxy carries the leg;
+// the scope proof lists it as a disclosed absence.
+var d4RelayLegs = []string{
+	"GET /api/v0/repositories/{repo_id}/story",
+}
 
 // d4SlashSkip holds the wave paths whose trailing-slash spelling must
 // NOT double-register on the native route. Go 1.22+ ServeMux panics
@@ -72,9 +88,13 @@ type d4Route struct {
 	Fragment string
 }
 
-// d4Wave is the frozen D4 termination target: 46 routes across the 8
+// d4Wave is the frozen D4 termination target: 45 routes across the 8
 // Native-next families (CICD, Documentation, Infra, PackageRegistry,
-// Repositories, Evidence, InvestigationWorkflows, Playbooks).
+// Repositories, Evidence, InvestigationWorkflows, Playbooks). The
+// repositories story GET stays on the generic relay (its spec entry
+// waits on the schema.EvidenceBoundaries helper port), so it is not a
+// wave route: TestD4StoryRelayLegOnGenericProxy carries it as a relay
+// leg instead.
 // TestD4WaveFrozen pins it entry by entry; a wave change moves the
 // ownership map, the fragments, and this mirror together.
 var d4Wave = []d4Route{
@@ -114,7 +134,6 @@ var d4Wave = []d4Route{
 	{Method: "GET", Path: "/api/v0/repositories/{repo_id}/coverage", Family: "repositories", Serve: d4ServeGated, Fragment: "paths/repository/stats_and_coverage.go"},
 	{Method: "GET", Path: "/api/v0/repositories/{repo_id}/freshness", Family: "repositories", Serve: d4ServeGated, Fragment: "paths/repository/freshness.go"},
 	{Method: "GET", Path: "/api/v0/repositories/{repo_id}/stats", Family: "repositories", Serve: d4ServeGated, Fragment: "paths/repository/stats_and_coverage.go"},
-	{Method: "GET", Path: "/api/v0/repositories/{repo_id}/story", Family: "repositories", Serve: d4ServeGated, Fragment: "paths/repository/routes.go"},
 	{Method: "GET", Path: "/api/v0/repositories/{repo_id}/tree", Family: "repositories", Serve: d4ServeGated, Fragment: "paths/repository/routes.go"},
 	{Method: "POST", Path: "/api/v0/ecosystem/graph-summary", Family: "infra", Serve: d4ServeGated, Fragment: "paths/infrastructure/routes.go"},
 	{Method: "POST", Path: "/api/v0/evidence/citations", Family: "evidence", Serve: d4ServeGated, Fragment: "paths/evidence/routes.go"},

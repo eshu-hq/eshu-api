@@ -2,11 +2,13 @@
 
 Versioned read-termination record for the D4 wave (Refs
 `eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`). This lane terminates
-the 46 Native-next read routes natively against the D0-proven
+the 45 Native-next read routes natively against the D0-proven
 terminated transport: dest owns the route (caller gate, family
 authorizer, response mapping) and calls the versioned core read API as
 its port transport. Dest holds no table or queue handle; authz stays
-atomic core-side.
+atomic core-side. The repositories story GET stays on the generic
+relay (its fragment waits on the schema helper port) and is carried
+as a relay leg below, not a terminated route.
 
 Scope source: `go/cmd/api/CUTOVER_OWNERSHIP.md` at the D2 lane base
 (17feac86e0): the CICD, Documentation, Infra, PackageRegistry,
@@ -14,19 +16,20 @@ Repositories, Evidence, InvestigationWorkflows, and Playbooks read rows
 (Compare deferred to D6 — no Compare route terminates here). Excluded
 and staying relay (disclosed, not silent):
 
-- the repositories story GET: its spec entry interpolates the shared
-  `schema.EvidenceBoundaries` helper, which has no line-verbatim port
-  without a core import (forbidden). The route terminates natively
-  regardless; only its served spec key waits for the helper to port as
-  a component. The served spec test pins the omission.
 - the supply-chain, drift, and services packets sharing the
   investigations file: only the deployable-unit entry ports this lane.
 - the mux-health entry sharing the repository routes file: dest serves
   `/health` from its own probe with a dest-owned shape.
 
+(The repositories story GET was excluded here until this record's
+relay-leg update: its spec entry interpolates the shared
+`schema.EvidenceBoundaries` helper, which has no line-verbatim port
+without a core import (forbidden), so the route reverted to the
+generic relay and its fragment gap is carried as a relay leg below.)
+
 Transport pin: `CoreReadContractsVersion v0`
 (`contracts/upstream/api_boundary.go` at the provenance pin) covers
-every D4 family — all 46 rows are `read`-channel rows on reader ports
+every D4 family — all 45 rows are `read`-channel rows on reader ports
 only (`db.ReadStore`, graph `GraphQuery`, `ContentStore`) per the
 ownership map, so no per-family admission alias is minted or needed
 here (D1 minted family pins for the admin reads only). The minting
@@ -90,7 +93,7 @@ for that day and unreachable on live routes.
 | Documentation | 6 GETs (`documentation/facts`, `findings`, `findings/count`, `findings/inventory`, `findings/{finding_id}/evidence-packet`, `evidence-packets/{packet_id}/freshness`) | wave-gated terminate / relay-explicit | shared-key allow |
 | Infra | 9 routes (`cloud/resources`, `ecosystem/overview`, `infra/resources/count`, `infra/resources/inventory` GETs; `ecosystem/graph-summary`, `infra/relationships`, `infra/resources/search`, `relationships/catalog`, `relationships/edges` POSTs) | wave-gated terminate / relay-explicit | shared-key allow |
 | PackageRegistry | 7 GETs (`package-registry/correlations`, `dependencies`, `dependency-chains`, `packages`, `packages/count`, `packages/inventory`, `versions`) | wave-gated terminate / relay-explicit | shared-key allow |
-| Repositories | 12 GETs (`catalog`, `repositories`, `by-language`, `language-inventory`, `{repo_id}/branches`, `content`, `context`, `coverage`, `freshness`, `stats`, `story`, `tree`) | wave-gated terminate / relay-explicit | shared-key allow |
+| Repositories | 11 GETs (`catalog`, `repositories`, `by-language`, `language-inventory`, `{repo_id}/branches`, `content`, `context`, `coverage`, `freshness`, `stats`, `tree`) | wave-gated terminate / relay-explicit | shared-key allow |
 | Evidence | 5 routes (`evidence/admission-decisions`, `bundle`, `evidence/relationships/{resolved_id}`, `investigations/deployable-unit/packet` GETs; `evidence/citations` POST) | wave-gated terminate / relay-explicit | shared-key allow |
 | InvestigationWorkflows | 2 routes (`investigation-workflows` GET + `resolve` POST) | wave-gated terminate / relay-explicit | shared-key allow |
 | Playbooks | 2 routes (`query-playbooks` GET + `resolve` POST) | wave-gated terminate / relay-explicit | shared-key allow |
@@ -104,10 +107,11 @@ core contact.
 
 Known divergences (disclosed, not hidden):
 
-- The served `openapi.json` omits the repositories story key: its
-  entry interpolates the shared `schema.EvidenceBoundaries` helper and
-  has no line-verbatim port without a core import. The story route
-  terminates natively; only the served entry waits.
+- The served `openapi.json` omits the repositories story key: the
+  story GET stays on the generic relay (its entry interpolates the
+  shared `schema.EvidenceBoundaries` helper and has no line-verbatim
+  port without a core import), so its fragment never lands; the served
+  story bytes come from core through the relay leg instead.
 - The served admission-decisions entry omits the core 501
   `UnsupportedCapability` response: that `$ref` target has no
   definition in the pinned core tree, so porting the line would dangle
@@ -125,9 +129,21 @@ Known divergences (disclosed, not hidden):
   `/api/v0/repositories` and the terminated POST is
   `/api/v0/infra/resources/search`; the relay legs are
   `/api/v0/dependencies` (GET) and `/api/v0/code/bundles` (POST),
-  both still on the generic proxy. The D2/D3 relay legs moved to the
+  both still on the generic proxy — plus the reverted story GET
+  `/api/v0/repositories/{repo_id}/story`, whose fragment waits on
+  the schema helper port (carried by
+  `TestD4StoryRelayLegOnGenericProxy`). Unlike the catch-all riders,
+  the story leg is registered explicitly on the generic-relay stack
+  (`d4RelayLegs` in `api/d4_wave.go`): the list route's slash twin is
+  a subtree that would otherwise swallow the story path back under
+  the D4 gate, so only the explicit wildcard restores true relay
+  behavior. The D2/D3 relay legs moved to the
   same still-relaying routes in this lane, so every lane gates
   terminated-vs-relay again instead of terminated-vs-terminated.
+  Foreign credential classes (scoped/OIDC bearer, session/junk cookie)
+  on the story path meet the generic-relay key gate (dest 401, zero
+  core contact), restoring the pre-lane posture — pinned by
+  `TestD4StoryRelayLegOnGenericProxy`.
 
 ## Spec posture
 

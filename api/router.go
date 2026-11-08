@@ -358,8 +358,9 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern+"/", gated)
 	}
 	// D4 Native-next reads termination (Refs eshu-hq/eshu#9669): the
-	// 46 Native-next read routes register explicitly inside the D4 wave
-	// gate, ahead of the generic proxy. A valid shared key terminates
+	// 45 Native-next read routes register explicitly inside the D4 wave
+	// gate, ahead of the generic proxy. The repositories story GET stays
+	// on the generic relay (its fragment waits on the schema helper port). A valid shared key terminates
 	// on the native lane; a foreign credential class (scoped token,
 	// OIDC bearer, session cookie) relays explicitly on the relay lane
 	// so core judges it; credential-less callers — and junk-cookie
@@ -378,6 +379,19 @@ func (s *Server) routes() *http.ServeMux {
 		if !d4SlashSkip[pattern] {
 			mux.Handle(pattern+"/", gated)
 		}
+	}
+	// D4 story relay leg (Refs eshu-hq/eshu#9669): the reverted story
+	// GET rides the keyed generic-relay stack (RequireAuth + dispatch),
+	// registered explicitly ahead of the generic proxy. The explicit
+	// wildcard is load-bearing: the list route's slash twin above is a
+	// subtree that would otherwise swallow the story path back under
+	// the D4 gate, so only the explicit registration restores true
+	// relay behavior. The trailing-slash twin relays with it for the
+	// same never-split reason.
+	for _, pattern := range d4RelayLegs {
+		relayed := s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
+		mux.Handle(pattern, relayed)
+		mux.Handle(pattern+"/", relayed)
 	}
 	// D6 Status + SupplyChain reads termination (Refs
 	// eshu-hq/eshu#9669): the 29 pinned read routes register

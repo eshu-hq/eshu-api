@@ -15,7 +15,7 @@ import (
 // stats/coverage, freshness, evidence bundle, investigation workflows,
 // playbooks) and three line-verbatim subsets (evidence routes without
 // the dangling 501, the deployable-unit packet entry, the repository
-// routes without the mux-health and schema-interpolated story entries).
+// routes without the mux-health entry and the relay-leg story entry).
 // Byte identity of every ported line rides scripts/check-parity.sh;
 // these tests pin the served assembly around those bytes.
 //
@@ -131,17 +131,18 @@ func TestSpec_ServesD4Families(t *testing.T) {
 	}
 }
 
-// TestSpec_D4DisclosedOmissions pins the three documented spec gaps so
-// they cannot silently widen: the story key (schema-interpolated entry),
-// the admission-decisions 501 (dangling core $ref), and the relay-only
-// packets sharing the investigations file.
+// TestSpec_D4DisclosedOmissions pins the documented spec gaps so they
+// cannot silently widen: the story key (the route relays until its
+// schema-interpolated entry ports), the admission-decisions 501
+// (dangling core $ref), and the relay-only packets sharing the
+// investigations file.
 func TestSpec_D4DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
 	served := decodePaths(t, Spec())
 
 	if _, ok := served["/api/v0/repositories/{repo_id}/story"]; ok {
-		t.Errorf("served spec carries the story key, want it omitted until the schema helper ports as a component")
+		t.Errorf("served spec carries the story key, want it omitted while the route relays")
 	}
 	if _, ok := served["/health"]; ok {
 		t.Errorf("served spec carries the mux-health entry, want it core-side only (dest serves its own probe shape)")

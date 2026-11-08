@@ -23,7 +23,7 @@ import (
 
 // TestD4AuthorizerSharedKeyAllowDeny pins the family gate: the
 // shared-key identity allows, anything else denies. One shared
-// authorizer covers all 46 D4 wave routes until D8 resolves per-class
+// authorizer covers all 45 D4 wave routes until D8 resolves per-class
 // handling.
 func TestD4AuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()
@@ -117,7 +117,6 @@ func TestD4DenyBranchShapePinned(t *testing.T) {
 		{http.MethodGet, "/api/v0/repositories/repo_1/coverage"},
 		{http.MethodGet, "/api/v0/repositories/repo_1/freshness"},
 		{http.MethodGet, "/api/v0/repositories/repo_1/stats"},
-		{http.MethodGet, "/api/v0/repositories/repo_1/story"},
 		{http.MethodGet, "/api/v0/repositories/repo_1/tree"},
 		{http.MethodPost, "/api/v0/ecosystem/graph-summary"},
 		{http.MethodPost, "/api/v0/evidence/citations"},
@@ -128,8 +127,8 @@ func TestD4DenyBranchShapePinned(t *testing.T) {
 		{http.MethodPost, "/api/v0/relationships/catalog"},
 		{http.MethodPost, "/api/v0/relationships/edges"},
 	}
-	if len(cases) != 46 {
-		t.Fatalf("deny-shape cases = %d, want the 46 D4 wave routes", len(cases))
+	if len(cases) != 45 {
+		t.Fatalf("deny-shape cases = %d, want the 45 D4 wave routes (story rides the generic relay)", len(cases))
 	}
 	for _, tc := range cases {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
