@@ -25,6 +25,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D9 GitHub-login wave) | `8c2324693320c8f69ef3e8078c795956b549d7ad` (`origin/main` at the D9 GitHub lane base, a descendant of `40e88be1`; GitHubLoginAdmission v0 re-anchored byte-identical from the stale `1e034786` pin — re-anchor, no content change; satellite D9 GitHub wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
 | Source commit (D9 SAML-login wave) | `8c2324693320c8f69ef3e8078c795956b549d7ad` (unchanged from the D9 GitHub wave SHA: `git diff aac271ad..8c23246933` over the 5 SAML files is empty, arbiter verified; SAMLLoginAdmission v0 re-anchored byte-identical from the stale `aac271ad` pin — re-anchor, no content change; satellite D9 SAML wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
 | Source commit (Gap 02 trio pins) | `4a587431fdf748c0a231b60708131fbaa1f41064` (merge of `eshu-hq/eshu#10412`; DeltaUnionCompleteness, ReindexProgress, and SharedProjectionTuningReport read admissions v0, unwired-seam style: version constant plus frozen method-set/shape contract test per pin; the two whole-file OpenAPI ports and the tuning-report subset ship at the same merge) |
+| Source commit (Gap 04 Compare pin) | `3870181f323dbac84496efb87f7498b19afe1bf4` (merge of `eshu-hq/eshu#10425`; CompareReadAdmission v0, unwired-seam style: version constant + frozen method-set contract test; gap 04 deliberate later pin, arbiter review precedes satellite termination) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -58,6 +59,7 @@ preparation only; nothing here carries cutover authority.
 | `DeltaUnionCompletenessReadAdmissionContractVersion` | `v0` |
 | `ReindexProgressReadAdmissionContractVersion` | `v0` |
 | `SharedProjectionTuningReportContractVersion` | `v0` |
+| `CompareReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -111,6 +113,8 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/shared_projection_tuning_report_read_admission_contract_test.go` at `4a587431fd` | `contracts/upstream/shared_projection_tuning_report_read_admission_contract_test.go` | `ef5b390bf4885124d246fefdeaa651f8a653ce6989a7785fa5952df635c541c4` | verbatim |
 | `go/internal/query/admin/shared_projection_tuning_report_read_admission.go` at `4a587431fd` | `contracts/upstream/shared_projection_tuning_report_read_admission.go` | `c1cc1ed0a10e2bdddc05fa9ca7b11304ed883a9ee5953aa6a227e0b983744d39` | verbatim |
 | `go/internal/query/admin/delta_union_completeness_read_admission.go` (version, interface, `Check`, compile assertion) + `reindex_progress_read_admission.go` (version, alias) + `shared_projection_tuning_report_read_admission.go` (version, `Status`/`Detail` constants) + `handler.go` (tuning constants use) at `4a587431fd` | `contracts/upstream/admin-trio-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/compare/read_admission_contract_test.go` at `3870181f` | `contracts/upstream/compare_read_admission_contract_test.go` | `0a394ea8c3230c1bc978bc6c4f86d15b058805a607e3d63d60ec9ea6f0521b1a` | verbatim |
+| `go/internal/query/compare/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `3870181f` | `contracts/upstream/compare-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/delta_union_completeness.go` at `4a587431fd` | `openapi/paths/status/delta_union_completeness.go` | `c6bfd5a9c663d3c584ecb247798e1407ceb729531d4d5a61098d9114dd582520` | verbatim |
 | `go/internal/query/openapi/paths/status/reindex_progress.go` at `4a587431fd` | `openapi/paths/status/reindex_progress.go` | `d018e6d902873fd22a09a57959dd21124ce194b5c481ee93e9a262af06f10a88` | verbatim |
 | `go/internal/query/openapi/paths/status/admin.go` (the tuning-report entry only) at `4a587431fd` (admin.go is byte-identical at `7c605839` and `4a587431fd`) | `openapi/paths/status/admin_tuning_report.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim tuning-report subset) | verbatim subset |
