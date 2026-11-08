@@ -348,10 +348,23 @@ func (s *Server) routes() *http.ServeMux {
 	// credential-less callers — and junk-cookie carriers, per the D2
 	// follow-up lesson — get the standing 401. Each trailing-slash
 	// spelling stays on the wave route for the same never-split
-	// reason. The 3 unpinned Admin GETs (delta-union completeness,
-	// reindex progress, tuning-report) and every other family still
-	// cross their existing lanes.
+	// reason. The 3 Gap 02 Admin GETs (delta-union completeness,
+	// reindex progress, tuning-report) ride the trio registration
+	// below; every other family still crosses its existing lane.
 	for _, entry := range d3Wave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
+	// D3 Gap 02 trio termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#70): the three Gap 02-pinned Admin GETs register
+	// explicitly inside the same D3 wave gate, ahead of the generic
+	// proxy — same shared-key authorizer, same explicit-relay rule for
+	// foreign credential classes, same standing 401, same never-split
+	// trailing-slash rule. See api/d3trio_wave.go and
+	// contracts/d3-admin-reads.md.
+	for _, entry := range d3TrioWave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))
 		mux.Handle(pattern, gated)

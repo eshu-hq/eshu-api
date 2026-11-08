@@ -148,3 +148,32 @@ const GovernanceAuditReadAdmissionContractVersion = "v0"
 // terminate natively since the D3 lane (api/d3_wave.go); see
 // contracts/d3-admin-reads.md.
 const TerminalFailureReadAdmissionContractVersion = "v0"
+
+// DeltaUnionCompletenessReadAdmissionContractVersion names the
+// versioned admission-contract port for the delta-union completeness
+// read (GET /api/v0/admin/delta-union/completeness). It must move in
+// lockstep with the in-tree
+// DeltaUnionCompletenessReadAdmissionContractVersion; the vendored
+// pin lives in contracts/admin-trio-read-admission.md. Reads over
+// this port terminate natively since the Gap 02 trio lane
+// (api/d3trio_wave.go); see contracts/d3-admin-reads.md.
+const DeltaUnionCompletenessReadAdmissionContractVersion = "v0"
+
+// ReindexProgressReadAdmissionContractVersion names the versioned
+// admission-contract port for the reindex progress read (GET
+// /api/v0/admin/reindex/progress). It must move in lockstep with the
+// in-tree ReindexProgressReadAdmissionContractVersion; the vendored
+// pin lives in contracts/admin-trio-read-admission.md. Reads over
+// this port terminate natively since the Gap 02 trio lane
+// (api/d3trio_wave.go); see contracts/d3-admin-reads.md.
+const ReindexProgressReadAdmissionContractVersion = "v0"
+
+// SharedProjectionTuningReportContractVersion names the versioned
+// admission-contract shape for the static shared-projection tuning
+// report (GET /api/v0/admin/shared-projection/tuning-report). It must
+// move in lockstep with the in-tree
+// SharedProjectionTuningReportContractVersion; the vendored pin lives
+// in contracts/admin-trio-read-admission.md. Reads over this shape
+// terminate natively since the Gap 02 trio lane (api/d3trio_wave.go);
+// see contracts/d3-admin-reads.md.
+const SharedProjectionTuningReportContractVersion = "v0"

@@ -115,6 +115,9 @@ func specScopeMounted() []string {
 	for _, entry := range d3Wave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range d3TrioWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range d4Wave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -160,11 +163,15 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // implicitly, via the bijection below — the served operation count.
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
+//
+// Arithmetic (Gap 02 trio lane): 167 + 3 trio GETs = 170 mounted
+// (169 native + 1 explicit relay leg); the disclosed-absence count
+// stays 10 (the trio serve their spec entries, so no new absence).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 167 {
-		t.Fatalf("mounted operations = %d, want 167 (166 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 170 {
+		t.Fatalf("mounted operations = %d, want 170 (167 + 3 trio GETs = 169 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
 	if got := len(specScopeAbsent); got != 10 {
 		t.Fatalf("disclosed-absent operations = %d, want 10: each absence needs its disclosing contract", got)
@@ -172,7 +179,7 @@ func TestSpecScope_Frozen(t *testing.T) {
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (166 native + 1 explicit relay leg) has its served spec
+// API operation (169 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

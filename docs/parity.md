@@ -26,9 +26,10 @@ after the move.
   `contracts/admin-identity-admission.md`,
   `contracts/governance-audit-read-admission.md`, and
   `contracts/terminal-failure-admission.md`; the D3 scope (16 routes
-  across those four pins, minus the families D2 already terminated
-  and the 3 unpinned Admin GETs) terminates natively per
-  `contracts/d3-admin-reads.md`; the D4 scope (45 Native-next routes
+  across those four pins, minus the families D2 already terminated)
+  terminates natively per `contracts/d3-admin-reads.md`, including
+  the 3 formerly unpinned Admin GETs now frozen under the D3 trio
+  pins; the D4 scope (45 Native-next routes
   across CICD, Documentation, Infra, PackageRegistry, Repositories,
   Evidence, InvestigationWorkflows, and Playbooks — Compare deferred
   to D6, the story GET on the generic relay as a relay leg) terminates

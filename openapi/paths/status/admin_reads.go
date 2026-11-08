@@ -7,13 +7,14 @@ package status
 // keys are unique to the D3 lane: the six query POSTs (work-items,
 // decisions, dead-letters, input-invalid-facts, changed-since
 // poisoned-links, replay-events). The relay-only mutations and the 3
-// unpinned Admin GETs (delta-union completeness, reindex progress,
+// Gap 02 Admin GETs (delta-union completeness, reindex progress,
 // tuning-report) share the core source file but keep their own path
-// keys and stay on the generic relay with no admission pin, so this
-// fragment ports only the six lane entries — never a key the relay
-// still serves. The entries reference only the shared responses
-// (BadRequest, Forbidden, InternalError, ServiceUnavailable), so the
-// lane adds no schemas.
+// keys — the GETs are pinned and served by the trio lane
+// (delta_union_completeness.go, reindex_progress.go,
+// admin_tuning_report.go) — so this fragment ports only the six lane
+// entries, never a key another lane serves. The entries reference
+// only the shared responses (BadRequest, Forbidden, InternalError,
+// ServiceUnavailable), so the lane adds no schemas.
 //
 // Provenance: each payload line below is verbatim from the pinned core
 // file go/internal/query/openapi/paths/status/admin.go

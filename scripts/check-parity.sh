@@ -28,6 +28,7 @@ SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
 SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
 SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
+SRC_SHA_GAP02="4a587431fdf748c0a231b60708131fbaa1f41064"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -613,6 +614,50 @@ check_fragment_subset_named_at "$SRC_SHA_WAVE" "go/internal/query/openapi/paths/
   "709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a" \
   "AdminInvitations"
 
+# D3 Gap 02 trio (satellite eshu-hq/eshu-api#70, core eshu-hq/eshu#10412
+# merge 4a587431fd): the three versioned admission pins (unwired-seam
+# style — version constant plus frozen method-set/shape contract test
+# per pin), the two whole-file OpenAPI ports, and the tuning-report
+# line-verbatim subset. admin.go is byte-identical at the recovery pin
+# and the Gap 02 merge (same sha256), so the tuning gate pins that
+# same whole-file hash.
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/delta_union_completeness_read_admission.go" \
+  "contracts/upstream/delta_union_completeness_read_admission.go" \
+  "36ac5c63dd64c48a3985fd9645a70e3369908b2204d324eaae5ed0481e710c3e"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/delta_union_completeness_read_admission_contract_test.go" \
+  "contracts/upstream/delta_union_completeness_read_admission_contract_test.go" \
+  "dc6fdadc18352cec200e91f8c562e56345e336396c0b9aace560cfcd67996b61"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/reindex_progress_read_admission.go" \
+  "contracts/upstream/reindex_progress_read_admission.go" \
+  "dfdb95b3629722a488e60bf09f76c0dc02c7673905e1a5686ee1de908f520fba"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/reindex_progress_read_admission_contract_test.go" \
+  "contracts/upstream/reindex_progress_read_admission_contract_test.go" \
+  "990d173231923ae7f8789dccab296db9278c77b8cf1ca7cc4baf458d35c631a8"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/shared_projection_tuning_report_read_admission.go" \
+  "contracts/upstream/shared_projection_tuning_report_read_admission.go" \
+  "c1cc1ed0a10e2bdddc05fa9ca7b11304ed883a9ee5953aa6a227e0b983744d39"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/admin/shared_projection_tuning_report_read_admission_contract_test.go" \
+  "contracts/upstream/shared_projection_tuning_report_read_admission_contract_test.go" \
+  "ef5b390bf4885124d246fefdeaa651f8a653ce6989a7785fa5952df635c541c4"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/openapi/paths/status/delta_union_completeness.go" \
+  "openapi/paths/status/delta_union_completeness.go" \
+  "c6bfd5a9c663d3c584ecb247798e1407ceb729531d4d5a61098d9114dd582520"
+
+check_file_at "$SRC_SHA_GAP02" "go/internal/query/openapi/paths/status/reindex_progress.go" \
+  "openapi/paths/status/reindex_progress.go" \
+  "d018e6d902873fd22a09a57959dd21124ce194b5c481ee93e9a262af06f10a88"
+
+check_fragment_subset_named_at "$SRC_SHA_GAP02" "go/internal/query/openapi/paths/status/admin.go" \
+  "openapi/paths/status/admin_tuning_report.go" \
+  "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
+  "AdminTuningReport"
+
 # D4 Native-next wave (Decision 5(c)): the CICD, Documentation, Infra,
 # PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 # Playbooks fragments are byte-identical ports (whole-file) or
@@ -1172,6 +1217,12 @@ check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/admin-identity-read-wire-shap
 check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/terminal-failure-read-wire-shapes.txt" \
   "go/internal/query/admin/acknowledgement/terminal_failure_read_admission.go"
 
+check_excerpt_at "$SRC_SHA_GAP02" "contracts/upstream/admin-trio-read-wire-shapes.txt" \
+  "go/internal/query/admin/delta_union_completeness_read_admission.go" \
+  "go/internal/query/admin/reindex_progress_read_admission.go" \
+  "go/internal/query/admin/shared_projection_tuning_report_read_admission.go" \
+  "go/internal/query/admin/handler.go"
+
 check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/status-read-wire-shapes.txt" \
   "go/internal/status/read_admission.go" \
   "go/internal/status/report.go"
@@ -1198,6 +1249,9 @@ grep -qF 'AdminReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upst
 grep -qF 'AdminIdentityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
 grep -qF 'GovernanceAuditReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
 grep -qF 'TerminalFailureReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terminal-failure-read-wire-shapes.txt"
+grep -qF 'DeltaUnionCompletenessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
+grep -qF 'ReindexProgressReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
+grep -qF 'SharedProjectionTuningReportContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'SessionResolverAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"

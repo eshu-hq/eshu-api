@@ -45,8 +45,12 @@ family authorizer, byte-parity dispatch/conformance proof vs the
 relayed reference, and the line-verbatim spec subset
 (`openapi/paths/status/admin_reads.go`, gated byte-identical by
 `scripts/check-parity.sh`). See `contracts/d3-admin-reads.md` for the
-termination record and rollback. The 3 unpinned Admin GETs stay relay:
-their readers carry no versioned pin.
+termination record and rollback. The 3 Gap 02 Admin GETs
+(`delta-union/completeness`, `reindex/progress`,
+`shared-projection/tuning-report`) terminate separately since the
+Gap 02 trio lane (`api/d3trio_wave.go`) under the trio pins in
+`contracts/admin-trio-read-admission.md` — this record claims no
+`ReadStore` coverage for them.
 
 ## Enforcement
 

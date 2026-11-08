@@ -29,11 +29,11 @@ import (
 //   - AdminReadAdmission v0 (family admin): the 6 query POSTs served
 //     through ReadStore (work items, dead letters, input-invalid
 //     facts, poisoned links, replay events, decisions + decision
-//     evidence). The 3 Admin GETs (delta-union completeness,
-//     reindex progress, shared-projection tuning-report) stay relay:
-//     their readers (DeltaUnionCompletenessChecker,
-//     ReindexProgressReader, the static tuning report) carry no
-//     versioned pin, and the minting rule admits no blanket pins.
+//     evidence). The 3 Gap 02 Admin GETs (delta-union completeness,
+//     reindex progress, shared-projection tuning-report) are out of
+//     this wave's scope: the trio lane in api/d3trio_wave.go
+//     terminates them under the separate Gap 02 pins (no D1
+//     ReadStore claim).
 //   - AdminIdentityReadAdmission v0 (family admin_identity): the 6
 //     tenant-scoped identity GETs (api-tokens, idp-group-mappings,
 //     idp-providers, role-assignments, roles, local invitations).

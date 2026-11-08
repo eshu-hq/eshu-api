@@ -1,27 +1,45 @@
 # D3 admin/identity/recovery reads termination contract
 
 Versioned read-termination record for the D3 wave (Refs
-`eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`). This lane terminates
-the 16 D1-pinned read routes natively against the D0-proven
-terminated transport: dest owns the route (caller gate, family
-authorizer, response mapping) and calls the versioned core read API as
-its port transport. Dest holds no table or queue handle; authz stays
-atomic core-side.
+`eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`, plus the Gap 02
+follow-up for satellite `eshu-hq/eshu-api#70`). This lane terminates
+the 16 D1-pinned read routes plus the 3 Gap 02-pinned Admin GETs
+natively against the D0-proven terminated transport: dest owns the
+route (caller gate, family authorizer, response mapping) and calls
+the versioned core read API as its port transport. Dest holds no
+table or queue handle; authz stays atomic core-side. The trio lane
+claims no D1 `ReadStore` coverage for the three GETs — their pins
+live in `contracts/admin-trio-read-admission.md`.
 
 Scope source: `go/cmd/api/CUTOVER_OWNERSHIP.md` at the D2 lane base
 plus the four D1 pins recorded in `contracts/admin-read-admission.md`,
 `contracts/admin-identity-admission.md`,
 `contracts/governance-audit-read-admission.md`, and
-`contracts/terminal-failure-admission.md` — no guessing. Excluded and
+`contracts/terminal-failure-admission.md`, plus the three Gap 02 pins
+recorded in `contracts/admin-trio-read-admission.md` (core
+`eshu-hq/eshu#10412`, merge `4a587431fd`) — no guessing. Excluded and
 staying relay (disclosed, not silent):
 
-- the 3 Admin GETs (`delta-union/completeness`, `reindex/progress`,
-  `shared-projection/tuning-report`): their readers carry no
-  versioned pin (`DeltaUnionCompletenessChecker`,
-  `ReindexProgressReader`, the static tuning report), and the minting
-  rule admits no blanket pins;
 - the families D2 already terminated (provider-config reads, admin
   sign-in-policy).
+
+Terminated since the Gap 02 trio lane (no longer relay):
+
+- the 3 Admin GETs (`delta-union/completeness`,
+  `reindex/progress`, `shared-projection/tuning-report`): pinned by
+  `DeltaUnionCompletenessReadAdmission v0` (`Check`),
+  `ReindexProgressReadAdmission v0` (the 3-method alias), and
+  `SharedProjectionTuningReport v0` (the pinned `status`/`detail`
+  constants the handler serves), all recorded byte-identical. Proof:
+  the trio wave table (`api/d3trio_wave.go`), the same D3 wave gate
+  and family authorizer with deny-shape tests
+  (`api/d3trio_conformance_test.go`, `api/d3trio_auth_test.go`),
+  byte-parity dispatch/conformance proof vs the relayed reference
+  (`api/d3trio_parity_test.go`), per-route latency
+  (`api/d3trio_latency_test.go`, `docs/d3-latency.md`), and the
+  line-verbatim spec entries (`openapi/paths/status/`
+  `delta_union_completeness.go`, `reindex_progress.go`,
+  `admin_tuning_report.go`).
 
 ## Status
 
@@ -78,6 +96,7 @@ for that day and unreachable on live routes.
 | Family | Routes | Serve | Authorizer note |
 | --- | --- | --- | --- |
 | Admin | 6 POSTs (`admin/work-items/query`, `decisions/query`, `dead-letters/query`, `input-invalid-facts/query`, `changed-since/poisoned-links/query`, `replay-events/query`) | wave-gated terminate / relay-explicit | shared-key allow (AdminReadAdmission v0) |
+| Admin (Gap 02 trio) | 3 GETs (`admin/delta-union/completeness`, `admin/reindex/progress`, `admin/shared-projection/tuning-report`) | wave-gated terminate / relay-explicit | shared-key allow (Gap 02 pins v0, no D1 ReadStore claim) |
 | AdminIdentity | 6 GETs (`auth/admin/api-tokens`, `idp-group-mappings`, `idp-providers`, `role-assignments`, `roles`, `auth/local/invitations`) | wave-gated terminate / relay-explicit | shared-key allow (AdminIdentityReadAdmission v0) |
 | GovernanceAudit | 2 GETs (`auth/admin/audit/events`, `audit/summary`) | wave-gated terminate / relay-explicit | shared-key allow (GovernanceAuditReadAdmission v0) |
 | TerminalFailure | 2 POSTs (`admin/collector-failures/query`, `acknowledgements/query`) | wave-gated terminate / relay-explicit | shared-key allow (TerminalFailureReadAdmission v0) |
@@ -93,8 +112,11 @@ Known divergences (disclosed, not hidden):
 - The served `openapi.json` carries the invitations path key get-only:
   the create POST sharing the key stays relay until D8, so the served
   entry documents the landed method only. D8 merges the POST.
-- The 3 unpinned Admin GETs keep their own path keys out of the D3
-  fragment and stay relay; the served spec has no entry for them.
+- The 3 Gap 02 Admin GETs keep their own fragment keys
+  (`delta_union_completeness.go`, `reindex_progress.go`,
+  `admin_tuning_report.go` — the D3 AdminReads fragment still
+  carries only the six query POSTs); no served key duplicates a
+  relayed route.
 - Unconfigured origin answers the permanent local 503 on terminated
   routes where core nil-safe handlers would answer zero-defaults —
   the standing fail-closed rule, uniform across native lanes.
