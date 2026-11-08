@@ -1,0 +1,48 @@
+// StatusExtraReadAdmissionContractVersion versions the #9669 D6
+// admission-contract shape for the extra-port Status family reads:
+// the bounded LiveActivity read and the retirement-summary read
+// behind the index-status payload. Canonical reads persist through
+// explicit core-owned admission contracts:
+// eshu-api keeps the HTTP shape and calls this versioned port, which
+// the core-owned Postgres stores satisfy. A breaking change to the
+// read shape fails the frozen method-set test until that list is
+// deliberately updated; bump this version alongside (manually — the
+// bump is convention, the frozen list is the enforcement) so dest
+// consumers can pin the shape.
+const StatusExtraReadAdmissionContractVersion = "v0"
+
+// StatusExtraReadAdmission is the versioned admission-contract port
+// the API handler depends on instead of direct store handles. It
+// embeds the narrow family-scoped reader ports behind the six
+// extra-port Status aspects, so the boundary is identity-verified by
+// the frozen contract test rather than a parallel hand-maintained
+// shape; it will back the eshu-api extraction handoff for these
+// aspects. The seam is read-only on purpose: every embedded port
+// carries bounded snapshot/summary reads and no mutation surface, so
+// a dest consumer implementing only this contract can serve these
+// aspects but cannot acquire a write it did not bargain for through
+// it.
+//
+// D-wave consumer: D6 (Status + SupplyChain reads, per the arbiter
+// D-wave ruling on #9669, gaps 03+04 follow-up). The satellite
+// records this pin in a follow-up; a satellite PR consuming an
+// unminted pin is invalid. Arbiter review of this pin precedes
+// satellite termination of the aspects below.
+//
+// In scope (each aspect's extra leg admits through exactly this):
+//
+//   - GET /api/v0/status/operations admits its live-activity leg
+//     through LiveActivityReader.ReadLiveActivity, the bounded,
+//     separately-queried in-flight work-item read model.
+//   - GET /api/v0/index-status and GET /api/v0/status/index admit
+//     their retirements leg through
+//     status.IndexRetirementReader.ReadRetirementSummary, the
+//     tombstone aggregate behind the repository_retirements block.
+//
+// Rollback: revert this pin. The seam is unwired — no handler,
+// route, or caller depends on it yet — so rollback moves no traffic
+// and changes no data.
+type StatusExtraReadAdmission interface {
+	LiveActivityReader
+	status.IndexRetirementReader
+}

@@ -32,23 +32,26 @@ import (
 // pattern as TestCoreReadContractsVersioned. The want table is the
 // verbatim ownership-map rows (method, path, family) plus the
 // satellite serve kind and the Decision 5(c) fragment that carries the
-// route's spec entry. Relayed rows (extra-port Status aspects, the
-// impact packet, Compare, the suppressions mutation) are NOT in this
-// table; contracts/d6-status-supplychain.md discloses each with its
-// reason.
+// route's spec entry. Still-relayed rows (the remaining extra-port
+// Status aspects, the impact packet, Compare, the suppressions
+// mutation) are NOT in this table;
+// contracts/d6-status-supplychain.md discloses each with its reason.
 func TestD6WaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
 		"GET /api/v0/collector-readiness status gated paths/status/collector_readiness.go",
 		"GET /api/v0/collectors status gated paths/status/status_reads.go",
+		"GET /api/v0/index-status status gated paths/status/status_extra_reads.go",
 		"GET /api/v0/ingesters status gated paths/status/status_reads.go",
 		"GET /api/v0/ingesters/{ingester} status gated paths/status/status_reads.go",
 		"GET /api/v0/status/collector-readiness status gated paths/status/collector_readiness.go",
 		"GET /api/v0/status/collectors status gated paths/status/status_reads.go",
 		"GET /api/v0/status/freshness-causality status gated paths/freshness/causality.go",
+		"GET /api/v0/status/index status gated paths/status/status_extra_reads.go",
 		"GET /api/v0/status/ingesters status gated paths/status/status_reads.go",
 		"GET /api/v0/status/ingesters/{ingester} status gated paths/status/status_reads.go",
+		"GET /api/v0/status/operations status gated paths/status/operations.go",
 		"GET /api/v0/status/operator-control-plane status gated paths/status/operator_control_plane.go",
 		"GET /api/v0/status/pipeline status gated paths/status/status_reads.go",
 		"GET /api/v0/status/semantic-extraction status gated paths/status/semantic.go",
@@ -95,11 +98,14 @@ var d6ConcretePaths = map[string]string{
 	"GET /api/v0/collectors":                                             "/api/v0/collectors",
 	"GET /api/v0/ingesters":                                              "/api/v0/ingesters",
 	"GET /api/v0/ingesters/{ingester}":                                   "/api/v0/ingesters/repository",
+	"GET /api/v0/index-status":                                           "/api/v0/index-status",
 	"GET /api/v0/status/collector-readiness":                             "/api/v0/status/collector-readiness",
 	"GET /api/v0/status/collectors":                                      "/api/v0/status/collectors",
 	"GET /api/v0/status/freshness-causality":                             "/api/v0/status/freshness-causality",
 	"GET /api/v0/status/ingesters":                                       "/api/v0/status/ingesters",
 	"GET /api/v0/status/ingesters/{ingester}":                            "/api/v0/status/ingesters/repository",
+	"GET /api/v0/status/index":                                           "/api/v0/status/index",
+	"GET /api/v0/status/operations":                                      "/api/v0/status/operations",
 	"GET /api/v0/status/operator-control-plane":                          "/api/v0/status/operator-control-plane",
 	"GET /api/v0/status/pipeline":                                        "/api/v0/status/pipeline",
 	"GET /api/v0/status/semantic-extraction":                             "/api/v0/status/semantic-extraction",
@@ -204,10 +210,7 @@ func TestD6RelayedRoutesStayRelay(t *testing.T) {
 		path   string
 		body   string
 	}{
-		{http.MethodGet, "/api/v0/index-status", ""},
-		{http.MethodGet, "/api/v0/status/index", ""},
 		{http.MethodGet, "/api/v0/status/governance", ""},
-		{http.MethodGet, "/api/v0/status/operations", ""},
 		{http.MethodGet, "/api/v0/status/answer-narration", ""},
 		{http.MethodGet, "/api/v0/status/hosted-readiness", ""},
 		{http.MethodGet, "/api/v0/investigations/supply-chain/impact/packet", ""},

@@ -410,7 +410,7 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern+"/", relayed)
 	}
 	// D6 Status + SupplyChain reads termination (Refs
-	// eshu-hq/eshu#9669): the 29 pinned read routes register
+	// eshu-hq/eshu#9669): the 32 pinned read routes register
 	// explicitly inside the D6 wave gate, ahead of the generic proxy.
 	// A valid shared key terminates on the native lane; a foreign
 	// credential class (scoped token, OIDC bearer, session cookie)
@@ -418,9 +418,11 @@ func (s *Server) routes() *http.ServeMux {
 	// credential-less callers — and junk-cookie carriers, per the D2
 	// follow-up lesson — get the standing 401. Each trailing-slash
 	// spelling stays on the wave route for the same never-split
-	// reason. The extra-port Status aspects (index, governance,
-	// operations, answer-narration, hosted-readiness), the impact
-	// packet, Compare, and the suppressions mutation still cross
+	// reason. The phase-2 extra-port Status legs (index-status,
+	// status/index, status/operations, behind StatusExtraReadAdmission
+	// v0) terminate in this lane; the remaining extra-port Status
+	// aspects (governance, answer-narration, hosted-readiness), the
+	// impact packet, Compare, and the suppressions mutation still cross
 	// their existing lanes — the pins do not cover them and nobody
 	// infers them into this lane.
 	for _, entry := range d6Wave {

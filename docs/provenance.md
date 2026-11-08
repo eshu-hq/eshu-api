@@ -18,6 +18,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D1 read pins) | `2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923` (merge of `eshu-hq/eshu#10259`; Admin, AdminIdentity, GovernanceAudit, and TerminalFailure read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
 | Source commit (D2 Leaf B wave) | `17feac86e089a6da208fe6c93b5d89b8fb7ef3cc` (`origin/main` at the D2 lane base; wave fragments, doc-UI shells, and wave components entries, frozen at v0; the D4 Native-next fragments and components entries reuse this pin — every D4 file is byte-identical there and at `origin/main`, so no new source pin is minted) |
 | Source commit (D6 read pins) | `6b66e6b23efe226970b4571c955aed1dc42f987a` (merge of `eshu-hq/eshu#10303`; Status and SupplyChain read admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin) |
+| Source commit (D6 phase-2 extra-port pin) | `0ab602df5cda205dc326a44fae02c383c5a653b3` (merge of `eshu-hq/eshu#10405`; StatusExtra read admission v0, unwired-seam style: version constant + embedded reader ports + frozen method-set test; gap 03 phase 2) |
 | Source commit (D7 admin-four pins) | `19de7346d11a184bf88d8f307b5d7a9ced0a4657` (merge of `eshu-hq/eshu#10312`; Backfill, DeadLetter, Reindex, and Skip admissions v0, unwired-seam style: version constant + narrow port + frozen method-set test per pin; arbiter APPROVED-WITH-CONDITIONS) |
 | Source commit (D8 session-resolver pins) | `91f2df28dbe9e64ecf5812c5f89a76475a304d84` (merge of `eshu-hq/eshu#10317`; SessionResolver, BrowserSession, LocalIdentity, and APIToken admissions v0, unwired-seam style: version constant + admission alias + frozen method-set test per pin; satellite D8 wave arbiter APPROVED-WITH-CONDITIONS) |
 | Source commit (D9 OIDC-login wave) | `40e88be128ca876f7333588137af5a780bf31b93` (`origin/main` at the D9 OIDC lane base, a descendant of `91f2df28db`; OIDCLoginAdmission v0 re-anchored byte-identical from the stale `1e034786` pin — re-anchor, no content change; satellite D9 OIDC wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
@@ -45,6 +46,7 @@ preparation only; nothing here carries cutover authority.
 | `TerminalFailureReadAdmissionContractVersion` | `v0` |
 | `StatusReadAdmissionContractVersion` | `v0` |
 | `SupplyChainReadAdmissionContractVersion` | `v0` |
+| `StatusExtraReadAdmissionContractVersion` | `v0` |
 | `BackfillAdmissionContractVersion` | `v0` |
 | `DeadLetterAdmissionContractVersion` | `v0` |
 | `ReindexAdmissionContractVersion` | `v0` |
@@ -130,6 +132,7 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/openapi/spec.go` (swaggerUIHTML, redocHTML shells only) at `17feac86e089` | `api/leafb_terminate.go` (leafbSwaggerUIShell, leafbReDocShell consts) | block-identical (whole-shell compare, see `check_docui_shell_at`) | verbatim subset |
 | `go/internal/status/read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/status_read_admission_contract_test.go` | `83f8a4a15c24aa93c3d82dc14da1880470be58301aeac10f4944f28f57a90233` | verbatim |
 | `go/internal/query/supply/chain/supply_read_admission_contract_test.go` at `6b66e6b2` | `contracts/upstream/supply_read_admission_contract_test.go` | `8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367` | verbatim |
+| `go/internal/query/status_extra_read_admission_contract_test.go` at `0ab602df5c` | `contracts/upstream/status_extra_read_admission_contract_test.go` | `12615d35aebc9ef4e436a0ee616915ed584ab848602ddf62adf554acd15368d7` | verbatim |
 | `go/internal/query/admin/backfill_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/backfill_admission_contract_test.go` | `50fb9462a3aa2d4869bf43cab7e8af69a92dc5a7a9625339fd6b86be34b5efbe` | verbatim |
 | `go/internal/query/admin/dead_letter_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/dead_letter_admission_contract_test.go` | `9c583e7ce8c06384b8c6642f1fea0c1d4581b40d84ca7dae3f94f2f192a56ddb` | verbatim |
 | `go/internal/query/admin/reindex_admission_contract_test.go` at `19de7346d1` | `contracts/upstream/reindex_admission_contract_test.go` | `061092ea83a6447af59298e3df5d49ff7878eff0df72bc43e3b7c8fafef44767` | verbatim |
@@ -156,11 +159,14 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/openapi/paths/status/admin.go` (the four admin-four entries only) at `19de7346d1` | `openapi/paths/status/admin_d7.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim AdminD7 subset) | verbatim subset |
 | `go/internal/status/read_admission.go` (version, alias) + `go/internal/status/report.go` (`Reader`) at `6b66e6b2` | `contracts/upstream/status-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/supply/chain/supply_read_admission.go` (version, embedded ports) at `6b66e6b2` | `contracts/upstream/supply-chain-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/status_extra_read_admission.go` (version, embedded ports, in-scope legs, rollback) at `0ab602df5c` | `contracts/upstream/status-extra-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/collector_readiness.go` at `6b66e6b2` | `openapi/paths/status/collector_readiness.go` | `12f2e23ec324531f83c960eb9dc429c1da11f749cdce000e14b659d476da6f2f` | verbatim |
 | `go/internal/query/openapi/paths/status/operator_control_plane.go` at `6b66e6b2` | `openapi/paths/status/operator_control_plane.go` | `fc58c514a42d02b56bd879f1b74678c3ee3c494bf8be49ef129525abda0f28c9` | verbatim |
 | `go/internal/query/openapi/paths/status/semantic.go` at `6b66e6b2` | `openapi/paths/status/semantic.go` | `c50a5391e3d765cdf3d40f9999eae33ffa1e1a299df455f81903af63272578da` | verbatim |
 | `go/internal/query/openapi/paths/freshness/causality.go` at `6b66e6b2` | `openapi/paths/freshness/causality.go` | `6409c05ee4b9c5078a7acabb12c3b783a297e2505a316f9b71d3bb2db5b0d3c2` | verbatim |
 | `go/internal/query/openapi/paths/status/routes.go` (the seven lane entries only) at `6b66e6b2` | `openapi/paths/status/status_reads.go` | `24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61` (whole file; this fragment is the line-verbatim StatusReads subset) | verbatim subset |
+| `go/internal/query/openapi/paths/status/operations.go` at `0ab602df5c` | `openapi/paths/status/operations.go` | `77ed558672a1d1ad54671388721704c539df5567ae45118e7e16cce1c029b5f8` | verbatim |
+| `go/internal/query/openapi/paths/status/routes.go` (the two index entries only) at `0ab602df5c` | `openapi/paths/status/status_extra_reads.go` | `24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61` (whole file; this fragment is the line-verbatim StatusExtraReads subset) | verbatim subset |
 | `go/internal/query/openapi/paths/supply/chain/runtime_context.go` at `6b66e6b2` | `openapi/paths/supply/chain/runtime_context.go` | `ec83120edab5d9b4d75622cc748d24c8f88f06036f8bc23e377a8b9830e6b83b` | verbatim |
 | `go/internal/query/openapi/paths/supply/chain/advisory_catalog.go` at `6b66e6b2` | `openapi/paths/supply/chain/advisory_catalog.go` | `2316253e4c20862081a21778f2c6619bb4e1e35ba63de7c603a8b4069e122d3b` | verbatim |
 | `go/internal/query/openapi/paths/supply/chain/advisory_evidence.go` at `6b66e6b2` | `openapi/paths/supply/chain/advisory_evidence.go` | `4a69d35575e23d8e8f7ed4453dbbd14c453688579e1f8edb320e35d74609d212` | verbatim |

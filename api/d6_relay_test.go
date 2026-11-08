@@ -164,10 +164,7 @@ func TestD6RelayedRoutesCarryRelayLane(t *testing.T) {
 	t.Parallel()
 
 	relayed := []string{
-		"/api/v0/index-status",
-		"/api/v0/status/index",
 		"/api/v0/status/governance",
-		"/api/v0/status/operations",
 		"/api/v0/status/answer-narration",
 		"/api/v0/status/hosted-readiness",
 		"/api/v0/investigations/supply-chain/impact/packet",

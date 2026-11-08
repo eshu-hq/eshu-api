@@ -10,19 +10,22 @@
 # pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs on every PR and in CI.
 #
-# Method: go test benchmarks BenchmarkD6TerminatedRead vs
+# Method: go test benchmarks BenchmarkD6TerminatedRead and
+# BenchmarkD6ExtraTerminatedRead (phase-2 extra-port legs) vs
 # BenchmarkD6RelayRead (api package), -count=5, take the median
 # ns/op. FAIL when terminated exceeds relay by more than 50% on any
-# leg (generous: both legs do one server-side fetch, so any real
+# leg (generous: every leg does one server-side fetch, so any real
 # pathology — a double fetch, a retry, a body re-read — exceeds it
 # loudly while scheduling noise does not).
 #
 # Relay-route disclosure (the D6 wave terminates no earlier relay
-# leg): terminated GET /api/v0/status/pipeline and terminated GET
-# /api/v0/supply-chain/impact/findings vs relay GET
-# /api/v0/dependencies. The D2-D4 relay legs moved to the same
-# still-relaying route in this lane, so every lane gates
-# terminated-vs-relay again instead of terminated-vs-terminated.
+# leg): terminated GET /api/v0/status/pipeline, terminated GET
+# /api/v0/supply-chain/impact/findings, and the phase-2 terminated
+# GET /api/v0/status/operations, GET /api/v0/index-status, and GET
+# /api/v0/status/index vs relay GET /api/v0/dependencies. The D2-D4
+# relay legs moved to the same still-relaying route in this lane, so
+# every lane gates terminated-vs-relay again instead of
+# terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-d6-latency.sh
 # Needs: go (version in go.mod).
@@ -59,9 +62,15 @@ check_leg() {
 
 term_status="$(bench 'BenchmarkD6TerminatedRead/status' | median)"
 term_supply="$(bench 'BenchmarkD6TerminatedRead/supply' | median)"
+term_operations="$(bench 'BenchmarkD6ExtraTerminatedRead/operations' | median)"
+term_index_status="$(bench 'BenchmarkD6ExtraTerminatedRead/index-status' | median)"
+term_status_index="$(bench 'BenchmarkD6ExtraTerminatedRead/status-index' | median)"
 relay_get="$(bench 'BenchmarkD6RelayRead/get' | median)"
 
 check_leg status "$term_status" "$relay_get"
 check_leg supply "$term_supply" "$relay_get"
+check_leg extra-operations "$term_operations" "$relay_get"
+check_leg extra-index-status "$term_index_status" "$relay_get"
+check_leg extra-status-index "$term_status_index" "$relay_get"
 
 echo "d6-latency: all legs within budget"
