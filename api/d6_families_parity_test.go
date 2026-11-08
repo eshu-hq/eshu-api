@@ -24,16 +24,23 @@ import (
 // include_suppressed, provider_state, reconciliation_status): parity
 // must exercise suppression-state filtering or the split is unproven,
 // so the matrix drives those queries through the native lane and
-// TestD6SuppressionFiltersForwarded pins they arrive intact.
+// TestD6SuppressionFiltersForwarded pins they arrive intact. The two
+// operations entries pin the phase-2 live-activity leg with and
+// without its limit query; the index entries pin the phase-2
+// retirements leg on both spellings.
 var d6ParityRoutes = []string{
 	"/api/v0/collector-readiness",
 	"/api/v0/collectors",
+	"/api/v0/index-status",
 	"/api/v0/ingesters",
 	"/api/v0/ingesters/repository",
 	"/api/v0/status/collector-readiness",
 	"/api/v0/status/collectors",
 	"/api/v0/status/freshness-causality",
+	"/api/v0/status/index",
 	"/api/v0/status/ingesters/repository",
+	"/api/v0/status/operations",
+	"/api/v0/status/operations?limit=10",
 	"/api/v0/status/operator-control-plane",
 	"/api/v0/status/pipeline",
 	"/api/v0/status/semantic-extraction",

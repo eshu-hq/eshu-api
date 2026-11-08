@@ -2,6 +2,10 @@
 // Copyright (c) 2025-2026 eshu-hq
 
 // Package status holds the ported OpenAPI path fragments for the
+// D6 phase-2 extra-port Status legs: GET /api/v0/status/operations
+// (Operations, a whole-file byte-identical port) and GET
+// /api/v0/status/index plus GET /api/v0/index-status (StatusExtraReads,
+// a line-verbatim subset of the pinned core routes file); the
 // admin-retirement family: POST /api/v0/admin/repository-retirements
 // (RepositoryRetirement); the terminal-failure family: the
 // acknowledgement POST and its two query POSTs under
@@ -19,9 +23,10 @@
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other
-// way around. Each fragment file is a byte-identical port of the pinned
-// core source (see scripts/check-parity.sh); keep fragments in lockstep
-// with their handlers and contracts/retirement-admission.md,
+// way around. Each fragment file is a byte-identical port or a
+// line-verbatim subset of the pinned core source (see
+// scripts/check-parity.sh); keep fragments in lockstep with their
+// handlers and contracts/retirement-admission.md,
 // contracts/terminal-failure-admission.md,
 // contracts/recovery-admission.md, and contracts/d7-admin-four.md.
 package status

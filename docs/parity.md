@@ -36,11 +36,13 @@ after the move.
   natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
-  SupplyChain read GETs, with the extra-port Status aspects, the
-  impact packet, Compare, and the suppressions mutation row staying
-  relay by disclosure) terminates natively per
+  SupplyChain read GETs plus the 3 phase-2 extra-port Status legs, with
+  the remaining extra-port Status aspects, the impact packet, Compare,
+  and the suppressions mutation row staying relay by disclosure)
+  terminates natively per
   `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
-  v0` and `SupplyChainReadAdmission v0` port transports; and the rest
+  v0`, `SupplyChainReadAdmission v0`, and (phase 2)
+  `StatusExtraReadAdmission v0` port transports; and the rest
   stay on the generic relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
@@ -110,9 +112,10 @@ after the move.
   ActiveWorkSource schemas, and the GatewayTimeout response the wave
   entries reference,
   and the D6 Status + SupplyChain reads wave: the status reads, status
-  collector-readiness, operator-control-plane, semantic-extraction, and
-  freshness causality entries (one line-verbatim status subset plus
-  four whole-file ports), the supply-chain advisory, container-image,
+  extra reads, operations, status collector-readiness,
+  operator-control-plane, semantic-extraction, and freshness causality
+  entries (two line-verbatim status subsets plus five whole-file ports),
+  the supply-chain advisory, container-image,
   impact aggregate, SBOM, security-alert, and vulnerability-scanner
   contract entries (ten whole-file ports plus the runtime-context
   sibling), and the impact findings and impact explain entries (two
@@ -182,28 +185,32 @@ arbiter re-reviews the D0 evidence (blocker B1).
 
 ## Native termination (D6)
 
-The 29 pinned Status + SupplyChain read routes (12 snapshot-pure
-Status GETs, 17 SupplyChain read GETs) terminate natively per
+The 32 pinned Status + SupplyChain read routes (12 snapshot-pure
+Status GETs, 17 SupplyChain read GETs, plus the 3 phase-2 extra-port
+Status legs) terminate natively per
 `contracts/d6-status-supplychain.md`: explicit gated routes ahead of
 the generic relay, the shared-key family authorizer with the
 documented deny shape, byte-parity dispatch/conformance proof vs the
 relayed reference, extended `viaNative`/`viaRelay` telemetry, and the
 satellite-owned read-latency gate (`docs/d6-latency.md` with the
 relay-route disclosure). The transport pins are `StatusReadAdmission
-v0` (aliases `status.Reader`, 2 methods) and `SupplyChainReadAdmission
-v0` (embeds the 17 family-owned reader ports, 23 methods). Decision 2
-stays a proven split: parity exercises suppression-state filtering
-(`suppression_state`, `include_suppressed`, `provider_state`,
-`reconciliation_status`), and the suppressions mutation row stays the
-Never-satellite survivor via SuppressionAdmission. Divergences stay
-disclosed in the contract: the six extra-port Status aspects (index,
-governance, operations, answer-narration, hosted-readiness) stay
-relay with per-route reasons, the impact packet stays relay (writer
-responder plus shared ports), Compare stays relay for its deliberate
-later pin, the status reads fragment ports only the seven lane keys,
-and the D2-D4 relay legs moved to the still-relaying dependencies
-route. Termination claims stay provisional until the arbiter
-re-reviews the D0 evidence (blocker B1).
+v0` (aliases `status.Reader`, 2 methods), `SupplyChainReadAdmission
+v0` (embeds the 17 family-owned reader ports, 23 methods), and
+`StatusExtraReadAdmission v0` (embeds the LiveActivity and retirement
+readers, 2 methods). Decision 2 stays a proven split: parity exercises
+suppression-state filtering (`suppression_state`,
+`include_suppressed`, `provider_state`, `reconciliation_status`), and
+the suppressions mutation row stays the Never-satellite survivor via
+SuppressionAdmission. Divergences stay disclosed in the contract: the
+three remaining extra-port Status aspects (governance,
+answer-narration, hosted-readiness) stay relay with per-route reasons,
+the impact packet stays relay (writer responder plus shared ports),
+Compare stays relay for its deliberate later pin, the status reads
+fragment ports only the seven snapshot lane keys (the phase-2 index
+and operations keys ride their own fragments), and the D2-D4 relay
+legs moved to the still-relaying dependencies route. Termination
+claims stay provisional until the arbiter re-reviews the D0 evidence
+(blocker B1).
 
 ## Tier-C dispatch clones (D7)
 

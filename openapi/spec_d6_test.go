@@ -8,19 +8,21 @@ import (
 )
 
 // D6 Status + SupplyChain reads spec proof (Refs eshu-hq/eshu#9669,
-// part of #6707). The D6 lane ports eighteen fragments into the served
-// document: eleven whole-file byte-identical ports (status collector
-// readiness, operator control plane, semantic extraction, freshness
-// causality, supply runtime context, advisory catalog, advisory
-// evidence, container images, container-image aggregates, impact
-// aggregates, SBOM attestations, SBOM aggregates, security alerts,
-// security-alert aggregates, vulnerability-scanner contract), two
-// line-verbatim finding subsets (impact findings, impact explain),
-// and one line-verbatim status subset (status reads without the
-// relay-only index, governance, operations, answer-narration,
-// hosted-readiness, and openapi.json entries). Byte identity of every
-// ported line rides scripts/check-parity.sh; these tests pin the
-// served assembly around those bytes.
+// part of #6707). The D6 lane ports twenty fragments into the served
+// document: sixteen whole-file byte-identical ports (status collector
+// readiness, status operations, operator control plane, semantic
+// extraction, freshness causality, supply runtime context, advisory
+// catalog, advisory evidence, container images, container-image
+// aggregates, impact aggregates, SBOM attestations, SBOM aggregates,
+// security alerts, security-alert aggregates, vulnerability-scanner
+// contract), two line-verbatim finding subsets (impact findings,
+// impact explain), one line-verbatim status subset (status reads
+// without the still-relayed governance, answer-narration,
+// hosted-readiness, and openapi.json entries), and one line-verbatim
+// phase-2 index subset (status index plus the legacy index-status
+// alias). Byte identity of every ported line rides
+// scripts/check-parity.sh; these tests pin the served assembly around
+// those bytes.
 //
 // New $refs the D6 lane introduces beyond the existing components
 // block: schemas CoordinatorSource, TerraformStateSource. The generic
@@ -39,6 +41,9 @@ func TestSpec_ServesD6Families(t *testing.T) {
 		"/api/v0/collectors":                                   "listCollectorsLegacy",
 		"/api/v0/ingesters":                                    "listIngestersLegacy",
 		"/api/v0/ingesters/{ingester}":                         "getIngesterStatusLegacy",
+		"/api/v0/index-status":                                 "getIndexStatusLegacy",
+		"/api/v0/status/index":                                 "getIndexStatus",
+		"/api/v0/status/operations":                            "getOperations",
 		"/api/v0/status/pipeline":                              "getPipelineStatus",
 		"/api/v0/status/operator-control-plane":                "getOperatorControlPlane",
 		"/api/v0/status/semantic-extraction":                   "getSemanticExtractionStatus",
@@ -84,11 +89,14 @@ func TestSpec_ServesD6Families(t *testing.T) {
 		"/api/v0/collectors",
 		"/api/v0/ingesters",
 		"/api/v0/ingesters/{ingester}",
+		"/api/v0/index-status",
 		"/api/v0/status/collector-readiness",
 		"/api/v0/status/collectors",
 		"/api/v0/status/freshness-causality",
+		"/api/v0/status/index",
 		"/api/v0/status/ingesters",
 		"/api/v0/status/ingesters/{ingester}",
+		"/api/v0/status/operations",
 		"/api/v0/status/operator-control-plane",
 		"/api/v0/status/pipeline",
 		"/api/v0/status/semantic-extraction",
@@ -125,8 +133,9 @@ func TestSpec_ServesD6Families(t *testing.T) {
 }
 
 // TestSpec_D6DisclosedOmissions pins the documented spec gaps so they
-// cannot silently widen: the extra-port Status aspects (each needs a
-// port the pins do not cover), the impact packet (writer responder +
+// cannot silently widen: the still-relayed extra-port Status aspects
+// (governance, answer-narration, hosted-readiness — each needs a port
+// the pins do not cover), the impact packet (writer responder +
 // shared ports), and Compare (deliberate later pin) stay relay-only,
 // so their keys stay out of the served document.
 func TestSpec_D6DisclosedOmissions(t *testing.T) {
@@ -135,10 +144,7 @@ func TestSpec_D6DisclosedOmissions(t *testing.T) {
 	served := decodePaths(t, Spec())
 
 	for _, path := range []string{
-		"/api/v0/index-status",
-		"/api/v0/status/index",
 		"/api/v0/status/governance",
-		"/api/v0/status/operations",
 		"/api/v0/status/answer-narration",
 		"/api/v0/status/hosted-readiness",
 		"/api/v0/investigations/supply-chain/impact/packet",

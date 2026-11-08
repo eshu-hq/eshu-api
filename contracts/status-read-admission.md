@@ -45,12 +45,13 @@ relayed reference, and the line-verbatim spec subsets
 `openapi/paths/status/operator_control_plane.go`,
 `openapi/paths/status/semantic.go`,
 `openapi/paths/freshness/causality.go`, gated byte-identical by
-`scripts/check-parity.sh`). See `contracts/d6-status-supplychain.md`
-for the termination record and rollback. The 6 extra-port Status
-aspects stay relay: their readers carry no versioned pin (index
-counts via Neo4j, the Retirements aggregate, the GovernanceAudit
-Summary, the LiveActivity read model, the NarrationPosture
-override).
+`scripts/check-parity.sh`). The 3 phase-2 extra-port legs terminate
+under `StatusExtraReadAdmission v0` (see
+`contracts/status-extra-read-admission.md`). See
+`contracts/d6-status-supplychain.md` for the termination record and
+rollback. The 3 remaining extra-port Status aspects stay relay: their
+readers carry no versioned pin (the GovernanceAudit Summary, the
+NarrationPosture override, index counts via Neo4j).
 
 ## Enforcement
 

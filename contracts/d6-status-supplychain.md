@@ -2,7 +2,7 @@
 
 Versioned read-termination record for the D6 wave (Refs
 `eshu-hq/eshu#9669`, part of `eshu-hq/eshu#6707`). This lane terminates
-the 29 pinned read routes natively against the D0-proven terminated
+the 32 pinned read routes natively against the D0-proven terminated
 transport: dest owns the route (caller gate, family authorizer,
 response mapping) and calls the versioned core read API as its port
 transport. Dest holds no table or queue handle; authz stays atomic
@@ -12,8 +12,14 @@ Scope source: `go/cmd/api/CUTOVER_OWNERSHIP.md` at the D6 pin commit
 (`6b66e6b23efe226970b4571c955aed1dc42f987a`, merge of
 `eshu-hq/eshu#10303`): the Status read rows admitting through
 StatusReadAdmission v0 and the SupplyChain read rows admitting
-through SupplyChainReadAdmission v0. Compare is deferred to a later
-pin; the suppressions mutation row stays out via SuppressionAdmission.
+through SupplyChainReadAdmission v0. Phase-2 scope source: the
+StatusExtraReadAdmission v0 pin
+(`go/internal/query/status_extra_read_admission.go` at
+`0ab602df5cda205dc326a44fae02c383c5a653b3`, merge of
+`eshu-hq/eshu#10405`, gap 03 phase 2): the live-activity leg on
+`status/operations` and the retirements leg on both index spellings.
+Compare is deferred to a later pin; the suppressions mutation row
+stays out via SuppressionAdmission.
 
 Transport pins:
 
@@ -29,8 +35,17 @@ Transport pins:
   container-image, security-alert, impact finding/aggregate/explain/
   readiness, advisory catalog/evidence stores, plus the
   runtime-inventory filters).
+- `StatusExtraReadAdmission v0`
+  (`contracts/upstream/status_extra_read_admission_contract_test.go`
+  at the phase-2 pin) covers the 3 extra-port Status legs — the
+  live-activity leg admits through
+  `LiveActivityReader.ReadLiveActivity` (the bounded,
+  separately-queried in-flight work-item read model) and the
+  retirements leg admits through
+  `status.IndexRetirementReader.ReadRetirementSummary` (the tombstone
+  aggregate behind the `repository_retirements` block).
 
-The minting rule forbids inventing pins beyond these two: Compare
+The minting rule forbids inventing pins beyond these three: Compare
 admits only through the shared graph/content ports and needs a
 deliberate later pin with arbiter review; the suppressions mutation
 row stays the Never-satellite survivor via SuppressionAdmission
@@ -89,7 +104,7 @@ for that day and unreachable on live routes.
 
 | Family | Routes | Serve | Authorizer note |
 | --- | --- | --- | --- |
-| Status | 12 GETs (`collector-readiness`, `collectors`, `ingesters`, `ingesters/{ingester}` in legacy and `/status/` spellings, plus `status/pipeline`, `status/collector-readiness`, `status/freshness-causality`, `status/operator-control-plane`, `status/semantic-extraction`) | wave-gated terminate / relay-explicit | shared-key allow |
+| Status | 15 GETs (`collector-readiness`, `collectors`, `ingesters`, `ingesters/{ingester}` in legacy and `/status/` spellings, plus `status/pipeline`, `status/collector-readiness`, `status/freshness-causality`, `status/operator-control-plane`, `status/semantic-extraction`, plus phase-2 `status/operations`, `status/index`, `index-status`) | wave-gated terminate / relay-explicit | shared-key allow |
 | SupplyChain | 17 GETs (`supply-chain/advisories`, `advisories/evidence`, `container-images/identities` + `count` + `inventory`, `impact/explain`, `impact/findings` + `count` + `inventory`, `sbom-attestations/attachments` + `count` + `inventory`, `security-alerts/reconciliations` + `count` + `inventory`, `vulnerabilities/{advisory_id}`, `vulnerability-scanner/contract`) | wave-gated terminate / relay-explicit | shared-key allow |
 
 Cookie rule (D2 follow-up lesson, shared with the D3/D4 gates): only
@@ -101,17 +116,28 @@ core contact.
 
 Known divergences (disclosed, not hidden):
 
-- The six extra-port Status aspects stay relay with per-route reasons
-  (the pins do not cover them, and nobody widens them here):
-  `index-status` + `status/index` (Neo4j repository counts plus the
-  Retirements tombstone aggregate), `status/governance` (the
-  GovernanceAudit Summary — the D1 pin freezes the three-method
-  List/Summarize port on `identity.GovernanceAuditReader`, not the
-  one-method Summary port the Status path admits through),
-  `status/operations` (the bounded LiveActivity read model),
+- Phase-2 termination (gap 03 phase 2, `StatusExtraReadAdmission v0`):
+  `status/operations` terminates on its live-activity leg and
+  `index-status` + `status/index` terminate on their retirements leg.
+  Termination is route-granular over the versioned HTTP read API: dest
+  forwards the whole request and streams core bytes back untouched, so
+  the unpinned legs on the terminated routes (Neo4j repository counts
+  on both index spellings, the narration-posture override readback and
+  env-derived config where they apply) ride the terminated forward as
+  core-served bytes with no dest-owned port — disclosed here, never
+  claimed as pinned.
+- The three remaining extra-port Status aspects stay relay with
+  per-route reasons (no pin covers them, and nobody widens a pin
+  here): `status/governance` (the GovernanceAudit Summary — the D1
+  pin freezes the three-method List/Summarize port on
+  `identity.GovernanceAuditReader`, not the one-method Summary port
+  the Status path admits through; carried relay-disclosed per the
+  row-7 Path B ruling, which orders no new pin),
   `status/answer-narration` (the dest-injected NarrationPosture
-  override), `status/hosted-readiness` (Neo4j repository count plus
-  workload leftovers).
+  override — a handler field, not a port, so there is no method set
+  to freeze), `status/hosted-readiness` (Neo4j repository count plus
+  workload leftovers through the shared graph port — pinning it would
+  be a blanket pin).
 - The `investigations/supply-chain/impact/packet` read stays relay:
   it admits through the writer `ImpactPacketResponder` plus the shared
   graph/content ports the SupplyChain pin explicitly excludes.
@@ -128,10 +154,13 @@ Known divergences (disclosed, not hidden):
   forwarded-filter test pins the queries arrive core-side intact.
 - Session-dependent aspects relay until D8; scoped/browser identity
   classes relay explicitly.
-- The status reads fragment ports only the seven lane entries from
-  the shared `routes.go` core file — never the relayed index,
-  governance, operations, answer-narration, hosted-readiness, or
-  mux-level openapi.json keys sharing that file.
+- The status reads fragment ports only the seven snapshot lane
+  entries from the shared `routes.go` core file — never the
+  still-relayed governance, answer-narration, hosted-readiness, or
+  mux-level openapi.json keys sharing that file. The phase-2 index
+  entries ride the line-verbatim `StatusExtraReads` subset from the
+  same file at the phase-2 merge, and the operations entry rides the
+  whole-file byte-identical `Operations` port.
 - The two finding fragments ride dest-owned exported wrappers
   (`ImpactFindings`, `ImpactExplain`) over the core unexported consts
   and share the byte-identical `runtime_context.go` sibling.

@@ -23,7 +23,7 @@ import (
 
 // TestD6AuthorizerSharedKeyAllowDeny pins the family gate: the
 // shared-key identity allows, anything else denies. One shared
-// authorizer covers all 29 D6 wave routes until D8 resolves per-class
+// authorizer covers all 32 D6 wave routes until D8 resolves per-class
 // handling.
 func TestD6AuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()
@@ -95,9 +95,12 @@ func TestD6DenyBranchShapePinned(t *testing.T) {
 		{http.MethodGet, "/api/v0/ingesters/repo_1"},
 		{http.MethodGet, "/api/v0/status/collector-readiness"},
 		{http.MethodGet, "/api/v0/status/collectors"},
+		{http.MethodGet, "/api/v0/index-status"},
 		{http.MethodGet, "/api/v0/status/freshness-causality"},
+		{http.MethodGet, "/api/v0/status/index"},
 		{http.MethodGet, "/api/v0/status/ingesters"},
 		{http.MethodGet, "/api/v0/status/ingesters/repo_1"},
+		{http.MethodGet, "/api/v0/status/operations"},
 		{http.MethodGet, "/api/v0/status/operator-control-plane"},
 		{http.MethodGet, "/api/v0/status/pipeline"},
 		{http.MethodGet, "/api/v0/status/semantic-extraction"},

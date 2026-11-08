@@ -59,6 +59,31 @@ func BenchmarkD6TerminatedRead(b *testing.B) {
 	})
 }
 
+// BenchmarkD6ExtraTerminatedRead measures the phase-2 terminated path
+// for a shared-key GET through the full production chain: one leg per
+// newly terminated extra-port route (operations live-activity leg,
+// index retirements leg on both spellings), each through the same wave
+// gate and family authorizer as the base lane.
+func BenchmarkD6ExtraTerminatedRead(b *testing.B) {
+	_, srv := d6BenchServer(b, `{"data":[],"error":null,"truth":null}`)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	gets := map[string]*http.Request{
+		"operations":   authedRequest(http.MethodGet, "/api/v0/status/operations"),
+		"index-status": authedRequest(http.MethodGet, "/api/v0/index-status"),
+		"status-index": authedRequest(http.MethodGet, "/api/v0/status/index"),
+	}
+	for name, get := range gets {
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				rec := httptest.NewRecorder()
+				handler.ServeHTTP(rec, get.Clone(get.Context()))
+			}
+		})
+	}
+}
+
 // BenchmarkD6RelayRead measures the generic relay path for the
 // same caller and stub shape: the before leg the lane must not
 // regress. The legs compare different routes by necessity (the D6

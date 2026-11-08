@@ -23,6 +23,7 @@ SRC_SHA_D1="2c89a9d8b0a5efa1c4fbdd1d3e24de00012d1923"
 SRC_SHA_D0="ec1643d67f"
 SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
+SRC_SHA_STATUS_EXTRA="0ab602df5cda205dc326a44fae02c383c5a653b3"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
 SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
 SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
@@ -352,6 +353,12 @@ check_file_at "$SRC_SHA_D6" "go/internal/status/read_admission_contract_test.go"
 check_file_at "$SRC_SHA_D6" "go/internal/query/supply/chain/supply_read_admission_contract_test.go" \
   "contracts/upstream/supply_read_admission_contract_test.go" \
   "8132db71af6058478332913bfd260190dfd98e8a09b9230a742b4d2ecc2a7367"
+
+# D6 phase-2 extra-port Status pin (eshu-hq/eshu#10405, unwired seam):
+# the frozen method-set test, byte-identical to the merge commit.
+check_file_at "$SRC_SHA_STATUS_EXTRA" "go/internal/query/status_extra_read_admission_contract_test.go" \
+  "contracts/upstream/status_extra_read_admission_contract_test.go" \
+  "12615d35aebc9ef4e436a0ee616915ed584ab848602ddf62adf554acd15368d7"
 
 # D7 admin-four pins (eshu-hq/eshu#10312, unwired seams): the four
 # frozen method-set tests, byte-identical to the pinned core commit.
@@ -970,6 +977,21 @@ check_fragment_subset_named_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/st
   "24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61" \
   "StatusReads"
 
+# D6 phase-2 extra-port Status legs (eshu-hq/eshu#10405): the operations
+# board is a whole-file byte-identical port at the merge commit; the
+# index-status spellings ride a line-verbatim subset of the pinned core
+# routes file (routes.go is byte-identical between the D6 pin and the
+# phase-2 merge, so the file hash recurs — the gate still anchors each
+# fragment at the phase-2 merge for provenance).
+check_file_at "$SRC_SHA_STATUS_EXTRA" "go/internal/query/openapi/paths/status/operations.go" \
+  "openapi/paths/status/operations.go" \
+  "77ed558672a1d1ad54671388721704c539df5567ae45118e7e16cce1c029b5f8"
+
+check_fragment_subset_named_at "$SRC_SHA_STATUS_EXTRA" "go/internal/query/openapi/paths/status/routes.go" \
+  "openapi/paths/status/status_extra_reads.go" \
+  "24a57b35c675cb33ad5011343a0aeb68d49e9d05d7645f397de2d88e8e5afa61" \
+  "StatusExtraReads"
+
 check_fragment_subset_named_at "$SRC_SHA_D6" "go/internal/query/openapi/paths/supply/chain/impact_explain.go" \
   "openapi/paths/supply/chain/impact_explain.go" \
   "7b64a8ce69cc2802157303f1fd50a2914a5cd2c9693743368da0889639852f3e" \
@@ -1230,6 +1252,11 @@ check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/status-read-wire-shapes.txt" 
 check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/supply-chain-read-wire-shapes.txt" \
   "go/internal/query/supply/chain/supply_read_admission.go"
 
+# D6 phase-2 extra-port Status pin (eshu-hq/eshu#10405): the admission
+# shape excerpt, line-verbatim from the pin file at the merge commit.
+check_excerpt_at "$SRC_SHA_STATUS_EXTRA" "contracts/upstream/status-extra-read-wire-shapes.txt" \
+  "go/internal/query/status_extra_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1254,6 +1281,7 @@ grep -qF 'ReindexProgressReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/cont
 grep -qF 'SharedProjectionTuningReportContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
+grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
 grep -qF 'SessionResolverAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
 grep -qF 'BrowserSessionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"
 grep -qF 'LocalIdentityAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/session_admission.go"

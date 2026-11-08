@@ -7,18 +7,19 @@ package status
 // keys are unique to the D6 lane: the pipeline, ingesters, collectors,
 // and ingesters-by-name GETs in both their legacy (/api/v0/...) and
 // /api/v0/status/... spellings (satellite-design Decision 5(c) on
-// eshu-hq/eshu#9669). The relay-only Status aspects share the core
-// source file but keep their own path keys and stay on the generic
-// relay with no admission pin, so this fragment ports only the seven
-// lane entries — never a key the relay still serves (index-status
-// and status/index via Neo4j counts plus Retirements, governance
-// via the GovernanceAudit Summary, operations via LiveActivity,
-// answer-narration via the NarrationPosture override, hosted-readiness
-// via Neo4j counts, and the mux-level openapi.json self entry). The
-// entries reference only the shared responses (BadRequest, Forbidden,
-// NotFound, InternalError, ServiceUnavailable) and the ActiveWorkSource,
-// CoordinatorSource, and TerraformStateSource schemas, so the lane adds
-// no other schemas.
+// eshu-hq/eshu#9669). The still-relayed Status aspects share the core
+// source file but keep their own path keys on the generic relay with
+// no admission pin, so this fragment ports only the seven snapshot
+// lane entries — never a key the relay still serves (governance via
+// the GovernanceAudit Summary, answer-narration via the
+// NarrationPosture override, hosted-readiness via Neo4j counts, and
+// the mux-level openapi.json self entry). The phase-2 extra-port legs
+// (index-status and status/index via StatusExtraReads, operations via
+// Operations) carry their own fragments behind StatusExtraReadAdmission
+// v0. The entries reference only the shared responses (BadRequest,
+// Forbidden, NotFound, InternalError, ServiceUnavailable) and the
+// ActiveWorkSource, CoordinatorSource, and TerraformStateSource
+// schemas, so the lane adds no other schemas.
 //
 // Provenance: each payload line below is verbatim from the pinned core
 // file go/internal/query/openapi/paths/status/routes.go

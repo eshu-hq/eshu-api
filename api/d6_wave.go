@@ -4,15 +4,18 @@
 package api
 
 // D6 Status + SupplyChain reads termination (Refs eshu-hq/eshu#9669,
-// part of #6707). This file owns the frozen wave table: the 29 routes
+// part of #6707). This file owns the frozen wave table: the 32 routes
 // across the Status and SupplyChain families the satellite terminates
 // after the D4 Native-next lane. It mirrors the CUTOVER_OWNERSHIP rows
 // for the Status reads admitting through StatusReadAdmission v0
 // (status.Reader) and the SupplyChain reads admitting through
-// SupplyChainReadAdmission v0 (the 17 family-owned reader ports); a
-// wave change moves the ownership map, the spec fragments, and this
-// mirror together. The behavior lives in d6_terminate.go; the proofs
-// in d6_conformance_test.go and the per-family suites.
+// SupplyChainReadAdmission v0 (the 17 family-owned reader ports),
+// plus the phase-2 extra-port Status legs admitting through
+// StatusExtraReadAdmission v0 (the bounded LiveActivity read and the
+// retirement-summary read); a wave change moves the ownership map,
+// the spec fragments, and this mirror together. The behavior lives in
+// d6_terminate.go; the proofs in d6_conformance_test.go and the
+// per-family suites.
 //
 // Production binding (carried from the D0 shim proof via the D2/D4
 // waves): dest owns each route (caller gate, family authorizer,
@@ -33,19 +36,25 @@ package api
 // SupplyChainReadAdmission v0 (contracts/upstream/
 // supply_read_admission_contract_test.go at the D6 pin) covers the 17
 // SupplyChain wave rows — every row admits through the frozen
-// family-owned reader ports. The minting rule forbids inventing pins
-// beyond these two; Compare needs a deliberate later pin and the
+// family-owned reader ports. StatusExtraReadAdmission v0
+// (contracts/upstream/status_extra_read_admission_contract_test.go at
+// the phase-2 pin) covers the 3 extra-port Status legs — the
+// live-activity leg on operations and the retirements leg on both
+// index spellings. The minting rule forbids inventing pins beyond
+// these three; Compare needs a deliberate later pin and the
 // suppressions mutation stays out via SuppressionAdmission.
 //
-// Scoping line (hard, from the pin contracts): Status routes also
-// touching Retirements, the GovernanceAudit Summary, LiveActivity,
-// the NarrationPosture override, or Neo4j index counts are NOT fully
-// covered by the Status pin — those six routes stay relay with the
-// reason disclosed per route in the contract (index-status,
-// status/index, governance, operations, answer-narration,
-// hosted-readiness). The investigations impact packet admits through
-// the writer ImpactPacketResponder plus shared graph/content ports the
-// pin explicitly excludes, so it stays relay. Compare
+// Scoping line (hard, from the pin contracts): the Status pin never
+// covers the GovernanceAudit Summary, the NarrationPosture override,
+// or the Neo4j index counts — governance, answer-narration, and
+// hosted-readiness stay relay with the reason disclosed per route in
+// the contract. The terminated index and operations routes still cross
+// unpinned legs (Neo4j counts, the narration override, env-derived
+// config); those legs ride the terminated forward as core-served
+// bytes with no dest-owned port, disclosed per route in the contract.
+// The investigations impact packet admits through the writer
+// ImpactPacketResponder plus shared graph/content ports the pin
+// explicitly excludes, so it stays relay. Compare
 // (POST /api/v0/compare/environments) admits only through the shared
 // ports and stays relay for its deliberate later pin.
 //
@@ -69,19 +78,23 @@ type d6Route struct {
 }
 
 // d6Wave is the frozen D6 termination target: 12 Status routes plus 17
-// SupplyChain routes. TestD6WaveFrozen pins it entry by entry; a wave
-// change moves the ownership map, the fragments, and this mirror
-// together.
+// SupplyChain routes, plus the 3 phase-2 extra-port Status legs behind
+// StatusExtraReadAdmission v0. TestD6WaveFrozen pins it entry by
+// entry; a wave change moves the ownership map, the fragments, and
+// this mirror together.
 var d6Wave = []d6Route{
 	{Method: "GET", Path: "/api/v0/collector-readiness", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/collector_readiness.go"},
 	{Method: "GET", Path: "/api/v0/collectors", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/index-status", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_extra_reads.go"},
 	{Method: "GET", Path: "/api/v0/ingesters", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
 	{Method: "GET", Path: "/api/v0/ingesters/{ingester}", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
 	{Method: "GET", Path: "/api/v0/status/collector-readiness", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/collector_readiness.go"},
 	{Method: "GET", Path: "/api/v0/status/collectors", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
 	{Method: "GET", Path: "/api/v0/status/freshness-causality", Family: "status", Serve: d6ServeGated, Fragment: "paths/freshness/causality.go"},
+	{Method: "GET", Path: "/api/v0/status/index", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_extra_reads.go"},
 	{Method: "GET", Path: "/api/v0/status/ingesters", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
 	{Method: "GET", Path: "/api/v0/status/ingesters/{ingester}", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
+	{Method: "GET", Path: "/api/v0/status/operations", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/operations.go"},
 	{Method: "GET", Path: "/api/v0/status/operator-control-plane", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/operator_control_plane.go"},
 	{Method: "GET", Path: "/api/v0/status/pipeline", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/status_reads.go"},
 	{Method: "GET", Path: "/api/v0/status/semantic-extraction", Family: "status", Serve: d6ServeGated, Fragment: "paths/status/semantic.go"},

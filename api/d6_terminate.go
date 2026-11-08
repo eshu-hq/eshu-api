@@ -40,10 +40,11 @@ import (
 // mode-dependent denials come from). The false branch is the hookup
 // point for the day dest gains a scoped/session resolver; until then
 // it stays a plain deny (no invented reason codes, no audit
-// widening). One shared authorizer covers all 29 D6 wave routes: they
-// share the shared-key trust root until D8 resolves per-class
-// handling, and the contract record (contracts/d6-status-supplychain.md)
-// carries the scope-honesty label for each family.
+// widening). One shared authorizer covers all 32 D6 wave routes (29
+// base plus the 3 phase-2 extra-port legs): they share the shared-key
+// trust root until D8 resolves per-class handling, and the contract
+// record (contracts/d6-status-supplychain.md) carries the scope-honesty
+// label for each family.
 func authorizeD6SharedKey(allScopes bool) bool {
 	return allScopes
 }
@@ -95,7 +96,8 @@ func (s *Server) serveD6TerminatedAs(w http.ResponseWriter, r *http.Request, all
 	forwardToCore(s, w, r, viaNative)
 }
 
-// d6ReadGate fronts the 29 D6 wave routes. A valid shared key
+// d6ReadGate fronts the 32 D6 wave routes (29 base plus the 3 phase-2
+// extra-port legs). A valid shared key
 // terminates (next); a request carrying any other credential — a
 // non-key Bearer [REDACTED] a foreign credential class (scoped
 // token, OIDC) or a session-cookie-shaped Cookie — relays explicitly
