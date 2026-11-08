@@ -25,7 +25,7 @@ SRC_SHA_WAVE="17feac86e089a6da208fe6c93b5d89b8fb7ef3cc"
 SRC_SHA_D6="6b66e6b23efe226970b4571c955aed1dc42f987a"
 SRC_SHA_STATUS_EXTRA="0ab602df5cda205dc326a44fae02c383c5a653b3"
 SRC_SHA_D7="19de7346d11a184bf88d8f307b5d7a9ced0a4657"
-SRC_SHA_D8="91f2df28dbe9e64ecf5812c5f89a76475a304d84"
+SRC_SHA_D8="aa58debdd8102042f6c7e8b8e2e2944805889ef3"
 SRC_SHA_D9="40e88be128ca876f7333588137af5a780bf31b93"
 SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
@@ -411,7 +411,10 @@ check_fragment_subset_named_at "$SRC_SHA_D7" "go/internal/query/openapi/paths/st
 # APPROVED-WITH-CONDITIONS): the four v0 admission pins
 # (SessionResolver, BrowserSession, LocalIdentity, APIToken), unwired
 # seams, recorded byte-identical satellite-side first (D7 #57
-# precedent).
+# precedent), re-anchored at the fresh origin/main SHA (byte-identical
+# to the stale 91f2df28db pin, same sha256 — re-anchor, no content
+# change; every other file gated at SRC_SHA_D8 verifies identical at
+# both SHAs).
 check_file_at "$SRC_SHA_D8" "go/internal/query/session_admission.go" \
   "contracts/upstream/session_admission.go" \
   "11d1dd3415a7a925a181016eb8aefbb4dedccbd542a2798c729972c06062676d"
