@@ -134,6 +134,15 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/terminal-failure-admission.md", "TerminalFailureReadAdmissionContractVersion"); got != TerminalFailureReadAdmissionContractVersion {
 		t.Errorf("contracts/terminal-failure-admission.md pins %q, constant is %q: move them in the same diff", got, TerminalFailureReadAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/admin-trio-read-admission.md", "DeltaUnionCompletenessReadAdmissionContractVersion"); got != DeltaUnionCompletenessReadAdmissionContractVersion {
+		t.Errorf("contracts/admin-trio-read-admission.md pins %q, constant is %q: move them in the same diff", got, DeltaUnionCompletenessReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/admin-trio-read-admission.md", "ReindexProgressReadAdmissionContractVersion"); got != ReindexProgressReadAdmissionContractVersion {
+		t.Errorf("contracts/admin-trio-read-admission.md pins %q, constant is %q: move them in the same diff", got, ReindexProgressReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/admin-trio-read-admission.md", "SharedProjectionTuningReportContractVersion"); got != SharedProjectionTuningReportContractVersion {
+		t.Errorf("contracts/admin-trio-read-admission.md pins %q, constant is %q: move them in the same diff", got, SharedProjectionTuningReportContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
 		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
 	}
@@ -197,6 +206,15 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "TerminalFailureReadAdmissionContractVersion"); got != TerminalFailureReadAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins terminal-failure reads %q, constant is %q: record the new pin before consuming it", got, TerminalFailureReadAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "DeltaUnionCompletenessReadAdmissionContractVersion"); got != DeltaUnionCompletenessReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins delta-union completeness reads %q, constant is %q: record the new pin before consuming it", got, DeltaUnionCompletenessReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "ReindexProgressReadAdmissionContractVersion"); got != ReindexProgressReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins reindex progress reads %q, constant is %q: record the new pin before consuming it", got, ReindexProgressReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SharedProjectionTuningReportContractVersion"); got != SharedProjectionTuningReportContractVersion {
+		t.Errorf("docs/provenance.md pins shared-projection tuning reads %q, constant is %q: record the new pin before consuming it", got, SharedProjectionTuningReportContractVersion)
+	}
 }
 
 // TestHealthReportsPinnedContractVersions pins the /health version
@@ -213,25 +231,28 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 
 	health := decodeMap(t, rec)
 	want := map[string]string{
-		"core_read_contracts":                          CoreReadContractsVersion,
-		"admission_contracts":                          SuppressionAdmissionContractVersion,
-		"suppression_admission_contracts":              SuppressionAdmissionContractVersion,
-		"terminal_failure_admission_contracts":         TerminalFailureAdmissionContractVersion,
-		"replay_ledger_admission_contracts":            ReplayLedgerAdmissionContractVersion,
-		"sign_in_policy_admission_contracts":           SignInPolicyAdmissionContractVersion,
-		"retirement_admission_contracts":               RetirementAdmissionContractVersion,
-		"admin_identity_admission_contracts":           AdminIdentityAdmissionContractVersion,
-		"setup_admission_contracts":                    SetupAdmissionContractVersion,
-		"provider_config_mutation_admission_contracts": ProviderConfigMutationAdmissionContractVersion,
-		"provider_config_read_admission_contracts":     ProviderConfigReadAdmissionContractVersion,
-		"oidc_login_admission_contracts":               OIDCLoginAdmissionContractVersion,
-		"github_login_admission_contracts":             GitHubLoginAdmissionContractVersion,
-		"saml_login_admission_contracts":               SAMLLoginAdmissionContractVersion,
-		"recovery_admission_contracts":                 RecoveryAdmissionContractVersion,
-		"admin_read_admission_contracts":               AdminReadAdmissionContractVersion,
-		"admin_identity_read_admission_contracts":      AdminIdentityReadAdmissionContractVersion,
-		"governance_audit_read_admission_contracts":    GovernanceAuditReadAdmissionContractVersion,
-		"terminal_failure_read_admission_contracts":    TerminalFailureReadAdmissionContractVersion,
+		"core_read_contracts":                               CoreReadContractsVersion,
+		"admission_contracts":                               SuppressionAdmissionContractVersion,
+		"suppression_admission_contracts":                   SuppressionAdmissionContractVersion,
+		"terminal_failure_admission_contracts":              TerminalFailureAdmissionContractVersion,
+		"replay_ledger_admission_contracts":                 ReplayLedgerAdmissionContractVersion,
+		"sign_in_policy_admission_contracts":                SignInPolicyAdmissionContractVersion,
+		"retirement_admission_contracts":                    RetirementAdmissionContractVersion,
+		"admin_identity_admission_contracts":                AdminIdentityAdmissionContractVersion,
+		"setup_admission_contracts":                         SetupAdmissionContractVersion,
+		"provider_config_mutation_admission_contracts":      ProviderConfigMutationAdmissionContractVersion,
+		"provider_config_read_admission_contracts":          ProviderConfigReadAdmissionContractVersion,
+		"oidc_login_admission_contracts":                    OIDCLoginAdmissionContractVersion,
+		"github_login_admission_contracts":                  GitHubLoginAdmissionContractVersion,
+		"saml_login_admission_contracts":                    SAMLLoginAdmissionContractVersion,
+		"recovery_admission_contracts":                      RecoveryAdmissionContractVersion,
+		"admin_read_admission_contracts":                    AdminReadAdmissionContractVersion,
+		"admin_identity_read_admission_contracts":           AdminIdentityReadAdmissionContractVersion,
+		"governance_audit_read_admission_contracts":         GovernanceAuditReadAdmissionContractVersion,
+		"terminal_failure_read_admission_contracts":         TerminalFailureReadAdmissionContractVersion,
+		"delta_union_completeness_read_admission_contracts": DeltaUnionCompletenessReadAdmissionContractVersion,
+		"reindex_progress_read_admission_contracts":         ReindexProgressReadAdmissionContractVersion,
+		"shared_projection_tuning_report_contracts":         SharedProjectionTuningReportContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {
