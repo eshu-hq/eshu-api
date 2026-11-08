@@ -8,9 +8,9 @@ package auth
 // workspace-context switch PATCH (tier-C dispatch clones, not
 // termination). Each payload line below is verbatim from the pinned core
 // file go/internal/query/openapi/paths/auth/routes.go
-// at commit 91f2df28dbe9e64ecf5812c5f89a76475a304d84 (sha256
+// at commit aa58debdd8102042f6c7e8b8e2e2944805889ef3 (sha256
 // 709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a,
-// byte-identical there and at the D2 wave pin). Core ships the lane
+// byte-identical there and at the D2 wave and D8 stale pins). Core ships the lane
 // entries and the D9 login-family entries in one file, so no whole-file
 // byte-identical port can serve this lane only; this subset keeps the
 // line-verbatim property instead, gated by scripts/check-parity.sh.

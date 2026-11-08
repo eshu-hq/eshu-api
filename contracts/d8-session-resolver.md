@@ -13,8 +13,11 @@ Dest holds no session, identity, token, or TOTP state.
 ## Pin records (satellite-side, D1/D6/D7 precedent)
 
 Pins minted core-side in `eshu-hq/eshu` at `91f2df28dbe9e64ecf5812c5f89a76475a304d84`
-(unwired seams; arbiter APPROVED-WITH-CONDITIONS on the satellite D8
-wave), recorded here byte-identical under `contracts/upstream/`:
+(merge of `eshu-hq/eshu#10317`; unwired seams; arbiter
+APPROVED-WITH-CONDITIONS on the satellite D8 wave), re-anchored
+byte-identical at `aa58debdd8102042f6c7e8b8e2e2944805889ef3`
+(`origin/main` at the D8 re-record base — re-anchor, no content
+change), recorded here byte-identical under `contracts/upstream/`:
 
 | Core source at pin | Satellite record | sha256 | Treatment |
 | --- | --- | --- | --- |
@@ -44,7 +47,8 @@ the four frozen method sets:
   the four token routes but cannot authenticate, reset, or touch MFA.
 
 `scripts/check-parity.sh` gates both files at `SRC_SHA_D8`
-(`91f2df28dbe9e64ecf5812c5f89a76475a304d84`).
+(`aa58debdd8102042f6c7e8b8e2e2944805889ef3`, re-anchored byte-identical
+from `91f2df28dbe9e64ecf5812c5f89a76475a304d84`).
 
 ## Arbiter binding conditions (satellite D8 wave, APPROVED-WITH-CONDITIONS)
 
