@@ -7,9 +7,9 @@ package auth
 // eshu-hq/eshu#9669): the metadata-only caller-sessions GET (tier-C
 // dispatch clone, not termination). Each payload line below is verbatim
 // from the pinned core file go/internal/query/openapi/paths/auth/routes.go
-// at commit 91f2df28dbe9e64ecf5812c5f89a76475a304d84 (sha256
+// at commit aa58debdd8102042f6c7e8b8e2e2944805889ef3 (sha256
 // 709fe6b3e96967fa615bff59a8c02cb8c1c5fbc6a05744bf57835170a5ad633a,
-// byte-identical there and at the D2 wave pin). Same subset treatment
+// byte-identical there and at the D2 wave and D8 stale pins). Same subset treatment
 // as the BrowserSessions fragment, gated by scripts/check-parity.sh.
 const SessionList = `
     "/api/v0/auth/sessions": {

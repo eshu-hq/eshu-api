@@ -244,8 +244,10 @@ mutations on D0-proven transport.
 ## Tier-C dispatch clones (D8)
 
 The 22 D8-pinned session/token-lifecycle routes (BrowserSessions 4,
-SessionList, Profile, LocalIdentity 16) cross as tier-C dispatch
-clones per `contracts/d8-session-resolver.md`: the 18 authed routes
+SessionList, Profile, LocalIdentity 16; pins re-anchored byte-identical
+at `aa58debd` from the stale `91f2df28db` pin — re-anchor, no content
+change) cross as tier-C dispatch clones per
+`contracts/d8-session-resolver.md`: the 18 authed routes
 inside the credential-class gate ahead of the generic relay with the
 family authorizer (shared-key callers ride the native write-through;
 scoped tokens, OIDC bearers, and session-cookie carriers relay
