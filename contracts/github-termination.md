@@ -89,8 +89,9 @@ the core callback handler that still serves every fetch.
   the callback cookies — this lane mints none itself).
 - Public-registration exactness: `TestGitHubTermGroup_PublicExactnessRED`
   (10 non-carved spellings keyless 401, zero hits),
-  `TestGitHubTermGroup_KeyedExactIsNative` (keyed exact paths file
-  `via="native"`), `TestGitHubTermGroup_KeyedTwinRelays` (keyed twins
+  `TestGitHubTermGroup_KeyedExactIsNative` (keyed exact paths ride
+  the terminated lane: 302 + byte-verbatim Location + one fetch of the
+  canonical core route per leg), `TestGitHubTermGroup_KeyedTwinRelays` (keyed twins
   relay core bytes for the spelled path, never synthesized),
   `TestGitHubTermGroup_V1AliasTerminates` (both v1 spellings
   terminate).
