@@ -11,9 +11,11 @@ import (
 	"testing"
 )
 
-// setupNativeCases covers the four tier C-c1 routes with concrete
-// request paths: the pre-auth setup-state check and the three
-// bootstrap-credential wizard steps. Method and path forward verbatim.
+// setupNativeCases covers the four setup carve-out routes with
+// concrete request paths (C-c1 APPROVED, graduated to D8-grade
+// handling on the D10 wave): the terminating setup-state check and
+// the three bootstrap-credential wizard steps. Method and path
+// forward verbatim.
 var setupNativeCases = []struct {
 	name   string
 	method string
@@ -47,8 +49,9 @@ func setupSpellings() []struct {
 	return out
 }
 
-// TestSetupNative_PublicWithoutCredential pins the C-c1 carve-out: the
-// four setup routes serve without the shared-key gate, so a missing,
+// TestSetupNative_PublicWithoutCredential pins the setup carve-out
+// (C-c1 APPROVED, graduated to D8-grade handling on the D10 wave):
+// the four setup routes serve without the shared-key gate, so a missing,
 // empty-configured, or bogus credential still reaches the core and the
 // core's answer relays back. The neighboring RequireAuth route denies
 // with 401 under the same setups, proving no inherited global auth
