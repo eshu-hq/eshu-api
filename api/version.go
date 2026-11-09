@@ -177,3 +177,50 @@ const ReindexProgressReadAdmissionContractVersion = "v0"
 // terminate natively since the Gap 02 trio lane (api/d3trio_wave.go);
 // see contracts/d3-admin-reads.md.
 const SharedProjectionTuningReportContractVersion = "v0"
+
+// AuditAppendAdmissionContractVersion names the versioned
+// admission-contract port for the audit-append port behind the 18
+// tier-C audit-emitting routes. It must move in lockstep with the
+// in-tree AuditAppendAdmissionContractVersion; the vendored pin lives
+// in contracts/audit-append-admission.md. Record-only: no handler,
+// route, or caller depends on it yet.
+const AuditAppendAdmissionContractVersion = "v0"
+
+// SignInPolicyReadAdmissionContractVersion names the versioned
+// admission-contract port for the sign-in-policy reads. It must move
+// in lockstep with the in-tree
+// SignInPolicyReadAdmissionContractVersion; the vendored pin lives in
+// contracts/sign-in-policy-read-admission.md. Record-only: no
+// handler, route, or caller depends on it yet.
+const SignInPolicyReadAdmissionContractVersion = "v0"
+
+// MetricsReadAdmissionContractVersion names the versioned
+// admission-contract port for the metrics time-series read. It must
+// move in lockstep with the in-tree
+// MetricsReadAdmissionContractVersion; the vendored pin lives in
+// contracts/metrics-read-admission.md. Record-only: no handler,
+// route, or caller depends on it yet.
+const MetricsReadAdmissionContractVersion = "v0"
+
+// SemanticSearchReadAdmissionContractVersion names the versioned
+// admission-contract port for the semantic-search read. It must move
+// in lockstep with the in-tree
+// SemanticSearchReadAdmissionContractVersion; the vendored pin lives
+// in contracts/semantic-search-read-admission.md. Record-only: no
+// handler, route, or caller depends on it yet.
+const SemanticSearchReadAdmissionContractVersion = "v0"
+
+// TerraformDriftReadAdmissionContractVersion names the versioned
+// admission-contract port for the Terraform drift findings read. It
+// must move in lockstep with the in-tree
+// TerraformDriftReadAdmissionContractVersion; the vendored pin lives
+// in contracts/terraform-drift-read-admission.md. Record-only: no
+// handler, route, or caller depends on it yet.
+const TerraformDriftReadAdmissionContractVersion = "v0"
+
+// IaCReadAdmissionContractVersion names the versioned
+// admission-contract port for the IaC reads. It must move in lockstep
+// with the in-tree IaCReadAdmissionContractVersion; the vendored pin
+// lives in contracts/iac-read-admission.md. Record-only: no handler,
+// route, or caller depends on it yet.
+const IaCReadAdmissionContractVersion = "v0"

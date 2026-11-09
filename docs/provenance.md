@@ -26,6 +26,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (D9 SAML-login wave) | `8c2324693320c8f69ef3e8078c795956b549d7ad` (unchanged from the D9 GitHub wave SHA: `git diff aac271ad..8c23246933` over the 5 SAML files is empty, arbiter verified; SAMLLoginAdmission v0 re-anchored byte-identical from the stale `aac271ad` pin — re-anchor, no content change; satellite D9 SAML wave arbiter APPROVED-WITH-CONDITIONS on `eshu-hq/eshu#9669` comment `6701998359`) |
 | Source commit (Gap 02 trio pins) | `4a587431fdf748c0a231b60708131fbaa1f41064` (merge of `eshu-hq/eshu#10412`; DeltaUnionCompleteness, ReindexProgress, and SharedProjectionTuningReport read admissions v0, unwired-seam style: version constant plus frozen method-set/shape contract test per pin; the two whole-file OpenAPI ports and the tuning-report subset ship at the same merge) |
 | Source commit (Gap 04 Compare pin) | `3870181f323dbac84496efb87f7498b19afe1bf4` (merge of `eshu-hq/eshu#10425`; CompareReadAdmission v0, unwired-seam style: version constant + frozen method-set contract test; gap 04 deliberate later pin, arbiter review precedes satellite termination) |
+| Source commit (O2/O6 six pins) | `14a5bf8a52c582360158f85abda4c9675b2ea2e6` (`origin/main` at the O2/O6 record base; AuditAppendAdmission v0 (merge `eshu-hq/eshu#10430`), SignInPolicyReadAdmission v0 (merge `eshu-hq/eshu#10432`), MetricsReadAdmission v0 (merge `eshu-hq/eshu#10440`), TerraformDriftReadAdmission v0 (merge `eshu-hq/eshu#10442`), SemanticSearchReadAdmission v0 (merge `eshu-hq/eshu#10443`), and widened IaCReadAdmission v0 (merge `eshu-hq/eshu#10455`), each unwired-seam style: version constant + frozen method-set contract test; arbiter review precedes satellite termination) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -60,6 +61,12 @@ preparation only; nothing here carries cutover authority.
 | `ReindexProgressReadAdmissionContractVersion` | `v0` |
 | `SharedProjectionTuningReportContractVersion` | `v0` |
 | `CompareReadAdmissionContractVersion` | `v0` |
+| `AuditAppendAdmissionContractVersion` | `v0` |
+| `SignInPolicyReadAdmissionContractVersion` | `v0` |
+| `MetricsReadAdmissionContractVersion` | `v0` |
+| `SemanticSearchReadAdmissionContractVersion` | `v0` |
+| `TerraformDriftReadAdmissionContractVersion` | `v0` |
+| `IaCReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -115,6 +122,18 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/delta_union_completeness_read_admission.go` (version, interface, `Check`, compile assertion) + `reindex_progress_read_admission.go` (version, alias) + `shared_projection_tuning_report_read_admission.go` (version, `Status`/`Detail` constants) + `handler.go` (tuning constants use) at `4a587431fd` | `contracts/upstream/admin-trio-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/compare/read_admission_contract_test.go` at `3870181f` | `contracts/upstream/compare_read_admission_contract_test.go` | `0a394ea8c3230c1bc978bc6c4f86d15b058805a607e3d63d60ec9ea6f0521b1a` | verbatim |
 | `go/internal/query/compare/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `3870181f` | `contracts/upstream/compare-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/auth/audit_append_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/audit_append_admission_contract_test.go` | `268a736ea8309f59244353f2f321192c3abbbd5a9b312d41c0e8558dc7c63581` | verbatim |
+| `go/internal/query/auth/audit_append_admission.go` (version, interface, mirror assertion, narrow-by-construction, D-wave consumer, rollback) at `14a5bf8a52` | `contracts/upstream/audit-append-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/auth/read_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/sign_in_policy_read_admission_contract_test.go` | `f9ec1530119e00121ea313abfa29e679897867e806cf0161faa2a7f86e763eea` | verbatim |
+| `go/internal/query/auth/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `14a5bf8a52` | `contracts/upstream/sign-in-policy-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/metrics/read_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/metrics_read_admission_contract_test.go` | `c794f47ff10e15bfe8a5476516c6cb3c77b635b39d4a829bd3551f6c7e7301bd` | verbatim |
+| `go/internal/query/metrics/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `14a5bf8a52` | `contracts/upstream/metrics-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/semanticsearch/read_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/semantic_search_read_admission_contract_test.go` | `63dcc3bbb35945cd65968acce51a30c164971a73680ce941cf351cb803767766` | verbatim |
+| `go/internal/query/semanticsearch/read_admission.go` (version, interface, mirror, narrow-by-construction, explicitly-OUT, rollback) at `14a5bf8a52` | `contracts/upstream/semantic-search-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/terraform/drift/read_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/terraform_drift_read_admission_contract_test.go` | `964f85f275ce0fd7eda690200e679f2a0dd7115f7beb11a11b1da40124584c6c` | verbatim |
+| `go/internal/query/terraform/drift/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `14a5bf8a52` | `contracts/upstream/terraform-drift-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/iac/read_admission_contract_test.go` at `14a5bf8a52` | `contracts/upstream/iac_read_admission_contract_test.go` | `2454d431ed9f6f04cdd47d1e720d99b2a7dd9c4245ee6e2b05f6da236043b242` | verbatim |
+| `go/internal/query/iac/read_admission.go` (version, interface, mirror assertion, narrow-by-construction, explicitly-OUT, rollback) at `14a5bf8a52` | `contracts/upstream/iac-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/delta_union_completeness.go` at `4a587431fd` | `openapi/paths/status/delta_union_completeness.go` | `c6bfd5a9c663d3c584ecb247798e1407ceb729531d4d5a61098d9114dd582520` | verbatim |
 | `go/internal/query/openapi/paths/status/reindex_progress.go` at `4a587431fd` | `openapi/paths/status/reindex_progress.go` | `d018e6d902873fd22a09a57959dd21124ce194b5c481ee93e9a262af06f10a88` | verbatim |
 | `go/internal/query/openapi/paths/status/admin.go` (the tuning-report entry only) at `4a587431fd` (admin.go is byte-identical at `7c605839` and `4a587431fd`) | `openapi/paths/status/admin_tuning_report.go` | `26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9` (whole file; this fragment is the line-verbatim tuning-report subset) | verbatim subset |

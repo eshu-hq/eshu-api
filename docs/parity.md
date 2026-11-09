@@ -408,6 +408,22 @@ replay reservation, session mint, and finalize/audit stack stay open
 termination obligations for a later lane. Termination stays last on
 D0-proven transport only. The D9 wave is complete with this lane.
 
+## Record-only pins (O2/O6)
+
+The O2 audit-append pin (`AuditAppendAdmission v0` in
+`contracts/audit-append-admission.md`) and the five O6 read pins
+(`SignInPolicyReadAdmission v0`,
+`contracts/sign-in-policy-read-admission.md`;
+`MetricsReadAdmission v0`, `contracts/metrics-read-admission.md`;
+`SemanticSearchReadAdmission v0`,
+`contracts/semantic-search-read-admission.md`;
+`TerraformDriftReadAdmission v0`,
+`contracts/terraform-drift-read-admission.md`; widened
+`IaCReadAdmission v0`, `contracts/iac-read-admission.md`) are
+recorded byte-identical at `14a5bf8a52` with no wiring, no behavior
+change, and no route moves: every leg stays on its current relay or
+tier-C lane until its termination lane lands with arbiter review.
+
 ## What stays in the core
 
 Fact admission, canonical identity, projection, retraction, recovery,
