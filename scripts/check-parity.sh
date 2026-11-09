@@ -31,6 +31,7 @@ SRC_SHA_D9_GITHUB="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_GAP02="4a587431fdf748c0a231b60708131fbaa1f41064"
 SRC_SHA_COMPARE="3870181f323dbac84496efb87f7498b19afe1bf4"
+SRC_SHA_O2O6="14a5bf8a52c582360158f85abda4c9675b2ea2e6"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -679,6 +680,36 @@ check_file_at "$SRC_SHA_COMPARE" "go/internal/query/compare/read_admission_contr
   "contracts/upstream/compare_read_admission_contract_test.go" \
   "0a394ea8c3230c1bc978bc6c4f86d15b058805a607e3d63d60ec9ea6f0521b1a"
 
+# O2/O6 six pins (satellite eshu-hq/eshu-api#72, core origin/main
+# 14a5bf8a52): the versioned admission pins (unwired-seam style —
+# version constant + frozen method-set contract test per pin),
+# recorded byte-identical satellite-side first. No termination rides
+# this record: every leg stays on its current relay or tier-C lane
+# until its termination lane lands.
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/auth/audit_append_admission_contract_test.go" \
+  "contracts/upstream/audit_append_admission_contract_test.go" \
+  "268a736ea8309f59244353f2f321192c3abbbd5a9b312d41c0e8558dc7c63581"
+
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/auth/read_admission_contract_test.go" \
+  "contracts/upstream/sign_in_policy_read_admission_contract_test.go" \
+  "f9ec1530119e00121ea313abfa29e679897867e806cf0161faa2a7f86e763eea"
+
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/metrics/read_admission_contract_test.go" \
+  "contracts/upstream/metrics_read_admission_contract_test.go" \
+  "c794f47ff10e15bfe8a5476516c6cb3c77b635b39d4a829bd3551f6c7e7301bd"
+
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/semanticsearch/read_admission_contract_test.go" \
+  "contracts/upstream/semantic_search_read_admission_contract_test.go" \
+  "63dcc3bbb35945cd65968acce51a30c164971a73680ce941cf351cb803767766"
+
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/terraform/drift/read_admission_contract_test.go" \
+  "contracts/upstream/terraform_drift_read_admission_contract_test.go" \
+  "964f85f275ce0fd7eda690200e679f2a0dd7115f7beb11a11b1da40124584c6c"
+
+check_file_at "$SRC_SHA_O2O6" "go/internal/query/iac/read_admission_contract_test.go" \
+  "contracts/upstream/iac_read_admission_contract_test.go" \
+  "2454d431ed9f6f04cdd47d1e720d99b2a7dd9c4245ee6e2b05f6da236043b242"
+
 # D4 Native-next wave (Decision 5(c)): the CICD, Documentation, Infra,
 # PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 # Playbooks fragments are byte-identical ports (whole-file) or
@@ -1264,6 +1295,26 @@ check_excerpt_at "$SRC_SHA_GAP02" "contracts/upstream/admin-trio-read-wire-shape
 check_excerpt_at "$SRC_SHA_COMPARE" "contracts/upstream/compare-read-wire-shapes.txt" \
   "go/internal/query/compare/read_admission.go"
 
+# O2/O6 six pins (core origin/main 14a5bf8a52): the admission shape
+# excerpts, line-verbatim from the pin files at the record commit.
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/audit-append-wire-shapes.txt" \
+  "go/internal/query/auth/audit_append_admission.go"
+
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/sign-in-policy-read-wire-shapes.txt" \
+  "go/internal/query/auth/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/metrics-read-wire-shapes.txt" \
+  "go/internal/query/metrics/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/semantic-search-read-wire-shapes.txt" \
+  "go/internal/query/semanticsearch/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/terraform-drift-read-wire-shapes.txt" \
+  "go/internal/query/terraform/drift/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_O2O6" "contracts/upstream/iac-read-wire-shapes.txt" \
+  "go/internal/query/iac/read_admission.go"
+
 check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/status-read-wire-shapes.txt" \
   "go/internal/status/read_admission.go" \
   "go/internal/status/report.go"
@@ -1299,6 +1350,12 @@ grep -qF 'DeltaUnionCompletenessReadAdmissionContractVersion = "v0"' "${REPO_ROO
 grep -qF 'ReindexProgressReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'SharedProjectionTuningReportContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-trio-read-wire-shapes.txt"
 grep -qF 'CompareReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/compare-read-wire-shapes.txt"
+grep -qF 'AuditAppendAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/audit-append-wire-shapes.txt"
+grep -qF 'SignInPolicyReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/sign-in-policy-read-wire-shapes.txt"
+grep -qF 'MetricsReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/metrics-read-wire-shapes.txt"
+grep -qF 'SemanticSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/semantic-search-read-wire-shapes.txt"
+grep -qF 'TerraformDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terraform-drift-read-wire-shapes.txt"
+grep -qF 'IaCReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"

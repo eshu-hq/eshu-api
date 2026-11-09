@@ -143,6 +143,24 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/admin-trio-read-admission.md", "SharedProjectionTuningReportContractVersion"); got != SharedProjectionTuningReportContractVersion {
 		t.Errorf("contracts/admin-trio-read-admission.md pins %q, constant is %q: move them in the same diff", got, SharedProjectionTuningReportContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/audit-append-admission.md", "AuditAppendAdmissionContractVersion"); got != AuditAppendAdmissionContractVersion {
+		t.Errorf("contracts/audit-append-admission.md pins %q, constant is %q: move them in the same diff", got, AuditAppendAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/sign-in-policy-read-admission.md", "SignInPolicyReadAdmissionContractVersion"); got != SignInPolicyReadAdmissionContractVersion {
+		t.Errorf("contracts/sign-in-policy-read-admission.md pins %q, constant is %q: move them in the same diff", got, SignInPolicyReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/metrics-read-admission.md", "MetricsReadAdmissionContractVersion"); got != MetricsReadAdmissionContractVersion {
+		t.Errorf("contracts/metrics-read-admission.md pins %q, constant is %q: move them in the same diff", got, MetricsReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/semantic-search-read-admission.md", "SemanticSearchReadAdmissionContractVersion"); got != SemanticSearchReadAdmissionContractVersion {
+		t.Errorf("contracts/semantic-search-read-admission.md pins %q, constant is %q: move them in the same diff", got, SemanticSearchReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/terraform-drift-read-admission.md", "TerraformDriftReadAdmissionContractVersion"); got != TerraformDriftReadAdmissionContractVersion {
+		t.Errorf("contracts/terraform-drift-read-admission.md pins %q, constant is %q: move them in the same diff", got, TerraformDriftReadAdmissionContractVersion)
+	}
+	if got := pinnedVersion(t, "../contracts/iac-read-admission.md", "IaCReadAdmissionContractVersion"); got != IaCReadAdmissionContractVersion {
+		t.Errorf("contracts/iac-read-admission.md pins %q, constant is %q: move them in the same diff", got, IaCReadAdmissionContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/retirement-admission.md", "RetirementAdmissionContractVersion"); got != RetirementAdmissionContractVersion {
 		t.Errorf("contracts/retirement-admission.md pins %q, constant is %q: move them in the same diff", got, RetirementAdmissionContractVersion)
 	}
@@ -214,6 +232,24 @@ func TestContractVersionsArePinned(t *testing.T) {
 	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "SharedProjectionTuningReportContractVersion"); got != SharedProjectionTuningReportContractVersion {
 		t.Errorf("docs/provenance.md pins shared-projection tuning reads %q, constant is %q: record the new pin before consuming it", got, SharedProjectionTuningReportContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "AuditAppendAdmissionContractVersion"); got != AuditAppendAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins audit-append %q, constant is %q: record the new pin before consuming it", got, AuditAppendAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SignInPolicyReadAdmissionContractVersion"); got != SignInPolicyReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins sign-in-policy reads %q, constant is %q: record the new pin before consuming it", got, SignInPolicyReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "MetricsReadAdmissionContractVersion"); got != MetricsReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins metrics reads %q, constant is %q: record the new pin before consuming it", got, MetricsReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "SemanticSearchReadAdmissionContractVersion"); got != SemanticSearchReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins semantic-search reads %q, constant is %q: record the new pin before consuming it", got, SemanticSearchReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "TerraformDriftReadAdmissionContractVersion"); got != TerraformDriftReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins terraform-drift reads %q, constant is %q: record the new pin before consuming it", got, TerraformDriftReadAdmissionContractVersion)
+	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "IaCReadAdmissionContractVersion"); got != IaCReadAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins IaC reads %q, constant is %q: record the new pin before consuming it", got, IaCReadAdmissionContractVersion)
 	}
 }
 
