@@ -200,6 +200,17 @@ func (s *Server) fetchOIDCCore(ctx context.Context, req oidcPortRequest) (oidcPo
 	return oidcPortResponse{status: resp.StatusCode, header: mapped, body: raw}, nil
 }
 
+// oidcTerminatedHandler selects the terminated handler for one OIDC
+// route: the login start leg, or for any other d9Routes entry the
+// callback leg. Lives here (not in routes()) so the shared router
+// stays under the file-size cap.
+func (s *Server) oidcTerminatedHandler(route string) func(http.ResponseWriter, *http.Request) {
+	if route == d9OIDCLogin {
+		return s.serveOIDCLoginTerminated
+	}
+	return s.serveOIDCCallbackTerminated
+}
+
 // serveOIDCLoginTerminated terminates one OIDC login GET for any
 // caller: the route is public pre-auth, so there is no gate and no
 // authorizer judgment to file. The redirect comes from the
