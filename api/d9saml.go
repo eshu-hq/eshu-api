@@ -3,10 +3,6 @@
 
 package api
 
-import (
-	"net/http"
-)
-
 // SAML-login tier-C dispatch clones (Refs eshu-hq/eshu#9669, part of
 // #6707; pin SAMLLoginAdmission v0; arbiter APPROVED-WITH-CONDITIONS
 // on the D9 SAML wave). This is the third of three sequential family
@@ -25,18 +21,20 @@ import (
 // path. The OpenAPI entries are a line-verbatim subset of the pinned
 // core file (see contracts/d9-saml-login.md).
 //
-// Scope honesty (binding): this lane is tier-C dispatch only — HTTP
-// write-through to the current core handlers — not termination, not
-// removal readiness. Dest holds no provider material, session, replay
-// reservation, or request record, mints no credential or idempotency
-// value, keeps no ledger, appends no audit, and runs no finalize: the
-// request creation and RelayState hashing, the signed-assertion
-// verification, the replay reservation, the group-to-role mapping, the
-// session mint, and the allow/deny audit append all run inside the
-// core handlers that still serve every forwarded request. The ledger
-// deficit stays open in the contract; serialization dest-side (state
-// stores, replay caches) is not a substitute for it. Termination stays
-// last on D0-proven transport only.
+// Scope honesty (binding): this lane landed as tier-C dispatch only
+// — HTTP write-through to the current core handlers — and the
+// saml-triple termination lane (see api/saml_terminate.go)
+// supersedes the write-through for the same three exact paths: dest
+// now owns the route mapping over the versioned SAMLLoginAdmission v0
+// port on D0-proven transport. Dest still holds no SAML state,
+// session, or provider material, mints no credential or idempotency
+// value, keeps no replay cache, appends no audit event, and runs no
+// finalize: the request creation and RelayState hashing, the
+// signed-assertion verification, the replay reservation, the
+// group-to-role mapping, the session mint, and the allow/deny audit
+// append all run inside the core handlers that still serve every
+// fetch. The ledger deficit stays open in the contract; serialization
+// dest-side (state stores, replay caches) is not a substitute for it.
 const (
 	d9SAMLMetadata = "GET /api/v0/auth/saml/providers/{provider_id}/metadata"
 	d9SAMLLogin    = "GET /api/v0/auth/saml/providers/{provider_id}/login"
@@ -53,46 +51,14 @@ var d9SAMLRoutes = []string{
 	d9SAMLACS,
 }
 
-// d9SAMLPublicWriteThrough is the tier-C clone for the 3 pre-auth
-// public SAML routes (C-c1 carve-out grade): each request crosses an
-// explicit public per-route registration outside every gate instead of
-// the generic byte-relay, with no dest-side gate at all — an anonymous
-// browser beginning a login carries no session, bearer, or prior
-// credential to present, and the IdP posts the ACS form straight to
-// the public endpoint. The shape is HTTP write-through — method, path,
-// query, headers, and body forward to the same core route, and core
-// bytes come back unmodified — because every trust decision stays
-// core-side: core's AuthMiddleware public-path bypass plus the
-// per-request proofs the core handlers run (provider selection and
-// request creation on start; RelayState hash consumption, replay
-// reservation, and signed-assertion verification on ACS) still run on
-// every forwarded request.
-//
-// Dest adds no validation and keeps no state. The provider path value,
-// the return_to query value, and the IdP-posted form fields cross as
-// opaque bytes — never parsed, logged, or telemetered — the dest
-// shared key is never injected as Authorization on these routes
-// (forwardToCore clones the caller headers and invents none), the
-// core's Location and Set-Cookie answers relay unmodified, redirects
-// are never followed dest-side, and a forwarded login is never
-// retried: start and ACS are census mutations (login start creates
-// server-side state; an ACS consume spends the request), so dest makes
-// exactly one upstream attempt on every shape. The only body cap lives
-// core-side on the ACS route; dest applies none.
-//
-// Governance audit stays core-side on forwarded requests: the
-// identity-authentication event (allowed "sso_login_authenticated" or
-// a denied classification carrying the server-side reason) emits from
-// inside the core login and ACS handlers that still run on every
-// forwarded request, so write-through keeps every audit event
-// core-side with no gap. Dest emits none. A family whose handlers
-// emit audit must never be re-implemented dest-side without a
-// versioned audit-append contract; this lane re-implements nothing.
-func (s *Server) d9SAMLPublicWriteThrough(w http.ResponseWriter, r *http.Request) {
-	if s.core == nil {
-		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core origin is not configured; no core routes are served")
-		return
-	}
-	forwardToCore(s, w, r, viaNative)
-}
+// Termination supersedes the write-through (saml-triple lane, Refs
+// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#72): the 2 pre-auth
+// public GETs plus the pre-auth public ACS POST terminate dest-side
+// on serveSAMLMetadataTerminated, serveSAMLLoginTerminated, and
+// serveSAMLACSTerminated (see api/saml_terminate.go and
+// contracts/saml-termination.md), registered on the same exact paths
+// outside every gate ahead of the generic proxy. The table above
+// stays frozen: only these three spellings terminate, and the
+// trailing-slash twins stay on the generic relay by design. The
+// write-through method lived here before this lane; rollback restores
+// it from this lane's diff.

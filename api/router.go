@@ -288,27 +288,22 @@ func (s *Server) routes() *http.ServeMux {
 		// for the spelled path).
 		mux.Handle(route, terminated)
 	}
-	// Native dispatch, SAML-login public carve-out (D9 SAML lane,
-	// C-c1 grade): the 2 pre-auth public GETs plus the pre-auth
-	// public ACS POST register exactly those paths outside every
-	// gate, ahead of the generic proxy, on the public write-through
-	// handler. No other login route leaves the gate in this lane:
-	// OIDC and GitHub stay on their own landed lanes, and non-GET
-	// spellings of the metadata/login paths (plus non-POST spellings
-	// of the ACS path) keep the standing 401. The provider path
-	// value, the return_to query value, and the IdP form fields
-	// cross as opaque bytes; the dest shared key is never injected
-	// here. See api/d9saml.go and contracts/d9-saml-login.md:
-	// tier-C dispatch only, not termination.
+	// Native termination, SAML-login triple (see
+	// api/saml_terminate.go): the 2 pre-auth public GETs plus the
+	// pre-auth public ACS POST terminate dest-side, registered
+	// exactly those paths outside every gate. OIDC and GitHub stay
+	// on their own landed termination lanes; non-GET spellings of
+	// the metadata/login paths (plus non-POST spellings of the ACS
+	// path) keep the standing 401; credentials cross as opaque bytes.
 	for _, route := range d9SAMLRoutes {
-		public := s.instrumented(viaNative, http.HandlerFunc(s.d9SAMLPublicWriteThrough))
+		terminated := s.instrumented(viaNative, http.HandlerFunc(s.samlTerminatedHandler(route)))
 		// Exact paths only: a trailing-slash twin would be a
 		// subtree pattern swallowing past the auth bypass, and the
 		// carve-out is exactly these three paths. The slash
 		// spellings stay on the generic relay (keyless callers keep
 		// the standing 401 there; keyed callers get core's answer
 		// for the spelled path).
-		mux.Handle(route, public)
+		mux.Handle(route, terminated)
 	}
 	for _, route := range recoveryRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))

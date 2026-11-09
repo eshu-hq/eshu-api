@@ -1387,6 +1387,34 @@ for call in ParseForm FormValue PostForm MultipartForm 'ReadAll(' MaxBytesReader
 done
 echo "OK: api/d9saml.go carries no dest-side client or form/body read"
 
+# SAML-triple termination: no dest-side client on the lane (arbiter
+# ruling decision 3, binding). api/saml_terminate.go must name no
+# dest-side client type, interface, or import — no store, no provider
+# config, no verifier, no keyring, no client library — and above all
+# never GetSAMLProvider: that store method returns the SP key material
+# (service-provider private key, IdP metadata) that must never leave
+# core, so the dest-side metadata call is deliberately named
+# FetchSAMLMetadata instead. The lane must also contain no form parse
+# and no provider extraction: the ACS form crosses as bounded bytes
+# (the ReadAll-over-LimitReader size bound is the one deliberate
+# exception — size-bounding is not parsing) and the provider path
+# value crosses whole, never segmented. Fails closed on any match
+# (the in-suite source test TestSAMLTerm_LaneFileHygiene proves the
+# same list plus the log/store/lock bans).
+for symbol in GetSAMLProvider SAMLStore SAMLProviderConfig ServiceProviderConfig samlauth secretcrypto keyring; do
+  if grep -qF "$symbol" "${REPO_ROOT}/api/saml_terminate.go"; then
+    echo "FAIL: api/saml_terminate.go names ${symbol}: no dest-side SAML client on this lane" >&2
+    exit 1
+  fi
+done
+for call in ParseForm FormValue PostForm MultipartForm MultipartReader MaxBytesReader 'PathValue(' '.RequestURI'; do
+  if grep -qF "$call" "${REPO_ROOT}/api/saml_terminate.go"; then
+    echo "FAIL: api/saml_terminate.go contains ${call}: no dest-side form parse or path extraction on this lane" >&2
+    exit 1
+  fi
+done
+echo "OK: api/saml_terminate.go carries no dest-side client or form parse"
+
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core
 # packages. Dest dispatches over HTTP write-through; the vendored
