@@ -234,18 +234,32 @@ func (s *Server) fetchSAMLCore(ctx context.Context, req samlPortRequest) (samlPo
 }
 
 // samlTerminatedHandler selects the terminated handler for one SAML
-// route: the metadata leg, the login start leg, or for the remaining
-// d9SAMLRoutes entry the ACS leg. Lives here (not in routes()) so the
-// shared router stays under the file-size cap.
+// route: the metadata leg, the login start leg, or the ACS leg. Any
+// other route fails closed with 404 instead of silently riding a leg:
+// routes() only passes d9SAMLRoutes entries, so a future table add
+// without a handler here (and in the mirror test) breaks loudly.
+// Lives here (not in routes()) so the shared router stays under the
+// file-size cap.
 func (s *Server) samlTerminatedHandler(route string) func(http.ResponseWriter, *http.Request) {
 	switch route {
 	case d9SAMLMetadata:
 		return s.serveSAMLMetadataTerminated
 	case d9SAMLLogin:
 		return s.serveSAMLLoginTerminated
-	default:
+	case d9SAMLACS:
 		return s.serveSAMLACSTerminated
+	default:
+		return s.serveSAMLUnknownRouteTerminated
 	}
+}
+
+// serveSAMLUnknownRouteTerminated answers any route the terminated
+// table does not know: 404, never a leg handler. Unreachable through
+// routes(); it makes a future table add without a handler fail loudly
+// instead of silently riding ACS.
+func (s *Server) serveSAMLUnknownRouteTerminated(w http.ResponseWriter, r *http.Request) {
+	writeError(w, r, http.StatusNotFound, http.StatusText(http.StatusNotFound),
+		"eshu-api: unknown SAML terminated route; no core routes are served")
 }
 
 // serveSAMLMetadataTerminated terminates one SAML metadata GET for
@@ -288,9 +302,9 @@ func (s *Server) serveSAMLLoginTerminated(w http.ResponseWriter, r *http.Request
 func (s *Server) serveSAMLACSTerminated(w http.ResponseWriter, r *http.Request) {
 	form, err := io.ReadAll(io.LimitReader(r.Body, samlTermMaxBody+1))
 	if err != nil || len(form) > samlTermMaxBody {
-		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
+		s.dispatchOutcome(r, viaNative, outcomeDenied, 0, false)
 		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core fetch failed; no core routes are served")
+			"eshu-api: ACS form exceeds the size bound; no core routes are served")
 		return
 	}
 	port := &coreSAMLPort{server: s}

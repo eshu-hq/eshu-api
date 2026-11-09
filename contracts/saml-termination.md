@@ -208,8 +208,9 @@ every fetch.
   bound). Parity proof runs in isolation AND under the full
   parallel race+coverage load.
 - Fail-closed box: unconfigured origin, dead core single attempt,
-  unreadable/oversize ACS body, unbuildable fetch — all permanent
-  local 503, never `Retry-After`.
+  unreadable ACS body, unbuildable fetch — permanent local 503;
+  oversize ACS body — denied outcome with zero upstream contact,
+  same 503 status. Never `Retry-After`.
 
 ## Rollback
 

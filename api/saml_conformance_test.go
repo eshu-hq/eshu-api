@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/eshu-hq/eshu-api/openapi"
@@ -120,12 +121,26 @@ func TestSAMLTermGroup_SpecCarriesTripleOps(t *testing.T) {
 func TestSAMLTermPathsMirrorD9SAMLRoutes(t *testing.T) {
 	t.Parallel()
 
-	want := map[string]string{
+	// Exact table membership: the mirror reads the live table, so a
+	// route add fails here first instead of silently riding a leg.
+	want := []string{d9SAMLMetadata, d9SAMLLogin, d9SAMLACS}
+	if len(d9SAMLRoutes) != len(want) {
+		t.Fatalf("len(d9SAMLRoutes) = %d, want %d (the frozen triple; a route add must update this test and samlTerminatedHandler)", len(d9SAMLRoutes), len(want))
+	}
+	paths := map[string]string{
 		d9SAMLMetadata: "/api/v0/auth/saml/providers/{provider_id}/metadata",
 		d9SAMLLogin:    "/api/v0/auth/saml/providers/{provider_id}/login",
 		d9SAMLACS:      "/api/v0/auth/saml/providers/{provider_id}/acs",
 	}
-	for route, path := range want {
+	for i, route := range d9SAMLRoutes {
+		if route != want[i] {
+			t.Errorf("d9SAMLRoutes[%d] = %q, want %q (registration order is frozen)", i, route, want[i])
+		}
+		path, ok := paths[route]
+		if !ok {
+			t.Errorf("route %q: not a known terminated SAML route", route)
+			continue
+		}
 		method, routePath, _ := strings.Cut(route, " ")
 		if routePath != path {
 			t.Errorf("route %q: path = %q, want terminated %q", route, routePath, path)
@@ -140,6 +155,71 @@ func TestSAMLTermPathsMirrorD9SAMLRoutes(t *testing.T) {
 				t.Errorf("route %q: method = %q, want GET (only GETs terminate here)", route, method)
 			}
 		}
+	}
+}
+
+// TestSAMLTermUnknownRouteFailsClosed pins the fail-closed default:
+// a route the terminated table does not know answers 404, never a
+// leg handler. A future table add without a handler case fails here
+// instead of silently riding ACS.
+func TestSAMLTermUnknownRouteFailsClosed(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("http://127.0.0.1:1", skeletonTestKey)
+	for _, route := range []string{
+		"GET /api/v0/auth/saml/providers/acme-munich/extra",
+		"POST /api/v0/auth/saml/providers/acme-munich/acs/extra",
+		"DELETE /api/v0/auth/saml/providers/acme-munich/acs",
+	} {
+		rec := httptest.NewRecorder()
+		srv.samlTerminatedHandler(route)(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("route %q: status = %d, want 404 (unknown terminated route)", route, rec.Code)
+		}
+	}
+}
+
+// TestSAMLTermOversizeACSFilesDenied pins the dest-cap signal: an
+// oversize ACS form fails closed with zero upstream contact and files
+// the denied outcome — never the dead-core local_503.
+func TestSAMLTermOversizeACSFilesDenied(t *testing.T) {
+	t.Parallel()
+
+	var hits atomic.Int64
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusOK)
+	})
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
+
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	tel := NewTelemetry(nil)
+	srv.WithTelemetry(tel)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	big := strings.Repeat("A", samlTermMaxBody+1)
+	req := httptest.NewRequest(http.MethodPost, "/api/v0/auth/saml/providers/acme-munich/acs", strings.NewReader(big))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("oversize ACS: status = %d, want permanent local 503", rec.Code)
+	}
+	if got := hits.Load(); got != 0 {
+		t.Errorf("oversize ACS: upstream hits = %d, want 0 (zero-contact dest-cap refusal)", got)
+	}
+	if body := rec.Body.String(); !strings.Contains(body, "size bound") {
+		t.Errorf("oversize ACS: body = %q, want the dest-cap detail (not a core-fetch claim)", body)
+	}
+	snap := tel.snapshot()
+	if got := snap.dispatches["saml_login"]["native"]["denied"]; got != 1 {
+		t.Errorf("oversize ACS: denied rows = %d, want 1 (zero-contact dest-cap refusal)", got)
+	}
+	if got := snap.dispatches["saml_login"]["native"]["local_503"]; got != 0 {
+		t.Errorf("oversize ACS: local_503 rows = %d, want 0 (not a core outage)", got)
 	}
 }
 
