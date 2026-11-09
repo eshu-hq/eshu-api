@@ -76,21 +76,27 @@ func TestLeafBPublicDocUI(t *testing.T) {
 
 // TestLeafBPublicDataReads pins the login-picker carve-out: the
 // public sign-in-policy and auth-providers reads serve every caller
-// (credential or none) from the core on the native lane — the core
-// Cache-Control posture relays untouched — and fail closed with the
-// permanent local 503 only when no core origin is configured.
+// (credential or none) dest-synthesized on the native lane — the core
+// Cache-Control posture is re-emitted, never relayed — and fail
+// closed with the permanent local 503 only when no core origin is
+// configured. (Signinpolicy-group lane: synthesis replaced the D2
+// forward; the shape proofs live in signinpolicy_terminate_test.go.)
 func TestLeafBPublicDataReads(t *testing.T) {
 	t.Parallel()
 
-	for _, path := range []string{
-		"/api/v0/auth/sign-in-policy?tenant_id=tenant_a",
-		"/api/v0/auth/providers?tenant_id=tenant_a",
+	// One stub body decodes for both fetches (JSON ignores the keys
+	// each fetch does not need): the policy fetch reads require_sso,
+	// the posture fetch reads providers plus the two offered bits.
+	const stubBody = `{"require_sso":false,"providers":[],"local_login_offered":true,"self_service_tokens_offered":true}`
+	for _, tc := range []struct {
+		path         string
+		cacheControl string
+		wantBody     string
+	}{
+		{"/api/v0/auth/sign-in-policy?tenant_id=tenant_a", "public, max-age=30", `{"require_sso":false}`},
+		{"/api/v0/auth/providers?tenant_id=tenant_a", "public, max-age=60", `{"providers":[],"local_login_offered":true,"self_service_tokens_offered":true}`},
 	} {
-		core := &stubCore{
-			status: http.StatusOK,
-			body:   `{"require_sso":false}`,
-			header: http.Header{"Cache-Control": []string{"public, max-age=30"}},
-		}
+		core := &stubCore{status: http.StatusOK, body: stubBody}
 		mux := http.NewServeMux()
 		mux.Handle("/", core.handler())
 		upstream := httptest.NewServer(mux)
@@ -106,11 +112,11 @@ func TestLeafBPublicDataReads(t *testing.T) {
 		}{
 			{"anonymous", nil},
 			{"shared key", map[string]string{"Authorization": "Bearer " + skeletonTestKey}},
-			{"foreign bearer", map[string]string{"Authorization": "Bearer scoped-token-abc"}},
+			{"foreign bearer", map[string]string{"Authorization": "Bearer [REDACTED]"}},
 			{"session cookie", map[string]string{"Cookie": "eshu_session=sess_123"}},
 		}
 		for _, caller := range callers {
-			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			for k, v := range caller.header {
 				req.Header.Set(k, v)
 			}
@@ -118,19 +124,19 @@ func TestLeafBPublicDataReads(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
-				t.Errorf("%s %s: status = %d, want the relayed core 200", path, caller.name, rec.Code)
+				t.Errorf("%s %s: status = %d, want the synthesized 200", tc.path, caller.name, rec.Code)
 			}
-			if got := rec.Header().Get("Cache-Control"); got != "public, max-age=30" {
-				t.Errorf("%s %s: Cache-Control = %q, want the core posture relayed", path, caller.name, got)
+			if got := rec.Header().Get("Cache-Control"); got != tc.cacheControl {
+				t.Errorf("%s %s: Cache-Control = %q, want the synthesized posture %q", tc.path, caller.name, got, tc.cacheControl)
 			}
 			body, _ := io.ReadAll(rec.Result().Body)
-			if string(body) != core.body {
-				t.Errorf("%s %s: body = %q, want the core bytes %q", path, caller.name, body, core.body)
+			if string(body) != tc.wantBody {
+				t.Errorf("%s %s: body = %q, want the synthesized %q", tc.path, caller.name, body, tc.wantBody)
 			}
 		}
-		family := classifyFamily(path)
+		family := classifyFamily(tc.path)
 		if got := tel.snapshot().dispatches[family][viaNative][outcomeCoreOK]; got != uint64(len(callers)) {
-			t.Errorf("%s: family %q native core_ok = %d, want every caller terminated", path, family, got)
+			t.Errorf("%s: family %q native core_ok = %d, want every caller terminated", tc.path, family, got)
 		}
 	}
 

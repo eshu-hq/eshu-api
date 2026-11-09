@@ -86,22 +86,6 @@ func (s *Server) serveLeafBTerminatedAs(w http.ResponseWriter, r *http.Request, 
 	forwardToCore(s, w, r, viaNative)
 }
 
-// serveLeafBPublicRead terminates one wave-public data read (the
-// pre-auth login-picker routes). There is no gate: core serves these
-// routes publicly, so dest forwards whatever credential arrived (or
-// none) and relays core bytes — including the core Cache-Control
-// posture — untouched on the native lane. Unconfigured origin still
-// fails closed with the permanent local 503.
-func (s *Server) serveLeafBPublicRead(w http.ResponseWriter, r *http.Request) {
-	if s.core == nil {
-		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
-		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core origin is not configured; no core routes are served")
-		return
-	}
-	forwardToCore(s, w, r, viaNative)
-}
-
 // leafbWaveGate fronts the 12 wave-gated routes. A valid shared key
 // terminates (next); a request carrying any other credential — a
 // non-key Bearer (scoped token, OIDC) or a session cookie — relays
