@@ -84,55 +84,66 @@ func TestD9SAMLNative_CredentialHygiene(t *testing.T) {
 }
 
 // TestD9SAMLNative_LargeFormBodyStaysOpaque pins the POST ACS opacity
-// bound: a near-1MiB form body and an over-1MiB form body both forward
-// byte-intact with exactly one upstream attempt each, and core's own
-// answer (the stub stands in for core's MaxBytesReader 400 on the
-// oversize shape) relays unmodified. Dest applies no body cap of its
-// own on this lane — the only cap lives core-side — and parses
-// nothing: the test would fail on any truncation, second attempt, or
-// dest-side refusal.
+// bound under termination (saml-triple lane supersedes the dispatch
+// streaming rule): a near-1MiB form body forwards byte-intact with
+// exactly one upstream attempt and the core bytes relay unmodified,
+// while an over-1MiB form body fails closed to the permanent local 503
+// backend_unavailable with zero upstream contact — dest mirrors core's
+// own 1MiB cap at the lane file (samlTermMaxBody) instead of streaming
+// unboundedly. Dest parses nothing either way: the test would fail on
+// any truncation, second attempt, or dest-side parse.
 func TestD9SAMLNative_LargeFormBodyStaysOpaque(t *testing.T) {
 	t.Parallel()
 
 	near := "RelayState=" + strings.Repeat("r", 512*1024) + "&SAMLResponse=" + strings.Repeat("s", 512*1024-64*1024)
 	over := "RelayState=" + strings.Repeat("r", 640*1024) + "&SAMLResponse=" + strings.Repeat("s", 640*1024)
-	for _, tc := range []struct {
-		name   string
-		form   string
-		status int
-		body   string
-	}{
-		{"near-1MiB relays 201", near, http.StatusCreated, `{"csrf_token":"opaque-csrf"}`},
-		{"over-1MiB relays core 400", over, http.StatusBadRequest, `{"error":"Bad Request","detail":"invalid saml response form"}`},
-	} {
-		core := &stubCore{status: tc.status, header: nil, body: tc.body}
-		mux := http.NewServeMux()
-		mux.Handle("/", core.handler())
-		upstream := httptest.NewServer(mux)
-		defer upstream.Close()
 
-		srv := NewServer(upstream.URL, skeletonTestKey)
-		handler := srv.Handler(DefaultV0Sunset)
+	core := &stubCore{status: http.StatusCreated, header: nil, body: `{"csrf_token":"opaque-csrf"}`}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v0/auth/saml/providers/acme-munich/acs", strings.NewReader(tc.form))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	handler := srv.Handler(DefaultV0Sunset)
 
-		if core.hits != 1 {
-			t.Errorf("%s: upstream hits = %d, want exactly 1", tc.name, core.hits)
-		}
-		if core.lastBody != tc.form {
-			t.Errorf("%s: upstream body differs from caller form: len = %d, want %d (byte-intact)",
-				tc.name, len(core.lastBody), len(tc.form))
-		}
-		if rec.Code != tc.status {
-			t.Errorf("%s: status = %d, want relayed %d", tc.name, rec.Code, tc.status)
-		}
-		respBody, _ := io.ReadAll(rec.Result().Body)
-		if string(respBody) != tc.body {
-			t.Errorf("%s: body = %q, want the core bytes %q", tc.name, respBody, tc.body)
-		}
+	req := httptest.NewRequest(http.MethodPost, "/api/v0/auth/saml/providers/acme-munich/acs", strings.NewReader(near))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if core.hits != 1 {
+		t.Errorf("near-1MiB: upstream hits = %d, want exactly 1", core.hits)
+	}
+	if core.lastBody != near {
+		t.Errorf("near-1MiB: upstream body differs from caller form: len = %d, want %d (byte-intact)",
+			len(core.lastBody), len(near))
+	}
+	if rec.Code != http.StatusCreated {
+		t.Errorf("near-1MiB: status = %d, want relayed 201", rec.Code)
+	}
+	respBody, _ := io.ReadAll(rec.Result().Body)
+	if string(respBody) != `{"csrf_token":"opaque-csrf"}` {
+		t.Errorf("near-1MiB: body = %q, want the core bytes", respBody)
+	}
+
+	overReq := httptest.NewRequest(http.MethodPost, "/api/v0/auth/saml/providers/acme-munich/acs", strings.NewReader(over))
+	overReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	overRec := httptest.NewRecorder()
+	handler.ServeHTTP(overRec, overReq)
+
+	if core.hits != 1 {
+		t.Errorf("over-1MiB: upstream hits = %d, want still 1 (dest cap fails closed with zero upstream contact)", core.hits)
+	}
+	if overRec.Code != http.StatusServiceUnavailable {
+		t.Errorf("over-1MiB: status = %d, want the permanent local 503", overRec.Code)
+	}
+	if got := overRec.Header().Get("Retry-After"); got != "" {
+		t.Errorf("over-1MiB: Retry-After = %q, want empty (permanent, never retryable)", got)
+	}
+	overBody, _ := io.ReadAll(overRec.Result().Body)
+	if !strings.Contains(string(overBody), "backend_unavailable") {
+		t.Errorf("over-1MiB: body = %q, want backend_unavailable", overBody)
 	}
 }
 
