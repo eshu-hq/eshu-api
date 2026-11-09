@@ -38,9 +38,12 @@ import (
 // PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 // Playbooks, then the D6 Status + SupplyChain reads wave: the
 // snapshot-pure Status GETs and the 17 SupplyChain read GETs plus the
-// phase-2 extra-port Status legs (Compare, the remaining extra-port
-// Status aspects, the impact packet, and the suppressions mutation
-// stay relay), then the D7 admin-four tier-C clone lane: the
+// phase-2 extra-port Status legs (the remaining extra-port Status
+// aspects, the impact packet, and the suppressions mutation stay
+// relay) plus the gap-04 Compare POST termination (mounted native;
+// its fragment ports in the follow-up, so its key stays disclosed
+// out of the served document), then the D7 admin-four tier-C clone
+// lane: the
 // backfill, dead-letter, reindex, and skip POSTs (dispatch only, not
 // termination), then the D8 session-resolver tier-C clone lane: the
 // browser-session lifecycle, session-list, profile, local-identity,

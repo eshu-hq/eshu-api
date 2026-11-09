@@ -65,10 +65,13 @@ SupplyChain finding/reconciliation legs this pin does not touch.
 
 ## Relay posture
 
-The Compare POST stays on the generic relay until the termination
-lane lands; no native route moves in this record. The pin is
-recorded here first so the termination lane consumes a minted pin,
-never an unminted one.
+The Compare POST terminated in its gap-04 lane (see
+`contracts/compare-termination.md`): shared-key callers terminate on
+the native lane ahead of the generic proxy with byte parity to the
+relay, while scoped-token, OIDC-bearer, and browser-session classes
+relay explicitly until D8-grade parity. The pin was recorded here
+first so the termination lane consumed a minted pin, never an
+unminted one.
 
 ## Enforcement
 

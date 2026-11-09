@@ -20,9 +20,10 @@
 # pathology (a double fetch, a retry, a body re-read) exceeds it
 # loudly while scheduling noise does not.
 #
-# Relay-route disclosure: the write-relay leg is the Compare POST
-# (/api/v0/compare/environments), which stays on the generic relay by
-# D6 disclosure (no pin covers its shared graph/content ports); the
+# Relay-route disclosure: the write-relay leg is POST
+# /api/v0/code/bundles, which stays on the generic relay (the
+# D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
+# terminated in its gap-04 lane); the
 # read-relay leg is GET /api/v0/dependencies, which stays on the
 # generic relay. The setup paths left the relay on the D10 wave (the
 # state GET terminates; the claim POST rides the tier-C clone); the

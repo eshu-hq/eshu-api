@@ -75,16 +75,17 @@ func BenchmarkSetupWrite(b *testing.B) {
 }
 
 // BenchmarkSetupRelayWrite measures the generic relay path for the
-// same caller shape: the Compare POST, which stays on the generic
-// relay by D6 disclosure (no pin covers its shared graph/content
-// ports). The legs compare different routes by necessity (the setup
+// same caller shape: POST /api/v0/code/bundles, which stays on the
+// generic relay (the D3/D4/Leaf B lanes pin it as their relay POST
+// leg; the Compare POST terminated in its gap-04 lane). The legs
+// compare different routes by necessity (the setup
 // paths left the relay); both do exactly one server-side fetch, so
 // the 1.50 bound stays a real pathology check.
 func BenchmarkSetupRelayWrite(b *testing.B) {
 	_, srv := setupBenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/compare/environments")
+	post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
@@ -145,7 +146,7 @@ func TestSetupBenchmarks_ServeShapes(t *testing.T) {
 		t.Errorf("setup claim status = %d, want 200", claimRec.Code)
 	}
 
-	relayPost := authedRequest(http.MethodPost, "/api/v0/compare/environments")
+	relayPost := authedRequest(http.MethodPost, "/api/v0/code/bundles")
 	relayPostRec := httptest.NewRecorder()
 	handler.ServeHTTP(relayPostRec, relayPost)
 	if relayPostRec.Code != http.StatusOK {

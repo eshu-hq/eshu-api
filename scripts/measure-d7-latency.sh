@@ -17,9 +17,10 @@
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
 #
-# Relay-route disclosure: the relay leg is the Compare POST
-# (/api/v0/compare/environments), which stays on the generic relay by
-# D6 disclosure (no pin covers its shared graph/content ports). The D6
+# Relay-route disclosure: the relay leg is POST /api/v0/code/bundles,
+# which stays on the generic relay (the D3/D4/Leaf B lanes pin it as
+# their relay POST leg; the Compare POST terminated in its gap-04
+# lane). The D6
 # lane used GET /api/v0/dependencies for the same reason; both legs do
 # exactly one server-side fetch, so the 1.50 bound stays a real
 # pathology check either way.

@@ -22,9 +22,10 @@ import (
 // d6WaveSpecKeys are the path keys the D6 wave adds to the served
 // document: one entry per served wave route. The still-relayed Status
 // aspects (governance, answer-narration, hosted-readiness), the impact
-// packet, Compare, and the mux-level openapi.json self entry keep
-// their own posture: their keys stay out of this fragment set, so no
-// served key duplicates a relayed route.
+// packet, and the mux-level openapi.json self entry keep their own
+// posture: their keys stay out of this fragment set, so no served key
+// duplicates a relayed route. Compare serves its own key via its
+// gap-04 lane (see openapi/spec_compare_test.go).
 var d6WaveSpecKeys = []string{
 	"/api/v0/collector-readiness",
 	"/api/v0/collectors",
@@ -61,22 +62,23 @@ var d6WaveSpecKeys = []string{
 }
 
 // d6RelayedSpecKeys are the path keys the D6 lane deliberately does
-// NOT serve: the extra-port Status aspects, the impact packet, and
-// Compare keep their core-served posture via the relay, so their keys
-// must not appear in the dest-assembled document.
+// NOT serve: the extra-port Status aspects and the impact packet keep
+// their core-served posture via the relay, so their keys must not
+// appear in the dest-assembled document. Compare left this list when
+// its gap-04 lane ported its fragment (see
+// openapi/spec_compare_test.go).
 var d6RelayedSpecKeys = []string{
 	"/api/v0/status/governance",
 	"/api/v0/status/answer-narration",
 	"/api/v0/status/hosted-readiness",
 	"/api/v0/investigations/supply-chain/impact/packet",
-	"/api/v0/compare/environments",
 }
 
 func TestD6WaveSpecKeyCount(t *testing.T) {
 	t.Parallel()
 
 	if len(d6WaveSpecKeys) != 32 {
-		t.Fatalf("d6WaveSpecKeys holds %d keys, want the 32 served D6 keys (3 remaining extra-port Status aspects, the impact packet, and Compare omitted by disclosure)", len(d6WaveSpecKeys))
+		t.Fatalf("d6WaveSpecKeys holds %d keys, want the 32 served D6 keys (3 remaining extra-port Status aspects and the impact packet omitted by disclosure)", len(d6WaveSpecKeys))
 	}
 }
 

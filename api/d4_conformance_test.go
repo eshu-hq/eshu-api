@@ -16,7 +16,8 @@ import (
 // landed (frozen wave asserted first) and is green with it — the frozen
 // wave below mirrors go/cmd/api/CUTOVER_OWNERSHIP.md (CICD, Documentation,
 // Infra, PackageRegistry, Repositories, Evidence,
-// InvestigationWorkflows, Playbooks; Compare deferred to D6) and the
+// InvestigationWorkflows, Playbooks; Compare terminated in its gap-04
+// lane) and the
 // behavior tests require every wave route to terminate natively for
 // shared-key callers while relaying unresolvable identity classes
 // explicitly. Until the lane lands, the wave registers nothing and every

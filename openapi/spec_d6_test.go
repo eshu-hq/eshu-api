@@ -135,9 +135,10 @@ func TestSpec_ServesD6Families(t *testing.T) {
 // TestSpec_D6DisclosedOmissions pins the documented spec gaps so they
 // cannot silently widen: the still-relayed extra-port Status aspects
 // (governance, answer-narration, hosted-readiness — each needs a port
-// the pins do not cover), the impact packet (writer responder +
-// shared ports), and Compare (deliberate later pin) stay relay-only,
-// so their keys stay out of the served document.
+// the pins do not cover) and the impact packet (writer responder +
+// shared ports) stay relay-only, so their keys stay out of the
+// served document. Compare left this list when its gap-04 lane
+// ported its fragment (see openapi/spec_compare_test.go).
 func TestSpec_D6DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
@@ -148,7 +149,6 @@ func TestSpec_D6DisclosedOmissions(t *testing.T) {
 		"/api/v0/status/answer-narration",
 		"/api/v0/status/hosted-readiness",
 		"/api/v0/investigations/supply-chain/impact/packet",
-		"/api/v0/compare/environments",
 	} {
 		if _, ok := served[path]; ok {
 			t.Errorf("served spec carries %s, want it relay-only until its pin lands", path)

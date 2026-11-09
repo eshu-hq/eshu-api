@@ -10,7 +10,8 @@ package api
 // on the generic relay — see the d4Wave comment below). It mirrors
 // the CUTOVER_OWNERSHIP rows for CICD, Documentation, Infra,
 // PackageRegistry, Repositories, Evidence, InvestigationWorkflows,
-// and Playbooks (Compare deferred to D6); a wave change moves the
+// and Playbooks (Compare terminated in its gap-04 lane); a wave change
+// moves the
 // ownership map, the spec fragments, and this mirror together. The
 // behavior lives in d4_terminate.go; the proofs in
 // d4_conformance_test.go and the per-family suites.

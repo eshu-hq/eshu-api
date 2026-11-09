@@ -15,8 +15,8 @@ import (
 // part of #6707). TDD record: this suite failed RED before the
 // implementation landed (frozen wave asserted first) and is green with
 // it — the frozen wave below mirrors go/cmd/api/CUTOVER_OWNERSHIP.md
-// (Status and SupplyChain read rows; Compare deferred with a
-// deliberate later pin; the suppressions mutation row stays relay via
+// (Status and SupplyChain read rows; Compare terminated in its own
+// gap-04 lane; the suppressions mutation row stays relay via
 // SuppressionAdmission) and the behavior tests require every wave
 // route to terminate natively for shared-key callers while
 // unresolvable identity classes relay explicitly. Until the lane
@@ -33,8 +33,9 @@ import (
 // verbatim ownership-map rows (method, path, family) plus the
 // satellite serve kind and the Decision 5(c) fragment that carries the
 // route's spec entry. Still-relayed rows (the remaining extra-port
-// Status aspects, the impact packet, Compare, the suppressions
-// mutation) are NOT in this table;
+// Status aspects, the impact packet, the suppressions
+// mutation) are NOT in this table (Compare terminated in its gap-04
+// lane — see api/compare_conformance_test.go);
 // contracts/d6-status-supplychain.md discloses each with its reason.
 func TestD6WaveFrozen(t *testing.T) {
 	t.Parallel()
@@ -197,11 +198,13 @@ func TestD6SuppressionsMutationNotInWave(t *testing.T) {
 }
 
 // TestD6RelayedRoutesStayRelay pins the scoping line: the Status
-// aspects the pins do not cover, the impact packet, and Compare are
-// NOT wave routes and must not file a native dispatch. A shared-key
-// call to each still answers from the stub core on the generic relay
-// lane — the pin never widens silently. (The suppressions mutation
-// above stays on its tier-C write-through lane, covered separately.)
+// aspects the pins do not cover and the impact packet are NOT wave
+// routes and must not file a native dispatch. A shared-key call to
+// each still answers from the stub core on the generic relay lane —
+// the pin never widens silently. (The suppressions mutation above
+// stays on its tier-C write-through lane, covered separately, and
+// Compare terminated in its gap-04 lane — see
+// api/compare_conformance_test.go.)
 func TestD6RelayedRoutesStayRelay(t *testing.T) {
 	t.Parallel()
 
@@ -214,7 +217,6 @@ func TestD6RelayedRoutesStayRelay(t *testing.T) {
 		{http.MethodGet, "/api/v0/status/answer-narration", ""},
 		{http.MethodGet, "/api/v0/status/hosted-readiness", ""},
 		{http.MethodGet, "/api/v0/investigations/supply-chain/impact/packet", ""},
-		{http.MethodPost, "/api/v0/compare/environments", `{"baseline":"a","candidate":"b"}`},
 	}
 	for _, route := range relayed {
 		t.Run(route.method+" "+route.path, func(t *testing.T) {

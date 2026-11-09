@@ -21,9 +21,10 @@
 # BenchmarkD9SAMLRelayLargePost, proving the streaming forward adds no
 # per-byte dest cost beyond the relay.
 #
-# Relay-route disclosure: the write-relay leg is the Compare POST
-# (/api/v0/compare/environments), which stays on the generic relay by
-# D6 disclosure (no pin covers its shared graph/content ports); the
+# Relay-route disclosure: the write-relay leg is POST
+# /api/v0/code/bundles, which stays on the generic relay (the
+# D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
+# terminated in its gap-04 lane); the
 # read-relay leg is GET /api/v0/dependencies, which stays on the
 # generic relay. The D9 paths now clone; both legs do exactly one
 # server-side fetch, so the 1.50 bound stays a real pathology check

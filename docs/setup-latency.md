@@ -19,9 +19,11 @@ Hermetic stub-core comparison, same binary, same caller shape:
   full production chain (`BenchmarkSetupState` and
   `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
   `bash scripts/measure-setup-latency.sh`).
-- Relay legs: the Compare POST (`/api/v0/compare/environments`) for
+- Relay legs: POST `/api/v0/code/bundles` for
   writes and GET `/api/v0/dependencies` for reads, which stay on the
-  generic relay by D6 disclosure. Both legs hit the same
+  generic relay (the D3/D4/Leaf B lanes pin them as their relay legs;
+  the Compare POST previously used for writes terminated in its
+  gap-04 lane). Both legs hit the same
   in-process stub core, so the numbers isolate dest-side cost, not
   core or network time.
 - The gate takes the median ns/op and fails when a setup leg exceeds
@@ -32,8 +34,9 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is the Compare POST (the still-relaying write
-the D6 lane disclosed); the read-relay leg is GET
+The write-relay leg is POST `/api/v0/code/bundles` (the still-relaying
+write the D3/D4/Leaf B lanes pin as their relay POST leg); the
+read-relay leg is GET
 `/api/v0/dependencies` (the still-relaying read the D6 lane
 disclosed). Both legs do exactly one server-side fetch, so the 1.50
 bound stays a real pathology check.
