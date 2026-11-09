@@ -24,8 +24,9 @@ import (
 // aspects (governance, answer-narration, hosted-readiness), the impact
 // packet, and the mux-level openapi.json self entry keep their own
 // posture: their keys stay out of this fragment set, so no served key
-// duplicates a relayed route. Compare serves its own key via its
-// gap-04 lane (see openapi/spec_compare_test.go).
+// duplicates a relayed route. Compare carries no served key: its
+// gap-04 lane mounts natively with the fragment disclosed core-side
+// (see openapi/spec_compare_test.go).
 var d6WaveSpecKeys = []string{
 	"/api/v0/collector-readiness",
 	"/api/v0/collectors",
@@ -65,8 +66,8 @@ var d6WaveSpecKeys = []string{
 // NOT serve: the extra-port Status aspects and the impact packet keep
 // their core-served posture via the relay, so their keys must not
 // appear in the dest-assembled document. Compare left this list when
-// its gap-04 lane ported its fragment (see
-// openapi/spec_compare_test.go).
+// its gap-04 lane mounted natively with its fragment disclosed
+// core-side (see openapi/spec_compare_test.go).
 var d6RelayedSpecKeys = []string{
 	"/api/v0/status/governance",
 	"/api/v0/status/answer-narration",

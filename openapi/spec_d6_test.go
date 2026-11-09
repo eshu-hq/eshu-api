@@ -138,7 +138,8 @@ func TestSpec_ServesD6Families(t *testing.T) {
 // the pins do not cover) and the impact packet (writer responder +
 // shared ports) stay relay-only, so their keys stay out of the
 // served document. Compare left this list when its gap-04 lane
-// ported its fragment (see openapi/spec_compare_test.go).
+// mounted natively with its fragment disclosed core-side (see
+// openapi/spec_compare_test.go).
 func TestSpec_D6DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
