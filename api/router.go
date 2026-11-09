@@ -431,16 +431,30 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)
 	}
-	// D2 wave-public carve-out (core-public parity): the four routes
-	// core serves pre-auth register explicitly OUTSIDE any gate, ahead
-	// of the generic proxy. Docs and redoc serve compiled shells with
-	// no core fetch; the login-picker data reads forward whatever
-	// credential arrived (or none) and relay core bytes on the native
-	// lane. Each trailing-slash spelling stays on the carve-out for
-	// the same never-split reason (the static shells answer the slash
-	// spelling dest-side while core 404s it — disclosed in
-	// contracts/leafb-native-now.md). No other /api/* route leaves the
-	// gate in this lane: the carve-out is exactly these four.
+	// Signinpolicy-group native termination (Refs eshu-hq/eshu#9669,
+	// satellite eshu-hq/eshu-api#72): the two public login-picker
+	// reads terminate dest-side via the SignInPolicyReadAdmission v0
+	// port (see api/signinpolicy_terminate.go), registered explicitly
+	// OUTSIDE any gate, ahead of the generic proxy and ahead of the D2
+	// wave-public loop below. Exact paths only: the trailing-slash
+	// twins and deeper subtrees stay on the generic relay behind
+	// RequireAuth (keyless callers keep the standing 401 there; keyed
+	// callers get core's answer for the spelled path), and non-GET
+	// spellings keep the standing 401. The public registration is
+	// exactly these two: the admin sign-in-policy GET stays wave-gated
+	// and the PATCH stays on its RequireAuth write-through.
+	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
+	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
+	// D2 wave-public carve-out (core-public parity): the routes core
+	// serves pre-auth register explicitly OUTSIDE any gate, ahead of
+	// the generic proxy. Docs and redoc serve compiled shells with no
+	// core fetch (each trailing-slash spelling stays on the carve-out:
+	// the static shells answer the slash spelling dest-side while
+	// core 404s it — disclosed in contracts/leafb-native-now.md). The
+	// two login-picker data reads are served by the native synthesis
+	// above (exact paths only, twins stay on the generic relay), so
+	// the loop below serves only the doc shells now. No other /api/*
+	// route leaves the gate in this lane.
 	for _, entry := range leafbWave {
 		if entry.Serve != leafbServePublic {
 			continue
@@ -452,7 +466,7 @@ func (s *Server) routes() *http.ServeMux {
 		case "/api/v0/redoc":
 			public = s.instrumented(viaNative, serveLeafBDocUI(leafbReDocShell))
 		default:
-			public = s.instrumented(viaNative, http.HandlerFunc(s.serveLeafBPublicRead))
+			continue
 		}
 		pattern := entry.Method + " " + entry.Path
 		mux.Handle(pattern, public)

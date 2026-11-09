@@ -67,8 +67,8 @@ for that day and unreachable on live routes.
 | CLISupport | 5 POSTs (`answer-quality/score`, `packet/render`, `bundle/capture`, `bundle/validate`, `service/report/compose`) | wave-gated terminate / relay-explicit | shared-key allow |
 | Ask | `POST /api/v0/ask` | wave-gated terminate / relay-explicit | shared-key allow |
 | ServiceIntelHTTP | `GET /api/v0/services/{service_name}/intelligence-report` | wave-gated terminate / relay-explicit | shared-key allow |
-| AuthProviders | `GET /api/v0/auth/providers` | wave-public carve-out, forward any/no credential | none (core-public parity) |
-| SignInPolicyReads | `GET /api/v0/auth/sign-in-policy` | wave-public carve-out, forward any/no credential | none (core-public parity) |
+| AuthProviders | `GET /api/v0/auth/providers` | native-public synthesis via SignInPolicyReadAdmission v0 port, exact path only (twins stay relay) — see `contracts/signinpolicy-termination.md` | none (public, no gate to judge) |
+| SignInPolicyReads | `GET /api/v0/auth/sign-in-policy` | native-public synthesis via SignInPolicyReadAdmission v0 port, exact path only (twins stay relay) — see `contracts/signinpolicy-termination.md` | none (public, no gate to judge) |
 | SignInPolicyReads | `GET /api/v0/auth/admin/sign-in-policy` | wave-gated terminate / relay-explicit | shared-key allow |
 | AdminProviderConfigReads | 3 GETs (list, detail, revisions) | wave-gated terminate / relay-explicit | shared-key allow (D0-proven pattern) |
 

@@ -161,35 +161,33 @@ func TestSignInPolicyNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 }
 
 // TestSignInPolicyNative_ReadsStillProxy pins that the native PATCH route
-// changes nothing for the family's reads: both GET spellings still cross
-// the generic byte-relay with path and method intact.
+// changes nothing for the family's authed admin read: the admin GET
+// still crosses its wave-gated forward with path and method intact.
+// The public GET terminated in the signinpolicy-group lane: it serves
+// dest-synthesized from the port (zero core contact without a tenant,
+// one anonymous fetch with one), never the generic proxy.
 func TestSignInPolicyNative_ReadsStillProxy(t *testing.T) {
 	t.Parallel()
 
-	for _, path := range []string{
-		"/api/v0/auth/admin/sign-in-policy",
-		"/api/v0/auth/sign-in-policy",
-	} {
-		core := &stubCore{status: http.StatusOK, body: `{"require_sso":false}`}
-		mux := http.NewServeMux()
-		mux.Handle("/", core.handler())
-		upstream := httptest.NewServer(mux)
-		defer upstream.Close()
+	core := &stubCore{status: http.StatusOK, body: `{"require_sso":false}`}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
 
-		srv := NewServer(upstream.URL, skeletonTestKey)
-		handler := srv.Handler(DefaultV0Sunset)
+	srv := NewServer(upstream.URL, skeletonTestKey)
+	handler := srv.Handler(DefaultV0Sunset)
 
-		req := authedRequest(http.MethodGet, path)
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+	req := authedRequest(http.MethodGet, "/api/v0/auth/admin/sign-in-policy")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
 
-		if core.hits != 1 || core.lastPath != path || core.lastMethod != http.MethodGet {
-			t.Errorf("path %q: hits = %d method = %q lastPath = %q, want the generic proxy to the read route",
-				path, core.hits, core.lastMethod, core.lastPath)
-		}
-		if rec.Code != http.StatusOK {
-			t.Errorf("path %q: status = %d, want 200", path, rec.Code)
-		}
+	if core.hits != 1 || core.lastPath != "/api/v0/auth/admin/sign-in-policy" || core.lastMethod != http.MethodGet {
+		t.Errorf("admin read: hits = %d method = %q lastPath = %q, want the wave-gated forward to the read route",
+			core.hits, core.lastMethod, core.lastPath)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("admin read: status = %d, want 200", rec.Code)
 	}
 }
 

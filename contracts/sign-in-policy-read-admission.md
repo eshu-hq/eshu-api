@@ -51,12 +51,15 @@ handler behavior, not port shape.
 
 ## Relay posture
 
-The sign-in-policy read legs stay on the generic relay until the
-termination lane lands; no native route moves in this record. The pin
-is recorded here first so the termination lane consumes a minted pin,
-never an unminted one. It unblocks the admin sign-in-policy GET on
-shared-key after record plus parity plus D0 review; the public GET
-and the providers GET stay gated on the O3 posture election.
+The pin was recorded here first so the termination lane consumes a
+minted pin, never an unminted one. The signinpolicy-group lane
+(`contracts/signinpolicy-termination.md`, Refs `eshu-hq/eshu#9669`)
+terminates the two public legs natively — `GET
+/api/v0/auth/sign-in-policy` and `GET /api/v0/auth/providers`
+synthesize dest-side via this port under the O3 public-registration
+grant — while the admin sign-in-policy GET admits its policy read
+through this port core-side on its wave-gated forward. The
+sign-in-policy mutation stays on its own pin; nothing else moves.
 
 ## Enforcement
 

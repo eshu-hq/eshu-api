@@ -117,7 +117,15 @@ func TestLeafBWaveRoutesAheadOfRelay(t *testing.T) {
 		t.Run(entry.Method+" "+entry.Path, func(t *testing.T) {
 			t.Parallel()
 
-			core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
+			// The two terminated login-picker reads synthesize from the
+			// fetched JSON instead of relaying bytes, so the stub answers
+			// a body each fetch decodes: the policy fetch reads
+			// require_sso, the posture fetch reads the posture keys.
+			body := `{"data":[],"error":null,"truth":null}`
+			if entry.Path == "/api/v0/auth/sign-in-policy" || entry.Path == "/api/v0/auth/providers" {
+				body = `{"require_sso":false,"providers":[],"local_login_offered":true,"self_service_tokens_offered":true}`
+			}
+			core := &stubCore{status: http.StatusOK, body: body}
 			mux := http.NewServeMux()
 			mux.Handle("/", core.handler())
 			upstream := httptest.NewServer(mux)
