@@ -259,7 +259,7 @@ func (s *Server) serveGitHubTerminated(w http.ResponseWriter, r *http.Request, p
 	if err != nil {
 		s.dispatchOutcome(r, viaNative, outcomeLocal503, coreLatency, false)
 		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
-			"eshu-api: core origin is not configured; no core routes are served")
+			"eshu-api: core fetch failed; no core routes are served")
 		return
 	}
 	retryAfter := got.status == http.StatusServiceUnavailable && got.header.Get("Retry-After") != ""

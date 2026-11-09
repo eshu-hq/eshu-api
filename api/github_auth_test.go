@@ -62,26 +62,28 @@ func TestGitHubTermGroup_PublicExactnessRED(t *testing.T) {
 }
 
 // TestGitHubTermGroup_KeyedExactIsNative pins that keyed callers on
-// the exact paths ride the terminated lane: the dispatch signal files
-// via="native" (not the relay fallback) with the core bytes
-// synthesized from the port.
+// the exact paths ride the terminated lane: 302 + byte-verbatim
+// Location + one fetch of the canonical core route per leg.
 func TestGitHubTermGroup_KeyedExactIsNative(t *testing.T) {
 	t.Parallel()
 
-	core := &stubCore{
-		status: http.StatusFound,
-		header: http.Header{"Location": []string{"https://github.com/login/oauth/authorize?state=opaque"}},
-		body:   ``,
-	}
-	mux := http.NewServeMux()
-	mux.Handle("/", core.handler())
-	upstream := httptest.NewServer(mux)
-	defer upstream.Close()
-
-	srv := NewServer(upstream.URL, skeletonTestKey)
-	handler := srv.Handler(DefaultV0Sunset)
-
 	for _, path := range []string{githubLoginPath, githubCallbackPath} {
+		// Fresh stub per leg: the stub answers any path identically,
+		// so a shared stub cannot catch a login/callback fetch swap.
+		// Asserting lastPath per leg turns a swap RED.
+		core := &stubCore{
+			status: http.StatusFound,
+			header: http.Header{"Location": []string{"https://github.com/login/oauth/authorize?state=opaque"}},
+			body:   ``,
+		}
+		mux := http.NewServeMux()
+		mux.Handle("/", core.handler())
+		upstream := httptest.NewServer(mux)
+		defer upstream.Close()
+
+		srv := NewServer(upstream.URL, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
+
 		req := authedRequest(http.MethodGet, path+"?"+d9GitHubParityQuery(path))
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -92,9 +94,12 @@ func TestGitHubTermGroup_KeyedExactIsNative(t *testing.T) {
 		if got := rec.Header().Get("Location"); got != "https://github.com/login/oauth/authorize?state=opaque" {
 			t.Errorf("GET %s: Location = %q, want core value byte-verbatim", path, got)
 		}
-	}
-	if core.hits != 2 {
-		t.Errorf("upstream hits = %d, want 2 (one port fetch per terminated leg)", core.hits)
+		if core.hits != 1 {
+			t.Errorf("GET %s: upstream hits = %d, want 1 (one port fetch per terminated leg)", path, core.hits)
+		}
+		if core.lastPath != path {
+			t.Errorf("GET %s: upstream path = %q, want the canonical core route for this leg", path, core.lastPath)
+		}
 	}
 }
 
