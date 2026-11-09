@@ -31,10 +31,11 @@ import (
 // contact, exactly like a credential-less caller. The gate reuses
 // hasSessionCookie from the D3 lane — one shape check, not four.
 //
-// Rollback is revert-to-relay: delete the compare wave loop in
-// routes() and the Compare POST returns to the generic relay behind
-// RequireAuth; the served fragment stays (it documents the core
-// route either way). No data migrates and no other family moves.
+// Rollback is revert-to-relay: remove the s.registerCompareWave(mux)
+// call in routes() (or this lane's files) and re-add Compare to the
+// D6 disclosed relay lists; the Compare POST returns to the generic
+// relay behind RequireAuth. No data migrates and no other family
+// moves.
 
 // authorizeCompareSharedKey reports whether an identity carrying
 // allScopes may terminate the Compare POST natively. The only

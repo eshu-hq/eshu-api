@@ -79,8 +79,10 @@ this lane.
 
 ## Rollback
 
-Revert-to-relay: delete the Compare wave loop in `routes()` (and
-its wave/gate/terminate/test files with this contract). The
-Compare POST returns to the generic relay behind RequireAuth and
-rejoins the D6 disclosed relay lists; the spec absence stays
+Revert-to-relay: remove the `s.registerCompareWave(mux)` call in
+`routes()` (or the wave/gate/terminate/test files with this
+contract), and re-add Compare to the D6 disclosed relay lists
+(`TestD6RelayedRoutesStayRelay`, `d6RelayedSpecKeys`) and the
+spec-omission lists this lane edited. The Compare POST returns to
+the generic relay behind RequireAuth; the spec absence stays
 disclosed either way. No data migrates and no other family moves.
