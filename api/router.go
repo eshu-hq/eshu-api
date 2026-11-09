@@ -257,25 +257,31 @@ func (s *Server) routes() *http.ServeMux {
 		// core's answer for the spelled path).
 		mux.Handle(route, public)
 	}
-	// Native dispatch, OIDC-login public carve-out (D9, C-c1 grade):
-	// the 2 pre-auth public GETs register exactly those paths
-	// outside every gate, ahead of the generic proxy, on the public
-	// write-through handler. No other login route leaves the gate in
-	// this lane: GitHub rides d9GitHubRoutes below and SAML rides
-	// its own landed lane (d9SAMLRoutes), and non-GET spellings of
-	// these paths keep the standing 401. Credential query values
-	// cross as opaque bytes; the dest shared key is never injected
-	// here. See api/d9.go and contracts/d9-oidc-login.md: tier-C
-	// dispatch only, not termination.
+	// Native termination, OIDC-login pair (oidc-pair lane, C-c1
+	// grade): the 2 pre-auth public GETs terminate dest-side on the
+	// terminated handlers (see api/oidc_terminate.go and
+	// contracts/oidc-termination.md), registered exactly those paths
+	// outside every gate, ahead of the generic proxy. No other login
+	// route leaves the gate in this lane: GitHub rides
+	// d9GitHubRoutes below and SAML rides its own landed lane
+	// (d9SAMLRoutes), and non-GET spellings of these paths keep the
+	// standing 401. Credential query values cross as opaque bytes;
+	// the dest shared key is never injected here.
 	for _, route := range d9Routes {
-		public := s.instrumented(viaNative, http.HandlerFunc(s.d9PublicWriteThrough))
+		var terminated http.Handler
+		switch route {
+		case d9OIDCLogin:
+			terminated = s.instrumented(viaNative, http.HandlerFunc(s.serveOIDCLoginTerminated))
+		default:
+			terminated = s.instrumented(viaNative, http.HandlerFunc(s.serveOIDCCallbackTerminated))
+		}
 		// Exact paths only: a trailing-slash twin would be a
 		// subtree pattern swallowing past the auth bypass, and the
 		// carve-out is exactly these two paths. The slash
 		// spellings stay on the generic relay (keyless callers keep
 		// the standing 401 there; keyed callers get core's answer
 		// for the spelled path).
-		mux.Handle(route, public)
+		mux.Handle(route, terminated)
 	}
 	// Native dispatch, GitHub-login public carve-out (D9 GitHub lane,
 	// C-c1 grade): the 2 pre-auth public GETs register exactly those
