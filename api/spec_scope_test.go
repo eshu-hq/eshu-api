@@ -19,26 +19,30 @@ import (
 //
 // The mounted set is rebuilt here from the exact tables and route
 // constants the router registers (leafbWave, d3Wave, d4Wave, d6Wave,
-// the per-family route lists, the mux-level probes), never from a
-// second frozen copy: a lane change moves the router tables and this
-// proof together. The spec side is read through the real route as a
+// compareWave, the per-family route lists, the mux-level probes),
+// never from a second frozen copy: a lane change moves the router
+// tables and this proof together. The spec side is read through the real route as a
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Ten mounted spellings stay out of the document by disclosure, each
-// with its owning contract: the three mux-level non-API mounts
+// Eleven mounted spellings stay out of the document by disclosure,
+// each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
 // whose fragment waits on its helper port (the repositories story
-// GET, on the generic-relay stack in d4RelayLegs), and the four D10
+// GET, on the generic-relay stack in d4RelayLegs), the four D10
 // setup-wizard routes whose fragment stays core-side by the recorded
 // eshu-hq/eshu-api#44 posture outcome (contracts/setup-admission.md,
-// pinned by TestSetupSpecPosture_StaysCoreSide). Only explicitly
+// pinned by TestSetupSpecPosture_StaysCoreSide), and the gap-04
+// Compare POST whose fragment stays core-side for the relay-leg lane
+// (core shapes it as its paths-closing entry, unportable mid-list —
+// contracts/compare-termination.md, pinned by
+// TestSpec_CompareStaysDisclosedAbsent). Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
 // core surface) stay out with the unbounded proxy itself. A newly
-// mounted route fails here until its lane ports the fragment and
-// claims it; a newly served operation fails here until its lane
-// mounts the route.
+// mounted route fails here until its lane ports the fragment or
+// discloses the absence; a newly served operation fails here until
+// its lane mounts the route.
 
 // specScopeAbsent pins the mounted spellings with no served spec
 // entry, each with the contract that discloses it. A newly absent
@@ -53,6 +57,7 @@ var specScopeAbsent = map[string]string{
 	"GET /api/v0/redoc": "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
 	"GET /api/v0/repositories/{repo_id}/story": "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
 	"GET /api/v0/auth/setup-state":             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/compare/environments":        "compare fragment stays core-side for the relay-leg lane (core shapes it as its paths-closing entry); the POST terminates regardless (contracts/compare-termination.md, TestSpec_CompareStaysDisclosedAbsent)",
 	"POST /api/v0/auth/setup/claim":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/admin":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/mfa":              "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
@@ -130,6 +135,9 @@ func specScopeMounted() []string {
 	for _, entry := range d6Wave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range compareWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -164,23 +172,24 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
 //
-// Arithmetic (trio + D6 lanes): 167 + 3 trio GETs + 3 D6 legs =
-// 173 mounted (172 native + 1 explicit relay leg); the
-// disclosed-absence count stays 10 (both lanes serve their spec
-// entries, so no new absence).
+// Arithmetic (trio + D6 + Compare lanes): 167 + 3 trio GETs + 3 D6
+// legs + 1 Compare POST = 174 mounted (173 native + 1 explicit relay
+// leg); the disclosed-absence count moves 10 -> 11 (the Compare POST
+// mounts native with its fragment disclosed core-side for this
+// lane).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 173 {
-		t.Fatalf("mounted operations = %d, want 173 (167 + 3 trio + 3 D6 = 172 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 174 {
+		t.Fatalf("mounted operations = %d, want 174 (167 + 3 trio + 3 D6 + 1 Compare = 173 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 10 {
-		t.Fatalf("disclosed-absent operations = %d, want 10: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 11 {
+		t.Fatalf("disclosed-absent operations = %d, want 11: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (172 native + 1 explicit relay leg) has its served spec
+// API operation (173 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

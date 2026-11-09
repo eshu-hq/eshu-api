@@ -404,6 +404,7 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, relayed)
 		mux.Handle(pattern+"/", relayed)
 	}
+	s.registerCompareWave(mux)
 	// D6 Status + SupplyChain reads termination (Refs
 	// eshu-hq/eshu#9669): the 32 pinned read routes register
 	// explicitly inside the D6 wave gate, ahead of the generic proxy.
@@ -417,9 +418,10 @@ func (s *Server) routes() *http.ServeMux {
 	// status/index, status/operations, behind StatusExtraReadAdmission
 	// v0) terminate in this lane; the remaining extra-port Status
 	// aspects (governance, answer-narration, hosted-readiness), the
-	// impact packet, Compare, and the suppressions mutation still cross
+	// impact packet, and the suppressions mutation still cross
 	// their existing lanes — the pins do not cover them and nobody
-	// infers them into this lane.
+	// infers them into this lane. Compare terminates in its gap-04
+	// lane (see api/compare_wave.go).
 	for _, entry := range d6Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d6ReadGate(http.HandlerFunc(s.serveD6Terminated)))

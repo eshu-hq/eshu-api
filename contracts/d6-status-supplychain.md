@@ -18,8 +18,9 @@ StatusExtraReadAdmission v0 pin
 `0ab602df5cda205dc326a44fae02c383c5a653b3`, merge of
 `eshu-hq/eshu#10405`, gap 03 phase 2): the live-activity leg on
 `status/operations` and the retirements leg on both index spellings.
-Compare is deferred to a later pin; the suppressions mutation row
-stays out via SuppressionAdmission.
+Compare carried its own deliberate later pin and terminated in its
+gap-04 lane (see `contracts/compare-termination.md`); the
+suppressions mutation row stays out via SuppressionAdmission.
 
 Transport pins:
 
@@ -141,15 +142,17 @@ Known divergences (disclosed, not hidden):
 - The `investigations/supply-chain/impact/packet` read stays relay:
   it admits through the writer `ImpactPacketResponder` plus the shared
   graph/content ports the SupplyChain pin explicitly excludes.
-- Compare (`POST /api/v0/compare/environments`) stays relay: it
-  admitted only through the shared graph/content ports, never through
-  `status.Reader`, until the gap-04 deliberate later pin —
+- Compare (`POST /api/v0/compare/environments`) terminated in its
+  gap-04 lane (see `contracts/compare-termination.md`): it admitted
+  only through the shared graph/content ports, never through
+  `status.Reader`, until the deliberate later pin —
   `CompareReadAdmission v0`, recorded in
   `contracts/compare-read-admission.md` at the core merge
   (`eshu-hq/eshu#10425`) — re-declared the four reads in a
-  Compare-scoped shape with no shared-port pin. No termination rides
-  this record, so the route stays relay until the termination lane
-  lands.
+  Compare-scoped shape with no shared-port pin, and the termination
+  lane consumed that pin with byte-parity dispatch/conformance proof.
+  The shared-key lane terminates; scoped/OIDC/session classes relay
+  explicitly until D8-grade parity.
 - The suppressions mutation row stays on its tier-C write-through
   lane via SuppressionAdmission (the Decision 2 survivor, not a read
   port) — never in this read wave.

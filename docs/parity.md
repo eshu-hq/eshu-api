@@ -31,18 +31,21 @@ after the move.
   the 3 formerly unpinned Admin GETs now frozen under the D3 trio
   pins; the D4 scope (45 Native-next routes
   across CICD, Documentation, Infra, PackageRegistry, Repositories,
-  Evidence, InvestigationWorkflows, and Playbooks — Compare deferred
-  to D6, the story GET on the generic relay as a relay leg) terminates
+  Evidence, InvestigationWorkflows, and Playbooks — Compare since
+  terminated in its gap-04 lane, the story GET on the generic relay
+  as a relay leg) terminates
   natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
   SupplyChain read GETs plus the 3 phase-2 extra-port Status legs, with
-  the remaining extra-port Status aspects, the impact packet, Compare,
+  the remaining extra-port Status aspects, the impact packet,
   and the suppressions mutation row staying relay by disclosure)
   terminates natively per
   `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
   v0`, `SupplyChainReadAdmission v0`, and (phase 2)
-  `StatusExtraReadAdmission v0` port transports; and the rest
+  `StatusExtraReadAdmission v0` port transports; the gap-04 Compare
+  POST terminates natively per `contracts/compare-termination.md` on
+  the `CompareReadAdmission v0` port transport; and the rest
   stay on the generic relay until their D waves land.
 - Mutation HTTP shapes (all 50 `mutation` rows): the routes move, the
   stores do not. Each persists through an explicit versioned core
@@ -205,9 +208,10 @@ SuppressionAdmission. Divergences stay disclosed in the contract: the
 three remaining extra-port Status aspects (governance,
 answer-narration, hosted-readiness) stay relay with per-route reasons,
 the impact packet stays relay (writer responder plus shared ports),
-Compare stays relay with its deliberate later pin now recorded
-(`CompareReadAdmission v0` in `contracts/compare-read-admission.md`;
-termination lands in a follow-up lane), the status reads
+Compare terminates in its gap-04 lane on the now-recorded deliberate
+later pin (`CompareReadAdmission v0` in
+`contracts/compare-read-admission.md`; see
+`contracts/compare-termination.md`), the status reads
 fragment ports only the seven snapshot lane keys (the phase-2 index
 and operations keys ride their own fragments), and the D2-D4 relay
 legs moved to the still-relaying dependencies route. Termination

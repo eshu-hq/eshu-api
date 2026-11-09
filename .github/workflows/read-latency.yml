@@ -4,14 +4,16 @@
 # Owns the read-latency comparison the destination census assigns the
 # satellite: the terminated Native-now wave (D2), the terminated
 # admin/identity/recovery reads (D3), the terminated Native-next
-# reads (D4), the terminated D6 Status + SupplyChain reads, the D7
+# reads (D4), the terminated D6 Status + SupplyChain reads, the
+# gap-04 terminated Compare POST, the D7
 # admin-four tier-C clones, the D8 session-resolver tier-C clones,
 # the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones, and
 # the D10 terminated setup-state GET plus tier-C setup claim POST
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
-# scripts/measure-d6-latency.sh, scripts/measure-d7-latency.sh,
+# scripts/measure-d6-latency.sh, scripts/measure-compare-latency.sh,
+# scripts/measure-d7-latency.sh,
 # scripts/measure-d8-latency.sh, scripts/measure-d9-latency.sh,
 # scripts/measure-d9github-latency.sh,
 # scripts/measure-d9saml-latency.sh,
@@ -40,6 +42,7 @@ on:
       - 'scripts/measure-d3-latency.sh'
       - 'scripts/measure-d4-latency.sh'
       - 'scripts/measure-d6-latency.sh'
+      - 'scripts/measure-compare-latency.sh'
       - 'scripts/measure-d7-latency.sh'
       - 'scripts/measure-d8-latency.sh'
       - 'scripts/measure-d9-latency.sh'
@@ -154,5 +157,14 @@ jobs:
             echo "## D10 setup latency (stub-core, median ns/op)"
             echo '```'
             cat setup-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Compare gap-04 termination latency
+        run: |
+          bash scripts/measure-compare-latency.sh 2>&1 | tee compare-latency.log
+          {
+            echo "## Compare latency (stub-core, median ns/op)"
+            echo '```'
+            cat compare-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

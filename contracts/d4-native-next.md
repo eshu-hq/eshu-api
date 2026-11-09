@@ -13,7 +13,9 @@ as a relay leg below, not a terminated route.
 Scope source: `go/cmd/api/CUTOVER_OWNERSHIP.md` at the D2 lane base
 (17feac86e0): the CICD, Documentation, Infra, PackageRegistry,
 Repositories, Evidence, InvestigationWorkflows, and Playbooks read rows
-(Compare deferred to D6 — no Compare route terminates here). Excluded
+(Compare deferred past this lane — it terminated in its gap-04 lane,
+see `contracts/compare-termination.md` — so no Compare route
+terminates here). Excluded
 and staying relay (disclosed, not silent):
 
 - the supply-chain, drift, and services packets sharing the

@@ -10,10 +10,11 @@ slower than the relay they replace.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before leg: the generic byte-relay (`BenchmarkD7RelayWrite`), the
-  Compare POST (`/api/v0/compare/environments`) through the full
-  production chain. The Compare route stays on the generic relay by D6
-  disclosure (no pin covers its shared graph/content ports).
+- Before leg: the generic byte-relay (`BenchmarkD7RelayWrite`), POST
+  `/api/v0/code/bundles` through the full production chain. The
+  code-bundles route stays on the generic relay (the D3/D4/Leaf B
+  lanes pin it as their relay POST leg); the Compare POST it replaces
+  terminated in its gap-04 lane.
 - After legs: the D7 clones (`BenchmarkD7NativeWrite`), shared-key
   dead-letter and reindex POSTs through the full production chain with
   the explicit route match and family authorizer.
@@ -28,10 +29,10 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The relay leg is the Compare POST: it is the still-relaying write the
-D6 lane disclosed (Compare admits only through the shared
-graph/content ports, deliberately unpinned). Both legs do exactly one
-server-side fetch, so the 1.50 bound stays a real pathology check.
+The relay leg is POST `/api/v0/code/bundles`: it is the still-relaying
+write the D3/D4/Leaf B lanes pin as their relay POST leg. Both legs do
+exactly one server-side fetch, so the 1.50 bound stays a real
+pathology check.
 
 ## Numbers (local, 2026-11-07)
 

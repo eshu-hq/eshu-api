@@ -12,9 +12,10 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before legs: the generic byte-relay (`BenchmarkD8RelayWrite` for
   writes, `BenchmarkD8RelayRead` for reads) through the full
-  production chain. The write-relay leg is the Compare POST
-  (`/api/v0/compare/environments`), which stays on the generic relay
-  by D6 disclosure (no pin covers its shared graph/content ports);
+  production chain. The write-relay leg is POST
+  `/api/v0/code/bundles`, which stays on the generic relay (the
+  D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
+  it replaces terminated in its gap-04 lane);
   the read-relay leg is GET `/api/v0/dependencies`, which stays on
   the generic relay.
 - After legs: the D8 clones — shared-key browser-session create and
@@ -34,8 +35,9 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is the Compare POST (the still-relaying write the
-D6 lane disclosed); the read-relay leg is GET `/api/v0/dependencies`
+The write-relay leg is POST `/api/v0/code/bundles` (the still-relaying
+write the D3/D4/Leaf B lanes pin as their relay POST leg); the
+read-relay leg is GET `/api/v0/dependencies`
 (the still-relaying read the D6 lane disclosed). Both legs do exactly
 one server-side fetch, so the 1.50 bound stays a real pathology check.
 

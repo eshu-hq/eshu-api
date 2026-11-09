@@ -41,8 +41,10 @@ package api
 // the phase-2 pin) covers the 3 extra-port Status legs — the
 // live-activity leg on operations and the retirements leg on both
 // index spellings. The minting rule forbids inventing pins beyond
-// these three; Compare needs a deliberate later pin and the
-// suppressions mutation stays out via SuppressionAdmission.
+// these three; the suppressions mutation stays out via
+// SuppressionAdmission, and Compare carries its own deliberate later
+// pin in its gap-04 lane (CompareReadAdmission v0 — see
+// api/compare_wave.go).
 //
 // Scoping line (hard, from the pin contracts): the Status pin never
 // covers the GovernanceAudit Summary, the NarrationPosture override,
@@ -55,8 +57,10 @@ package api
 // The investigations impact packet admits through the writer
 // ImpactPacketResponder plus shared graph/content ports the pin
 // explicitly excludes, so it stays relay. Compare
-// (POST /api/v0/compare/environments) admits only through the shared
-// ports and stays relay for its deliberate later pin.
+// (POST /api/v0/compare/environments) admitted only through the
+// shared ports until its deliberate later pin landed
+// (CompareReadAdmission v0, eshu-hq/eshu#10425); it terminates in
+// its own gap-04 lane now (see api/compare_wave.go).
 //
 // D6 satellite serve kind. Every D6 route is wave-gated: shared-key
 // callers terminate, unresolvable credential classes relay explicitly,

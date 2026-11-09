@@ -107,9 +107,10 @@ func BenchmarkD9SAMLPublicACS(b *testing.B) {
 // BenchmarkD9SAMLRelayLargePost measures the generic relay path for a
 // keyed POST carrying the same representative large form body the ACS
 // leg moves, so the ACS clone leg compares against the same bytes —
-// not against an empty-body GET. The Compare POST stays on the generic
-// relay by D6 disclosure (no pin covers its shared graph/content
-// ports); both legs do exactly one server-side fetch of the same body,
+// not against an empty-body GET. POST /api/v0/code/bundles stays on
+// the generic relay (the D3/D4/Leaf B lanes pin it as their relay
+// POST leg; the Compare POST terminated in its gap-04 lane); both
+// legs do exactly one server-side fetch of the same body,
 // so the 1.50 bound stays a real pathology check on the clone route
 // match, not on body size.
 func BenchmarkD9SAMLRelayLargePost(b *testing.B) {
@@ -120,7 +121,7 @@ func BenchmarkD9SAMLRelayLargePost(b *testing.B) {
 		b.ReportAllocs()
 		b.SetBytes(int64(len(d9SAMLACSLargeForm)))
 		for i := 0; i < b.N; i++ {
-			post := httptest.NewRequest(http.MethodPost, "/api/v0/compare/environments", strings.NewReader(d9SAMLACSLargeForm))
+			post := httptest.NewRequest(http.MethodPost, "/api/v0/code/bundles", strings.NewReader(d9SAMLACSLargeForm))
 			post.Header.Set("Authorization", "Bearer "+skeletonTestKey)
 			post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			rec := httptest.NewRecorder()
