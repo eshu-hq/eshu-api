@@ -377,9 +377,8 @@ func (s *Server) routes() *http.ServeMux {
 	// so core judges it; credential-less callers — and junk-cookie
 	// carriers, per the D2 follow-up lesson — get the standing 401.
 	// Each trailing-slash spelling stays on the wave route for the same
-	// never-split reason. Compare rides its own gap-04 wave lane
-	// (registered above), and every other family still crosses its
-	// existing lane.
+	// never-split reason. Compare, and every other family still cross
+	// their existing lanes.
 	for _, entry := range d4Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d4ReadGate(http.HandlerFunc(s.serveD4Terminated)))
@@ -405,18 +404,7 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, relayed)
 		mux.Handle(pattern+"/", relayed)
 	}
-	// Compare relay-leg termination (Refs eshu-hq/eshu#9669, satellite
-	// eshu-hq/eshu-api#72, gap 04): the gap-04-pinned Compare POST
-	// terminates in the Compare wave gate ahead of the generic proxy
-	// (shared key native; foreign classes explicit relay;
-	// credential-less 401; slash twin rides along never-split). See
-	// api/compare_wave.go and contracts/compare-termination.md.
-	for _, entry := range compareWave {
-		pattern := entry.Method + " " + entry.Path
-		gated := s.instrumented(viaNative, s.compareReadGate(http.HandlerFunc(s.serveCompareTerminated)))
-		mux.Handle(pattern, gated)
-		mux.Handle(pattern+"/", gated)
-	}
+	s.registerCompareWave(mux)
 	// D6 Status + SupplyChain reads termination (Refs
 	// eshu-hq/eshu#9669): the 32 pinned read routes register
 	// explicitly inside the D6 wave gate, ahead of the generic proxy.
@@ -430,10 +418,9 @@ func (s *Server) routes() *http.ServeMux {
 	// status/index, status/operations, behind StatusExtraReadAdmission
 	// v0) terminate in this lane; the remaining extra-port Status
 	// aspects (governance, answer-narration, hosted-readiness), the
-	// impact packet, and the suppressions mutation still cross
+	// impact packet, Compare, and the suppressions mutation still cross
 	// their existing lanes — the pins do not cover them and nobody
-	// infers them into this lane. Compare terminates in its own gap-04
-	// lane (see api/compare_wave.go).
+	// infers them into this lane.
 	for _, entry := range d6Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d6ReadGate(http.HandlerFunc(s.serveD6Terminated)))

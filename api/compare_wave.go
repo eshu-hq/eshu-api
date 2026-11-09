@@ -3,6 +3,10 @@
 
 package api
 
+import (
+	"net/http"
+)
+
 // Compare relay-leg termination (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#72, gap 04). This file owns the frozen wave table:
 // the single Compare POST the deliberate later pin covers. The
@@ -65,4 +69,18 @@ type compareRoute struct {
 // together.
 var compareWave = []compareRoute{
 	{Method: "POST", Path: "/api/v0/compare/environments", Family: "compare", Serve: compareServeGated, Fragment: "go/internal/query/openapi/paths/status/compare.go"},
+}
+
+// registerCompareWave mounts the gap-04 Compare wave gate ahead of the
+// generic proxy: shared-key callers terminate, foreign classes relay
+// explicitly, credential-less callers keep the standing 401, and the
+// slash twin rides along never-split. Lives here (not in routes())
+// so the shared router stays under the file-size cap.
+func (s *Server) registerCompareWave(mux *http.ServeMux) {
+	for _, entry := range compareWave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.compareReadGate(http.HandlerFunc(s.serveCompareTerminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
 }
