@@ -16,12 +16,13 @@
 # a body re-read, a lock convoy under duplicate callbacks) exceeds it
 # loudly while scheduling noise does not.
 #
-# Relay-route disclosure: the write-relay leg is the Compare POST
-# (/api/v0/compare/environments), the read-relay leg is GET
-# /api/v0/dependencies — both stay on the generic relay (Compare by D6
-# disclosure, dependencies by census). The OIDC paths now terminate;
-# both legs do exactly one server-side fetch, so the 1.50 bound stays a
-# real pathology check either way.
+# Relay-route disclosure: the write-relay leg is POST
+# /api/v0/code/bundles, which stays on the generic relay (the
+# D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
+# terminated in its gap-04 lane); the read-relay leg is GET
+# /api/v0/dependencies, which stays on the generic relay. The OIDC
+# paths now terminate; both legs do exactly one server-side fetch, so
+# the 1.50 bound stays a real pathology check either way.
 #
 # Usage: bash scripts/measure-oidc-termination-latency.sh
 # Needs: go (version in go.mod).

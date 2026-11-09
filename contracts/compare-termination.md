@@ -35,9 +35,7 @@ not port shape — core judges them on the forwarded call.
   - scoped API tokens (`Bearer sc_...`, any non-key bearer),
   - OIDC bearers (`Bearer eyJ...` carrying an OIDC `iss`),
   - browser sessions (`eshu_session` / `__Host-eshu_session`
-    cookies).
-  
-  The explicit relay carries the caller's credential, method, path,
+    cookies). The explicit relay carries the caller's credential, method, path,
   query, and body to the same core route untouched; dest invents no
   401, 403, 404, or 500 for these classes
   (`TestCompareWaveRelayExplicitForUnresolvableIdentities`).
