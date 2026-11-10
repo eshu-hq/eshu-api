@@ -122,6 +122,7 @@ var familyPrefixes = []struct {
 	{"/collector-readiness", "status"},
 	{"/ingesters", "status"},
 	{"/index-status", "status"},
+	{"/freshness", "freshness"},
 	{"/supply-chain", "supply_chain"},
 	{"/investigations/supply-chain", "supply_chain"},
 }

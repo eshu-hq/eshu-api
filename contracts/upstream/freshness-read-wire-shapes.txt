@@ -1,0 +1,31 @@
+// FreshnessReadAdmissionContractVersion versions the #9669 D13
+// admission-contract shape for the Freshness family reads: the bounded
+// generation-lifecycle page and the two bounded changed-since delta
+// summaries behind the freshness drilldown routes. Canonical reads
+// persist through explicit core-owned admission contracts: eshu-api
+// keeps the HTTP shape and calls this versioned port, which the
+// core-owned Postgres status store satisfies. A breaking change to the
+// read shape fails the frozen method-set test until that list is
+// deliberately updated; bump this version alongside (manually — the
+// bump is convention, the frozen list is the enforcement) so dest
+// consumers can pin the shape.
+const FreshnessReadAdmissionContractVersion = "v0"
+
+// FreshnessReadAdmission is the versioned admission-contract port the
+// API handler depends on instead of a direct StatusStore handle. It
+// re-declares exactly the three StatusStore signatures the freshness
+// drilldown routes admit through — the repository-scope changed-since
+// delta, the generation-lifecycle page, and the service-scope
+// changed-since delta — so the boundary is held honest by the
+// compile-time mirror assertion below plus the frozen method-set
+// contract test; it will back the eshu-api extraction handoff for
+// this family. The seam is read-only on purpose: every declared
+// method is a bounded read and the port carries no mutation surface,
+// so a dest consumer implementing only this contract can serve
+// freshness drilldowns but cannot acquire a write it did not bargain
+// for through it.
+type FreshnessReadAdmission interface {
+	ComputeChangedSinceDelta(context.Context, changedsince.Filter) (changedsince.Summary, error)
+	ComputeServiceChangedSinceDelta(context.Context, changedsince.ServiceFilter) (changedsince.ServiceSummary, error)
+	ListGenerationLifecycle(context.Context, generation.LifecycleFilter) (generation.LifecyclePage, error)
+}
