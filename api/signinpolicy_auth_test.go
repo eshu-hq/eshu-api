@@ -23,8 +23,8 @@ import (
 // TestSigninpolicyGroup_AdminStaysAuthed pins no widening on the
 // admin leg: keyless admin GET and keyless PATCH each keep the
 // standing 401 with zero core contact, in both shapes. The keyed
-// admin GET still forwards on its wave-gated lane (covered by
-// TestSignInPolicyNative_ReadsStillProxy); the keyed PATCH still
+// admin GET still forwards on its family lane (covered by the
+// signinpolicy_admin terminate suite); the keyed PATCH still
 // write-throughs (covered by the signin dispatch suite).
 func TestSigninpolicyGroup_AdminStaysAuthed(t *testing.T) {
 	t.Parallel()

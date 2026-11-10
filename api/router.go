@@ -309,8 +309,11 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 	}
+	// W7-read admin sign-in-policy GET: family-owned termination
+	// (see api/signinpolicy_admin_terminate.go), ahead of the LeafB loop.
+	s.registerAdminSignInPolicyRead(mux)
 	// D2 Leaf B Native-now termination (Refs eshu-hq/eshu#9669): the
-	// 12 wave-gated reads register explicitly inside the wave gate,
+	// wave-gated reads register explicitly inside the wave gate,
 	// ahead of the generic proxy. A valid shared key terminates on the
 	// native lane; a foreign credential class (scoped token, OIDC
 	// bearer, session cookie) relays explicitly on the relay lane so
@@ -438,8 +441,9 @@ func (s *Server) routes() *http.ServeMux {
 	// RequireAuth (keyless callers keep the standing 401 there; keyed
 	// callers get core's answer for the spelled path), and non-GET
 	// spellings keep the standing 401. The public registration is
-	// exactly these two: the admin sign-in-policy GET stays wave-gated
-	// and the PATCH stays on its RequireAuth write-through.
+	// exactly these two; the admin sign-in-policy GET terminates on
+	// its family lane (see api/signinpolicy_admin_terminate.go) and
+	// the PATCH stays on its RequireAuth write-through.
 	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
 	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
 	// D2 wave-public carve-out (core-public parity): the routes core

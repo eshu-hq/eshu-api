@@ -69,7 +69,7 @@ for that day and unreachable on live routes.
 | ServiceIntelHTTP | `GET /api/v0/services/{service_name}/intelligence-report` | wave-gated terminate / relay-explicit | shared-key allow |
 | AuthProviders | `GET /api/v0/auth/providers` | native-public synthesis via SignInPolicyReadAdmission v0 port, exact path only (twins stay relay) — see `contracts/signinpolicy-termination.md` | none (public, no gate to judge) |
 | SignInPolicyReads | `GET /api/v0/auth/sign-in-policy` | native-public synthesis via SignInPolicyReadAdmission v0 port, exact path only (twins stay relay) — see `contracts/signinpolicy-termination.md` | none (public, no gate to judge) |
-| SignInPolicyReads | `GET /api/v0/auth/admin/sign-in-policy` | wave-gated terminate / relay-explicit | shared-key allow |
+| SignInPolicyReads | `GET /api/v0/auth/admin/sign-in-policy` | family-owned terminate / relay-explicit (W7-read lane; LeafB loop skips the wave-family row) — see `contracts/signin-policy-admin-read-wave.md` | shared-key allow (family authorizer shared with PATCH) |
 | AdminProviderConfigReads | 3 GETs (list, detail, revisions) | wave-gated terminate / relay-explicit | shared-key allow (D0-proven pattern) |
 
 Known divergences (disclosed, not hidden):

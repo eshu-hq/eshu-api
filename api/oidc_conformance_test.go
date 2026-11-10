@@ -284,12 +284,10 @@ func TestOIDCTerm_NoRetryOnUnstable(t *testing.T) {
 func TestOIDCTerm_DeadCoreSingleAttempt(t *testing.T) {
 	t.Parallel()
 
-	core := &stubCore{status: http.StatusOK, body: `{}`}
-	mux := http.NewServeMux()
-	mux.Handle("/", core.handler())
-	upstream := httptest.NewServer(mux)
-	deadURL := upstream.URL
-	upstream.Close()
+	// Dead port, never a recycled test-server URL: a closed httptest
+	// server's port can be rebound by a parallel test, turning this
+	// dead-core proof into a hit on a live stub (eshu-api#94).
+	deadURL := "http://127.0.0.1:1"
 
 	srv := NewServer(deadURL, skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)

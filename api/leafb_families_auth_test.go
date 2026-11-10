@@ -23,8 +23,9 @@ import (
 
 // TestLeafBAuthorizerSharedKeyAllowDeny pins the family gate: the
 // shared-key identity allows, anything else denies. One shared
-// authorizer covers all 12 gated wave routes until D8 resolves
-// per-class handling.
+// authorizer covers the remaining 11 gated wave routes until D8
+// resolves per-class handling (the admin sign-in-policy GET
+// terminated in its own family lane under its family authorizer).
 func TestLeafBAuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()
 
@@ -89,13 +90,12 @@ func TestLeafBDenyBranchShapePinned(t *testing.T) {
 		{http.MethodPost, "/api/v0/service/report/compose"},
 		{http.MethodPost, "/api/v0/ask"},
 		{http.MethodGet, "/api/v0/services/checkout/intelligence-report"},
-		{http.MethodGet, "/api/v0/auth/admin/sign-in-policy"},
 		{http.MethodGet, "/api/v0/auth/admin/provider-configs"},
 		{http.MethodGet, "/api/v0/auth/admin/provider-configs/prov_1"},
 		{http.MethodGet, "/api/v0/auth/admin/provider-configs/prov_1/revisions"},
 	}
-	if len(cases) != 12 {
-		t.Fatalf("deny-shape cases = %d, want the 12 gated wave routes", len(cases))
+	if len(cases) != 11 {
+		t.Fatalf("deny-shape cases = %d, want the 11 gated wave routes (admin sign-in-policy GET denies on its family lane)", len(cases))
 	}
 	for _, tc := range cases {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {

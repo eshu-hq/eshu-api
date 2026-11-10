@@ -48,7 +48,7 @@ func TestLeafBWaveFrozen(t *testing.T) {
 		"GET /api/v0/services/{service_name}/intelligence-report service_intel wave-gated paths/service/intelligence_report.go",
 		"GET /api/v0/auth/providers auth_providers wave-public paths/auth/routes.go",
 		"GET /api/v0/auth/sign-in-policy sign_in_policy wave-public paths/auth/sign_in_policy.go",
-		"GET /api/v0/auth/admin/sign-in-policy sign_in_policy wave-gated paths/auth/sign_in_policy.go",
+		"GET /api/v0/auth/admin/sign-in-policy sign_in_policy wave-family paths/auth/sign_in_policy.go",
 		"GET /api/v0/auth/admin/provider-configs provider_config wave-gated paths/auth/admin_provider_configs.go",
 		"GET /api/v0/auth/admin/provider-configs/{provider_config_id} provider_config wave-gated paths/auth/admin_provider_configs.go",
 		"GET /api/v0/auth/admin/provider-configs/{provider_config_id}/revisions provider_config wave-gated paths/auth/admin_provider_configs.go",
@@ -234,7 +234,7 @@ func TestLeafBWaveRelayExplicitForUnresolvableIdentities(t *testing.T) {
 			}
 		})
 	}
-	if gated != 12 {
-		t.Fatalf("gated wave routes = %d, want 12 (the D2 termination set)", gated)
+	if gated != 11 {
+		t.Fatalf("gated wave routes = %d, want 11 (the D2 termination set minus the family-owned admin sign-in-policy GET)", gated)
 	}
 }
