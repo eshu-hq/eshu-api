@@ -53,5 +53,6 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 Within budget on all three legs: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment
-numbers against a pinned core image ride flip prep (D11); this gate
-runs hermetically on every PR and in CI.
+numbers against a pinned core image ride flip prep (D11); this evidence
+runs hermetically via .github/workflows/read-latency.yml on
+lane-affecting PRs and weekly, and locally with the script.

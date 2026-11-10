@@ -43,8 +43,10 @@ list: explicit routes ahead of relay, byte-identical fragments under
 scope-honesty label, byte-parity dispatch/conformance tests vs the
 relayed reference (including the filter-query forwarding cases the pin
 shape requires), the no-core-import check, extended
-`viaNative`/`viaRelay` telemetry, the satellite latency gate with
-before/after numbers, and this contract section with rollback.
+`viaNative`/`viaRelay` telemetry, the satellite latency evidence
+(terminated-vs-proxy-relay ratios, no same-shape before/after: the
+baseline is the still-relaying proxy route), and this contract section
+with rollback.
 
 ## Production binding
 

@@ -9,7 +9,8 @@
 # in-process stub core, so the numbers isolate dest-side cost (wave
 # gate + family authorizer + telemetry), not core or network time. The
 # pinned-core-image leg against a real deployment rides flip prep
-# (D11); this gate runs on every PR and in CI.
+# (D11); this evidence runs via .github/workflows/read-latency.yml on
+# lane-affecting PRs and weekly, and locally with this script.
 #
 # Method: go test benchmarks BenchmarkFreshnessTerminatedRead (one leg
 # per wave route) vs BenchmarkFreshnessRelayRead (api package),
