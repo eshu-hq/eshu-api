@@ -9,8 +9,9 @@
 # admin-four tier-C clones, the D8 session-resolver tier-C clones,
 # the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones, and
 # the D10 terminated setup-state GET plus tier-C setup claim POST,
-# the Wave-1 terminated Freshness reads, and the Wave-2 terminated
-# Content point reads
+# the Wave-1 terminated Freshness reads, the Wave-2 terminated
+# Content point reads, and the W7-read terminated admin
+# sign-in-policy GET
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
@@ -21,7 +22,8 @@
 # scripts/measure-d9saml-latency.sh,
 # scripts/measure-setup-latency.sh,
 # scripts/measure-freshness-latency.sh,
-# scripts/measure-content-latency.sh).
+# scripts/measure-content-latency.sh,
+# scripts/measure-signinpolicy-admin-read-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -55,6 +57,7 @@ on:
       - 'scripts/measure-setup-latency.sh'
       - 'scripts/measure-freshness-latency.sh'
       - 'scripts/measure-content-latency.sh'
+      - 'scripts/measure-signinpolicy-admin-read-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -190,5 +193,14 @@ jobs:
             echo "## Wave-2 Content latency (stub-core, median ns/op)"
             echo '```'
             cat content-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: W7-read admin sign-in-policy termination latency
+        run: |
+          bash scripts/measure-signinpolicy-admin-read-latency.sh 2>&1 | tee signinpolicy-admin-read-latency.log
+          {
+            echo "## W7-read admin sign-in-policy latency (stub-core, median ns/op)"
+            echo '```'
+            cat signinpolicy-admin-read-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

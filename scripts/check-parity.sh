@@ -1572,6 +1572,28 @@ for lane in content_terminate content_wave; do
 done
 echo "OK: Wave-2 Content lane files carry no dest-side store or parse"
 
+# W7-read admin sign-in-policy lane: no dest-side store on the lane
+# (arbiter W7 ruling, sealed 1-method admission). api/
+# signinpolicy_admin_terminate.go must name no dest-side store,
+# reader port, or table symbol — the pin's store stays core-side,
+# and the lane forwards the keyed call opaquely (no query, form,
+# path, or credential parse; the tenant and the credential cross
+# whole). Fails closed on any match (the in-suite source test
+# TestAdminSignInPolicyTerm_LaneFileHygiene proves the same list).
+for symbol in postgres SignInPolicyStore ReadStore IdentitySubjectStore 'database/sql' sql.DB sql.Open; do
+  if grep -qF "$symbol" "${REPO_ROOT}/api/signinpolicy_admin_terminate.go"; then
+    echo "FAIL: api/signinpolicy_admin_terminate.go names ${symbol}: no dest-side store on this lane" >&2
+    exit 1
+  fi
+done
+for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"tenant_id"' '"Authorization"'; do
+  if grep -qF "$call" "${REPO_ROOT}/api/signinpolicy_admin_terminate.go"; then
+    echo "FAIL: api/signinpolicy_admin_terminate.go contains ${call}: no dest-side query/form/path/credential parse on this lane" >&2
+    exit 1
+  fi
+done
+echo "OK: W7-read admin sign-in-policy lane file carries no dest-side store or parse"
+
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core
 # packages. Dest dispatches over HTTP write-through; the vendored

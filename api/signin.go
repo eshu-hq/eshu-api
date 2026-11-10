@@ -64,7 +64,9 @@ func (s *Server) signInPolicyWriteThroughAs(w http.ResponseWriter, r *http.Reque
 }
 
 // authorizeSignInPolicyAdmin reports whether an identity carrying
-// allScopes may call the admin sign-in policy PATCH. The only identity
+// allScopes may call the admin sign-in policy family legs: the GET
+// read (terminated, see api/signinpolicy_admin_terminate.go) and the
+// PATCH update (write-through below). The only identity
 // dest can construct today is the shared-key holder, which core maps to
 // AllScopes, so callers pass true and core re-judges (tenant scope,
 // permission catalog) as backstop. The false branch exists for the day

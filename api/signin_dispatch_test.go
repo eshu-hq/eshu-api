@@ -162,10 +162,11 @@ func TestSignInPolicyNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 
 // TestSignInPolicyNative_ReadsStillProxy pins that the native PATCH route
 // changes nothing for the family's authed admin read: the admin GET
-// still crosses its wave-gated forward with path and method intact.
-// The public GET terminated in the signinpolicy-group lane: it serves
-// dest-synthesized from the port (zero core contact without a tenant,
-// one anonymous fetch with one), never the generic proxy.
+// still crosses its family-lane forward with path and method intact
+// (see api/signinpolicy_admin_terminate.go). The public GET terminated
+// in the signinpolicy-group lane: it serves dest-synthesized from the
+// port (zero core contact without a tenant, one anonymous fetch with
+// one), never the generic proxy.
 func TestSignInPolicyNative_ReadsStillProxy(t *testing.T) {
 	t.Parallel()
 

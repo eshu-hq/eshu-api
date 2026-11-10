@@ -309,8 +309,11 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.recoveryWriteThrough))))
 	}
+	// W7-read admin sign-in-policy GET: family-owned termination
+	// (see api/signinpolicy_admin_terminate.go), ahead of the LeafB loop.
+	s.registerAdminSignInPolicyRead(mux)
 	// D2 Leaf B Native-now termination (Refs eshu-hq/eshu#9669): the
-	// 12 wave-gated reads register explicitly inside the wave gate,
+	// wave-gated reads register explicitly inside the wave gate,
 	// ahead of the generic proxy. A valid shared key terminates on the
 	// native lane; a foreign credential class (scoped token, OIDC
 	// bearer, session cookie) relays explicitly on the relay lane so

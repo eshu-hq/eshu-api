@@ -40,8 +40,11 @@ or DB handle — only prose mentions of core-side store outages).
 
 ## What stays
 
-- `GET /api/v0/auth/admin/sign-in-policy` stays wave-gated (shared-key
-  forward, foreign classes relay explicitly, credential-less 401).
+- `GET /api/v0/auth/admin/sign-in-policy` terminated in its own
+  family lane (W7-read; see
+  `contracts/signin-policy-admin-read-wave.md`) — same forward
+  semantics the wave-gated loop served, now under the family
+  authorizer with its own parity proof.
 - `PATCH /api/v0/auth/admin/sign-in-policy` stays on its RequireAuth
   tier-C write-through.
 - Trailing-slash twins, deeper subtrees, and non-GET spellings of the

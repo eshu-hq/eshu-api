@@ -10,8 +10,8 @@ package api
 // (go/cmd/api/read_transport_conformance.go at the provenance pin)
 // entry by entry; a wave change moves the eshu spec, the eshu skeleton
 // table, and this mirror together. The behavior lives in
-// leafb_terminate.go; the proofs in leafb_conformance_test.go and the
-// per-family suites.
+// leafb_terminate.go (wave-family rows live in their own family lane);
+// the proofs in leafb_conformance_test.go and the per-family suites.
 //
 // Production binding (carried from the D0 shim proof): dest owns each
 // route (caller gate, family authorizer, response mapping) and calls
@@ -31,11 +31,20 @@ package api
 // are core-public pre-auth and carry no gate. Landed routes keep their
 // existing serving and join the wave for frozenness only: openapi.json
 // stays RequireAuth-gated by the standing no-new-public-surface
-// decision, and /health stays the public probe.
+// decision, and /health stays the public probe. Wave-family rows
+// terminated in their own family lane (own gate, own record) and are
+// skipped by the gated loop below.
 const (
 	leafbServeGated  = "wave-gated"
 	leafbServePublic = "wave-public"
 	leafbServeLanded = "landed"
+	// leafbServeFamily marks a census row whose route terminated in
+	// its own family lane (own gate, own authorizer, own record):
+	// the LeafB gated loop skips it, and the family registration
+	// ahead of the generic proxy serves it. The row stays in this
+	// table so the mirror of the eshu nativeNowWave stays entry by
+	// entry.
+	leafbServeFamily = "wave-family"
 )
 
 // leafbRoute is one frozen Native-now wave entry: the exact cross-repo
@@ -72,7 +81,7 @@ var leafbWave = []leafbRoute{
 	{Method: "GET", Path: "/api/v0/services/{service_name}/intelligence-report", Family: "service_intel", Serve: leafbServeGated, Fragment: "paths/service/intelligence_report.go"},
 	{Method: "GET", Path: "/api/v0/auth/providers", Family: "auth_providers", Serve: leafbServePublic, Fragment: "paths/auth/routes.go"},
 	{Method: "GET", Path: "/api/v0/auth/sign-in-policy", Family: "sign_in_policy", Serve: leafbServePublic, Fragment: "paths/auth/sign_in_policy.go"},
-	{Method: "GET", Path: "/api/v0/auth/admin/sign-in-policy", Family: "sign_in_policy", Serve: leafbServeGated, Fragment: "paths/auth/sign_in_policy.go"},
+	{Method: "GET", Path: "/api/v0/auth/admin/sign-in-policy", Family: "sign_in_policy", Serve: leafbServeFamily, Fragment: "paths/auth/sign_in_policy.go"},
 	{Method: "GET", Path: "/api/v0/auth/admin/provider-configs", Family: "provider_config", Serve: leafbServeGated, Fragment: "paths/auth/admin_provider_configs.go"},
 	{Method: "GET", Path: "/api/v0/auth/admin/provider-configs/{provider_config_id}", Family: "provider_config", Serve: leafbServeGated, Fragment: "paths/auth/admin_provider_configs.go"},
 	{Method: "GET", Path: "/api/v0/auth/admin/provider-configs/{provider_config_id}/revisions", Family: "provider_config", Serve: leafbServeGated, Fragment: "paths/auth/admin_provider_configs.go"},
