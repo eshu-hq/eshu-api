@@ -241,6 +241,28 @@ the out-of-pin legs stay out with no wire change. Termination claims
 stay provisional until the arbiter re-reviews the D0 evidence
 (blocker B1).
 
+## Native termination (Wave-2 Content)
+
+The 3 pinned Content POSTs (`content/files/read`,
+`content/files/lines`, `content/entities/read`) terminate natively per
+`contracts/content-point-reads-wave.md`: explicit gated routes ahead
+of the generic relay, the shared-key family authorizer with the
+documented deny shape, byte-parity dispatch/conformance proof vs the
+relayed reference (including the line-range slicing-edge bodies the
+pin shape requires), lane-file hygiene (no dest-side store or parse)
+plus body-value opacity in logs and metrics, extended
+`viaNative`/`viaRelay` telemetry, and the satellite-owned read-latency
+gate (`docs/content-latency.md`: 0.98x, 0.99x, 1.04x vs the 1.50
+budget). The transport pin is `ContentPointReadAdmission v0`
+(re-declares the 3 ContentStore signatures, sealed — no search, no
+list, no ledger/summary/snapshot surface); the three spec entries port
+as a line-verbatim subset (mid-list entries, so no disclosed absence
+was needed). Divergences stay disclosed in the contract: the
+out-of-pin search legs keep relaying with their fragments core-side,
+the list and scoped-entity legs keep their own standing, and non-POST
+spellings stay unregistered. Termination claims stay provisional until
+the arbiter re-reviews the D0 evidence (blocker B1).
+
 ## Tier-C dispatch clones (D7)
 
 The four D7-pinned admin-four mutations (backfill, dead-letter,

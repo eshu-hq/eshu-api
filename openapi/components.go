@@ -67,6 +67,10 @@ package openapi
 //     go/internal/query/openapi/components_workload_session.go (D8 wave:
 //     referenced by the served browser-session and local-identity
 //     session entries).
+//   - FileContent, EntityContent: schemas from
+//     go/internal/query/openapi/components.go (Wave-2 Content wave:
+//     referenced by the served file-read, file-lines, and entity-read
+//     entries).
 //
 // A new family lane extends this block with the entries its fragment
 // references; TestSpec_LocalRefsResolve fails closed on a dangling $ref.

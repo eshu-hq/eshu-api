@@ -251,6 +251,47 @@
           "absolute_expires_at": {"type": "string", "format": "date-time"}
         }
       },
+      "FileContent": {
+        "type": "object",
+        "properties": {
+          "repo_id": {"type": "string"},
+          "relative_path": {"type": "string"},
+          "commit_sha": {"type": "string"},
+          "content": {"type": "string"},
+          "content_hash": {"type": "string"},
+          "line_count": {"type": "integer"},
+          "language": {"type": "string"},
+          "search_backend": {"type": "string", "enum": ["hybrid"], "description": "Set to \"hybrid\" on search_file_content rows reordered by the bounded fused BM25+vector re-rank; absent when the lexical content-index order was served."}
+        }
+      },
+      "EntityContent": {
+        "type": "object",
+        "properties": {
+          "entity_id": {"type": "string"},
+          "repo_id": {"type": "string"},
+          "relative_path": {"type": "string"},
+          "entity_type": {"type": "string"},
+          "entity_name": {"type": "string"},
+          "start_line": {"type": "integer"},
+          "end_line": {"type": "integer"},
+          "language": {"type": "string"},
+          "source_cache": {"type": "string", "description": "Stored source body. On search_entity_content rows it is clipped at read time to 4096 bytes (see source_cache_clipped); get_entity_content returns the full body."},
+          "source_cache_clipped": {"type": "boolean", "description": "Present and true only when this row's source_cache was clipped at read time to source_cache_clip_bytes. The stored body is unchanged; use source_handle with get_entity_content or get_file_lines for the full text. Distinct from the write-time metadata.source_cache_truncated marker."},
+          "source_cache_clip_bytes": {"type": "integer", "description": "Present only on a clipped row: the read-time source_cache ceiling in bytes (4096)."},
+          "source_cache_total_bytes": {"type": "integer", "description": "Present only on a clipped row: the stored source_cache length in bytes before the clip."},
+          "docstring_clipped": {"type": "boolean", "description": "Present and true only when this row's docstring was clipped at read time to docstring_clip_bytes. Every copy the row echoes (metadata, semantic_summary, semantic_profile, the per-language semantics blocks, story) derives from the clipped value; get_entity_content returns the stored docstring whole."},
+          "docstring_clip_bytes": {"type": "integer", "description": "Present only on a row whose docstring was clipped: the read-time docstring ceiling in bytes (512)."},
+          "docstring_total_bytes": {"type": "integer", "description": "Present only on a row whose docstring was clipped: the stored docstring length in bytes before the clip."},
+          "source_handle": {"type": "object", "additionalProperties": true, "description": "Present on search_entity_content rows: {repo_id, file_path, start_line, end_line} locator for the full body via get_entity_content(entity_id) or get_file_lines."},
+          "search_backend": {"type": "string", "enum": ["hybrid"], "description": "Set to \"hybrid\" on search_entity_content rows reordered by the bounded fused BM25+vector re-rank; absent when the lexical content-index order was served."},
+          "page_position": {"type": "integer", "minimum": 0, "description": "Present only on a page the hybrid re-rank reordered: this row's zero-based position inside the page's offset-ordered window. The MCP response-budget page keeps the rows with the smallest positions, so next_offset resumes at the first dropped row."},
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Language- and entity-specific parser metadata preserved from the Go content pipeline. Store-internal parser fingerprint keys (body_fp_exact, body_fp_renamed, body_sketch, body_shingles, body_token_count) are never emitted."
+          }
+        }
+      },
       "SkippedScopesReport": {
         "type": "object",
         "description": "Scopes a refinalize (POST /api/v0/admin/recover-generations, POST /api/v0/admin/refinalize) considered but did not re-enqueue, by reason. Always present in a performed recovery, with empty objects when nothing was skipped, so a partial graph rebuild is visible to the operator (#7116).",
