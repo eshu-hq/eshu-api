@@ -32,6 +32,7 @@ SRC_SHA_D9_SAML="8c2324693320c8f69ef3e8078c795956b549d7ad"
 SRC_SHA_GAP02="4a587431fdf748c0a231b60708131fbaa1f41064"
 SRC_SHA_COMPARE="3870181f323dbac84496efb87f7498b19afe1bf4"
 SRC_SHA_O2O6="14a5bf8a52c582360158f85abda4c9675b2ea2e6"
+SRC_SHA_WAVE1="51b84b23a4d21fb1282c3a50f5f1530ad5853c51"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -361,6 +362,31 @@ check_file_at "$SRC_SHA_D6" "go/internal/query/supply/chain/supply_read_admissio
 check_file_at "$SRC_SHA_STATUS_EXTRA" "go/internal/query/status_extra_read_admission_contract_test.go" \
   "contracts/upstream/status_extra_read_admission_contract_test.go" \
   "12615d35aebc9ef4e436a0ee616915ed584ab848602ddf62adf554acd15368d7"
+
+# Wave-1 Freshness read-admission pin (eshu-hq/eshu#10494, unwired
+# seam): the frozen method-set test, byte-identical to the merge
+# commit. The pin re-declares (never embeds) exactly the three
+# StatusStore signatures the freshness drilldown routes admit through.
+check_file_at "$SRC_SHA_WAVE1" "go/internal/query/freshness/read_admission_contract_test.go" \
+  "contracts/upstream/freshness_read_admission_contract_test.go" \
+  "af566dadb76cd0a4f2caff92434ad3f62956b8b2f62520e5573e7baf48b92b80"
+
+# Wave-1 Freshness spec (Decision 5(c)): the three drilldown OpenAPI
+# fragments are whole-file byte-identical ports of the pinned core
+# files at the Wave-1 merge. All three are standalone entries — not
+# paths-closing entries shaped like the Compare fragment — so no
+# disclosed absence was needed.
+check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/changed_since.go" \
+  "openapi/paths/freshness/changed_since.go" \
+  "26db6d16d8936ab0398ccd94e447305eedbe98fb0707a87e9f87e8e1d11fb9e0"
+
+check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/generations.go" \
+  "openapi/paths/freshness/generations.go" \
+  "acb3e8f332b3b0524a2b0cc52fe559dce8827471bfa87b651050e16df3303845"
+
+check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/service_changed_since.go" \
+  "openapi/paths/freshness/service_changed_since.go" \
+  "e15d5b3dfeb864d0384893c58752a9d40bb49e8e63a24af0308b12b6d2243a05"
 
 # D7 admin-four pins (eshu-hq/eshu#10312, unwired seams): the four
 # frozen method-set tests, byte-identical to the pinned core commit.
@@ -1327,6 +1353,12 @@ check_excerpt_at "$SRC_SHA_D6" "contracts/upstream/supply-chain-read-wire-shapes
 check_excerpt_at "$SRC_SHA_STATUS_EXTRA" "contracts/upstream/status-extra-read-wire-shapes.txt" \
   "go/internal/query/status_extra_read_admission.go"
 
+# Wave-1 Freshness pin (eshu-hq/eshu#10494): the admission shape
+# excerpt, line-verbatim from the pin file at the merge commit — the
+# version const stanza plus the three re-declared method signatures.
+check_excerpt_at "$SRC_SHA_WAVE1" "contracts/upstream/freshness-read-wire-shapes.txt" \
+  "go/internal/query/freshness/read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1356,6 +1388,7 @@ grep -qF 'MetricsReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/up
 grep -qF 'SemanticSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/semantic-search-read-wire-shapes.txt"
 grep -qF 'TerraformDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terraform-drift-read-wire-shapes.txt"
 grep -qF 'IaCReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-read-wire-shapes.txt"
+grep -qF 'FreshnessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/freshness-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1414,6 +1447,30 @@ for call in ParseForm FormValue PostForm MultipartForm MultipartReader MaxBytesR
   fi
 done
 echo "OK: api/saml_terminate.go carries no dest-side client or form parse"
+
+# Wave-1 Freshness lane: no dest-side store on the lane (arbiter
+# Wave-1 ruling, sealed 3-method admission). api/freshness_terminate.go
+# and api/freshness_wave.go must name no dest-side store, reader port,
+# or ledger/summary/snapshot symbol — the pin's store, readers, ledger
+# flag, summary reader, and snapshot legs all stay core-side, and the
+# lane forwards the filter queries opaquely (no query, form, or path
+# parse). Fails closed on any match (the in-suite source test
+# TestFreshnessTerm_LaneFileHygiene proves the same list).
+for lane in freshness_terminate freshness_wave; do
+  for symbol in postgres StatusStore ReadStore LedgerReadEnabled WithSummaryReader SummaryReader Snapshot 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: Wave-1 Freshness lane files carry no dest-side store or parse"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core

@@ -102,7 +102,9 @@ const specPrefix = `{
 // InvestigationWorkflows, Playbooks); the D6 Status + SupplyChain
 // reads wave appends after the D4 entries in wave-table order (Status
 // reads, then the phase-2 extra-port Status legs, then SupplyChain
-// reads); the D7 admin-four tier-C clone lane
+// reads, with the Wave-1 Freshness drilldown reads (ChangedSince,
+// Generations, ServiceChangedSince) appended right after the freshness
+// causality entry inside that block; the D7 admin-four tier-C clone lane
 // appends after the D6 entries (AdminD7); the D8 session-resolver tier-C
 // clone lane appends after the D7 entries (BrowserSessions, SessionList,
 // AuthProfile, AdminInvitations-carrying-the-invitations-POST,
@@ -158,6 +160,9 @@ func familyPaths() string {
 		strings.TrimSpace(status.Operations) + "\n" +
 		strings.TrimSpace(status.CollectorReadiness) + "\n" +
 		strings.TrimSpace(freshness.Causality) + "\n" +
+		strings.TrimSpace(freshness.ChangedSince) + "\n" +
+		strings.TrimSpace(freshness.Generations) + "\n" +
+		strings.TrimSpace(freshness.ServiceChangedSince) + "\n" +
 		strings.TrimSpace(status.OperatorControlPlane) + "\n" +
 		strings.TrimSpace(status.Semantic) + "\n" +
 		strings.TrimSpace(supplychain.AdvisoryCatalog) + "\n" +

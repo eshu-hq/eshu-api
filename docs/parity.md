@@ -218,6 +218,29 @@ legs moved to the still-relaying dependencies route. Termination
 claims stay provisional until the arbiter re-reviews the D0 evidence
 (blocker B1).
 
+## Native termination (Wave-1 Freshness)
+
+The 3 pinned Freshness GETs (`freshness/changed-since`,
+`freshness/generations`, `freshness/services/changed-since`) terminate
+natively per `contracts/freshness-wave.md`: explicit gated routes ahead
+of the generic relay, the shared-key family authorizer with the
+documented deny shape, byte-parity dispatch/conformance proof vs the
+relayed reference (including the filter-query forwarding cases the pin
+shape requires), lane-file hygiene (no dest-side store or parse) plus
+filter-value opacity in logs and metrics, extended
+`viaNative`/`viaRelay` telemetry, and the satellite-owned read-latency
+gate (`docs/freshness-latency.md`: 1.02x, 1.00x, 1.03x vs the 1.50
+budget). The transport pin is `FreshnessReadAdmission v0`
+(re-declares the 3 StatusStore signatures, sealed — no ledger,
+summary-reader, or snapshot surface); the three spec fragments port
+whole-file byte-identical (all standalone entries, so no disclosed
+absence was needed). Divergences stay disclosed in the contract: the
+earlier-lane freshness-path reads (repository freshness, documentation
+freshness, freshness causality) keep their own lanes and families, and
+the out-of-pin legs stay out with no wire change. Termination claims
+stay provisional until the arbiter re-reviews the D0 evidence
+(blocker B1).
+
 ## Tier-C dispatch clones (D7)
 
 The four D7-pinned admin-four mutations (backfill, dead-letter,

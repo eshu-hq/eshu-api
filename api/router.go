@@ -418,6 +418,11 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)
 	}
+	// Wave-1 Freshness reads termination (Refs eshu-hq/eshu#9669, D13
+	// tracker eshu-hq/eshu#10491): the 3 pinned Freshness GETs register
+	// explicitly inside the wave gate, ahead of the generic proxy. See
+	// api/freshness_wave.go.
+	s.registerFreshnessWave(mux)
 	// Signinpolicy-group native termination (Refs eshu-hq/eshu#9669,
 	// satellite eshu-hq/eshu-api#72): the two public login-picker
 	// reads terminate dest-side via the SignInPolicyReadAdmission v0

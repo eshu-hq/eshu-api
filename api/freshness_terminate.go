@@ -1,0 +1,180 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package api
+
+import (
+	"crypto/subtle"
+	"net/http"
+)
+
+// Wave-1 Freshness reads termination engine (Refs eshu-hq/eshu#9669,
+// D13 tracker eshu-hq/eshu#10491, satellite eshu-hq/eshu-api#72). The
+// wave table lives in freshness_wave.go; this file owns the serving
+// contract: the wave gate and the terminated reader.
+//
+// Lane rule (arbiter D-wave ruling, decision 4, via the D2/D5 waves):
+// shared-key callers terminate natively; credential classes dest
+// cannot resolve (scoped tokens, OIDC bearers, browser sessions) relay
+// explicitly — core judges, core bytes come back untouched, dest
+// invents no 401, 403, 404, or 500 for them; credential-less callers
+// get the standing dest 401. The only dest-synthesized errors on the
+// terminated path are the gate 401, the future-resolver family 403,
+// and the permanent local 503 when no core origin is configured
+// (never Retry-After).
+//
+// Cookie rule (D2 follow-up lesson, shared with the D3/D4/D6 gates):
+// only session-cookie-shaped credentials relay. A Cookie header
+// carrying the eshu_session (or __Host-eshu_session) member names a
+// browser-session caller and relays explicitly; any other Cookie
+// (junk) is not a credential and stays dest-401 with zero core
+// contact, exactly like a credential-less caller. The gate reuses
+// hasSessionCookie from the D3 lane — one shape check, not three.
+
+// authorizeFreshnessSharedKey reports whether an identity carrying
+// allScopes may terminate a Wave-1 read natively. The only identity
+// dest can construct today is the shared-key holder, which core maps
+// to AllScopes, so the wave gate passes true and core re-judges every
+// forwarded call as backstop (tenant scope, permission catalog,
+// governance mode — which is also where the live 403s and
+// mode-dependent denials come from). The false branch is the hookup
+// point for the day dest gains a scoped/session resolver; until then
+// it stays a plain deny (no invented reason codes, no audit
+// widening). One shared authorizer covers all 3 Wave-1 routes: they
+// share the shared-key trust root until D8 resolves per-class
+// handling, and the contract record
+// (contracts/freshness-wave.md) carries the scope-honesty label.
+func authorizeFreshnessSharedKey(allScopes bool) bool {
+	return allScopes
+}
+
+// freshnessFamilyDenyMessage is the documented family-403 text the
+// dest authorizer adds on the unreachable-until-D8 deny branch.
+const freshnessFamilyDenyMessage = "all-scopes operator authorization is required"
+
+// serveFreshnessTerminated terminates one Wave-1 read for a
+// shared-key caller: the family authorizer runs first, then the call
+// crosses the versioned port transport (forwardToCore on the native
+// lane) with the caller's negotiation headers and credential intact
+// and core bytes come back unmodified.
+func (s *Server) serveFreshnessTerminated(w http.ResponseWriter, r *http.Request) {
+	s.serveFreshnessTerminatedAs(w, r, true)
+}
+
+// serveFreshnessTerminatedAs is the testable core of the terminated
+// reader: allScopes is the resolved caller scope. The wave gate always
+// passes true today (the shared key maps to AllScopes in core); the
+// false branch is the hookup point for the day dest gains a
+// scoped/session resolver, and it stays a plain deny until then. Like
+// dispatch, it fails closed with the permanent 503 when no core origin
+// is configured, so a native route can never dereference an
+// unconfigured origin.
+func (s *Server) serveFreshnessTerminatedAs(w http.ResponseWriter, r *http.Request, allScopes bool) {
+	if s.core == nil {
+		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
+			"eshu-api: core origin is not configured; no core routes are served")
+		return
+	}
+	// The family authorizer judgment counts on both branches, so the
+	// unreachable deny branch stays observable from dest signals. A deny
+	// never dispatches: it files the denied outcome on the native lane.
+	family := classifyFamily(r.URL.Path)
+	if !authorizeFreshnessSharedKey(allScopes) {
+		if tel := s.telemetry; tel != nil {
+			tel.observeAuthorizer(family, decisionDeny)
+		}
+		s.dispatchOutcome(r, viaNative, outcomeDenied, 0, false)
+		writeError(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden),
+			freshnessFamilyDenyMessage)
+		return
+	}
+	if tel := s.telemetry; tel != nil {
+		tel.observeAuthorizer(family, decisionAllow)
+	}
+	forwardToCore(s, w, r, viaNative)
+}
+
+// freshnessTerminatedHandler selects the terminated handler for one
+// Wave-1 route: the changed-since leg, the generations leg, or the
+// service changed-since leg. Any other route fails closed with 404
+// instead of silently riding a leg: routes() only passes freshnessWave
+// entries, so a future table add without a handler here (and in the
+// mirror test) breaks loudly. Lives here (not in routes()) so the
+// shared router stays under the file-size cap.
+func (s *Server) freshnessTerminatedHandler(route string) func(http.ResponseWriter, *http.Request) {
+	switch route {
+	case freshnessChangedSincePath:
+		return s.serveFreshnessTerminated
+	case freshnessGenerationsPath:
+		return s.serveFreshnessTerminated
+	case freshnessServiceChangedSincePath:
+		return s.serveFreshnessTerminated
+	default:
+		return s.serveFreshnessUnknownRouteTerminated
+	}
+}
+
+// serveFreshnessUnknownRouteTerminated answers any route the
+// terminated table does not know: 404, never a leg handler.
+// Unreachable through routes(); it makes a future table add without a
+// handler fail loudly instead of silently riding a leg.
+func (s *Server) serveFreshnessUnknownRouteTerminated(w http.ResponseWriter, r *http.Request) {
+	writeError(w, r, http.StatusNotFound, http.StatusText(http.StatusNotFound),
+		"eshu-api: unknown Freshness terminated route; no core routes are served")
+}
+
+// freshnessReadGate fronts the 3 Wave-1 routes. A valid shared key
+// terminates (next); a request carrying any other credential — a
+// non-key Bearer [REDACTED] a foreign credential class (scoped
+// token, OIDC) or a session-cookie-shaped Cookie — relays explicitly
+// to the same core route on the relay lane, so core judges the class
+// dest cannot resolve and dest invents no failure for it; a
+// credential-less request (or a junk-cookie carrier, per the D2
+// follow-up lesson) gets the standing dest 401 with zero core
+// contact. An empty configured key fails closed like RequireAuth.
+func (s *Server) freshnessReadGate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.apiKey == "" {
+			WriteUnauthorized(w, r)
+			return
+		}
+		if got, ok := bearerKey(r); ok {
+			if subtle.ConstantTimeCompare([]byte(got), []byte(s.apiKey)) == 1 {
+				next.ServeHTTP(w, r)
+				return
+			}
+			// A non-key Bearer [REDACTED] a foreign credential class (scoped
+			// token, OIDC): relay explicitly so core judges it.
+			s.freshnessRelayExplicit(w, r)
+			return
+		}
+		if hasSessionCookie(r) {
+			// A session-cookie-shaped Cookie without a Bearer [REDACTED] a
+			// browser-session caller: relay explicitly so core judges it.
+			// Junk cookies fall through to the standing 401 below.
+			s.freshnessRelayExplicit(w, r)
+			return
+		}
+		WriteUnauthorized(w, r)
+	})
+}
+
+// freshnessRelayExplicit forwards one wave call carrying an
+// unresolvable credential class to the same core route and relays core
+// bytes untouched on the relay lane. The instrumented middleware files
+// the lane from the record, so the gate flips the record lane before
+// forwarding; direct (uninstrumented) calls already carry the relay
+// lane through forwardToCore.
+func (s *Server) freshnessRelayExplicit(w http.ResponseWriter, r *http.Request) {
+	if rec := dispatchNote(r); rec != nil {
+		rec.via = viaRelay
+	}
+	if s.core == nil {
+		s.dispatchOutcome(r, viaRelay, outcomeLocal503, 0, false)
+		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
+			"eshu-api: core origin is not configured; no core routes are served")
+		return
+	}
+	forwardToCore(s, w, r, viaRelay)
+}

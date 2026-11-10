@@ -290,13 +290,15 @@ func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 // Gap 02 trio lane claims its 3 served GET keys in its owning table
 // (d3TrioSpecKeys, watched by the trio conformance/openapi suites —
 // the pinned core entries carry no operationId, so the operationId
-// probe above cannot watch them), so the reverse check unions all six
-// lanes' claim tables plus the trio table; the D2-D4 frozen counts in
-// TestD5ProbeFrozen stay untouched.
+// probe above cannot watch them), and the Wave-1 Freshness lane claims
+// its 3 served GET keys in its owning table (freshnessWaveSpecKeys,
+// watched by the Wave-1 conformance/openapi/spec suites), so the
+// reverse check unions all seven lanes' claim tables plus the trio
+// table; the D2-D4 frozen counts in TestD5ProbeFrozen stay untouched.
 func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 	t.Parallel()
 
-	probed := make(map[string]bool, len(d5ProbeGETs)+len(d6WaveSpecKeys)+len(d8WaveSpecKeys)+len(d9WaveSpecKeys)+len(d9GitHubWaveSpecKeys)+len(d9SAMLWaveSpecKeys)+len(d3TrioSpecKeys))
+	probed := make(map[string]bool, len(d5ProbeGETs)+len(d6WaveSpecKeys)+len(d8WaveSpecKeys)+len(d9WaveSpecKeys)+len(d9GitHubWaveSpecKeys)+len(d9SAMLWaveSpecKeys)+len(d3TrioSpecKeys)+len(freshnessWaveSpecKeys))
 	for _, p := range d5ProbeGETs {
 		probed[p.Path] = true
 	}
@@ -316,6 +318,9 @@ func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 		probed[path] = true
 	}
 	for _, path := range d3TrioSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range freshnessWaveSpecKeys {
 		probed[path] = true
 	}
 	for _, origin := range []string{"http://core.invalid", ""} {
