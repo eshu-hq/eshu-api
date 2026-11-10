@@ -138,6 +138,9 @@ func specScopeMounted() []string {
 	for _, entry := range freshnessWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range contentWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range compareWave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -175,15 +178,16 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
 //
-// Arithmetic (trio + D6 + Wave-1 + Compare lanes): 167 + 3 trio GETs
-// + 3 D6 legs + 3 Wave-1 Freshness GETs + 1 Compare POST = 177 mounted
-// (176 native + 1 explicit relay leg); the disclosed-absence count
-// stays 11 (the Wave-1 fragments port whole-file, so no new absence).
+// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare lanes): 167 + 3
+// trio GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2 Content
+// POSTs + 1 Compare POST = 180 mounted (179 native + 1 explicit relay
+// leg); the disclosed-absence count stays 11 (the Wave-2 fragment
+// ports line-verbatim, so no new absence).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 177 {
-		t.Fatalf("mounted operations = %d, want 177 (167 + 3 trio + 3 D6 + 3 Wave-1 + 1 Compare = 176 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 180 {
+		t.Fatalf("mounted operations = %d, want 180 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare = 179 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
 	if got := len(specScopeAbsent); got != 11 {
 		t.Fatalf("disclosed-absent operations = %d, want 11: each absence needs its disclosing contract", got)

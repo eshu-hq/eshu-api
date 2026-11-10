@@ -33,6 +33,7 @@ SRC_SHA_GAP02="4a587431fdf748c0a231b60708131fbaa1f41064"
 SRC_SHA_COMPARE="3870181f323dbac84496efb87f7498b19afe1bf4"
 SRC_SHA_O2O6="14a5bf8a52c582360158f85abda4c9675b2ea2e6"
 SRC_SHA_WAVE1="51b84b23a4d21fb1282c3a50f5f1530ad5853c51"
+SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -387,6 +388,29 @@ check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/genera
 check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/service_changed_since.go" \
   "openapi/paths/freshness/service_changed_since.go" \
   "e15d5b3dfeb864d0384893c58752a9d40bb49e8e63a24af0308b12b6d2243a05"
+
+# Wave-2 Content point-read pin (eshu-hq/eshu#10504, unwired seam):
+# the frozen method-set test, byte-identical to the merge commit. The
+# pin re-declares (never embeds) exactly the three ContentStore
+# signatures the content point routes admit through.
+check_file_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/content_read_admission_contract_test.go" \
+  "contracts/upstream/content_point_read_admission_contract_test.go" \
+  "c46ef2c13d23b1e654b473b61e29a24a82cc35782cc0e948bd6c62cba94434a6"
+
+# Wave-2 Content spec (Decision 5(c)): the three point-read entries
+# are a line-verbatim subset of the pinned core content fragment at
+# the Wave-2 merge. Core ships the lane entries mid-list with the
+# search entries in one file, so no whole-file identity port can serve
+# this lane only; the gate pins the core file's sha256 and proves
+# every payload line of the dest fragment (the const string body,
+# which is the only JSON the assembly consumes) appears verbatim in
+# the pinned core file. The search entries stay core-side with the
+# still-relaying search legs, so no served key duplicates a relayed
+# route.
+check_fragment_subset_named_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/openapi/paths/search/content.go" \
+  "openapi/paths/search/content_point_reads.go" \
+  "d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca" \
+  "ContentPointReads"
 
 # D7 admin-four pins (eshu-hq/eshu#10312, unwired seams): the four
 # frozen method-set tests, byte-identical to the pinned core commit.
@@ -1173,6 +1197,50 @@ check_d8_components_at() {
 
 check_d8_components_at
 
+# Wave-2 Content wave (Decision 5(c)): the two schemas the lane
+# entries reference, ported line-verbatim into the shared components
+# block — FileContent and EntityContent from components.go.
+check_content_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.json" >&2
+      return 1
+    fi
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"FileContent": {' "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"EntityContent": {' "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/openapi/components.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: Content components lines all verbatim in pinned component sources"
+}
+
+check_content_components_at
+
 # Wire-shape excerpt: every vendored line must appear verbatim in at
 # least one of the pinned source files (whole-line match,
 # order-insensitive).
@@ -1359,6 +1427,13 @@ check_excerpt_at "$SRC_SHA_STATUS_EXTRA" "contracts/upstream/status-extra-read-w
 check_excerpt_at "$SRC_SHA_WAVE1" "contracts/upstream/freshness-read-wire-shapes.txt" \
   "go/internal/query/freshness/read_admission.go"
 
+# Wave-2 Content point-read pin (eshu-hq/eshu#10504): the admission
+# shape excerpt, line-verbatim from the pin file at the merge commit —
+# the version const stanza plus the three re-declared method
+# signatures.
+check_excerpt_at "$SRC_SHA_WAVE2_CONTENT" "contracts/upstream/content-point-read-wire-shapes.txt" \
+  "go/internal/query/content_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1389,6 +1464,7 @@ grep -qF 'SemanticSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contr
 grep -qF 'TerraformDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/terraform-drift-read-wire-shapes.txt"
 grep -qF 'IaCReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-read-wire-shapes.txt"
 grep -qF 'FreshnessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/freshness-read-wire-shapes.txt"
+grep -qF 'ContentPointReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-point-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1471,6 +1547,30 @@ for lane in freshness_terminate freshness_wave; do
   done
 done
 echo "OK: Wave-1 Freshness lane files carry no dest-side store or parse"
+
+# Wave-2 Content lane: no dest-side store on the lane (arbiter Wave-2
+# ruling, sealed 3-method admission). api/content_terminate.go and
+# api/content_wave.go must name no dest-side store, reader port, search
+# or list leg, or scoped-entity symbol — the pin's store, readers, and
+# out-of-pin legs all stay core-side, and the lane forwards the request
+# bodies opaquely (no query, form, path, or body parse). Fails closed
+# on any match (the in-suite source test
+# TestContentPointReadsTerm_LaneFileHygiene proves the same list).
+for lane in content_terminate content_wave; do
+  for symbol in postgres ContentStore ContentReader ReadStore SearchFileContent SearchEntityContent ListRepoFiles ListRepoEntities GetEntityContentInRepositories 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"relative_path"' '"entity_id"' '"start_line"' '"end_line"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: Wave-2 Content lane files carry no dest-side store or parse"
 
 # No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
 # runtime module (api, internal, cmd) must not import eshu-hq/eshu core
