@@ -441,8 +441,9 @@ func (s *Server) routes() *http.ServeMux {
 	// RequireAuth (keyless callers keep the standing 401 there; keyed
 	// callers get core's answer for the spelled path), and non-GET
 	// spellings keep the standing 401. The public registration is
-	// exactly these two: the admin sign-in-policy GET stays wave-gated
-	// and the PATCH stays on its RequireAuth write-through.
+	// exactly these two; the admin sign-in-policy GET terminates on
+	// its family lane (see api/signinpolicy_admin_terminate.go) and
+	// the PATCH stays on its RequireAuth write-through.
 	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
 	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
 	// D2 wave-public carve-out (core-public parity): the routes core

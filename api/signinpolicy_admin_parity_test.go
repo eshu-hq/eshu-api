@@ -89,8 +89,15 @@ func TestAdminSignInPolicyTerminatedMatchesRelayByteForByte(t *testing.T) {
 					if string(nativeBody) != string(relayBody) {
 						t.Errorf("native body = %q, relay body = %q, want identical", nativeBody, relayBody)
 					}
-					if got := nativeRes.Header.Get("Retry-After"); got != relayRes.Header.Get("Retry-After") {
-						t.Errorf("native Retry-After = %q, relay Retry-After = %q, want identical", got, relayRes.Header.Get("Retry-After"))
+					for _, header := range []string{"Content-Type", "Retry-After", "Location", "Cache-Control", "X-Correlation-ID"} {
+						if nativeRes.Header.Get(header) != relayRes.Header.Get(header) {
+							t.Errorf("header %s: native = %q, relay = %q, want identical",
+								header, nativeRes.Header.Get(header), relayRes.Header.Get(header))
+						}
+					}
+					if nativeCore.hits != 1 || relayCore.hits != 1 {
+						t.Errorf("upstream hits native = %d relay = %d, want exactly 1 each (no retry on terminated reads)",
+							nativeCore.hits, relayCore.hits)
 					}
 				})
 			}
