@@ -107,9 +107,11 @@ Known divergences (disclosed, not hidden):
   keeps the standing 401 at the key gate; a keyed PATCH crosses the
   tier-C write-through (unchanged); other keyed methods cross the
   generic relay and core judges the method.
-- Deeper subtrees (`/api/v0/auth/admin/sign-in-policy/...`) are not
-  registered: keyless callers keep the standing 401; keyed callers
-  get core's answer via the generic relay.
+- Deeper subtrees (`/api/v0/auth/admin/sign-in-policy/...`) enter the
+  family gate via the trailing-slash twin registration (Go 1.22 subtree
+  pattern): keyless callers keep the standing 401; keyed callers are
+  forwarded intact and get core's answer byte-identical, filed under the
+  family telemetry lane rather than the relay lane.
 - Unconfigured origin answers the permanent local 503 on the family
   route where nil-safe core handlers answer zero-defaults — the
   standing fail-closed rule, uniform across native lanes.
