@@ -71,6 +71,33 @@ deliberately excluded; the v0 `ContentStore` leg rides the frozen
 `CoreReadContractsVersion v0`; no suppression leg exists on these
 routes.
 
+## Supplemental pin: IaCInventorySearchAdmission v0
+
+The resources candidate page (`GET /api/v0/iac/resources`) clears on
+its own supplemental pin, `IaCInventorySearchAdmission v0`
+(eshu-hq/eshu#10578, merge `d9deb65433`), recorded byte-identical in
+`contracts/upstream/iac_search_admission.go`,
+`contracts/upstream/iac_search_admission_contract_test.go`, and
+`contracts/upstream/iac_search_admission_external_test.go`. The pin
+adopts exactly one read — `SearchActive` over the exported
+`IaCInventorySearch` shape plus the three-const kind seam (unknown
+kinds rejected at the seam), witnessed by the Postgres-composing
+witness — and `IaCReadAdmission v0` stays untouched beside it. The
+version line, the single-method interface, the `InventoryStore`
+mirror assertion, and the surrounding contract comment (narrow by
+construction, unwired, rollback) are vendored verbatim in
+`contracts/upstream/iac-search-wire-shapes.txt`. The frozen method set
+is `frozenIaCInventorySearchAdmission` in
+`contracts/upstream/iac_search_admission_contract_test.go`
+(1 method: `SearchActive`).
+
+Explicitly OUT of the supplemental pin: grant checks and fixed failure
+messages are handler behavior, not port shape; every other
+`InventoryStore` method stays unadopted; no dest authorizer rides on
+the forwarded call (dest carries no scoped/session resolver, so a
+dest-side gate would deny scoped callers the core allows — core
+re-judges every forwarded request as backstop).
+
 ## Relay posture
 
 W3 IaC-6 (Refs eshu-hq/eshu-api#102) terminates the four pin-sufficient
@@ -79,16 +106,21 @@ POST legs ahead of the relay on native write-through routes
 `api/family.go`): `POST /api/v0/iac/unmanaged-resources`, `POST
 /api/v0/iac/management-status`, `POST
 /api/v0/iac/management-status/explain`, and `POST
-/api/v0/iac/terraform-import-plan/candidates`. Termination proof:
-byte-parity (`api/iac_dispatch_test.go`, including the native-vs-relay
-equivalence), resilience (`api/iac_resilience_test.go`), and the
+/api/v0/iac/terraform-import-plan/candidates` — plus the resources
+candidate page `GET /api/v0/iac/resources` on its own supplemental pin
+(`iacResourcesRoutes` in `api/iac.go`, same write-through handler).
+Termination proof: byte-parity (`api/iac_dispatch_test.go` and
+`api/iac_resources_test.go`, each including the native-vs-relay
+equivalence that doubles as the revert-to-relay proof),
+resilience (`api/iac_resilience_test.go` plus the resources
+cancel/parallel probes in `api/iac_resources_test.go`), and the
 latency gate (`api/iac_latency_test.go` with
-`scripts/measure-iac-latency.sh`). GET /api/v0/iac/resources and POST
-/api/v0/iac/dead stay on the generic relay until their cleared coverage
-lands (the supplemental SearchActive mint, the dual-pin dead
-disposition); the remaining IaC 5 ride W8a on the same pin. No traffic
-flip, no deploy, no in-tree removal in this lane: the arbiter ruling
-precedes satellite consumption per the Compare gap-04 standing.
+`scripts/measure-iac-latency.sh`, resources leg gated beside the POST
+legs). POST /api/v0/iac/dead stays on the generic relay until the
+dual-pin dead disposition lands; the remaining IaC 5 ride W8a on the
+same pin. No traffic flip, no deploy, no in-tree removal in this lane:
+the arbiter ruling precedes satellite consumption per the Compare
+gap-04 standing.
 
 ## Enforcement
 

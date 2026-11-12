@@ -3,12 +3,13 @@
 # eshu-hq/eshu#9669).
 #
 # Owns the read-latency comparison the lane assigns the satellite:
-# the four cleared IaC POST legs must not be slower than the generic
-# relay they replace. Hermetic by design: both legs run against the
-# same in-process stub core, so the numbers isolate dest-side cost
-# (explicit route match + telemetry), not core or network time. The
-# pinned-core-image leg against a real deployment rides flip prep
-# (D11); this gate runs on every PR and in CI.
+# the four cleared IaC POST legs plus the resources candidate-page GET
+# must not be slower than the generic relay they replace. Hermetic by
+# design: both legs run against the same in-process stub core, so the
+# numbers isolate dest-side cost (explicit route match + telemetry),
+# not core or network time. The pinned-core-image leg against a real
+# deployment rides flip prep (D11); this gate runs on every PR and in
+# CI.
 #
 # Method: go test benchmarks BenchmarkIaCNativeRead vs
 # BenchmarkIaCRelayRead (api package), -count=5, take the median
@@ -58,11 +59,13 @@ clone_unmanaged="$(bench 'BenchmarkIaCNativeRead/unmanaged-resources' | median)"
 clone_status="$(bench 'BenchmarkIaCNativeRead/management-status' | median)"
 clone_explain="$(bench 'BenchmarkIaCNativeRead/management-status-explain' | median)"
 clone_candidates="$(bench 'BenchmarkIaCNativeRead/terraform-import-plan-candidates' | median)"
+clone_resources="$(bench 'BenchmarkIaCResourcesRead/resources' | median)"
 relay_dead="$(bench 'BenchmarkIaCRelayRead/dead-relay' | median)"
 
 check_leg unmanaged-resources "$clone_unmanaged" "$relay_dead"
 check_leg management-status "$clone_status" "$relay_dead"
 check_leg management-status-explain "$clone_explain" "$relay_dead"
 check_leg terraform-import-plan-candidates "$clone_candidates" "$relay_dead"
+check_leg resources "$clone_resources" "$relay_dead"
 
 echo "iac-latency: all legs within budget"

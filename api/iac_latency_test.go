@@ -55,6 +55,24 @@ func BenchmarkIaCNativeRead(b *testing.B) {
 	bench("terraform-import-plan-candidates", iacRoutePath(iacTerraformImportPlanCandidatesRoute))
 }
 
+// BenchmarkIaCResourcesRead measures the resources candidate-page leg
+// through the full production chain: one shared-key GET with the
+// paging query the route forwards. The script gates it against the
+// same dead-relay before-shape as the POST legs.
+func BenchmarkIaCResourcesRead(b *testing.B) {
+	_, srv := iacBenchServer(b, `{"data":{"total":0},"error":null}`)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	b.Run("resources", func(b *testing.B) {
+		b.ReportAllocs()
+		req := authedRequest(http.MethodGet, "/api/v0/iac/resources?limit=2")
+		for i := 0; i < b.N; i++ {
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req.Clone(req.Context()))
+		}
+	})
+}
+
 // BenchmarkIaCRelayRead measures the relay leg through the full
 // production chain: POST /api/v0/iac/dead stays on the generic relay,
 // so it is the before-shape for every cleared leg above. Both legs do
