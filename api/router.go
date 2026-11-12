@@ -70,10 +70,9 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 	})
 }
 
-// health reports the served contract versions and the intended core
-// origin. It takes no credential and never discloses the API key. Every
-// admission port has its own explicit key; admission_contracts stays as
-// the legacy suppression alias.
+// health reports the served contract versions and the intended core origin.
+// It takes no credential and never discloses the API key. Every admission
+// port has its own explicit key; admission_contracts stays as the legacy suppression alias.
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":                                            "ok",
