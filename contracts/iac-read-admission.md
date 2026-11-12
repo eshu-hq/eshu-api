@@ -73,11 +73,22 @@ routes.
 
 ## Relay posture
 
-The IaC legs stay on the generic relay until the termination lane
-lands; no native route moves in this record. The pin is recorded here
-first so the termination lane consumes a minted pin, never an
-unminted one. The widened shape needs arbiter review per the Compare
-gap-04 standing before satellite consumption.
+W3 IaC-6 (Refs eshu-hq/eshu-api#102) terminates the four pin-sufficient
+POST legs ahead of the relay on native write-through routes
+(`api/iac.go`, registered in `api/router.go`; family label `iac` in
+`api/family.go`): `POST /api/v0/iac/unmanaged-resources`, `POST
+/api/v0/iac/management-status`, `POST
+/api/v0/iac/management-status/explain`, and `POST
+/api/v0/iac/terraform-import-plan/candidates`. Termination proof:
+byte-parity (`api/iac_dispatch_test.go`, including the native-vs-relay
+equivalence), resilience (`api/iac_resilience_test.go`), and the
+latency gate (`api/iac_latency_test.go` with
+`scripts/measure-iac-latency.sh`). GET /api/v0/iac/resources and POST
+/api/v0/iac/dead stay on the generic relay until their cleared coverage
+lands (the supplemental SearchActive mint, the dual-pin dead
+disposition); the remaining IaC 5 ride W8a on the same pin. No traffic
+flip, no deploy, no in-tree removal in this lane: the arbiter ruling
+precedes satellite consumption per the Compare gap-04 standing.
 
 ## Enforcement
 
