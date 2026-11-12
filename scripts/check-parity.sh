@@ -36,6 +36,7 @@ SRC_SHA_WAVE1="51b84b23a4d21fb1282c3a50f5f1530ad5853c51"
 SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
 SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W8A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
+SRC_SHA_W4="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -1461,6 +1462,36 @@ check_excerpt_at "$SRC_SHA_WAVE2_CONTENT" "contracts/upstream/content-point-read
 # const stanza plus the one re-declared method signature.
 check_excerpt_at "$SRC_SHA_W6A" "contracts/upstream/code-flow-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_flow_read_admission.go"
+# W4 search pins (eshu-hq/eshu#10540, recorded at the verified HEAD):
+# the two minted v0 pins, byte-identical to the record base. The pins
+# were minted at 330828359a; the content pin carries a post-merge
+# instruments delta at the record base (constructor gains
+# *telemetry.Instruments, recorded in contracts/
+# content-search-read-admission.md), disclosed not silently assumed.
+check_file_at "$SRC_SHA_W4" "contracts/content-search-read-admission.md" \
+  "contracts/content-search-read-admission.md" \
+  "2c955bdc2c95e079928e4b18189411e06fc11db9ce3dddd1b069c396ff922d3f"
+
+check_file_at "$SRC_SHA_W4" "contracts/code-search-read-admission.md" \
+  "contracts/code-search-read-admission.md" \
+  "6a41f16e5f7705c51153956cbda903b196426a349e10fd40ceea0aec363b7ef0"
+
+check_file_at "$SRC_SHA_W4" "go/internal/query/content_search_read_admission_contract_test.go" \
+  "contracts/upstream/content_search_read_admission_contract_test.go" \
+  "6a5eb7e63620dc552c6ef666341acad8645ec73f77a6039ae1db98f2e053e711"
+
+check_file_at "$SRC_SHA_W4" "go/internal/query/code_search_read_admission_contract_test.go" \
+  "contracts/upstream/code_search_read_admission_contract_test.go" \
+  "b25093f073a59b16a423d716fc1235b461dd995c51b8ed0ce217ee7060e71b79"
+
+# W4 search-pin admission shape excerpts, line-verbatim from the pin
+# files at the record base — the version const stanza plus the
+# re-declared method signatures (10 content, 9 code).
+check_excerpt_at "$SRC_SHA_W4" "contracts/upstream/content-search-read-wire-shapes.txt" \
+  "go/internal/query/content_search_read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W4" "contracts/upstream/code-search-read-wire-shapes.txt" \
+  "go/internal/query/code_search_read_admission.go"
 
 # W8a new pins (satellite eshu-hq/eshu-api#100): the admission shape
 # excerpts, line-verbatim from the pin files at the W8a core HEAD.
@@ -1530,6 +1561,8 @@ grep -qF 'IaCReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstre
 grep -qF 'FreshnessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/freshness-read-wire-shapes.txt"
 grep -qF 'ContentPointReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-point-read-wire-shapes.txt"
 grep -qF 'CodeFlowReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-flow-read-wire-shapes.txt"
+grep -qF 'ContentSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-search-read-wire-shapes.txt"
+grep -qF 'CodeSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-search-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
