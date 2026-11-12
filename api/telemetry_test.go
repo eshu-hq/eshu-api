@@ -26,6 +26,8 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/supply-chain/impact/suppressions/", "suppression"},
 		{"/api/v0/admin/collector-failures/acknowledge", "terminal_failure"},
 		{"/api/v0/admin/repository-retirements", "retirement"},
+		{"/api/v0/admin/workflow-retire-unclaimed", "retire_unclaimed"},
+		{"/api/v0/admin/workflow-retire-unclaimed/", "retire_unclaimed"},
 		{"/api/v0/admin/replay", "recovery"},
 		{"/api/v0/admin/reopen", "recovery"},
 		{"/api/v0/admin/refinalize", "recovery"},

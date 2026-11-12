@@ -61,6 +61,7 @@ var familyPrefixes = []struct {
 	{"/admin/collector-failures/acknowledge", "terminal_failure"},
 	{"/admin/collector-failures/", "terminal_failure"},
 	{"/admin/repository-retirements", "retirement"},
+	{"/admin/workflow-retire-unclaimed", "retire_unclaimed"},
 	{"/admin/work-items", "admin"},
 	{"/admin/decisions", "admin"},
 	{"/admin/dead-letter", "admin"},

@@ -122,6 +122,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := pinnedVersion(t, "../contracts/recovery-admission.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
 		t.Errorf("contracts/recovery-admission.md pins %q, constant is %q: move them in the same diff", got, RecoveryAdmissionContractVersion)
 	}
+	if got := pinnedVersion(t, "../contracts/retire-unclaimed-admission.md", "RetireUnclaimedAdmissionContractVersion"); got != RetireUnclaimedAdmissionContractVersion {
+		t.Errorf("contracts/retire-unclaimed-admission.md pins %q, constant is %q: move them in the same diff", got, RetireUnclaimedAdmissionContractVersion)
+	}
 	if got := pinnedVersion(t, "../contracts/admin-read-admission.md", "AdminReadAdmissionContractVersion"); got != AdminReadAdmissionContractVersion {
 		t.Errorf("contracts/admin-read-admission.md pins %q, constant is %q: move them in the same diff", got, AdminReadAdmissionContractVersion)
 	}
@@ -212,6 +215,9 @@ func TestContractVersionsArePinned(t *testing.T) {
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "RecoveryAdmissionContractVersion"); got != RecoveryAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins recovery %q, constant is %q: record the new pin before consuming it", got, RecoveryAdmissionContractVersion)
 	}
+	if got := tablePinnedVersion(t, "../docs/provenance.md", "RetireUnclaimedAdmissionContractVersion"); got != RetireUnclaimedAdmissionContractVersion {
+		t.Errorf("docs/provenance.md pins retire-unclaimed %q, constant is %q: record the new pin before consuming it", got, RetireUnclaimedAdmissionContractVersion)
+	}
 	if got := tablePinnedVersion(t, "../docs/provenance.md", "AdminReadAdmissionContractVersion"); got != AdminReadAdmissionContractVersion {
 		t.Errorf("docs/provenance.md pins admin reads %q, constant is %q: record the new pin before consuming it", got, AdminReadAdmissionContractVersion)
 	}
@@ -289,6 +295,7 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 		"delta_union_completeness_read_admission_contracts": DeltaUnionCompletenessReadAdmissionContractVersion,
 		"reindex_progress_read_admission_contracts":         ReindexProgressReadAdmissionContractVersion,
 		"shared_projection_tuning_report_contracts":         SharedProjectionTuningReportContractVersion,
+		"retire_unclaimed_admission_contracts":              RetireUnclaimedAdmissionContractVersion,
 	}
 	for key, wantVersion := range want {
 		if health[key] != wantVersion {
