@@ -36,7 +36,7 @@ the whole stack (see
 
 ## Quickstart
 
-You'll need Go 1.26.10 (see `go.mod`) and a running core to point at.
+You'll need Go 1.26.11 (see `go.mod`) and a running core to point at.
 
 ```bash
 go build -o /tmp/eshu-api ./cmd/eshu-api

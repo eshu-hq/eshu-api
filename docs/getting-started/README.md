@@ -1,6 +1,6 @@
 # Getting started with eshu-api
 
-Fastest path from nothing to an answered call. You'll need Go 1.26.10
+Fastest path from nothing to an answered call. You'll need Go 1.26.11
 (see `go.mod`) and a running Eshu core to point at — this repo is only
 the HTTP layer, so without a core there's nobody home behind the front
 desk.

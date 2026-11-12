@@ -6,7 +6,7 @@ two ever disagree, the root file wins.
 
 ## Setup
 
-You'll need Go 1.26.10 (see `go.mod`), `golangci-lint` v2.12.2, and
+You'll need Go 1.26.11 (see `go.mod`), `golangci-lint` v2.12.2, and
 `git`. Then:
 
 ```bash
