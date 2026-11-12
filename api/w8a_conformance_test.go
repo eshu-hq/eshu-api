@@ -300,7 +300,10 @@ func TestW8aTerminated_ForwardsCallerBytes(t *testing.T) {
 // must not file a native dispatch. A shared-key call to each still
 // answers from the stub core on the generic relay lane — the pins
 // never widen silently. (The suppressions mutation stays on its
-// tier-C write-through lane; Compare terminated in its gap-04 lane.)
+// tier-C write-through lane; Compare terminated in its gap-04 lane.
+// GET /api/v0/iac/resources left this list in the W3 IaC-6 lane: it
+// terminates natively on its supplemental SearchActive pin, pinned by
+// TestIaCResources_AheadOfRelay — see contracts/iac-read-admission.md.)
 func TestW8aExcludedRoutesStayRelay(t *testing.T) {
 	t.Parallel()
 
@@ -310,7 +313,6 @@ func TestW8aExcludedRoutesStayRelay(t *testing.T) {
 		body   string
 	}{
 		{http.MethodPost, "/api/v0/cloud/runtime-drift/findings", `{"scope_id":"scope_1"}`},
-		{http.MethodGet, "/api/v0/iac/resources", ""},
 		{http.MethodPost, "/api/v0/code/call-graph/metrics", `{"scope_id":"scope_1"}`},
 	}
 	for _, route := range excluded {

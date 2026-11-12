@@ -13,9 +13,10 @@ import (
 
 // iacNativeCases is the W3 IaC-6 termination slice cleared on
 // IaCReadAdmission v0 (eshu-hq/eshu#10455): the four POST legs whose
-// every read the pin adopts. GET /iac/resources and POST /iac/dead
-// stay on the generic relay until their cleared coverage lands
-// (supplemental SearchActive mint, dual-pin dead disposition).
+// every read the pin adopts. GET /iac/resources rides its own
+// supplemental SearchActive pin, terminated natively in this lane;
+// POST /iac/dead stays on the generic relay until its dual-pin dead
+// disposition lands.
 var iacNativeCases = []struct {
 	name    string
 	route   string
@@ -272,7 +273,8 @@ func TestIaCNative_MatchesGenericRelay(t *testing.T) {
 			upstream := httptest.NewServer(mux)
 			defer upstream.Close()
 
-			srv := NewServer(upstream.URL, skeletonTestKey)
+			tel := NewTelemetry(nil)
+			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 			handler := srv.Handler(DefaultV0Sunset)
 
 			serve := func(target string) (int, string) {
@@ -288,6 +290,17 @@ func TestIaCNative_MatchesGenericRelay(t *testing.T) {
 
 			if nativeCode != relayCode || nativeBody != relayBody {
 				t.Errorf("%s %s: native = (%d, %q), relay = (%d, %q): want byte-identical", tc.name, fixture.name, nativeCode, nativeBody, relayCode, relayBody)
+			}
+			// The lane assertion: the native spelling must cross the
+			// native lane while the relay spelling crosses the relay
+			// lane. Without this the test passes identically with the
+			// native registration removed (both spellings then relay),
+			// proving nothing about termination.
+			if got := tel.snapshot().dispatches["iac"][viaNative][outcomeCoreOK]; got != 1 {
+				t.Errorf("%s %s: iac native core_ok = %d, want 1 (registration removed = 0, test must fail)", tc.name, fixture.name, got)
+			}
+			if got := tel.snapshot().dispatches["iac"][viaRelay][outcomeCoreOK]; got != 1 {
+				t.Errorf("%s %s: iac relay core_ok = %d, want 1 (comparison leg must stay relay)", tc.name, fixture.name, got)
 			}
 		}
 	}

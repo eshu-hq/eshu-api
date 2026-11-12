@@ -38,6 +38,7 @@ SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W8A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W4="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
+SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -798,6 +799,22 @@ check_file_at "$SRC_SHA_O2O6" "go/internal/query/iac/read_admission_contract_tes
   "contracts/upstream/iac_read_admission_contract_test.go" \
   "2454d431ed9f6f04cdd47d1e720d99b2a7dd9c4245ee6e2b05f6da236043b242"
 
+# W3 supplemental IaCInventorySearchAdmission v0 pin
+# (eshu-hq/eshu#10578): the resources candidate-page pin files are
+# byte-identical to the supplemental merge, and every line of the
+# wire-shapes excerpt appears verbatim in the pinned core file.
+check_file_at "$SRC_SHA_W3SUPP" "go/internal/query/iac/search_admission.go" \
+  "contracts/upstream/iac_search_admission.go" \
+  "6eb951dee5a69224182904782ed7df9b951137b886ab355995a0e74d21214210"
+
+check_file_at "$SRC_SHA_W3SUPP" "go/internal/query/iac/search_admission_contract_test.go" \
+  "contracts/upstream/iac_search_admission_contract_test.go" \
+  "f91dbfec5c0f87733962200309deb1c07252dfdae2e4930071118c7fd7859366"
+
+check_file_at "$SRC_SHA_W3SUPP" "go/internal/query/iac/search_admission_external_test.go" \
+  "contracts/upstream/iac_search_admission_external_test.go" \
+  "8b2967a1e1ebc978ea4a2b4fb73b73e1c23bcb0e1d1bb806c4ad7c029aab12cb"
+
 # D4 Native-next wave (Decision 5(c)): the CICD, Documentation, Infra,
 # PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and
 # Playbooks fragments are byte-identical ports (whole-file) or
@@ -1535,6 +1552,12 @@ check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/status-hosted-readiness-read
 # that standing in CI instead of asserting it.
 check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/iac-read-wire-shapes.txt" \
   "go/internal/query/iac/read_admission.go"
+
+# W3 supplemental IaCInventorySearchAdmission v0 pin
+# (eshu-hq/eshu#10578): every line of the supplemental wire-shapes
+# excerpt appears verbatim in the pinned core file.
+check_excerpt_at "$SRC_SHA_W3SUPP" "contracts/upstream/iac-search-wire-shapes.txt" \
+  "go/internal/query/iac/search_admission.go"
 
 check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/metrics-read-wire-shapes.txt" \
   "go/internal/query/metrics/read_admission.go"

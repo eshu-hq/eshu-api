@@ -59,12 +59,13 @@ import (
 //
 // Scoping line (hard, from the pin contracts and the arbiter W8a
 // ruling): recording a pin whole never authorizes terminating routes
-// beyond these 16. POST /api/v0/cloud/runtime-drift/findings, GET
-// /api/v0/iac/resources and every other IaC POST, the index-status
-// Neo4j-count legs, the impact packet, and the code-graph-metrics
-// POST stay relay with the reason disclosed per route in the
-// contract; unused pin methods (the IaC Run/Summary/Reachability
-// trio on these routes) stay unconsumed.
+// beyond these 16. POST /api/v0/cloud/runtime-drift/findings and the
+// IaC legs outside the W3 IaC-6 slice, the index-status Neo4j-count
+// legs, the impact packet, and the code-graph-metrics POST stay relay
+// with the reason disclosed per route in the contract; unused pin
+// methods (the IaC Run/Summary/Reachability trio on these routes)
+// stay unconsumed. (GET /api/v0/iac/resources terminated natively in
+// the W3 lane on its own supplemental pin.)
 //
 // The route stays inside RequireAuth: the wave gate below answers
 // every credential shape (shared-key terminate, foreign-class relay,

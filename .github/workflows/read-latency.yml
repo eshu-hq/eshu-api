@@ -10,8 +10,8 @@
 # the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones, and
 # the D10 terminated setup-state GET plus tier-C setup claim POST,
 # the Wave-1 terminated Freshness reads, the Wave-2 terminated
-# Content point reads, and the W7-read terminated admin
-# sign-in-policy GET
+# Content point reads, the W7-read terminated admin
+# sign-in-policy GET, and the W3 IaC-6 terminated legs
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
@@ -24,7 +24,8 @@
 # scripts/measure-freshness-latency.sh,
 # scripts/measure-content-latency.sh,
 # scripts/measure-signinpolicy-admin-read-latency.sh,
-# scripts/measure-code-flow-latency.sh).
+# scripts/measure-code-flow-latency.sh,
+# scripts/measure-iac-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -60,6 +61,7 @@ on:
       - 'scripts/measure-content-latency.sh'
       - 'scripts/measure-signinpolicy-admin-read-latency.sh'
       - 'scripts/measure-code-flow-latency.sh'
+      - 'scripts/measure-iac-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -213,5 +215,14 @@ jobs:
             echo "## W6a Code-flow latency (stub-core, median ns/op)"
             echo '```'
             cat code-flow-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: W3 IaC-6 termination latency
+        run: |
+          bash scripts/measure-iac-latency.sh 2>&1 | tee iac-latency.log
+          {
+            echo "## W3 IaC-6 latency (stub-core, median ns/op)"
+            echo '```'
+            cat iac-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

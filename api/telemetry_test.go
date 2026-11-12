@@ -90,6 +90,8 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/iac/management-status", "iac"},
 		{"/api/v0/iac/management-status/explain", "iac"},
 		{"/api/v0/iac/terraform-import-plan/candidates", "iac"},
+		{"/api/v0/iac/resources", "iac"},
+		{"/api/v0/iac/dead", "iac"},
 		{"/api/v0/freshness/changed-since", "freshness"},
 		{"/api/v0/freshness/generations", "freshness"},
 		{"/api/v0/freshness/services/changed-since", "freshness"},
