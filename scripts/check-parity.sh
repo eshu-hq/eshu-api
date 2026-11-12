@@ -34,6 +34,7 @@ SRC_SHA_COMPARE="3870181f323dbac84496efb87f7498b19afe1bf4"
 SRC_SHA_O2O6="14a5bf8a52c582360158f85abda4c9675b2ea2e6"
 SRC_SHA_WAVE1="51b84b23a4d21fb1282c3a50f5f1530ad5853c51"
 SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
+SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -411,6 +412,14 @@ check_fragment_subset_named_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/opena
   "openapi/paths/search/content_point_reads.go" \
   "d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca" \
   "ContentPointReads"
+
+# W6a Code-flow pin (eshu-hq/eshu#10552, unwired seam): the frozen
+# method-set test, byte-identical to the merge commit at e504e328a7.
+# The pin re-declares (never embeds) exactly the one CodeFlowStore
+# signature the four Code-flow routes admit through.
+check_file_at "$SRC_SHA_W6A" "go/internal/query/codequery/code_flow_read_admission_contract_test.go" \
+  "contracts/upstream/code_flow_read_admission_contract_test.go" \
+  "2c7b1e5e9e5527ba91cb6ce578eeb2ed098b9408876e612bfc7b58f71efeaa79"
 
 # D7 admin-four pins (eshu-hq/eshu#10312, unwired seams): the four
 # frozen method-set tests, byte-identical to the pinned core commit.
@@ -1434,6 +1443,12 @@ check_excerpt_at "$SRC_SHA_WAVE1" "contracts/upstream/freshness-read-wire-shapes
 check_excerpt_at "$SRC_SHA_WAVE2_CONTENT" "contracts/upstream/content-point-read-wire-shapes.txt" \
   "go/internal/query/content_read_admission.go"
 
+# W6a Code-flow pin (eshu-hq/eshu#10552): the admission shape excerpt,
+# line-verbatim from the pin file at the merge commit — the version
+# const stanza plus the one re-declared method signature.
+check_excerpt_at "$SRC_SHA_W6A" "contracts/upstream/code-flow-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_flow_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1465,6 +1480,7 @@ grep -qF 'TerraformDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contr
 grep -qF 'IaCReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-read-wire-shapes.txt"
 grep -qF 'FreshnessReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/freshness-read-wire-shapes.txt"
 grep -qF 'ContentPointReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-point-read-wire-shapes.txt"
+grep -qF 'CodeFlowReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-flow-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
