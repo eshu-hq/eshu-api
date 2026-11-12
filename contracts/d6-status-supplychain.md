@@ -127,18 +127,17 @@ Known divergences (disclosed, not hidden):
   env-derived config where they apply) ride the terminated forward as
   core-served bytes with no dest-owned port — disclosed here, never
   claimed as pinned.
-- The three remaining extra-port Status aspects stay relay with
-  per-route reasons (no pin covers them, and nobody widens a pin
-  here): `status/governance` (the GovernanceAudit Summary — the D1
-  pin freezes the three-method List/Summarize port on
-  `identity.GovernanceAuditReader`, not the one-method Summary port
-  the Status path admits through; carried relay-disclosed per the
-  row-7 Path B ruling, which orders no new pin),
-  `status/answer-narration` (the dest-injected NarrationPosture
-  override — a handler field, not a port, so there is no method set
-  to freeze), `status/hosted-readiness` (Neo4j repository count plus
-  workload leftovers through the shared graph port — pinning it would
-  be a blanket pin).
+- The three former extra-port Status aspects
+  (`status/governance`, `status/answer-narration`,
+  `status/hosted-readiness`) terminated in the W8a lane (see
+  `contracts/w8a-termination.md`): governance on its new
+  `StatusGovernanceReadAdmission v0` Summary leg plus the v0 snapshot
+  leg, hosted-readiness on its new `StatusHostedReadinessReadAdmission
+  v0` graph legs plus the v0 snapshot leg, answer-narration on
+  `StatusReadAdmission v0` alone (NarrationPosture is a handler func
+  field, not a port, riding core-side under the forward transport).
+  They left the D6 relay disclosure when the W8a lane mounted them
+  natively with their fragments disclosed core-side.
 - The `investigations/supply-chain/impact/packet` read stays relay:
   it admits through the writer `ImpactPacketResponder` plus the shared
   graph/content ports the SupplyChain pin explicitly excludes.
@@ -165,8 +164,9 @@ Known divergences (disclosed, not hidden):
   classes relay explicitly.
 - The status reads fragment ports only the seven snapshot lane
   entries from the shared `routes.go` core file — never the
-  still-relayed governance, answer-narration, hosted-readiness, or
-  mux-level openapi.json keys sharing that file. The phase-2 index
+  governance, answer-narration, hosted-readiness (W8a-terminated with
+  fragments disclosed core-side), or mux-level openapi.json keys
+  sharing that file. The phase-2 index
   entries ride the line-verbatim `StatusExtraReads` subset from the
   same file at the phase-2 merge, and the operations entry rides the
   whole-file byte-identical `Operations` port.

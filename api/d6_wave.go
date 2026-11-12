@@ -3,6 +3,10 @@
 
 package api
 
+import (
+	"net/http"
+)
+
 // D6 Status + SupplyChain reads termination (Refs eshu-hq/eshu#9669,
 // part of #6707). This file owns the frozen wave table: the 32 routes
 // across the Status and SupplyChain families the satellite terminates
@@ -119,4 +123,30 @@ var d6Wave = []d6Route{
 	{Method: "GET", Path: "/api/v0/supply-chain/security-alerts/reconciliations/inventory", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/security_alert_aggregate.go"},
 	{Method: "GET", Path: "/api/v0/supply-chain/vulnerabilities/{advisory_id}", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/advisory_evidence.go"},
 	{Method: "GET", Path: "/api/v0/supply-chain/vulnerability-scanner/contract", Family: "supply_chain", Serve: d6ServeGated, Fragment: "paths/supply/chain/vulnerability_scanner_contract.go"},
+}
+
+// registerD6Wave mounts the D6 Status + SupplyChain termination wave
+// (Refs eshu-hq/eshu#9669): the 32 pinned read routes register
+// explicitly inside the D6 wave gate, ahead of the generic proxy. A
+// valid shared key terminates on the native lane; a foreign
+// credential class (scoped token, OIDC bearer, session cookie)
+// relays explicitly on the relay lane so core judges it;
+// credential-less callers — and junk-cookie carriers, per the D2
+// follow-up lesson — get the standing 401. Each trailing-slash
+// spelling stays on the wave route for the same never-split reason.
+// The phase-2 extra-port Status legs (index-status, status/index,
+// status/operations, behind StatusExtraReadAdmission v0) terminate
+// in this lane; the governance, answer-narration, and
+// hosted-readiness aspects terminated in the W8a lane (see
+// api/w8a_wave.go); the impact packet and the suppressions mutation
+// still cross their existing lanes. Compare terminates in its
+// gap-04 lane (see api/compare_wave.go). Lives here (not in
+// routes()) so the shared router stays under the file-size cap.
+func (s *Server) registerD6Wave(mux *http.ServeMux) {
+	for _, entry := range d6Wave {
+		pattern := entry.Method + " " + entry.Path
+		gated := s.instrumented(viaNative, s.d6ReadGate(http.HandlerFunc(s.serveD6Terminated)))
+		mux.Handle(pattern, gated)
+		mux.Handle(pattern+"/", gated)
+	}
 }

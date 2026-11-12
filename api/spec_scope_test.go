@@ -26,7 +26,9 @@ import (
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Fifteen mounted spellings stay out of the document by disclosure,
+// Thirty-one mounted spellings stay out of the document by
+// disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
+// the 16 W8a routes),
 // each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
@@ -38,11 +40,14 @@ import (
 // POST whose fragment stays core-side for the relay-leg lane (core
 // shapes it as its paths-closing entry, unportable mid-list —
 // contracts/compare-termination.md, pinned by
-// TestSpec_CompareStaysDisclosedAbsent), and the four W6a Code-flow
+// TestSpec_CompareStaysDisclosedAbsent), the four W6a Code-flow
 // POSTs whose fragment stays core-side for the relay-leg lane (the
 // four-key flow.go block ports entry-shaped in the follow-up
 // spec-port lane — contracts/code-flow-termination.md, pinned by
-// TestSpec_CodeFlowStaysDisclosedAbsent). Only explicitly
+// TestSpec_CodeFlowStaysDisclosedAbsent), and the 16 W8a routes whose
+// fragments stay core-side for the satellite termination lane
+// (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go).
+// Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
 // core surface) stay out with the unbounded proxy itself. A newly
 // mounted route fails here until its lane ports the fragment or
@@ -60,16 +65,32 @@ var specScopeAbsent = map[string]string{
 	"GET /metrics":      "Prometheus exposition, public like the probes (docs/telemetry.md)",
 	"GET /api/v0/docs":  "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
 	"GET /api/v0/redoc": "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
-	"GET /api/v0/repositories/{repo_id}/story": "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
-	"GET /api/v0/auth/setup-state":             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"POST /api/v0/compare/environments":        "compare fragment stays core-side for the relay-leg lane (core shapes it as its paths-closing entry); the POST terminates regardless (contracts/compare-termination.md, TestSpec_CompareStaysDisclosedAbsent)",
-	"POST /api/v0/code/flow/cfg-summary":       "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
-	"POST /api/v0/code/flow/pdg-summary":       "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
-	"POST /api/v0/code/flow/reaching-def":      "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
-	"POST /api/v0/code/flow/taint-path":        "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
-	"POST /api/v0/auth/setup/claim":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"POST /api/v0/auth/setup/admin":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"POST /api/v0/auth/setup/mfa":              "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"GET /api/v0/repositories/{repo_id}/story":               "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
+	"GET /api/v0/auth/setup-state":                           "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/compare/environments":                      "compare fragment stays core-side for the relay-leg lane (core shapes it as its paths-closing entry); the POST terminates regardless (contracts/compare-termination.md, TestSpec_CompareStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/cfg-summary":                     "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/pdg-summary":                     "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/reaching-def":                    "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/taint-path":                      "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"GET /api/v0/secrets-iam/identity-trust-chains":          "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/privilege-posture-observations": "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/secret-access-paths":            "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/posture-gaps":                   "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/posture-summary":                "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/governance":                          "status governance fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/answer-narration":                    "status answer-narration fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/hosted-readiness":                    "status hosted-readiness fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/aws/runtime-drift/findings":                "cloud aws-runtime-drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/replatforming/selectors":                    "iac selectors fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/rollups":                     "iac rollups fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/plans":                       "iac plans fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/ownership-packets":           "iac ownership-packets fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/metrics/timeseries":                         "metrics fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/search/semantic":                           "semantic fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/terraform/config-state-drift/findings":     "terraform drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/auth/setup/claim":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/auth/setup/admin":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/auth/setup/mfa":                            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 }
 
 // specScopeMounted rebuilds every explicitly mounted Method+Path the
@@ -156,6 +177,9 @@ func specScopeMounted() []string {
 	for _, entry := range codeFlowWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range w8aWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -190,24 +214,25 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
 //
-// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare + W6a lanes):
+// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare + W6a + W8a lanes):
 // 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2
-// Content POSTs + 1 Compare POST + 4 Code-flow POSTs = 184 mounted
-// (183 native + 1 explicit relay leg); the disclosed-absence count
-// is 15 (11 prior + 4 W6a Code-flow keys disclosed core-side).
+// Content POSTs + 1 Compare POST + 4 Code-flow POSTs + 16 W8a reads =
+// 200 mounted (199 native + 1 explicit relay leg); the
+// disclosed-absence count is 31 (11 prior + 4 W6a Code-flow keys +
+// 16 W8a fragments, each disclosed core-side by its owning lane).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 184 {
-		t.Fatalf("mounted operations = %d, want 184 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare + 4 Code-flow = 183 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 200 {
+		t.Fatalf("mounted operations = %d, want 200 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare + 4 Code-flow + 16 W8a = 199 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 15 {
-		t.Fatalf("disclosed-absent operations = %d, want 15: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 31 {
+		t.Fatalf("disclosed-absent operations = %d, want 31: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (183 native + 1 explicit relay leg) has its served spec
+// API operation (199 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

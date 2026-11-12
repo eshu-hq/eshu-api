@@ -159,14 +159,14 @@ func TestD6WaveCredentiallessStays401(t *testing.T) {
 
 // TestD6RelayedRoutesCarryRelayLane pins that the disclosed relay-only
 // routes file their dispatch on the relay lane, never the native lane:
-// the scoping line is observable from dest signals.
+// the scoping line is observable from dest signals. The governance,
+// answer-narration, and hosted-readiness aspects left this list when
+// the W8a lane terminated them natively (see api/w8a_conformance_test.go);
+// the impact packet stays relay-only.
 func TestD6RelayedRoutesCarryRelayLane(t *testing.T) {
 	t.Parallel()
 
 	relayed := []string{
-		"/api/v0/status/governance",
-		"/api/v0/status/answer-narration",
-		"/api/v0/status/hosted-readiness",
 		"/api/v0/investigations/supply-chain/impact/packet",
 	}
 	for _, target := range relayed {
