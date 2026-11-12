@@ -68,6 +68,24 @@ func BenchmarkCodeFlowTerminatedPOST(b *testing.B) {
 			handler.ServeHTTP(rec, post)
 		}
 	})
+
+	b.Run("pdg-summary", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			post := codeFlowBenchPost("/api/v0/code/flow/pdg-summary")
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, post)
+		}
+	})
+
+	b.Run("reaching-def", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			post := codeFlowBenchPost("/api/v0/code/flow/reaching-def")
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, post)
+		}
+	})
 }
 
 // BenchmarkCodeFlowRelayPOST measures the generic relay path for the
