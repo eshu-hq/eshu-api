@@ -197,14 +197,15 @@ func TestD6SuppressionsMutationNotInWave(t *testing.T) {
 	}
 }
 
-// TestD6RelayedRoutesStayRelay pins the scoping line: the Status
-// aspects the pins do not cover and the impact packet are NOT wave
-// routes and must not file a native dispatch. A shared-key call to
-// each still answers from the stub core on the generic relay lane —
-// the pin never widens silently. (The suppressions mutation above
-// stays on its tier-C write-through lane, covered separately, and
-// Compare terminated in its gap-04 lane — see
-// api/compare_conformance_test.go.)
+// TestD6RelayedRoutesStayRelay pins the scoping line: the routes the
+// D6 pins do not cover and the impact packet are NOT D6 wave routes
+// and must not file a native dispatch. A shared-key call to each
+// still answers from the stub core on the generic relay lane — the
+// pin never widens silently. (The suppressions mutation above stays
+// on its tier-C write-through lane, Compare terminated in its gap-04
+// lane — see api/compare_conformance_test.go — and the governance,
+// answer-narration, and hosted-readiness aspects terminated in the
+// W8a lane — see api/w8a_conformance_test.go.)
 func TestD6RelayedRoutesStayRelay(t *testing.T) {
 	t.Parallel()
 
@@ -213,9 +214,6 @@ func TestD6RelayedRoutesStayRelay(t *testing.T) {
 		path   string
 		body   string
 	}{
-		{http.MethodGet, "/api/v0/status/governance", ""},
-		{http.MethodGet, "/api/v0/status/answer-narration", ""},
-		{http.MethodGet, "/api/v0/status/hosted-readiness", ""},
 		{http.MethodGet, "/api/v0/investigations/supply-chain/impact/packet", ""},
 	}
 	for _, route := range relayed {

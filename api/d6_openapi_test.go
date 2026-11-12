@@ -20,11 +20,13 @@ import (
 // decision for the assembled spec).
 
 // d6WaveSpecKeys are the path keys the D6 wave adds to the served
-// document: one entry per served wave route. The still-relayed Status
-// aspects (governance, answer-narration, hosted-readiness), the impact
-// packet, and the mux-level openapi.json self entry keep their own
-// posture: their keys stay out of this fragment set, so no served key
-// duplicates a relayed route. Compare carries no served key: its
+// document: one entry per served wave route. The impact packet and
+// the mux-level openapi.json self entry keep their own posture:
+// their keys stay out of this fragment set, so no served key
+// duplicates a relayed route. The former still-relayed Status
+// aspects (governance, answer-narration, hosted-readiness) moved to
+// the W8a lane with their fragments disclosed core-side (see
+// api/w8a_openapi_test.go). Compare carries no served key: its
 // gap-04 lane mounts natively with the fragment disclosed core-side
 // (see openapi/spec_compare_test.go).
 var d6WaveSpecKeys = []string{
@@ -63,15 +65,14 @@ var d6WaveSpecKeys = []string{
 }
 
 // d6RelayedSpecKeys are the path keys the D6 lane deliberately does
-// NOT serve: the extra-port Status aspects and the impact packet keep
-// their core-served posture via the relay, so their keys must not
-// appear in the dest-assembled document. Compare left this list when
-// its gap-04 lane mounted natively with its fragment disclosed
-// core-side (see openapi/spec_compare_test.go).
+// NOT serve: the impact packet keeps its core-served posture via the
+// relay, so its key must not appear in the dest-assembled document.
+// The governance, answer-narration, and hosted-readiness aspects left
+// this list when the W8a lane terminated them natively with their
+// fragments disclosed core-side (see api/w8a_openapi_test.go);
+// Compare left earlier when its gap-04 lane mounted natively the
+// same way (see openapi/spec_compare_test.go).
 var d6RelayedSpecKeys = []string{
-	"/api/v0/status/governance",
-	"/api/v0/status/answer-narration",
-	"/api/v0/status/hosted-readiness",
 	"/api/v0/investigations/supply-chain/impact/packet",
 }
 
@@ -79,7 +80,7 @@ func TestD6WaveSpecKeyCount(t *testing.T) {
 	t.Parallel()
 
 	if len(d6WaveSpecKeys) != 32 {
-		t.Fatalf("d6WaveSpecKeys holds %d keys, want the 32 served D6 keys (3 remaining extra-port Status aspects and the impact packet omitted by disclosure)", len(d6WaveSpecKeys))
+		t.Fatalf("d6WaveSpecKeys holds %d keys, want the 32 served D6 keys (the impact packet omitted by disclosure)", len(d6WaveSpecKeys))
 	}
 }
 

@@ -35,6 +35,7 @@ SRC_SHA_O2O6="14a5bf8a52c582360158f85abda4c9675b2ea2e6"
 SRC_SHA_WAVE1="51b84b23a4d21fb1282c3a50f5f1530ad5853c51"
 SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
 SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
+SRC_SHA_W8A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -394,6 +395,18 @@ check_file_at "$SRC_SHA_WAVE1" "go/internal/query/openapi/paths/freshness/servic
 # the frozen method-set test, byte-identical to the merge commit. The
 # pin re-declares (never embeds) exactly the three ContentStore
 # signatures the content point routes admit through.
+check_file_at "$SRC_SHA_W8A" "go/internal/query/secrets/read_admission_contract_test.go" \
+  "contracts/upstream/secretsiam_read_admission_contract_test.go" \
+  "c761d01fa4ce4812689376357f54bb1532b4dcfb5511a3145f20724a7ec612ed"
+
+check_file_at "$SRC_SHA_W8A" "go/internal/query/status_governance_read_admission_contract_test.go" \
+  "contracts/upstream/status_governance_read_admission_contract_test.go" \
+  "a6d85284bebd40dd68d9ee890903725fcaf768a51e599714446b2057a661f8b1"
+
+check_file_at "$SRC_SHA_W8A" "go/internal/query/status_hosted_readiness_read_admission_contract_test.go" \
+  "contracts/upstream/status_hosted_readiness_read_admission_contract_test.go" \
+  "939379f0b4059cd6d95db39e5948273ec1d00c0e9ad726fb617874526eaf8f79"
+
 check_file_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/content_read_admission_contract_test.go" \
   "contracts/upstream/content_point_read_admission_contract_test.go" \
   "c46ef2c13d23b1e654b473b61e29a24a82cc35782cc0e948bd6c62cba94434a6"
@@ -1448,6 +1461,42 @@ check_excerpt_at "$SRC_SHA_WAVE2_CONTENT" "contracts/upstream/content-point-read
 # const stanza plus the one re-declared method signature.
 check_excerpt_at "$SRC_SHA_W6A" "contracts/upstream/code-flow-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_flow_read_admission.go"
+
+# W8a new pins (satellite eshu-hq/eshu-api#100): the admission shape
+# excerpts, line-verbatim from the pin files at the W8a core HEAD.
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/secretsiam-read-wire-shapes.txt" \
+  "go/internal/query/secrets/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/status-governance-read-wire-shapes.txt" \
+  "go/internal/query/status_governance_read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/status-hosted-readiness-read-wire-shapes.txt" \
+  "go/internal/query/status_hosted_readiness_read_admission.go"
+
+# W8a re-verification at the W8a core HEAD (satellite
+# eshu-hq/eshu-api#100, D13 tracker eshu-hq/eshu#10491): the five
+# already-recorded pins plus StatusReadAdmission v0 and Compare prove
+# byte-identity again at e504e328a7 in-lane — zero commits touch any
+# pin file between its merge and the W8a HEAD, and these lines gate
+# that standing in CI instead of asserting it.
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/iac-read-wire-shapes.txt" \
+  "go/internal/query/iac/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/metrics-read-wire-shapes.txt" \
+  "go/internal/query/metrics/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/semantic-search-read-wire-shapes.txt" \
+  "go/internal/query/semanticsearch/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/terraform-drift-read-wire-shapes.txt" \
+  "go/internal/query/terraform/drift/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/compare-read-wire-shapes.txt" \
+  "go/internal/query/compare/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/status-read-wire-shapes.txt" \
+  "go/internal/status/read_admission.go" \
+  "go/internal/status/report.go"
 
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"

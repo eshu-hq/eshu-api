@@ -17,8 +17,9 @@ import (
 // security alerts, security-alert aggregates, vulnerability-scanner
 // contract), two line-verbatim finding subsets (impact findings,
 // impact explain), one line-verbatim status subset (status reads
-// without the still-relayed governance, answer-narration,
-// hosted-readiness, and openapi.json entries), and one line-verbatim
+// without the governance, answer-narration, hosted-readiness
+// (W8a-terminated with fragments disclosed core-side, see
+// openapi/spec_w8a_test.go), and openapi.json entries), and one line-verbatim
 // phase-2 index subset (status index plus the legacy index-status
 // alias). Byte identity of every ported line rides
 // scripts/check-parity.sh; these tests pin the served assembly around
@@ -132,23 +133,20 @@ func TestSpec_ServesD6Families(t *testing.T) {
 	}
 }
 
-// TestSpec_D6DisclosedOmissions pins the documented spec gaps so they
-// cannot silently widen: the still-relayed extra-port Status aspects
-// (governance, answer-narration, hosted-readiness — each needs a port
-// the pins do not cover) and the impact packet (writer responder +
-// shared ports) stay relay-only, so their keys stay out of the
-// served document. Compare left this list when its gap-04 lane
-// mounted natively with its fragment disclosed core-side (see
-// openapi/spec_compare_test.go).
+// TestSpec_D6DisclosedOmissions pins the documented spec gap so it
+// cannot silently widen: the impact packet (writer responder +
+// shared ports) stays relay-only, so its key stays out of the served
+// document. The governance, answer-narration, and hosted-readiness
+// aspects left this list when the W8a lane terminated them natively
+// with their fragments disclosed core-side (see
+// openapi/spec_w8a_test.go); Compare left earlier with its gap-04
+// lane (see openapi/spec_compare_test.go).
 func TestSpec_D6DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
 	served := decodePaths(t, Spec())
 
 	for _, path := range []string{
-		"/api/v0/status/governance",
-		"/api/v0/status/answer-narration",
-		"/api/v0/status/hosted-readiness",
 		"/api/v0/investigations/supply-chain/impact/packet",
 	} {
 		if _, ok := served[path]; ok {

@@ -249,7 +249,8 @@ func TestTelemetry_BoundedCardinality(t *testing.T) {
 		case "service_intel", "provider_config", "other", "capabilities", "ask", "suppression",
 			"terminal_failure", "retirement", "sign_in_policy", "setup",
 			"oidc_login", "github_login", "saml_login", "cli_support",
-			"auth_providers", "api_router":
+			"auth_providers", "api_router", "secrets_iam", "iac", "metrics",
+			"semantic_search", "terraform":
 		default:
 			t.Errorf("requests has family %q, outside the closed vocabulary", family)
 		}

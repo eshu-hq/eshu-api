@@ -398,29 +398,19 @@ func (s *Server) routes() *http.ServeMux {
 	}
 	s.registerCompareWave(mux)
 	s.registerCodeFlowWave(mux)
-	// D6 Status + SupplyChain reads termination (Refs
-	// eshu-hq/eshu#9669): the 32 pinned read routes register
-	// explicitly inside the D6 wave gate, ahead of the generic proxy.
+	// D6 Status + SupplyChain reads termination (see api/d6_wave.go).
+	s.registerD6Wave(mux)
+	// W8a satellite termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#100): the 16 pinned W8a reads register
+	// explicitly inside the W8a wave gate, ahead of the generic proxy.
 	// A valid shared key terminates on the native lane; a foreign
 	// credential class (scoped token, OIDC bearer, session cookie)
 	// relays explicitly on the relay lane so core judges it;
 	// credential-less callers — and junk-cookie carriers, per the D2
 	// follow-up lesson — get the standing 401. Each trailing-slash
 	// spelling stays on the wave route for the same never-split
-	// reason. The phase-2 extra-port Status legs (index-status,
-	// status/index, status/operations, behind StatusExtraReadAdmission
-	// v0) terminate in this lane; the remaining extra-port Status
-	// aspects (governance, answer-narration, hosted-readiness), the
-	// impact packet, and the suppressions mutation still cross
-	// their existing lanes — the pins do not cover them and nobody
-	// infers them into this lane. Compare terminates in its gap-04
-	// lane (see api/compare_wave.go).
-	for _, entry := range d6Wave {
-		pattern := entry.Method + " " + entry.Path
-		gated := s.instrumented(viaNative, s.d6ReadGate(http.HandlerFunc(s.serveD6Terminated)))
-		mux.Handle(pattern, gated)
-		mux.Handle(pattern+"/", gated)
-	}
+	// reason. See api/w8a_wave.go and contracts/w8a-termination.md.
+	s.registerW8aWave(mux)
 	// Wave-1 Freshness reads termination (Refs eshu-hq/eshu#9669, D13
 	// tracker eshu-hq/eshu#10491): the 3 pinned Freshness GETs register
 	// explicitly inside the wave gate, ahead of the generic proxy. See
