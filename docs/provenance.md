@@ -29,6 +29,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (O2/O6 six pins) | `14a5bf8a52c582360158f85abda4c9675b2ea2e6` (`origin/main` at the O2/O6 record base; AuditAppendAdmission v0 (merge `eshu-hq/eshu#10430`), SignInPolicyReadAdmission v0 (merge `eshu-hq/eshu#10432`), MetricsReadAdmission v0 (merge `eshu-hq/eshu#10440`), TerraformDriftReadAdmission v0 (merge `eshu-hq/eshu#10442`), SemanticSearchReadAdmission v0 (merge `eshu-hq/eshu#10443`), and widened IaCReadAdmission v0 (merge `eshu-hq/eshu#10455`), each unwired-seam style: version constant + frozen method-set contract test; arbiter review precedes satellite termination) |
 | Source commit (Wave-1 Freshness pin) | `51b84b23a4d21fb1282c3a50f5f1530ad5853c51` (merge of `eshu-hq/eshu#10494`; FreshnessReadAdmission v0, unwired-seam style: version constant + re-declared 3-method port + frozen method-set test; arbiter Wave-1 APPROVED-WITH-CONDITIONS) |
 | Source commit (Wave-2 Content pin) | `c987f7357be6e779676a4d922f456e788b068a3f` (merge of `eshu-hq/eshu#10504`; ContentPointReadAdmission v0, unwired-seam style: version constant + re-declared 3-method port + frozen method-set test; arbiter Wave-2 APPROVED-WITH-CONDITIONS) |
+| Source commit (W6a Code-flow pin) | `e504e328a7b665d7a5b4358a2f8b2ce5201b1d72` (merge of `eshu-hq/eshu#10552` via `e504e328a7`; CodeFlowReadAdmission v0, unwired-seam style: version constant + re-declared 1-method port + frozen method-set test; arbiter W-wave APPROVED-WITH-CONDITIONS for W6a 4 only) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -69,6 +70,7 @@ preparation only; nothing here carries cutover authority.
 | `SemanticSearchReadAdmissionContractVersion` | `v0` |
 | `TerraformDriftReadAdmissionContractVersion` | `v0` |
 | `IaCReadAdmissionContractVersion` | `v0` |
+| `CodeFlowReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -189,6 +191,8 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/status_extra_read_admission.go` (version, embedded ports, in-scope legs, rollback) at `0ab602df5c` | `contracts/upstream/status-extra-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/freshness/read_admission.go` (version, re-declared 3-method port) at `51b84b2` | `contracts/upstream/freshness-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/content_read_admission.go` (version, re-declared 3-method port) at `c987f73` | `contracts/upstream/content-point-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
+| `go/internal/query/codequery/code_flow_read_admission_contract_test.go` at `e504e328a7` | `contracts/upstream/code_flow_read_admission_contract_test.go` | `2c7b1e5e9e5527ba91cb6ce578eeb2ed098b9408876e612bfc7b58f71efeaa79` | verbatim |
+| `go/internal/query/codequery/code_flow_read_admission.go` (version, re-declared 1-method port) at `e504e328a7` | `contracts/upstream/code-flow-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/search/content.go` (the three point-read entries only) at `c987f73` | `openapi/paths/search/content_point_reads.go` | `d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca` (whole file; this fragment is the line-verbatim ContentPointReads subset) | verbatim subset |
 | `go/internal/query/openapi/components.go` (the FileContent and EntityContent entries only) at `c987f73` | `openapi/components.json` | block-verbatim (this lane's two schema blocks are the line-verbatim FileContent/EntityContent subset) | verbatim subset |
 | `go/internal/query/openapi/paths/freshness/changed_since.go` at `51b84b2` | `openapi/paths/freshness/changed_since.go` | `26db6d16d8936ab0398ccd94e447305eedbe98fb0707a87e9f87e8e1d11fb9e0` | verbatim |

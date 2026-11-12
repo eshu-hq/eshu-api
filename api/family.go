@@ -101,6 +101,7 @@ var familyPrefixes = []struct {
 	{"/capabilities", "capabilities"},
 	{"/ask", "ask"},
 	{"/compare", "compare"},
+	{"/code/flow", "code_flow"},
 	{"/openapi.json", "api_router"},
 	{"/docs", "api_router"},
 	{"/redoc", "api_router"},

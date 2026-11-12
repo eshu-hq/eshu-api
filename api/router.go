@@ -120,9 +120,8 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 // exactly one exception: the four setup wizard routes (terminated
 // state GET plus three tier-C POSTs), which are public pre-auth at
 // the core and register outside RequireAuth below. Every dispatch
-// handler runs inside the telemetry middleware
-// (outside the auth gate, so gate denials count per family too);
-// probes never do.
+// handler runs inside the telemetry middleware (outside the auth gate,
+// so gate denials count per family too); probes never do.
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
@@ -398,6 +397,7 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern+"/", relayed)
 	}
 	s.registerCompareWave(mux)
+	s.registerCodeFlowWave(mux)
 	// D6 Status + SupplyChain reads termination (Refs
 	// eshu-hq/eshu#9669): the 32 pinned read routes register
 	// explicitly inside the D6 wave gate, ahead of the generic proxy.

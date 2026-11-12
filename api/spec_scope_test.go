@@ -19,13 +19,14 @@ import (
 //
 // The mounted set is rebuilt here from the exact tables and route
 // constants the router registers (leafbWave, d3Wave, d4Wave, d6Wave,
-// compareWave, the per-family route lists, the mux-level probes),
+// compareWave, codeFlowWave, the per-family route lists, the
+// mux-level probes),
 // never from a second frozen copy: a lane change moves the router
 // tables and this proof together. The spec side is read through the real route as a
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Eleven mounted spellings stay out of the document by disclosure,
+// Fifteen mounted spellings stay out of the document by disclosure,
 // each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
@@ -33,11 +34,15 @@ import (
 // GET, on the generic-relay stack in d4RelayLegs), the four D10
 // setup-wizard routes whose fragment stays core-side by the recorded
 // eshu-hq/eshu-api#44 posture outcome (contracts/setup-admission.md,
-// pinned by TestSetupSpecPosture_StaysCoreSide), and the gap-04
-// Compare POST whose fragment stays core-side for the relay-leg lane
-// (core shapes it as its paths-closing entry, unportable mid-list —
+// pinned by TestSetupSpecPosture_StaysCoreSide), the gap-04 Compare
+// POST whose fragment stays core-side for the relay-leg lane (core
+// shapes it as its paths-closing entry, unportable mid-list —
 // contracts/compare-termination.md, pinned by
-// TestSpec_CompareStaysDisclosedAbsent). Only explicitly
+// TestSpec_CompareStaysDisclosedAbsent), and the four W6a Code-flow
+// POSTs whose fragment stays core-side for the relay-leg lane (the
+// four-key flow.go block ports entry-shaped in the follow-up
+// spec-port lane — contracts/code-flow-termination.md, pinned by
+// TestSpec_CodeFlowStaysDisclosedAbsent). Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
 // core surface) stay out with the unbounded proxy itself. A newly
 // mounted route fails here until its lane ports the fragment or
@@ -58,6 +63,10 @@ var specScopeAbsent = map[string]string{
 	"GET /api/v0/repositories/{repo_id}/story": "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
 	"GET /api/v0/auth/setup-state":             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/compare/environments":        "compare fragment stays core-side for the relay-leg lane (core shapes it as its paths-closing entry); the POST terminates regardless (contracts/compare-termination.md, TestSpec_CompareStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/cfg-summary":       "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/pdg-summary":       "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/reaching-def":      "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/flow/taint-path":        "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
 	"POST /api/v0/auth/setup/claim":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/admin":            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/mfa":              "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
@@ -144,6 +153,9 @@ func specScopeMounted() []string {
 	for _, entry := range compareWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range codeFlowWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -178,24 +190,24 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
 //
-// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare lanes): 167 + 3
-// trio GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2 Content
-// POSTs + 1 Compare POST = 180 mounted (179 native + 1 explicit relay
-// leg); the disclosed-absence count stays 11 (the Wave-2 fragment
-// ports line-verbatim, so no new absence).
+// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare + W6a lanes):
+// 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2
+// Content POSTs + 1 Compare POST + 4 Code-flow POSTs = 184 mounted
+// (183 native + 1 explicit relay leg); the disclosed-absence count
+// is 15 (11 prior + 4 W6a Code-flow keys disclosed core-side).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 180 {
-		t.Fatalf("mounted operations = %d, want 180 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare = 179 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 184 {
+		t.Fatalf("mounted operations = %d, want 184 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare + 4 Code-flow = 183 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 11 {
-		t.Fatalf("disclosed-absent operations = %d, want 11: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 15 {
+		t.Fatalf("disclosed-absent operations = %d, want 15: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (173 native + 1 explicit relay leg) has its served spec
+// API operation (183 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {
