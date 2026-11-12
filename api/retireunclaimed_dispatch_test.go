@@ -128,7 +128,8 @@ func TestRetireUnclaimedNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 			upstream := httptest.NewServer(mux)
 			defer upstream.Close()
 
-			srv := NewServer(upstream.URL, skeletonTestKey)
+			tel := NewTelemetry(nil)
+			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 			handler := srv.Handler(DefaultV0Sunset)
 
 			req := authedRequest(http.MethodPost, "/api/v0/admin/workflow-retire-unclaimed?probe=1")
@@ -165,6 +166,16 @@ func TestRetireUnclaimedNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 			body, _ := io.ReadAll(rec.Result().Body)
 			if string(body) != tc.body {
 				t.Errorf("body = %q, want the core bytes %q", body, tc.body)
+			}
+			wantOutcome := outcomeCoreOK
+			if tc.status == http.StatusServiceUnavailable {
+				wantOutcome = outcomeCoreRetryable
+			}
+			if got := tel.snapshot().dispatches["retire_unclaimed"][viaNative][wantOutcome]; got != 1 {
+				t.Errorf("retire_unclaimed native %s = %d, want 1 (terminated lane, not relay)", wantOutcome, got)
+			}
+			if got := len(tel.snapshot().dispatches["retire_unclaimed"][viaRelay]); got != 0 {
+				t.Errorf("retire_unclaimed relay outcomes = %d, want 0 (native lane only)", got)
 			}
 		})
 	}
