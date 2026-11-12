@@ -30,7 +30,7 @@ Request flow through these parts is told in
 
 ## Stack
 
-- Go 1.26.10 (see `go.mod`), module `github.com/eshu-hq/eshu-api`.
+- Go 1.26.11 (see `go.mod`), module `github.com/eshu-hq/eshu-api`.
 - Image: multi-arch (`linux/amd64,linux/arm64`) build onto a distroless
   non-root base with no shell; published as `ghcr.io/eshu-hq/eshu-api`
   with SLSA provenance and an SPDX SBOM — see [Release](../release.md).

@@ -2,7 +2,7 @@
 
 Two ways to run this: the container image, or the binary on its own.
 Releases publish `ghcr.io/eshu-hq/eshu-api`. The `Dockerfile` compiles
-with Go 1.26.10 and drops the binary onto a distroless base with no
+with Go 1.26.11 and drops the binary onto a distroless base with no
 shell, exposes port `8080`, and starts `/eshu-api`.
 
 ## Step 1: run it

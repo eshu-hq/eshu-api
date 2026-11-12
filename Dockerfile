@@ -1,10 +1,11 @@
 # eshu-api pre-cutover image: skeleton surface only, no core dispatch yet.
 #
-# Both stages pin by digest (verified 2026-10-29; re-verify with a registry
-# lookup when bumping the tag). The build stage is the multi-arch
-# golang:1.26.10-bookworm list; the runtime stage is the multi-arch
+# Both stages pin by digest (verified 2026-11-12 via Hub tag API +
+# docker buildx imagetools inspect; re-verify with a registry lookup
+# when bumping the tag). The build stage is the multi-arch
+# golang:1.26.11-bookworm list; the runtime stage is the multi-arch
 # distroless static nonroot OCI index.
-FROM golang:1.26.10-bookworm@sha256:23ce71337b726608afb1bc00986e630a05034a87a87ea1fc2cd1ae5cf33387eb AS build
+FROM golang:1.26.11-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0 AS build
 WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download
