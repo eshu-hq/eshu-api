@@ -8,9 +8,13 @@ import (
 )
 
 // Dispatch lanes: which handler served the request. The native lane is
-// the explicit per-family route (today only the suppression upsert);
-// the relay lane is the generic byte-for-byte proxy every other family
-// crosses.
+// the explicit per-family routes registered ahead of the proxy
+// (suppression, retirement, terminal-failure, retire-unclaimed,
+// admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
+// compare, content, freshness, code-flow, OIDC/GitHub/SAML, and
+// setup), each filing its dispatch outcomes and authorizer judgments
+// on every return path; the relay lane is the generic byte-for-byte
+// proxy every other family crosses.
 const (
 	viaNative = "native"
 	viaRelay  = "relay"

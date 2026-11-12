@@ -71,7 +71,8 @@ func TestRetireUnclaimedNative_AuthorizerRejectsNonAllScopes(t *testing.T) {
 func TestRetireUnclaimedNative_DenyBranchShapePinned(t *testing.T) {
 	t.Parallel()
 
-	srv := NewServer("http://core.invalid", skeletonTestKey)
+	tel := NewTelemetry(nil)
+	srv := NewServer("http://core.invalid", skeletonTestKey).WithTelemetry(tel)
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
 		req := authedRequest(http.MethodPost, "/api/v0/admin/workflow-retire-unclaimed")
@@ -88,6 +89,12 @@ func TestRetireUnclaimedNative_DenyBranchShapePinned(t *testing.T) {
 		if !strings.Contains(string(body), "all-scopes operator authorization is required") {
 			t.Errorf("Accept %q: body = %q, want the family-403 message", accept, body)
 		}
+	}
+	if got := tel.snapshot().dispatches["retire_unclaimed"][viaNative][outcomeDenied]; got != 2 {
+		t.Errorf("retire_unclaimed native denied = %d, want 2 (one per deny, no dispatch)", got)
+	}
+	if got := tel.snapshot().authorizer["retire_unclaimed"][decisionDeny]; got != 2 {
+		t.Errorf("authorizer[retire_unclaimed][deny] = %d, want 2 (deny judgment stays observable)", got)
 	}
 }
 
@@ -176,6 +183,9 @@ func TestRetireUnclaimedNative_WriteThroughRelaysCoreBytes(t *testing.T) {
 			}
 			if got := len(tel.snapshot().dispatches["retire_unclaimed"][viaRelay]); got != 0 {
 				t.Errorf("retire_unclaimed relay outcomes = %d, want 0 (native lane only)", got)
+			}
+			if got := tel.snapshot().authorizer["retire_unclaimed"][decisionAllow]; got != 1 {
+				t.Errorf("authorizer[retire_unclaimed][allow] = %d, want 1 (allow judgment filed on forward)", got)
 			}
 		})
 	}
@@ -308,6 +318,8 @@ func TestRetireUnclaimedNative_UnconfiguredOriginFailsClosed(t *testing.T) {
 	if srv.core != nil {
 		t.Fatalf("NewServer(\"\", key).core = non-nil, want nil (unconfigured origin)")
 	}
+	tel := NewTelemetry(nil)
+	srv = srv.WithTelemetry(tel)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
@@ -341,6 +353,9 @@ func TestRetireUnclaimedNative_UnconfiguredOriginFailsClosed(t *testing.T) {
 				t.Errorf("Accept %q path %q: body = %q, want backend_unavailable", accept, path, body)
 			}
 		}
+	}
+	if got := tel.snapshot().dispatches["retire_unclaimed"][viaNative][outcomeLocal503]; got != 4 {
+		t.Errorf("retire_unclaimed native local_503 = %d, want 4 (fail-closed files its row)", got)
 	}
 }
 

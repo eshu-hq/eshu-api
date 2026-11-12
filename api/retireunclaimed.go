@@ -65,14 +65,25 @@ func (s *Server) retireUnclaimedWriteThrough(w http.ResponseWriter, r *http.Requ
 // unconfigured origin.
 func (s *Server) retireUnclaimedWriteThroughAs(w http.ResponseWriter, r *http.Request, allScopes bool) {
 	if s.core == nil {
+		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
 		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
 			"eshu-api: core origin is not configured; no core routes are served")
 		return
 	}
+	// The family authorizer judgment counts on both branches, so the
+	// unreachable deny branch stays observable from dest signals. A deny
+	// never dispatches: it files the denied outcome on the native lane.
 	if !authorizeRetireUnclaimedAdmin(allScopes) {
+		if tel := s.telemetry; tel != nil {
+			tel.observeAuthorizer("retire_unclaimed", decisionDeny)
+		}
+		s.dispatchOutcome(r, viaNative, outcomeDenied, 0, false)
 		writeError(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden),
 			"all-scopes operator authorization is required")
 		return
+	}
+	if tel := s.telemetry; tel != nil {
+		tel.observeAuthorizer("retire_unclaimed", decisionAllow)
 	}
 	forwardToCore(s, w, r, viaNative)
 }
