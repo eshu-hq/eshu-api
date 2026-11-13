@@ -389,6 +389,12 @@ func (s *Server) routes() *http.ServeMux {
 	// proxy — never merged into the W6a Code-flow table. See
 	// api/code_search_wave.go.
 	s.registerCodeSearchWave(mux)
+	// Satellite Wave-4 Drift termination (Refs eshu-hq/eshu#9669,
+	// satellite eshu-hq/eshu-api#117): the 2 pinned drift routes
+	// register explicitly inside their own wave gate, ahead of the
+	// generic proxy — never merged into the W8a table. See
+	// api/drift_wave.go.
+	s.registerDriftWave(mux)
 	// D6 Status + SupplyChain reads termination (see api/d6_wave.go).
 	s.registerD6Wave(mux)
 	// W8a satellite termination (Refs eshu-hq/eshu#9669, satellite

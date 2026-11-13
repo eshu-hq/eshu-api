@@ -37,6 +37,7 @@ SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
 SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W8A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W4="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
+SRC_SHA_DRIFT="d81bd1280212745a2a3215f988087e1b92bd828"
 SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
 SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
 
@@ -1595,6 +1596,19 @@ check_excerpt_at "$SRC_SHA_W8A" "contracts/upstream/status-read-wire-shapes.txt"
   "go/internal/status/read_admission.go" \
   "go/internal/status/report.go"
 
+# Satellite Wave-4 Drift termination (eshu-hq/eshu-api#117): the
+# CloudRuntimeDriftReadAdmission v0 pin, minted core-side W8b tier-1
+# (unwired, arbiter-approved). The vendored contract test is
+# byte-identical at the mint commit; the wire-shapes excerpt carries
+# the version const stanza plus the two re-declared method signatures,
+# line-verbatim from the pin file.
+check_file_at "$SRC_SHA_DRIFT" "go/internal/query/cloud_runtime_drift_read_admission_contract_test.go" \
+  "contracts/upstream/cloud_runtime_drift_read_admission_contract_test.go" \
+  "89f313bdbe8ed6073d2ee68cfd29dc16b4931efb58a8ae06c965b5774f24ce77"
+
+check_excerpt_at "$SRC_SHA_DRIFT" "contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt" \
+  "go/internal/query/cloud_runtime_drift_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1630,6 +1644,7 @@ grep -qF 'ContentPointReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contrac
 grep -qF 'CodeFlowReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-flow-read-wire-shapes.txt"
 grep -qF 'ContentSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-search-read-wire-shapes.txt"
 grep -qF 'CodeSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-search-read-wire-shapes.txt"
+grep -qF 'CloudRuntimeDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1786,6 +1801,32 @@ for lane in code_search_terminate code_search_wave; do
   done
 done
 echo "OK: W4 Code search lane files carry no dest-side store or parse"
+
+# Satellite Wave-4 Drift termination (eshu-hq/eshu-api#117): no
+# dest-side store on the lane (arbiter W8b ruling, sealed 2-method
+# admission, no transport constructor by design).
+# api/drift_terminate.go and api/drift_wave.go must name no dest-side
+# store, reader port, or drift leg symbol — the pin's multi-cloud
+# drift store and the out-of-pin graph/content/snapshot/ledger legs
+# all stay core-side, and the lane forwards the request bodies and
+# packet queries opaquely (no query, form, path, or body parse). Fails
+# closed on any match (the in-suite source test
+# TestDriftTerm_LaneFileHygiene proves the same list).
+for lane in drift_terminate drift_wave; do
+  for symbol in postgres MultiCloudRuntimeDrift CloudRuntimeDriftReadAdmission ListActiveMultiCloudRuntimeDriftFindings CountActiveMultiCloudRuntimeDriftFindings ReadStore GraphQuery ContentReader RunSingle 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"scope_id"' '"provider"' '"limit"' '"offset"' '"cloud_resource_uid"' '"finding_kinds"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: Wave-4 Drift lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

@@ -135,7 +135,9 @@ func TestSpec_ServesD4Families(t *testing.T) {
 // cannot silently widen: the story key (the route relays until its
 // schema-interpolated entry ports), the admission-decisions 501
 // (dangling core $ref), and the relay-only packets sharing the
-// investigations file.
+// investigations file. (The drift packet left this list in the
+// Wave-4 Drift lane: it is disclosed-absent there, pinned by
+// TestSpec_DriftStaysDisclosedAbsent.)
 func TestSpec_D4DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
@@ -149,9 +151,6 @@ func TestSpec_D4DisclosedOmissions(t *testing.T) {
 	}
 	if _, ok := served["/api/v0/investigations/supply-chain/impact/packet"]; ok {
 		t.Errorf("served spec carries the supply-chain packet, want it relay-only until its lane")
-	}
-	if _, ok := served["/api/v0/investigations/drift/packet"]; ok {
-		t.Errorf("served spec carries the drift packet, want it relay-only until its lane")
 	}
 	if _, ok := served["/api/v0/investigations/services/{service_name}"]; ok {
 		t.Errorf("served spec carries the services packet, want it relay-only until its lane")
