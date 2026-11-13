@@ -383,6 +383,12 @@ func (s *Server) routes() *http.ServeMux {
 	}
 	s.registerCompareWave(mux)
 	s.registerCodeFlowWave(mux)
+	// W4 Code search termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#113): the 2 pinned code search POSTs register
+	// explicitly inside their own wave gate, ahead of the generic
+	// proxy — never merged into the W6a Code-flow table. See
+	// api/code_search_wave.go.
+	s.registerCodeSearchWave(mux)
 	// D6 Status + SupplyChain reads termination (see api/d6_wave.go).
 	s.registerD6Wave(mux)
 	// W8a satellite termination (Refs eshu-hq/eshu#9669, satellite

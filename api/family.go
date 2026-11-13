@@ -11,8 +11,9 @@ import (
 // the explicit per-family routes registered ahead of the proxy
 // (suppression, retirement, terminal-failure, retire-unclaimed,
 // admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
-// compare, content, freshness, code-flow, iac, OIDC/GitHub/SAML, and
-// setup), each filing its dispatch outcomes and authorizer judgments
+// compare, content, freshness, code-flow, code-search, iac, w8a,
+// OIDC/GitHub/SAML, and setup), each filing its dispatch outcomes
+// and authorizer judgments
 // on every return path; the relay lane is the generic byte-for-byte
 // proxy every other family crosses.
 const (
@@ -113,6 +114,8 @@ var familyPrefixes = []struct {
 	{"/ask", "ask"},
 	{"/compare", "compare"},
 	{"/code/flow", "code_flow"},
+	{"/code/symbols", "code_search"},
+	{"/code/search", "code_search"},
 	{"/openapi.json", "api_router"},
 	{"/docs", "api_router"},
 	{"/redoc", "api_router"},

@@ -8,12 +8,12 @@
 # gap-04 terminated Compare POST, the D7
 # admin-four tier-C clones, the D8 session-resolver tier-C clones,
 # the D9 OIDC-login, GitHub-login, and SAML-login tier-C clones, and
-# the D10 terminated setup-state GET plus tier-C setup claim POST,
+# the D10 terminated setup-state GET plus W7-writers setup trio,
 # the Wave-1 terminated Freshness reads, the Wave-2 terminated
 # Content point reads, the W4 terminated Content search reads, the
-# W7-read terminated admin sign-in-policy GET, the W7-writers
-# terminated admin sign-in-policy PATCH, and the W3 IaC-6 terminated
-# legs
+# W4 Code search terminated reads, the W7-read terminated admin
+# sign-in-policy GET, the W7-writers terminated admin sign-in-policy
+# PATCH, and the W3 IaC-6 terminated legs
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
@@ -29,6 +29,7 @@
 # scripts/measure-signinpolicy-admin-read-latency.sh,
 # scripts/measure-signinpolicy-admin-write-latency.sh,
 # scripts/measure-code-flow-latency.sh,
+# scripts/measure-code-search-latency.sh,
 # scripts/measure-iac-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
@@ -67,6 +68,7 @@ on:
       - 'scripts/measure-signinpolicy-admin-read-latency.sh'
       - 'scripts/measure-signinpolicy-admin-write-latency.sh'
       - 'scripts/measure-code-flow-latency.sh'
+      - 'scripts/measure-code-search-latency.sh'
       - 'scripts/measure-iac-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
@@ -239,6 +241,15 @@ jobs:
             echo "## W6a Code-flow latency (stub-core, median ns/op)"
             echo '```'
             cat code-flow-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: W4 Code search termination latency
+        run: |
+          bash scripts/measure-code-search-latency.sh 2>&1 | tee code-search-latency.log
+          {
+            echo "## W4 Code search latency (stub-core, median ns/op)"
+            echo '```'
+            cat code-search-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: W3 IaC-6 termination latency

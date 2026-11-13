@@ -19,16 +19,16 @@ import (
 //
 // The mounted set is rebuilt here from the exact tables and route
 // constants the router registers (leafbWave, d3Wave, d4Wave, d6Wave,
-// compareWave, codeFlowWave, the per-family route lists, the
-// mux-level probes),
+// compareWave, codeFlowWave, codeSearchWave, the per-family route
+// lists, the mux-level probes),
 // never from a second frozen copy: a lane change moves the router
 // tables and this proof together. The spec side is read through the real route as a
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Thirty-one mounted spellings stay out of the document by
+// Thirty-three mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
-// the 16 W8a routes),
+// the 2 W4 Code search routes plus the 16 W8a routes),
 // each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
@@ -44,7 +44,12 @@ import (
 // POSTs whose fragment stays core-side for the relay-leg lane (the
 // four-key flow.go block ports entry-shaped in the follow-up
 // spec-port lane — contracts/code-flow-termination.md, pinned by
-// TestSpec_CodeFlowStaysDisclosedAbsent), and the 16 W8a routes whose
+// TestSpec_CodeFlowStaysDisclosedAbsent), the 2 W4 Code search POSTs
+// whose fragments stay core-side for the relay-leg lane (the routes.go
+// and symbols.go entries port entry-shaped with their referenced
+// schemas in the follow-up spec-port lane —
+// contracts/code-search-termination.md, pinned by
+// TestSpec_CodeSearchStaysDisclosedAbsent), and the 16 W8a routes whose
 // fragments stay core-side for the satellite termination lane
 // (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go).
 // Only explicitly
@@ -72,6 +77,8 @@ var specScopeAbsent = map[string]string{
 	"POST /api/v0/code/flow/pdg-summary":                     "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
 	"POST /api/v0/code/flow/reaching-def":                    "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
 	"POST /api/v0/code/flow/taint-path":                      "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
+	"POST /api/v0/code/search":                               "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
+	"POST /api/v0/code/symbols/search":                       "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
 	"GET /api/v0/secrets-iam/identity-trust-chains":          "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
 	"GET /api/v0/secrets-iam/privilege-posture-observations": "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
 	"GET /api/v0/secrets-iam/secret-access-paths":            "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
@@ -181,6 +188,9 @@ func specScopeMounted() []string {
 	for _, entry := range codeFlowWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range codeSearchWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range w8aWave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -221,26 +231,26 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
 // W8a + retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3
 // Wave-1 Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search
-// POSTs + 1 Compare POST + 4 Code-flow POSTs + 16 W8a reads + 1
-// retire-unclaimed POST = 205 mounted (204 native + 1 explicit relay
-// leg); the disclosed-absence count is 31 (11 prior + 4 W6a Code-flow
-// keys + 16 W8a fragments, each disclosed core-side by its owning
-// lane; the W4 search fragment ports entry-shaped with the lane, and
-// the retire-unclaimed fragment ports whole-file, so no new absence
-// from this lane).
+// POSTs + 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow POSTs +
+// 16 W8a reads + 1 retire-unclaimed POST = 207 mounted (206 native + 1
+// explicit relay leg); the disclosed-absence count is 33 (11 prior + 4
+// W6a Code-flow keys + 2 W4 Code search keys + 16 W8a fragments, each
+// disclosed core-side by its owning lane; the W4 content-search
+// fragment ports entry-shaped with the lane, and the retire-unclaimed
+// fragment ports whole-file, so no new absence from those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 205 {
-		t.Fatalf("mounted operations = %d, want 205 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4-search + 1 Compare + 4 Code-flow + 16 W8a + 1 retire-unclaimed = 204 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 207 {
+		t.Fatalf("mounted operations = %d, want 207 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 16 W8a + 1 retire-unclaimed = 206 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 31 {
-		t.Fatalf("disclosed-absent operations = %d, want 31: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 33 {
+		t.Fatalf("disclosed-absent operations = %d, want 33: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (204 native + 1 explicit relay leg) has its served spec
+// API operation (206 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

@@ -1761,6 +1761,32 @@ for lane in content_search_terminate content_search_wave; do
 done
 echo "OK: W4 Content search lane files carry no dest-side store or parse"
 
+# W4 Code search lane (satellite eshu-hq/eshu-api#113): no dest-side
+# store on the lane (arbiter W4 ruling, sealed 9-method admission, no
+# transport constructor by design). api/code_search_terminate.go and
+# api/code_search_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pin's graph reader,
+# content reader, and out-of-pin legs (exact-name twins, file legs,
+# ledger/summary/snapshot, point reads) all stay core-side, and the
+# lane forwards the request bodies opaquely (no query, form, path, or
+# body parse). Fails closed on any match (the in-suite source test
+# TestCodeSearchTerm_LaneFileHygiene proves the same list).
+for lane in code_search_terminate code_search_wave; do
+  for symbol in postgres GraphQuery ContentReader ReadStore RunSingle SearchEntityNames SearchSymbols SearchCodeCandidates SearchEntitiesByName SearchEntityContent ListRepoEntitiesByIDs 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"query"' '"repo_id"' '"language"' '"limit"' '"offset"' '"exact"' '"rank_cursor"' '"symbol"' '"match_mode"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: W4 Code search lane files carry no dest-side store or parse"
+
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/
 # signinpolicy_admin_terminate.go must name no dest-side store,
