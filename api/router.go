@@ -383,6 +383,7 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern+"/", relayed)
 	}
 	s.registerCompareWave(mux)
+	s.registerCodeGraphWave(mux)
 	s.registerCodeFlowWave(mux)
 	// W4 Code search termination (Refs eshu-hq/eshu#9669, satellite
 	// eshu-hq/eshu-api#113): the 2 pinned code search POSTs register

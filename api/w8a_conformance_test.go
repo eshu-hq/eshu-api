@@ -295,69 +295,31 @@ func TestW8aTerminated_ForwardsCallerBytes(t *testing.T) {
 	}
 }
 
-// TestW8aExcludedRoutesStayRelay pins the Decision 7 scoping line:
-// the routes the seven pins do not cover are NOT wave routes and
-// must not file a native dispatch. A shared-key call to each still
-// answers from the stub core on the generic relay lane — the pins
-// never widen silently. (The suppressions mutation stays on its
-// tier-C write-through lane; Compare terminated in its gap-04 lane.
-// GET /api/v0/iac/resources left this list in the W3 IaC-6 lane: it
-// terminates natively on its supplemental SearchActive pin, pinned by
-// TestIaCResources_AheadOfRelay. POST /api/v0/cloud/runtime-drift/findings
-// left this list in the Wave-4 Drift lane: it terminates natively on the
-// CloudRuntimeDrift pin, pinned by TestDriftWaveAheadOfRelay — see
-// contracts/cloud-runtime-drift-termination.md.)
-func TestW8aExcludedRoutesStayRelay(t *testing.T) {
+// TestW8aWaveNeverAbsorbsGraphMetrics pins the Decision 7 scoping line
+// for the last excluded row: POST /api/v0/code/call-graph/metrics
+// terminated in the Wave-7 G-a lane (see
+// contracts/code-graph-termination.md) and must never enter w8aWave
+// silently — recording the W8a pins whole never authorizes the 17th
+// row. (The suppressions mutation stays on its tier-C write-through
+// lane; Compare terminated in its gap-04 lane; GET
+// /api/v0/iac/resources terminated natively in the W3 lane on its
+// supplemental SearchActive pin; POST
+// /api/v0/cloud/runtime-drift/findings terminated natively in the
+// Wave-4 Drift lane on the CloudRuntimeDrift pin.) The G-a lane's own
+// TestCodeGraphWaveAheadOfRelay pins the native filing there.
+func TestW8aWaveNeverAbsorbsGraphMetrics(t *testing.T) {
 	t.Parallel()
 
-	excluded := []struct {
-		method string
-		path   string
-		body   string
-	}{
-		{http.MethodPost, "/api/v0/code/call-graph/metrics", `{"scope_id":"scope_1"}`},
+	for _, entry := range w8aWave {
+		if entry.Method+" "+entry.Path == http.MethodPost+" /api/v0/code/call-graph/metrics" {
+			t.Errorf("w8aWave holds %q: the metrics POST terminates in the G-a lane, want it out (no pin covers a 17th row)", entry.Method+" "+entry.Path)
+		}
 	}
-	for _, route := range excluded {
-		t.Run(route.method+" "+route.path, func(t *testing.T) {
-			t.Parallel()
 
-			for _, entry := range w8aWave {
-				if entry.Method+" "+entry.Path == route.method+" "+route.path {
-					t.Fatalf("excluded route %q is in w8aWave, want it out (no pin covers it)", route.method+" "+route.path)
-				}
-			}
-
-			core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
-			mux := http.NewServeMux()
-			mux.Handle("/", core.handler())
-			upstream := httptest.NewServer(mux)
-			defer upstream.Close()
-
-			tel := NewTelemetry(nil)
-			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
-			handler := srv.Handler(DefaultV0Sunset)
-
-			var req *http.Request
-			if route.method == http.MethodPost {
-				req = authedRequest(route.method, route.path)
-				req.Body = io.NopCloser(strings.NewReader(route.body))
-				req.ContentLength = int64(len(route.body))
-				req.Header.Set("Content-Type", "application/json")
-			} else {
-				req = authedRequest(route.method, route.path)
-			}
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
-			}
-			snap := tel.snapshot()
-			family := classifyFamily(route.path)
-			lanes := snap.dispatches[family]
-			if lanes[viaNative] != nil {
-				t.Errorf("family %q dispatches = %v, want no native lane row for the excluded route", family, lanes)
-			}
-		})
+	for _, entry := range codeGraphWave {
+		if entry.Method+" "+entry.Path == http.MethodPost+" /api/v0/code/call-graph/metrics" {
+			return
+		}
 	}
+	t.Errorf("codeGraphWave holds no POST /api/v0/code/call-graph/metrics: the metrics POST must terminate in the G-a lane, not drift back to relay")
 }

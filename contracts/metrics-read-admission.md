@@ -43,9 +43,11 @@ cannot acquire a write it did not bargain for through it.
 
 Explicitly OUT of this pin: the code-graph-metrics POST (`POST
 /api/v0/code/call-graph/metrics`) is a `GraphQuery` reader, not a
-`TimeSeriesSource` consumer, and stays outside this pin with its own
-per-route relay reason; the grant check, the metric allow-list, and
-the fixed failure messages are handler behavior, not port shape.
+`TimeSeriesSource` consumer, and stays outside this pin — it
+terminates in the Wave-7 G-a lane on `CodeGraphReadAdmission v0`
+(see `contracts/code-graph-termination.md`); the grant check, the
+metric allow-list, and the fixed failure messages are handler
+behavior, not port shape.
 
 ## Relay posture
 

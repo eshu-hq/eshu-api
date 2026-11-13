@@ -32,6 +32,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (W6a Code-flow pin) | `e504e328a7b665d7a5b4358a2f8b2ce5201b1d72` (merge of `eshu-hq/eshu#10552` via `e504e328a7`; CodeFlowReadAdmission v0, unwired-seam style: version constant + re-declared 1-method port + frozen method-set test; arbiter W-wave APPROVED-WITH-CONDITIONS for W6a 4 only) |
 | Source commit (W4 search pins) | `e504e328a7` (record base, the verified core HEAD; pins minted at `330828359a`, merge of `eshu-hq/eshu#10540`: ContentSearchReadAdmission v0, 10 re-declared methods, and CodeSearchReadAdmission v0, 9 re-declared methods, each unwired-seam style: version constant + re-declared port + frozen method-set test; the content pin carries a post-merge instruments delta at the record base, constructor gains `*telemetry.Instruments`, disclosed in `contracts/content-search-read-admission.md`; arbiter W4 APPROVED-WITH-CONDITIONS, record-first) |
 | Source commit (retire-unclaimed writer pin) | `bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae` (merge of `eshu-hq/eshu#10583`; RetireUnclaimedAdmission v0, unwired seam: version constant + re-declared 1-method port + frozen method-set test; the OpenAPI fragment at the same commit is byte-identical to the `eshu-hq/eshu#10553` mint; arbiter eshu-api#103 ruling APPROVED AS-IS, satellite record-then-terminate) |
+| Source commit (Wave-7 G-a graph pin) | `0fd6db6deb38beaa9327ba015af5bd279729f8ae` (merge of `eshu-hq/eshu#10645`; CodeGraphReadAdmission v0, unwired seam: version constant + re-declared 3-method port + frozen method-set test with seeded rejection; arbiter Wave-7 SPLIT ruling recorded on `eshu-hq/eshu-api#121`, satellite record-then-terminate for the G-a 4 only) |
 | Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
@@ -74,6 +75,7 @@ preparation only; nothing here carries cutover authority.
 | `IaCReadAdmissionContractVersion` | `v0` |
 | `CodeFlowReadAdmissionContractVersion` | `v0` |
 | `RetireUnclaimedAdmissionContractVersion` | `v0` |
+| `CodeGraphReadAdmissionContractVersion` | `v0` |
 
 ## Mapping
 
@@ -253,6 +255,9 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/admin/retire_unclaimed_admission_contract_test.go` at `bc150cc0c6` | `contracts/upstream/retire_unclaimed_admission_contract_test.go` | `22b861314bdecf674047c8e642e59e58f64d6517a653f6e9288ae088066a86d2` | verbatim |
 | `go/internal/query/admin/retire_unclaimed_admission.go` (version, interface, witness) + `retire_unclaimed.go` (sentinels, request/response shapes) + `handler.go` (Mount) at `bc150cc0c6` | `contracts/upstream/retire-unclaimed-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/internal/query/openapi/paths/status/workflow_retire_unclaimed.go` at `bc150cc0c6` | `openapi/paths/status/workflow_retire_unclaimed.go` | `b58ed9e3ee80e774b022af5d42cd649fb9427697ed202bb1ea2a8288bb940f30` | verbatim |
+| `go/internal/query/codequery/code_graph_read_admission.go` (version, re-declared 3-method port) at `0fd6db6` | `contracts/upstream/code_graph_read_admission.go` | `1ef71affe095a4fa9ca4732f6cff28601e159b6e26c21c1acb0ae864511fbeac` (whole file) | verbatim |
+| `go/internal/query/codequery/code_graph_read_admission_contract_test.go` (frozen method-set test with seeded rejection) at `0fd6db6` | `contracts/upstream/code_graph_read_admission_contract_test.go` | `d0a621c8d1d4ca4d809a5ce6acd9512cca651ee6efe9497b884f754e6de403ae` (whole file) | verbatim |
+| `go/internal/query/codequery/code_graph_read_admission.go` (version, in-scope routes, 3-method interface, mirror assertion, contract comment) at `0fd6db6` | `contracts/upstream/code-graph-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
 | `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 
