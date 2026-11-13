@@ -40,6 +40,7 @@ SRC_SHA_W4="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_DRIFT="d81bd1280212745a2a3215f988087e1b92bd828"
 SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
 SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
+SRC_SHA_DEAD="8b28c0dba5f12c3b1b11c90fac6b24cfe5d82875"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -1609,6 +1610,28 @@ check_file_at "$SRC_SHA_DRIFT" "go/internal/query/cloud_runtime_drift_read_admis
 check_excerpt_at "$SRC_SHA_DRIFT" "contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt" \
   "go/internal/query/cloud_runtime_drift_read_admission.go"
 
+# Satellite Wave-5 dead-route termination (eshu-hq/eshu-api#119): the
+# IaCDeadContentAdmission v0 dual pin, minted core-side W8b tier-1
+# (unwired, arbiter-approved). The vendored contract test and external
+# servability test are byte-identical at the merge commit; the
+# wire-shapes excerpt carries the version const stanza, the
+# four-method interface, the ContentStore mirror assertion, and the
+# surrounding contract comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_DEAD" "go/internal/query/iac/dead_content_admission.go" \
+  "contracts/upstream/iac_dead_content_admission.go" \
+  "a3da56bbe6f60803a5c372b2918f537d80dc1cb53e7fc6177e034a4a2f3ab0cd"
+
+check_file_at "$SRC_SHA_DEAD" "go/internal/query/iac/dead_content_admission_contract_test.go" \
+  "contracts/upstream/iac_dead_content_admission_contract_test.go" \
+  "adba362c286cb18bd4e6a37fd330d4b7c4e3baed553fb0249949b887c5136118"
+
+check_file_at "$SRC_SHA_DEAD" "go/internal/query/iac/dead_content_admission_external_test.go" \
+  "contracts/upstream/iac_dead_content_admission_external_test.go" \
+  "0ef8b3a882c2476ab7da11a679dd6b055c23f8d2810664cc36e8db161154ac11"
+
+check_excerpt_at "$SRC_SHA_DEAD" "contracts/upstream/iac-dead-content-wire-shapes.txt" \
+  "go/internal/query/iac/dead_content_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1645,6 +1668,7 @@ grep -qF 'CodeFlowReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/u
 grep -qF 'ContentSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/content-search-read-wire-shapes.txt"
 grep -qF 'CodeSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-search-read-wire-shapes.txt"
 grep -qF 'CloudRuntimeDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt"
+grep -qF 'IaCDeadContentAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-dead-content-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1827,6 +1851,30 @@ for lane in drift_terminate drift_wave; do
   done
 done
 echo "OK: Wave-4 Drift lane files carry no dest-side store or parse"
+
+# Satellite Wave-5 dead-route termination (eshu-hq/eshu-api#119): no
+# dest-side store, port, or parse of Content on the lane (arbiter W8b
+# ruling, sealed 4-method supplemental admission). api/iac.go must name
+# no dest-side Content symbol — the pin's four ContentStore reads and
+# the out-of-pin graph/inventory/management/selector/reachability legs
+# all stay core-side, and the lane forwards the request bodies
+# opaquely (no query, form, path, or body-key parse). Pin names in
+# comments stay allowed (the lane record names its pins); only
+# executable coupling fails. Fails closed on any match (the in-suite
+# source test TestIaCLaneFileHygiene proves the same list).
+for symbol in ContentStore ContentReader ListRepositories MatchRepositories ListRepoFiles GetFileContent RepositoryCatalogEntry FileContent querycontract postgres 'database/sql' sql.DB sql.Open; do
+  if grep -qF "$symbol" "${REPO_ROOT}/api/iac.go"; then
+    echo "FAIL: api/iac.go names ${symbol}: no dest-side Content on this lane" >&2
+    exit 1
+  fi
+done
+for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"repo_ids"' '"families"' '"limit"' '"offset"'; do
+  if grep -qF "$call" "${REPO_ROOT}/api/iac.go"; then
+    echo "FAIL: api/iac.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+    exit 1
+  fi
+done
+echo "OK: Wave-5 dead-route lane file carries no dest-side Content or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

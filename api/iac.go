@@ -10,31 +10,34 @@ import (
 // W3 IaC-6 native routes (Refs eshu-hq/eshu-api#102, part of
 // eshu-hq/eshu#9669): the four POST legs cleared on IaCReadAdmission v0
 // (eshu-hq/eshu#10455, recorded in contracts/iac-read-admission.md),
-// plus the resources candidate page cleared on
+// the resources candidate page cleared on
 // IaCInventorySearchAdmission v0 (eshu-hq/eshu#10578, recorded beside
-// it). Each route is registered explicitly inside RequireAuth, ahead
-// of the generic /api/ proxy, and forwards to the same core route with
-// the caller bytes intact. POST /api/v0/iac/dead stays on the generic
-// relay until the dual-pin dead disposition lands; the remaining IaC 5
-// ride W8a on the same pin.
+// it), and POST /api/v0/iac/dead cleared on the supplemental
+// IaCDeadContentAdmission v0 dual pin (eshu-hq/eshu#10642, recorded
+// beside them). Each route is registered explicitly inside RequireAuth,
+// ahead of the generic /api/ proxy, and forwards to the same core
+// route with the caller bytes intact. No IaC read rides the generic
+// relay now; the remaining IaC 5 ride W8a on the same pin.
 const (
 	iacUnmanagedResourcesRoute            = "POST /api/v0/iac/unmanaged-resources"
 	iacManagementStatusRoute              = "POST /api/v0/iac/management-status"
 	iacManagementStatusExplainRoute       = "POST /api/v0/iac/management-status/explain"
 	iacTerraformImportPlanCandidatesRoute = "POST /api/v0/iac/terraform-import-plan/candidates"
+	iacDeadRoute                          = "POST /api/v0/iac/dead"
 	iacResourcesRoute                     = "GET /api/v0/iac/resources"
 )
 
 // iacNativeRoutes is the W3 IaC-6 termination slice: the four POST legs
-// cleared on IaCReadAdmission v0. The router registers each with its
-// trailing-slash twin; the resources leg rides iacResourcesRoutes
-// below on its own supplemental pin, and the dead partial stays
-// unlisted on purpose.
+// cleared on IaCReadAdmission v0 plus the dead POST leg cleared on
+// the supplemental IaCDeadContentAdmission v0 dual pin. The router
+// registers each with its trailing-slash twin; the resources leg rides
+// iacResourcesRoutes below on its own supplemental pin.
 var iacNativeRoutes = []string{
 	iacUnmanagedResourcesRoute,
 	iacManagementStatusRoute,
 	iacManagementStatusExplainRoute,
 	iacTerraformImportPlanCandidatesRoute,
+	iacDeadRoute,
 }
 
 // iacResourcesRoutes is the W3 IaC-6 resources termination slice: the
@@ -47,8 +50,9 @@ var iacResourcesRoutes = []string{
 	iacResourcesRoute,
 }
 
-// iacWriteThrough is the W3 IaC-6 native dispatch for the five cleared
-// read legs (the four IaCReadAdmission v0 POSTs plus the resources
+// iacWriteThrough is the W3 IaC-6 native dispatch for the six cleared
+// read legs (the four IaCReadAdmission v0 POSTs, the dead POST on the
+// supplemental IaCDeadContentAdmission v0 dual pin, plus the resources
 // candidate-page GET on the supplemental IaCInventorySearchAdmission
 // v0 pin): the request crosses an explicit per-family route instead
 // of the generic byte-relay. The shape is HTTP write-through — method,
