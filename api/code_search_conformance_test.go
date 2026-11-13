@@ -213,7 +213,7 @@ func TestCodeSearchTerminatedMatchesRelayByteForByte(t *testing.T) {
 	for _, path := range codeSearchConcretePaths {
 		for _, outcome := range outcomes {
 			for _, accept := range []string{EnvelopeMIME, "application/json"} {
-				for _, body := range codeSearchParityBodies[path][:1] {
+				for _, body := range codeSearchParityBodies[path] {
 					name := "POST " + path + " " + outcome.name + " " + accept
 					t.Run(name, func(t *testing.T) {
 						t.Parallel()

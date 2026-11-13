@@ -12,7 +12,7 @@ core or network time.
 - `BenchmarkCodeSearchTerminatedPOST/symbols-search`: ~94 µs/op.
 - `BenchmarkCodeSearchRelayPOST/bundles-relay`: ~94 µs/op.
 
-Ratios 1.00–1.01, inside the 1.50 budget
+Ratios 0.99–1.01, inside the 1.50 budget
 (`scripts/measure-code-search-latency.sh`, wired into
 `.github/workflows/read-latency.yml`).
 
