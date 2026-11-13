@@ -19,8 +19,8 @@ import (
 // eshu-hq/eshu#9669): GET /api/v0/iac/resources terminates ahead of the
 // relay on the explicit native route, cleared on
 // IaCInventorySearchAdmission v0 (eshu-hq/eshu#10578). POST
-// /api/v0/iac/dead stays on the generic relay until the dual-pin dead
-// disposition lands; the remaining IaC 5 ride W8a.
+// /api/v0/iac/dead terminates natively beside it on the supplemental
+// IaCDeadContentAdmission v0 dual pin; the remaining IaC 5 ride W8a.
 
 // iacResourcesTarget is the candidate-page spelling the parity proof
 // exercises, including the keyset query the route must forward intact.
@@ -279,23 +279,24 @@ func TestIaCResources_TrailingSlashStaysNative(t *testing.T) {
 	}
 }
 
-// TestIaCResources_MatchesGenericRelay pins the before/after parity at
-// the dest layer — the revert-to-relay proof: the same stub-core answer
-// crosses the native resources route and the generic relay (POST
-// /api/v0/iac/dead, the partial leg that stays on the relay) with
-// byte-identical status and body. Removing the native registration
-// restores relay bytes exactly, so rollback moves no truth.
-func TestIaCResources_MatchesGenericRelay(t *testing.T) {
+// TestIaCResources_MatchesNativeDead pins the parity at the dest
+// layer — the revert-to-relay proof: the same stub-core answer crosses
+// the native resources route and the native dead route (POST
+// /api/v0/iac/dead, terminated on the IaCDeadContentAdmission v0 dual
+// pin) with byte-identical status and body. No IaC read rides the
+// generic relay now; removing either native registration restores relay
+// bytes exactly, so rollback moves no truth.
+func TestIaCResources_MatchesNativeDead(t *testing.T) {
 	t.Parallel()
 
-	const relayPath = "/api/v0/iac/dead"
+	const nativePath = "/api/v0/iac/dead"
 	bodies := []struct {
 		name   string
 		status int
 		body   string
 	}{
 		{"truth page", http.StatusOK, "{\"data\":{\"total\":1},\"error\":null}\n"},
-		{"fixed 500", http.StatusInternalServerError, "{\"detail\":\"dead IaC scan failed\",\"error\":\"Internal Server Error\"}\n"},
+		{"fixed 500", http.StatusInternalServerError, "{\"detail\":\"list dead-IaC findings failed\",\"error\":\"Internal Server Error\"}\n"},
 	}
 	for _, fixture := range bodies {
 		core := &stubCore{status: fixture.status, body: fixture.body}
@@ -318,10 +319,10 @@ func TestIaCResources_MatchesGenericRelay(t *testing.T) {
 			return rec.Code, string(body)
 		}
 		nativeCode, nativeBody := serve(http.MethodGet, iacResourcesTarget, "")
-		relayCode, relayBody := serve(http.MethodPost, relayPath, `{"limit":50}`)
+		deadCode, deadBody := serve(http.MethodPost, nativePath, `{"repo_ids":["repository:r1"],"limit":50}`)
 
-		if nativeCode != relayCode || nativeBody != relayBody {
-			t.Errorf("%s: native = (%d, %q), relay = (%d, %q): want byte-identical", fixture.name, nativeCode, nativeBody, relayCode, relayBody)
+		if nativeCode != deadCode || nativeBody != deadBody {
+			t.Errorf("%s: native = (%d, %q), dead = (%d, %q): want byte-identical", fixture.name, nativeCode, nativeBody, deadCode, deadBody)
 		}
 	}
 }

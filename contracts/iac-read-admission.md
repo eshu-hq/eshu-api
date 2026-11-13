@@ -98,27 +98,68 @@ the forwarded call (dest carries no scoped/session resolver, so a
 dest-side gate would deny scoped callers the core allows — core
 re-judges every forwarded request as backstop).
 
+## Supplemental pin: IaCDeadContentAdmission v0
+
+The dead route (`POST /api/v0/iac/dead`) clears on its own
+supplemental pin, `IaCDeadContentAdmission v0`
+(eshu-hq/eshu#10642, merge `8b28c0db`), recorded byte-identical in
+`contracts/upstream/iac_dead_content_admission.go`,
+`contracts/upstream/iac_dead_content_admission_contract_test.go`, and
+`contracts/upstream/iac_dead_content_admission_external_test.go`. The
+pin adopts exactly the four `ContentStore` reads the dead route
+exercises when the reducer-materialized rows are absent or empty —
+`ListRepositories` for the repo-name enrichment, `MatchRepositories`
+for the access-filtered selector resolution, `ListRepoFiles` for the
+bounded per-repo file page (capped at the core `deadFileLimit`
+10,000-file worst case the latency gate measures), and
+`GetFileContent` for the blank-file reload — re-declared here in this
+IaC-scoped shape instead of embedding `ContentStore`, so the pin
+grants nothing beyond those four reads and no other family can cite
+it as coverage. The version line, the four-method interface, the
+`ContentStore` mirror assertion, and the surrounding contract comment
+(narrow by construction, unwired, rollback) are vendored verbatim in
+`contracts/upstream/iac-dead-content-wire-shapes.txt`. The frozen
+method set is `frozenIaCDeadContentAdmission` in
+`contracts/upstream/iac_dead_content_admission_contract_test.go`
+(4 methods: `ListRepositories`, `MatchRepositories`,
+`ListRepoFiles`, `GetFileContent`).
+
+Explicitly OUT of the supplemental pin: grant checks and fixed failure
+messages are handler behavior, not port shape; every other
+`ContentStore` method stays unadopted; no dest authorizer rides on
+the forwarded call (dest carries no scoped/session resolver, so a
+dest-side gate would deny scoped callers the core allows — core
+re-judges every forwarded request as backstop); no dest-side store,
+port, or parse of `Content` rides on the lane (the four reads stay
+core-side, the caller bytes cross opaquely).
+
 ## Relay posture
 
-W3 IaC-6 (Refs eshu-hq/eshu-api#102) terminates the four pin-sufficient
-POST legs ahead of the relay on native write-through routes
-(`api/iac.go`, registered in `api/router.go`; family label `iac` in
-`api/family.go`): `POST /api/v0/iac/unmanaged-resources`, `POST
-/api/v0/iac/management-status`, `POST
-/api/v0/iac/management-status/explain`, and `POST
-/api/v0/iac/terraform-import-plan/candidates` — plus the resources
-candidate page `GET /api/v0/iac/resources` on its own supplemental pin
-(`iacResourcesRoutes` in `api/iac.go`, same write-through handler).
-Termination proof: byte-parity (`api/iac_dispatch_test.go` and
-`api/iac_resources_test.go`, each including the native-vs-relay
-equivalence that doubles as the revert-to-relay proof),
-resilience (`api/iac_resilience_test.go` plus the resources
-cancel/parallel probes in `api/iac_resources_test.go`), and the
+W3 IaC-6 (Refs eshu-hq/eshu-api#102) terminates all six legs ahead of
+the relay on native write-through routes (`api/iac.go`, registered in
+`api/router.go`; family label `iac` in `api/family.go`): `POST
+/api/v0/iac/unmanaged-resources`, `POST /api/v0/iac/management-status`,
+`POST /api/v0/iac/management-status/explain`, and `POST
+/api/v0/iac/terraform-import-plan/candidates` cleared on
+`IaCReadAdmission v0`, the resources candidate page `GET
+/api/v0/iac/resources` on its supplemental
+`IaCInventorySearchAdmission v0` pin (`iacResourcesRoutes` in
+`api/iac.go`, same write-through handler), and `POST /api/v0/iac/dead`
+on its supplemental `IaCDeadContentAdmission v0` dual pin (this
+section, same write-through handler).
+Termination proof: byte-parity (`api/iac_dispatch_test.go`,
+`api/iac_resources_test.go`, and `api/iac_dead_test.go`, each
+including the native-vs-native equivalence that doubles as the
+revert-to-relay proof),
+resilience (`api/iac_resilience_test.go` plus the resources and dead
+cancel/parallel probes in `api/iac_resources_test.go` and
+`api/iac_dead_test.go`), and the
 latency gate (`api/iac_latency_test.go` with
-`scripts/measure-iac-latency.sh`, resources leg gated beside the POST
-legs). POST /api/v0/iac/dead stays on the generic relay until the
-dual-pin dead disposition lands; the remaining IaC 5 ride W8a on the
-same pin. No traffic flip, no deploy, no in-tree removal in this lane:
+`scripts/measure-iac-latency.sh`, resources leg and dead leg —
+including its derived-branch 10k-file worst case — gated beside the
+POST legs). No IaC read rides the generic relay now; the remaining
+IaC 5 ride W8a on the same pin. No traffic flip, no deploy, no
+in-tree removal in this lane:
 the arbiter ruling precedes satellite consumption per the Compare
 gap-04 standing.
 

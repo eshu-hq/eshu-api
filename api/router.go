@@ -132,10 +132,11 @@ func (s *Server) routes() *http.ServeMux {
 	mux.Handle(retireUnclaimedRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
 	mux.Handle(retireUnclaimedRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
 	// Native dispatch, IaC reads (W3 IaC-6, see api/iac.go): the four
-	// POST legs cleared on IaCReadAdmission v0, plus the resources
-	// candidate-page GET cleared on IaCInventorySearchAdmission v0
-	// (own slice, own pin, same write-through handler). POST
-	// /api/v0/iac/dead stays on the generic relay.
+	// POST legs cleared on IaCReadAdmission v0 plus the dead POST leg
+	// cleared on the supplemental IaCDeadContentAdmission v0 dual pin,
+	// plus the resources candidate-page GET cleared on
+	// IaCInventorySearchAdmission v0 (own slice, own pin, same
+	// write-through handler).
 	for _, route := range iacNativeRoutes {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))

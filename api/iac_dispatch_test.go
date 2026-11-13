@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-// iacNativeCases is the W3 IaC-6 termination slice cleared on
-// IaCReadAdmission v0 (eshu-hq/eshu#10455): the four POST legs whose
-// every read the pin adopts. GET /iac/resources rides its own
-// supplemental SearchActive pin, terminated natively in this lane;
-// POST /iac/dead stays on the generic relay until its dual-pin dead
-// disposition lands.
+// iacNativeCases is the W3 IaC-6 termination slice: the four POST legs
+// cleared on IaCReadAdmission v0 (eshu-hq/eshu#10455), whose every read
+// the pin adopts, plus POST /iac/dead cleared on the supplemental
+// IaCDeadContentAdmission v0 dual pin (eshu-hq/eshu#10642). GET
+// /iac/resources rides its own supplemental SearchActive pin,
+// terminated natively in this lane beside this slice.
 var iacNativeCases = []struct {
 	name    string
 	route   string
@@ -26,6 +26,7 @@ var iacNativeCases = []struct {
 	{"management-status", iacManagementStatusRoute, `{"repositories":["repository:r1"],"limit":50}`},
 	{"management-status-explain", iacManagementStatusExplainRoute, `{"repositories":["repository:r1"],"limit":1}`},
 	{"terraform-import-plan-candidates", iacTerraformImportPlanCandidatesRoute, `{"repositories":["repository:r1"],"limit":50}`},
+	{"dead", iacDeadRoute, `{"repo_ids":["repository:r1"],"limit":50}`},
 }
 
 // iacRoutePath strips the "METHOD " prefix from a native route const.
@@ -249,21 +250,24 @@ func TestIaCNative_TrailingSlashStaysNative(t *testing.T) {
 	}
 }
 
-// TestIaCNative_MatchesGenericRelay pins the before/after parity at the
-// dest layer: the same stub-core answer crosses the native route and the
-// generic relay (POST /api/v0/iac/dead, the partial leg that stays on the
-// relay) with byte-identical status and body.
-func TestIaCNative_MatchesGenericRelay(t *testing.T) {
+// TestIaCNative_MatchesNativeDead pins the parity at the dest layer:
+// the same stub-core answer crosses every native route and the
+// native dead comparison leg (POST /api/v0/iac/dead, terminated on the
+// IaCDeadContentAdmission v0 dual pin beside this slice) with
+// byte-identical status and body. No IaC read rides the generic relay
+// now, so the comparison leg is native too — the lane assertion below
+// proves both filings land native.
+func TestIaCNative_MatchesNativeDead(t *testing.T) {
 	t.Parallel()
 
-	const relayPath = "/api/v0/iac/dead"
+	const nativePath = "/api/v0/iac/dead"
 	bodies := []struct {
 		name   string
 		status int
 		body   string
 	}{
 		{"truth page", http.StatusOK, "{\"data\":{\"total\":1},\"error\":null}\n"},
-		{"fixed 500", http.StatusInternalServerError, "{\"detail\":\"dead IaC scan failed\",\"error\":\"Internal Server Error\"}\n"},
+		{"fixed 500", http.StatusInternalServerError, "{\"detail\":\"list dead-IaC findings failed\",\"error\":\"Internal Server Error\"}\n"},
 	}
 	for _, tc := range iacNativeCases {
 		for _, fixture := range bodies {
@@ -286,21 +290,21 @@ func TestIaCNative_MatchesGenericRelay(t *testing.T) {
 				return rec.Code, string(body)
 			}
 			nativeCode, nativeBody := serve(iacRoutePath(tc.route))
-			relayCode, relayBody := serve(relayPath)
+			deadCode, deadBody := serve(nativePath)
 
-			if nativeCode != relayCode || nativeBody != relayBody {
-				t.Errorf("%s %s: native = (%d, %q), relay = (%d, %q): want byte-identical", tc.name, fixture.name, nativeCode, nativeBody, relayCode, relayBody)
+			if nativeCode != deadCode || nativeBody != deadBody {
+				t.Errorf("%s %s: native = (%d, %q), dead = (%d, %q): want byte-identical", tc.name, fixture.name, nativeCode, nativeBody, deadCode, deadBody)
 			}
-			// The lane assertion: the native spelling must cross the
-			// native lane while the relay spelling crosses the relay
-			// lane. Without this the test passes identically with the
-			// native registration removed (both spellings then relay),
+			// The lane assertion: both spellings must cross the
+			// native lane, and nothing may fall back to the relay.
+			// Without this the test passes identically with either
+			// native registration removed (that spelling then relays),
 			// proving nothing about termination.
-			if got := tel.snapshot().dispatches["iac"][viaNative][outcomeCoreOK]; got != 1 {
-				t.Errorf("%s %s: iac native core_ok = %d, want 1 (registration removed = 0, test must fail)", tc.name, fixture.name, got)
+			if got := tel.snapshot().dispatches["iac"][viaNative][outcomeCoreOK]; got != 2 {
+				t.Errorf("%s %s: iac native core_ok = %d, want 2 (a removed registration files relay, test must fail)", tc.name, fixture.name, got)
 			}
-			if got := tel.snapshot().dispatches["iac"][viaRelay][outcomeCoreOK]; got != 1 {
-				t.Errorf("%s %s: iac relay core_ok = %d, want 1 (comparison leg must stay relay)", tc.name, fixture.name, got)
+			if lanes := tel.snapshot().dispatches["iac"]; lanes[viaRelay] != nil {
+				t.Errorf("%s %s: iac relay lane filed %v, want no relay filing on the terminated legs", tc.name, fixture.name, lanes[viaRelay])
 			}
 		}
 	}

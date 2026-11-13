@@ -176,6 +176,7 @@ func TestIaCNative_ParallelProbe(t *testing.T) {
 		iacRoutePath(iacManagementStatusRoute),
 		iacRoutePath(iacManagementStatusExplainRoute),
 		iacRoutePath(iacTerraformImportPlanCandidatesRoute),
+		iacRoutePath(iacDeadRoute),
 	}
 	const callers = 16
 	var wg sync.WaitGroup

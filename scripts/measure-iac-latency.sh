@@ -3,24 +3,29 @@
 # eshu-hq/eshu#9669).
 #
 # Owns the read-latency comparison the lane assigns the satellite:
-# the four cleared IaC POST legs plus the resources candidate-page GET
-# must not be slower than the generic relay they replace. Hermetic by
-# design: both legs run against the same in-process stub core, so the
-# numbers isolate dest-side cost (explicit route match + telemetry),
-# not core or network time. The pinned-core-image leg against a real
-# deployment rides flip prep (D11); this gate runs on every PR and in
-# CI.
+# the five cleared IaC POST legs plus the resources candidate-page GET
+# must not be slower than the generic relay they replace — including
+# the dead leg's derived-branch worst case (the 10,000-finding page
+# core's deadFileLimit bound admits, measured same-shape on both
+# lanes). Hermetic by design: both legs run against the same
+# in-process stub core, so the numbers isolate dest-side cost
+# (explicit route match + telemetry), not core or network time. The
+# pinned-core-image leg against a real deployment rides flip prep
+# (D11); this gate runs on every PR and in CI.
 #
-# Method: go test benchmarks BenchmarkIaCNativeRead vs
+# Method: go test benchmarks BenchmarkIaCNativeRead (plus
+# BenchmarkIaCDeadDerivedRead for the dead worst case) vs
 # BenchmarkIaCRelayRead (api package), -count=5, take the median
 # ns/op. FAIL when a native leg exceeds relay by more than 50%.
 # Generous: both legs do one server-side fetch, so any real pathology
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
 #
-# Relay-route disclosure: POST /api/v0/iac/dead stays on the generic
-# relay (partial leg: supplemental SearchActive mint + dual-pin dead
-# disposition pending), so it is the before-shape here.
+# Relay-route disclosure: no IaC read rides the generic relay now that
+# the dead leg terminates natively, so the before-shape is POST
+# /api/v0/code/bundles — a route no wave table covers (drift-style) —
+# with the small page for the cleared legs and the same worst-case
+# derived page for the dead 10k leg.
 #
 # Usage: bash scripts/measure-iac-latency.sh
 # Needs: go (version in go.mod).
@@ -59,13 +64,18 @@ clone_unmanaged="$(bench 'BenchmarkIaCNativeRead/unmanaged-resources' | median)"
 clone_status="$(bench 'BenchmarkIaCNativeRead/management-status' | median)"
 clone_explain="$(bench 'BenchmarkIaCNativeRead/management-status-explain' | median)"
 clone_candidates="$(bench 'BenchmarkIaCNativeRead/terraform-import-plan-candidates' | median)"
+clone_dead="$(bench 'BenchmarkIaCNativeRead/dead' | median)"
+clone_derived="$(bench 'BenchmarkIaCDeadDerivedRead/dead-derived-10k' | median)"
 clone_resources="$(bench 'BenchmarkIaCResourcesRead/resources' | median)"
-relay_dead="$(bench 'BenchmarkIaCRelayRead/dead-relay' | median)"
+relay_post="$(bench 'BenchmarkIaCRelayRead/post-relay$' | median)"
+relay_post_10k="$(bench 'BenchmarkIaCRelayRead/post-relay-10k' | median)"
 
-check_leg unmanaged-resources "$clone_unmanaged" "$relay_dead"
-check_leg management-status "$clone_status" "$relay_dead"
-check_leg management-status-explain "$clone_explain" "$relay_dead"
-check_leg terraform-import-plan-candidates "$clone_candidates" "$relay_dead"
-check_leg resources "$clone_resources" "$relay_dead"
+check_leg unmanaged-resources "$clone_unmanaged" "$relay_post"
+check_leg management-status "$clone_status" "$relay_post"
+check_leg management-status-explain "$clone_explain" "$relay_post"
+check_leg terraform-import-plan-candidates "$clone_candidates" "$relay_post"
+check_leg dead "$clone_dead" "$relay_post"
+check_leg dead-derived-10k "$clone_derived" "$relay_post_10k"
+check_leg resources "$clone_resources" "$relay_post"
 
 echo "iac-latency: all legs within budget"
