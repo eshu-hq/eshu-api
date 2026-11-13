@@ -8,13 +8,13 @@ cost, not core or network time.
 
 ## Measured (2026-11-13, `bash scripts/measure-code-graph-latency.sh`)
 
-- `BenchmarkCodeGraphTerminatedRead/call-chain-post`: ~95 us/op.
-- `BenchmarkCodeGraphTerminatedRead/compare-post`: ~95 us/op.
-- `BenchmarkCodeGraphTerminatedRead/metrics-post`: ~94 us/op.
-- `BenchmarkCodeGraphTerminatedRead/callers-post`: ~94 us/op.
-- `BenchmarkCodeGraphRelayRead/post-relay`: ~108 us/op.
+- `BenchmarkCodeGraphTerminatedRead/call-chain-post`: ~91 us/op.
+- `BenchmarkCodeGraphTerminatedRead/compare-post`: ~92 us/op.
+- `BenchmarkCodeGraphTerminatedRead/metrics-post`: ~91 us/op.
+- `BenchmarkCodeGraphTerminatedRead/callers-post`: ~91 us/op.
+- `BenchmarkCodeGraphRelayRead/post-relay`: ~93 us/op.
 
-Ratios 0.87–0.88, inside the 1.50 budget
+Ratios 0.98–0.99, inside the 1.50 budget
 (`scripts/measure-code-graph-latency.sh`, wired into
 `.github/workflows/read-latency.yml`).
 
