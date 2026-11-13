@@ -153,8 +153,8 @@ including the native-vs-native equivalence, plus a generic-relay
 comparison leg for the dead route (`TestIaCDeadNative_MatchesGenericRelay`);
 together they double as the revert-to-relay proof),
 resilience (`api/iac_resilience_test.go` plus the resources and dead
-cancel/parallel probes in `api/iac_resources_test.go` and
-`api/iac_dead_test.go`), and the
+cancel/parallel probes in `api/iac_resources_test.go`,
+`api/iac_dead_test.go`, and `api/iac_dead_relay_test.go`), and the
 latency gate (`api/iac_latency_test.go` with
 `scripts/measure-iac-latency.sh`, resources leg and dead leg —
 including its derived-branch 10k-file worst case — gated beside the
