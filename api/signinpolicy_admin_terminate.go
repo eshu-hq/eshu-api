@@ -18,7 +18,7 @@ import (
 // satellite record contracts/upstream/
 // sign_in_policy_read_admission_contract_test.go) with zero behavior
 // change: same credential matrix, same forward, same bytes. The
-// family's PATCH stays on its RequireAuth tier-C write-through
+// family's PATCH terminates natively behind its family writer gate
 // (see api/signin.go); trailing-slash twins ride the same family
 // route for the never-split reason; deeper subtrees and non-GET
 // spellings stay on the generic relay behind RequireAuth.

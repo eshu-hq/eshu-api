@@ -50,19 +50,34 @@ until the list is deliberately updated; bump
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
 
-## Native dispatch (tier C-a: HTTP write-through)
+## Native termination (W7 writers: terminated writer)
 
-The admin sign-in policy PATCH is the tier C-a native-dispatch lane:
-`api/signin.go` registers the explicit route inside `RequireAuth` ahead
-of the generic proxy and forwards to the same core route with method,
-path, query, headers (including the original `Authorization` header),
-and body relayed; core bytes come back unmodified and core re-judges
-every forwarded call as backstop. Dest holds the AllScopes family
-authorizer on the route
+The admin sign-in policy PATCH is the W7-writers terminated-writer
+lane (Refs `eshu-hq/eshu-api#114`, core writer record
+`eshu-hq/eshu#10531`): `api/signin.go` registers the explicit route
+behind the family credential-class gate (`signInPolicyWriterGate`)
+ahead of the generic proxy and forwards to the same core route with
+method, path, query, headers (including the original `Authorization`
+header), and body relayed; core bytes come back unmodified with
+exactly one forward attempt and no retry, and core re-judges every
+forwarded call as backstop. A valid shared key terminates natively
+with the AllScopes family authorizer
 (`TestSignInPolicyNative_AuthorizerRejectsNonAllScopes` pins the
-helper); see Scope honesty below for what is and is not live. Label the
-family native-dispatch (not native auth termination) until the dest
-scoped resolver lands.
+helper, `TestSignInPolicyWriter_TerminatesAheadOfRelay` pins the
+native-lane filing); a non-key Bearer or session-cookie-shaped
+Cookie relays explicitly on the relay lane so core judges the class
+dest cannot resolve (`TestSignInPolicyWriterGate_ForeignCredentialRelaysExplicit`);
+a credential-less or junk-cookie caller keeps the standing dest 401
+with zero core contact. Every dest-local answer files its outcome on
+the native lane (`local_503` on unconfigured origin, `denied` on the
+unreachable deny branch), and the family authorizer judgment counts
+on both branches. Dest holds the AllScopes family authorizer — the
+single trust root shared with the W7-read GET (see
+`api/signinpolicy_admin_terminate.go`) — and synthesizes nothing:
+no 401/403/404/500 for relayed classes, no Retry-After on the
+permanent local 503. Both spellings plus the v1 alias ride the
+family gate (`TestSignInPolicyNative_BothSpellingsWriteThrough`,
+`TestSignInPolicyNative_V1AliasOrderingUnchanged`).
 
 Scope honesty: dest holds the AllScopes authorizer per the dispatch
 ruling, but with no scoped/session resolver the deny branch is
@@ -70,7 +85,12 @@ unreachable on the live route until one lands — the live 403s on this
 route are core's, which re-judges all-scope admin, admin tenant scope,
 and the `identity_admin.sign_in_policy_update` permission catalog as
 backstop. Core is the sole writer. The deny-shape test pins the
-contract for the resolver-landing day, not a live path.
+contract for the resolver-landing day, not a live path. Exactly-once
+needs no dest machinery here: the PATCH is the core's atomic
+row-locked upsert, so a retried PATCH lands exactly as it would
+against the core directly — dest forwards twice and relays both
+core answers (`TestSignInPolicyNative_WriteThroughRelaysCoreBytes`,
+`TestSignInPolicyNative_ParallelProbe`).
 
 Audit parity: governance audit stays core-side on forwarded requests.
 Unlike suppression, the in-tree sign-in mutation handler at the

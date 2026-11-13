@@ -23,14 +23,18 @@ func (s *Server) registerNativeSingles(mux *http.ServeMux) {
 	// exact path and decides; dest keeps both spellings on the native
 	// route so the family is never split across dispatch paths).
 	mux.Handle(suppressionRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
-	// Native dispatch, SignInPolicyMutations (tier C-a): the admin
-	// sign-in policy PATCH has its explicit per-family route with the
-	// AllScopes authorizer, ahead of the generic proxy. The trailing
-	// slash stays on the native route for the same never-split reason;
-	// the family's GETs and every other family still cross the
-	// byte-relay below.
-	mux.Handle(signInPolicyRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
-	mux.Handle(signInPolicyRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
+	// Native dispatch, SignInPolicyMutations (W7 writers): the admin
+	// sign-in policy PATCH terminates natively behind the family
+	// credential-class gate (see api/signin.go): shared-key callers
+	// ride the native write-through with the AllScopes authorizer,
+	// unresolvable credential classes relay explicitly on the relay
+	// lane, and credential-less callers keep the standing 401. The
+	// trailing slash stays on the native route for the same
+	// never-split reason; the family's GETs and every other family
+	// still cross the byte-relay below.
+	gated := s.instrumented(viaNative, s.signInPolicyWriterGate(http.HandlerFunc(s.signInPolicyWriteThrough)))
+	mux.Handle(signInPolicyRoute, gated)
+	mux.Handle(signInPolicyRoute+"/", gated)
 	// Native dispatch, AdminRetirement (tier C-a): the operator
 	// retirement trigger has its explicit per-family route with the
 	// AllScopes authorizer, ahead of the generic proxy. The trailing
