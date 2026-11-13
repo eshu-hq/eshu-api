@@ -150,7 +150,7 @@ func TestIaCNative_CanceledContextFailsClosedWithoutRetry(t *testing.T) {
 }
 
 // TestIaCNative_ParallelProbe pins that concurrent callers each get one
-// write-through: 16 parallel POSTs across the four legs answer 200 with
+// write-through: 16 parallel POSTs across the five legs answer 200 with
 // the relayed core bytes and land 16 upstream hits (one forward per
 // caller, no dest coalescing and no dest retry).
 func TestIaCNative_ParallelProbe(t *testing.T) {

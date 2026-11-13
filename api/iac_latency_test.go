@@ -38,8 +38,8 @@ func iacBenchServer(b *testing.B, body string) (*httptest.Server, *Server) {
 	return upstream, NewServer(upstream.URL, skeletonTestKey)
 }
 
-// BenchmarkIaCNativeRead measures the four cleared legs through the
-// full production chain: one shared-key POST per leg.
+// BenchmarkIaCNativeRead measures the five cleared POST legs through
+// the full production chain: one shared-key POST per leg.
 func BenchmarkIaCNativeRead(b *testing.B) {
 	_, srv := iacBenchServer(b, `{"data":{"total":0},"error":null}`)
 	handler := srv.Handler(DefaultV0Sunset)

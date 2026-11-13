@@ -149,8 +149,9 @@ on its supplemental `IaCDeadContentAdmission v0` dual pin (this
 section, same write-through handler).
 Termination proof: byte-parity (`api/iac_dispatch_test.go`,
 `api/iac_resources_test.go`, and `api/iac_dead_test.go`, each
-including the native-vs-native equivalence that doubles as the
-revert-to-relay proof),
+including the native-vs-native equivalence, plus a generic-relay
+comparison leg for the dead route (`TestIaCDeadNative_MatchesGenericRelay`);
+together they double as the revert-to-relay proof),
 resilience (`api/iac_resilience_test.go` plus the resources and dead
 cancel/parallel probes in `api/iac_resources_test.go` and
 `api/iac_dead_test.go`), and the

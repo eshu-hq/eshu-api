@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -437,59 +436,5 @@ func TestIaCDead_CanceledContextFailsClosedWithoutRetry(t *testing.T) {
 				t.Errorf("body = %q, want backend_unavailable", body)
 			}
 		})
-	}
-}
-
-// TestIaCDead_ParallelProbe pins that concurrent callers each get one
-// write-through: 16 parallel POSTs on the dead leg (both spellings)
-// answer 200 with the relayed core bytes and land 16 upstream hits (one
-// forward per caller, no dest coalescing and no dest retry).
-func TestIaCDead_ParallelProbe(t *testing.T) {
-	t.Parallel()
-
-	var hits atomic.Int32
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hits.Add(1)
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = io.WriteString(w, `{"data":{"total":0},"error":null}`)
-	}))
-	defer upstream.Close()
-
-	srv := NewServer(upstream.URL, skeletonTestKey)
-	handler := srv.Handler(DefaultV0Sunset)
-
-	paths := []string{
-		iacRoutePath(iacDeadRoute),
-		iacRoutePath(iacDeadRoute) + "/",
-	}
-	const callers = 16
-	var wg sync.WaitGroup
-	failures := make([]string, callers)
-	for i := range callers {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			req := authedRequest(http.MethodPost, paths[i%len(paths)])
-			req.Body = io.NopCloser(strings.NewReader(iacDeadPayload))
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
-			if rec.Code != http.StatusOK {
-				failures[i] = paths[i%len(paths)]
-			}
-		}(i)
-	}
-	wg.Wait()
-
-	for i, path := range failures {
-		if path != "" {
-			t.Errorf("caller %d %q: non-200 answer", i, path)
-		}
-	}
-	if got := hits.Load(); got != callers {
-		t.Errorf("upstream hits = %d, want %d (one forward per caller)", got, callers)
 	}
 }
