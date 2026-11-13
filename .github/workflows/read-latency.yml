@@ -31,6 +31,7 @@
 # scripts/measure-code-flow-latency.sh,
 # scripts/measure-code-search-latency.sh,
 # scripts/measure-code-graph-latency.sh,
+# scripts/measure-code-divergence-latency.sh,
 # scripts/measure-drift-latency.sh,
 # scripts/measure-iac-latency.sh,
 # scripts/measure-dead-code-latency.sh).
@@ -73,6 +74,7 @@ on:
       - 'scripts/measure-code-flow-latency.sh'
       - 'scripts/measure-code-search-latency.sh'
       - 'scripts/measure-code-graph-latency.sh'
+      - 'scripts/measure-code-divergence-latency.sh'
       - 'scripts/measure-drift-latency.sh'
       - 'scripts/measure-iac-latency.sh'
       - 'scripts/measure-dead-code-latency.sh'
@@ -265,6 +267,15 @@ jobs:
             echo "## Satellite Wave-7 G-a graph latency (stub-core, median ns/op)"
             echo '```'
             cat code-graph-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Satellite divergence termination latency
+        run: |
+          bash scripts/measure-code-divergence-latency.sh 2>&1 | tee code-divergence-latency.log
+          {
+            echo "## Satellite divergence latency (stub-core, median ns/op)"
+            echo '```'
+            cat code-divergence-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Satellite Wave-4 Drift termination latency

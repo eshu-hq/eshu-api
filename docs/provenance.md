@@ -34,7 +34,7 @@ preparation only; nothing here carries cutover authority.
 | Source commit (retire-unclaimed writer pin) | `bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae` (merge of `eshu-hq/eshu#10583`; RetireUnclaimedAdmission v0, unwired seam: version constant + re-declared 1-method port + frozen method-set test; the OpenAPI fragment at the same commit is byte-identical to the `eshu-hq/eshu#10553` mint; arbiter eshu-api#103 ruling APPROVED AS-IS, satellite record-then-terminate) |
 | Source commit (Wave-7 G-a graph pin) | `0fd6db6deb38beaa9327ba015af5bd279729f8ae` (merge of `eshu-hq/eshu#10645`; CodeGraphReadAdmission v0, unwired seam: version constant + re-declared 3-method port + frozen method-set test with seeded rejection; arbiter Wave-7 SPLIT ruling recorded on `eshu-hq/eshu-api#121`, satellite record-then-terminate for the G-a 4 only) |
 | Source commit (dead-code pin) | `589d55ec024e0bdd7699176c04711b056b8af871` (merge of `eshu-hq/eshu#10648`; CodeDeadCodeReadAdmission v0, unwired seam: version constant + re-declared 14-method port + frozen method-set test with seal; arbiter SUPPLEMENTAL-PIN-OWED ruling recorded on `eshu-hq/eshu-api#124`, satellite record-then-terminate for the dead-code 3 only) |
-| Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
+| Source commit (divergence pin) | `d584e3897ed029611a0c2224edae282a591e0b34` (merge of `eshu-hq/eshu#10650`; CodeDivergenceReadAdmission v0, unwired seam: version constant + re-declared 6-method port + frozen method-set test with seeded rejection; arbiter supplemental ruling recorded on `eshu-hq/eshu-api#125`, satellite record-then-terminate for the divergence 3 only) || Destination base | `a49341a8eb73ee620e97df4b88b5ddf93efc62c5` (README-only `main`) |
 | `CoreReadContractsVersion` | `v0` |
 | `SuppressionAdmissionContractVersion` | `v0` |
 | `TerminalFailureAdmissionContractVersion` | `v0` |
@@ -78,7 +78,7 @@ preparation only; nothing here carries cutover authority.
 | `RetireUnclaimedAdmissionContractVersion` | `v0` |
 | `CodeGraphReadAdmissionContractVersion` | `v0` |
 | `CodeDeadCodeReadAdmissionContractVersion` | `v0` |
-
+| `CodeDivergenceReadAdmissionContractVersion` | `v0` |
 ## Mapping
 
 `contracts/upstream/` files are byte-exact copies of the pinned sources;
@@ -263,7 +263,9 @@ copied: they keep evolving in the source until the extraction PR.
 | `go/internal/query/code_dead_code_read_admission.go` (version, re-declared 14-method port) at `589d55e` | `contracts/upstream/code_dead_code_read_admission.go` | `7d6eeabbfa32f1b2d15adc30fd6baaf0fc1444dceb593dd1d6cf759fd96c827f` (whole file) | verbatim |
 | `go/internal/query/code_dead_code_read_admission_contract_test.go` (frozen method-set test with seal) at `589d55e` | `contracts/upstream/code_dead_code_read_admission_contract_test.go` | `60c46df6c641a9d92734fce91ce28ca58ca5d77af088f851d685285976f07f46` (whole file) | verbatim |
 | `go/internal/query/code_dead_code_read_admission.go` (version, in-scope routes, 14-method interface, witness assertion, contract comment) at `589d55e` | `contracts/upstream/code-dead-code-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt |
-| `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
+| `go/internal/query/codequery/code_divergence_read_admission.go` (version, re-declared 6-method port) at `d584e38` | `contracts/upstream/code_divergence_read_admission.go` | `38ea53daa80291b1adc5a63c01e98a87310c7ebfb6a22679cb3323593086fd50` (whole file) | verbatim |
+| `go/internal/query/codequery/code_divergence_read_admission_contract_test.go` (frozen method-set test with seeded rejection) at `d584e38` | `contracts/upstream/code_divergence_read_admission_contract_test.go` | `869d84a35deb8f02b508dab7f5370294ca263a11cf4b44201862e3f991c4c759` (whole file) | verbatim |
+| `go/internal/query/codequery/code_divergence_read_admission.go` (version, in-scope routes, 6-method interface, mirror assertion, contract comment) at `d584e38` | `contracts/upstream/code-divergence-read-wire-shapes.txt` | excerpt (line-presence at pin) | verbatim excerpt || `go/cmd/api/CUTOVER_OWNERSHIP.md` | referenced only | `423109a914e4b9b457a7bdb0c626ecee273b7be0c18743c4396907021a24f66f` | census basis |
 | `docs/internal/evidence/8872-eshu-api-destination-plan.md` | referenced only | `9dd775572bec0f86f390c0274dd03479fb1b79665c08117470ca3562ddf142b5` | content plan |
 
 The upstream copies carry their original `SPDX-MIT` and copyright
