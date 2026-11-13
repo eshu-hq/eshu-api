@@ -1,0 +1,30 @@
+// RetireUnclaimedAdmissionContractVersion versions the #9669 writer
+// admission-contract shape for the never-claimed workflow retirement the
+// admin workflow-retire-unclaimed endpoint admits through
+// Store.RetireUnclaimedWorkflowItems (POST
+// /api/v0/admin/workflow-retire-unclaimed). Canonical mutations persist
+// through explicit core-owned admission contracts: eshu-api keeps the HTTP
+// shape and calls this versioned port, which the core-owned Postgres store
+// satisfies. A breaking change to the mutation shape fails the frozen
+// method-set test until that list is deliberately updated; bump this
+// version alongside (manually — the bump is convention, the frozen list is
+// the enforcement) so dest consumers can pin the shape.
+const RetireUnclaimedAdmissionContractVersion = "v0"
+
+type RetireUnclaimedAdmission interface {
+	RetireUnclaimedWorkflowItems(ctx context.Context, kind, instanceID, note string) ([]RetiredUnclaimedItem, error)
+}
+var _ RetireUnclaimedAdmission = Store(nil)
+
+var ErrRetireUnclaimedUnknownInstance = errors.New("retire unclaimed workflow work items: unknown collector instance")
+var ErrRetireUnclaimedInstanceActive = errors.New("retire unclaimed workflow work items: collector instance still configured")
+
+		CollectorKind       string `json:"collector_kind"`
+		CollectorInstanceID string `json:"collector_instance_id"`
+		OperatorNote        string `json:"operator_note"`
+		querycontract.WriteError(w, http.StatusBadRequest, "collector_kind and collector_instance_id are required and must not be empty")
+
+			"work_item_id": item.WorkItemID,
+			"scope_id":     item.ScopeID,
+
+	mux.HandleFunc("POST /api/v0/admin/workflow-retire-unclaimed", h.retireUnclaimedWorkflowItems)

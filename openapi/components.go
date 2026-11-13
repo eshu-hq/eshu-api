@@ -16,7 +16,11 @@ package openapi
 // and 7c60583996d9a3ccc46288f40a38f614a4f28ea8 (recovery lane).
 // The terminal-failure lane adds no entries: its fragment references
 // only ErrorResponse plus the five responses above (gated in
-// check-parity.sh):
+// check-parity.sh). The retire-unclaimed lane likewise adds no
+// entries: its fragment references only ErrorResponse plus
+// BadRequest, NotFound, Conflict, InternalError, and
+// ServiceUnavailable (the LocalRefsResolve test fails closed on a
+// dangling $ref):
 //
 //   - AdminSignInPolicy, AdminSignInPolicyUpdateRequest: schemas from
 //     go/internal/query/openapi/components_sign_in_policy.go.

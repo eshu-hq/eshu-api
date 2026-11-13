@@ -63,8 +63,9 @@ after the move.
   `contracts/provider-config-admission.md`,
   `contracts/oidc-login-admission.md`,
   `contracts/github-login-admission.md`,
-  `contracts/saml-login-admission.md`, and
-  `contracts/recovery-admission.md`.
+  `contracts/saml-login-admission.md`,
+  `contracts/recovery-admission.md`, and
+  `contracts/retire-unclaimed-admission.md`.
 - OpenAPI contract fragments and the `api/` server, router, auth, v1
   alias, and deprecation middleware: move in the follow-up extraction
   PR, reviewed row-for-row against the ownership map. This seed carries
@@ -134,7 +135,13 @@ after the move.
   invitations key) plus the API-token and TOTP entries (two
   whole-file ports), with the shared components block extended by the
   nine LocalIdentity schemas and the BrowserSessionAuth and
-  BrowserSessionResponse schemas the lane entries reference —
+  BrowserSessionResponse schemas the lane entries reference,
+  and the retire-unclaimed writer lane: the never-claimed workflow
+  retirement POST (`openapi/paths/status/workflow_retire_unclaimed.go`,
+  whole-file byte-identical port of the pinned core file at
+  `bc150cc0c6`, no new schemas — the fragment references only the
+  existing ErrorResponse plus BadRequest/NotFound/Conflict/
+  InternalError/ServiceUnavailable) —
   per-family fragment moves now land in their
   family PRs per satellite-design Decision 5(c) on eshu-hq/eshu#9669.
 
@@ -497,7 +504,8 @@ globals.
 `SessionResolverAdmissionContractVersion v0`,
 `BrowserSessionAdmissionContractVersion v0`,
 `LocalIdentityAdmissionContractVersion v0`,
-`APITokenAdmissionContractVersion v0`). A breaking change to
+`APITokenAdmissionContractVersion v0`,
+`RetireUnclaimedAdmissionContractVersion v0`). A breaking change to
 any named port fails the frozen-set test next to that port in the source
 (`TestCoreReadContractsVersioned`,
 `TestSuppressionAdmissionContractIsVersioned`,

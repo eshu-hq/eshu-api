@@ -224,3 +224,11 @@ const TerraformDriftReadAdmissionContractVersion = "v0"
 // lives in contracts/iac-read-admission.md. Record-only: no handler,
 // route, or caller depends on it yet.
 const IaCReadAdmissionContractVersion = "v0"
+
+// RetireUnclaimedAdmissionContractVersion names the versioned admission
+// port for the never-claimed workflow retirement mutation. It must move
+// in lockstep with the in-tree RetireUnclaimedAdmissionContractVersion;
+// the vendored pin lives in contracts/retire-unclaimed-admission.md.
+// Route dispatch over this port lands with core dispatch, not in the
+// skeleton.
+const RetireUnclaimedAdmissionContractVersion = "v0"

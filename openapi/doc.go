@@ -10,7 +10,8 @@
 // satellite-design Decision 5(c), then the D7 admin-four tier-C clone
 // lane (AdminD7), then the D2 Leaf B Native-now wave:
 // capabilities, CLI support, ask, service intelligence, auth providers,
-// provider-config reads, and the served-spec self entry); every
+// provider-config reads, and the served-spec self entry, then the
+// retire-unclaimed writer lane (WorkflowRetireUnclaimed)); every
 // other family is still
 // relayed from core until its lane ports its fragment. The
 // concatenation order is the compatibility surface the destination

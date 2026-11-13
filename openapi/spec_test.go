@@ -321,6 +321,7 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 		"/api/v0/admin/reopen",
 		"/api/v0/admin/refinalize",
 		"/api/v0/admin/recover-generations",
+		"/api/v0/admin/workflow-retire-unclaimed",
 		"/api/v0/supply-chain/impact/suppressions",
 	} {
 		want, ok := fragment[path]
@@ -348,7 +349,8 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // SkippedScopesReport, DeltaActiveScopesReport, and
 // ReindexRequestsWrittenReport for the admin-recovery fragment;
 // AdminSignInPolicy schemas for the sign-in-policy family; the shared
-// ServiceUnavailable response for the suppression fragment).
+// ServiceUnavailable response for the suppression fragment; ErrorResponse
+// plus BadRequest/NotFound/Conflict/InternalError/ServiceUnavailable (retire-unclaimed).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
 
@@ -431,8 +433,8 @@ func TestServeSpec_WritesDocument(t *testing.T) {
 // exactly the families whose fragments have landed (sign-in-policy first,
 // retirement second, terminal-failure third, admin-identity mutations
 // fourth, admin-identity reads fifth, provider-config sixth,
-// admin-recovery seventh, suppression eighth). It advances as family
-// lanes port their fragments.
+// admin-recovery seventh, suppression eighth, retire-unclaimed ninth).
+// It advances as family lanes port their fragments.
 func TestSpec_VersionPinned(t *testing.T) {
 	t.Parallel()
 

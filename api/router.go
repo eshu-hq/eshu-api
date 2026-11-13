@@ -70,10 +70,9 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 	})
 }
 
-// health reports the served contract versions and the intended core
-// origin. It takes no credential; it discloses only the configured core
-// origin, never the API key. Every admission port has its own explicit
-// key; admission_contracts stays as the legacy suppression alias.
+// health reports the served contract versions and the intended core origin.
+// It takes no credential and never discloses the API key. Every admission
+// port has its own explicit key; admission_contracts stays as the legacy suppression alias.
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":                                            "ok",
@@ -100,7 +99,8 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 		"delta_union_completeness_read_admission_contracts": DeltaUnionCompletenessReadAdmissionContractVersion,
 		"reindex_progress_read_admission_contracts":         ReindexProgressReadAdmissionContractVersion,
 		"shared_projection_tuning_report_contracts":         SharedProjectionTuningReportContractVersion,
-		"core": s.coreBaseURL,
+		"retire_unclaimed_admission_contracts":              RetireUnclaimedAdmissionContractVersion,
+		"core":                                              s.coreBaseURL,
 	})
 }
 
@@ -114,14 +114,11 @@ func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-// routes registers the dispatch surface. Health, readiness, and the
-// metrics exposition are public; the /api/* subtree is auth-gated and
-// dispatched to the core origin byte-for-byte (see dispatch.go), with
-// exactly one exception: the four setup wizard routes (terminated
-// state GET plus three tier-C POSTs), which are public pre-auth at
-// the core and register outside RequireAuth below. Every dispatch
-// handler runs inside the telemetry middleware (outside the auth gate,
-// so gate denials count per family too); probes never do.
+// routes registers the dispatch surface. Health, readiness, and metrics
+// are public; /api/* is auth-gated and dispatched to the core origin
+// byte-for-byte (see dispatch.go), except the pre-auth carve-outs below.
+// Every dispatch handler runs inside the telemetry middleware (outside
+// the auth gate, so gate denials count per family too); probes never do.
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
@@ -159,6 +156,9 @@ func (s *Server) routes() *http.ServeMux {
 	// family still cross the byte-relay below.
 	mux.Handle(terminalFailureRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
 	mux.Handle(terminalFailureRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
+	// AdminRetireUnclaimed writer: explicit route + slash twin ahead of the relay, AllScopes-gated (see api/retireunclaimed.go).
+	mux.Handle(retireUnclaimedRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
+	mux.Handle(retireUnclaimedRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
 	// Native dispatch, AdminIdentityMutations (tier C-b): the five
 	// tenant-scoped admin identity mutation routes have their explicit
 	// per-family routes with the AllScopes authorizer, ahead of the

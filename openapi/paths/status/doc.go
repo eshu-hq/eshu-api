@@ -19,7 +19,10 @@
 // of the same pinned core file); and the admin-four family: the
 // backfill, dead-letter, reindex, and skip POSTs whose path keys are
 // unique to the D7 tier-C clone lane (AdminD7, a line-verbatim subset
-// of the same pinned core file at the D7 merge).
+// of the same pinned core file at the D7 merge); and the
+// retire-unclaimed family: POST
+// /api/v0/admin/workflow-retire-unclaimed (WorkflowRetireUnclaimed, a
+// whole-file byte-identical port).
 //
 // Each file holds exactly one exported string constant. This package
 // imports nothing; openapi/spec.go imports this package, never the other
@@ -28,5 +31,6 @@
 // scripts/check-parity.sh); keep fragments in lockstep with their
 // handlers and contracts/retirement-admission.md,
 // contracts/terminal-failure-admission.md,
-// contracts/recovery-admission.md, and contracts/d7-admin-four.md.
+// contracts/recovery-admission.md, contracts/d7-admin-four.md, and
+// contracts/retire-unclaimed-admission.md.
 package status

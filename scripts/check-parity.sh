@@ -37,6 +37,7 @@ SRC_SHA_WAVE2_CONTENT="c987f7357be6e779676a4d922f456e788b068a3f"
 SRC_SHA_W6A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W8A="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
 SRC_SHA_W4="e504e328a7b665d7a5b4358a2f8b2ce5201b1d72"
+SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -333,6 +334,12 @@ check_file_at "$SRC_SHA_RECOVERY" "go/internal/query/admin/recovery_admission_co
   "contracts/upstream/recovery_admission_contract_test.go" \
   "50dd78f3dc9bde8fdc67d7f818e0b2fdfdeb22fa7ce62d8650c361345826af24"
 
+# Retire-unclaimed writer pin (eshu-hq/eshu#10583, unwired seam): the
+# frozen method-set test, byte-identical to the merge commit.
+check_file_at "$SRC_SHA_RETIREUNCLAIMED" "go/internal/query/admin/retire_unclaimed_admission_contract_test.go" \
+  "contracts/upstream/retire_unclaimed_admission_contract_test.go" \
+  "22b861314bdecf674047c8e642e59e58f64d6517a653f6e9288ae088066a86d2"
+
 # D1 read-admission pins (eshu-hq/eshu#10259, unwired seams): the four
 # frozen method-set tests, byte-identical to the pinned core commit.
 check_file_at "$SRC_SHA_D1" "go/internal/query/admin/read_admission_contract_test.go" \
@@ -480,6 +487,14 @@ check_fragment_subset_named_at "$SRC_SHA_D7" "go/internal/query/openapi/paths/st
   "openapi/paths/status/admin_d7.go" \
   "26c7669744ebb6b29a18bb9d95c7186e24785421afb8d733d9d9a3a246a78eb9" \
   "AdminD7"
+
+# Native spec (Decision 5(c)): the retire-unclaimed OpenAPI fragment is
+# a byte-identical port of the pinned core file. The fragment predates
+# the RetireUnclaimedAdmission v0 pin (minted via eshu-hq/eshu#10553)
+# and is byte-identical at the pin merge, so the gate pins it there.
+check_file_at "$SRC_SHA_RETIREUNCLAIMED" "go/internal/query/openapi/paths/status/workflow_retire_unclaimed.go" \
+  "openapi/paths/status/workflow_retire_unclaimed.go" \
+  "b58ed9e3ee80e774b022af5d42cd649fb9427697ed202bb1ea2a8288bb940f30"
 
 # D8 session-resolver pins (satellite D8 wave, arbiter
 # APPROVED-WITH-CONDITIONS): the four v0 admission pins
@@ -1389,6 +1404,14 @@ check_excerpt_at "$SRC_SHA_RECOVERY" "contracts/upstream/recovery-wire-shapes.tx
   "go/internal/query/admin/recovery_admission.go" \
   "go/internal/query/admin/handler.go"
 
+# Retire-unclaimed writer pin (eshu-hq/eshu#10583): the admission shape
+# excerpt, line-verbatim from the pin, handler, and mount sources at
+# the merge commit.
+check_excerpt_at "$SRC_SHA_RETIREUNCLAIMED" "contracts/upstream/retire-unclaimed-wire-shapes.txt" \
+  "go/internal/query/admin/retire_unclaimed_admission.go" \
+  "go/internal/query/admin/retire_unclaimed.go" \
+  "go/internal/query/admin/handler.go"
+
 check_excerpt_at "$SRC_SHA_D1" "contracts/upstream/admin-read-wire-shapes.txt" \
   "go/internal/query/admin/read_admission.go" \
   "go/internal/query/admin/handler.go"
@@ -1544,6 +1567,7 @@ grep -qF 'OIDCLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upst
 grep -qF 'GitHubLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/github-login-wire-shapes.txt"
 grep -qF 'SAMLLoginAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/saml-login-wire-shapes.txt"
 grep -qF 'RecoveryAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/recovery-wire-shapes.txt"
+grep -qF 'RetireUnclaimedAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/retire-unclaimed-wire-shapes.txt"
 grep -qF 'AdminReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-read-wire-shapes.txt"
 grep -qF 'AdminIdentityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
 grep -qF 'GovernanceAuditReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/admin-identity-read-wire-shapes.txt"
