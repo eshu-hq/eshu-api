@@ -36,20 +36,22 @@ var setupMutationRoutes = []string{
 	setupMFARoute,
 }
 
-// setupWriteThrough is the tier-C native dispatch for the three
-// setup wizard credential POSTs: each request crosses an explicit
-// public per-family route instead of the generic byte-relay, with no
-// dest-side gate. The shape is HTTP write-through — method, path,
-// query, headers, and body forward to the same core route, and core
-// bytes relay back unmodified — because every trust decision stays
-// core-side: core's AuthMiddleware bypass (publicHTTPPaths) plus the
-// per-request SetupStore re-checks (VerifyBootstrapCredential proof
-// and the permanent SetupNeeded seal that answers 410 once any
-// identity exists) still run on every forwarded request. Terminating
-// these POSTs dest-side would require parsing credential bodies,
-// which is forbidden on this lane: they stay write-through, and the
-// setup-state GET is the only route that terminates (via the
-// SetupNeeded port, never touching a credential).
+// setupWriteThrough is the W7-writers terminated writer for the
+// three setup wizard credential POSTs: each request crosses an
+// explicit public per-family route instead of the generic
+// byte-relay, with no dest-side gate. The shape is HTTP
+// write-through — method, path, query, headers, and body forward to
+// the same core route, and core bytes relay back unmodified with
+// exactly one forward attempt and no retry — because every trust
+// decision stays core-side: core's AuthMiddleware bypass
+// (publicHTTPPaths) plus the per-request SetupStore re-checks
+// (VerifyBootstrapCredential proof and the permanent SetupNeeded seal
+// that answers 410 once any identity exists) still run on every
+// forwarded request. Re-implementing these POSTs dest-side would
+// require parsing credential bodies, which is forbidden on this lane:
+// they forward, and the setup-state GET is the only route that
+// terminates via a port (the SetupNeeded port, never touching a
+// credential).
 //
 // Dest adds no validation and keeps no setup state: no SetupNeeded
 // gate, cache, or synthesized 410. The credential bodies
@@ -69,6 +71,7 @@ var setupMutationRoutes = []string{
 // contract; this lane re-implements nothing.
 func (s *Server) setupWriteThrough(w http.ResponseWriter, r *http.Request) {
 	if s.core == nil {
+		s.dispatchOutcome(r, viaNative, outcomeLocal503, 0, false)
 		writeError(w, r, http.StatusServiceUnavailable, backendUnavailableCode,
 			"eshu-api: core origin is not configured; no core routes are served")
 		return

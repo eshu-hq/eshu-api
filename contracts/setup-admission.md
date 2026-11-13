@@ -55,7 +55,7 @@ test until the list is deliberately updated; bump
 convention, the frozen list is the enforcement), and this repository
 records the new pin before consuming it.
 
-## Native dispatch (D10: terminated GET plus tier-C POSTs)
+## Native dispatch (D10 terminated GET plus W7-writers trio)
 
 The four setup wizard routes are the arbiter-approved carve-out
 (C-c1 APPROVED on `eshu-hq/eshu#9669`, strict; graduated to
@@ -67,7 +67,7 @@ routes outside `RequireAuth`, ahead of the generic proxy —
   `SetupNeeded` port (see below),
 - `POST /api/v0/auth/setup/claim`,
 - `POST /api/v0/auth/setup/admin`,
-- `POST /api/v0/auth/setup/mfa` — stay tier-C HTTP write-through
+- `POST /api/v0/auth/setup/mfa` — terminate natively as writers
   (see `api/setup.go`),
 
 — each plus the trailing-slash twin on its route's handler, so the
@@ -147,13 +147,22 @@ fetch again), no dest-side gate, and no synthesized 410. Fail-closed
 is total: unconfigured store answers 503, never 410 — mirroring the
 core's own `ready()` 503 when its store is unavailable.
 
-### Tier-C POSTs (unchanged C-c1)
+### Terminated-writer trio (W7 writers)
 
-The three credential POSTs stay tier-C HTTP write-through, with
-termination forbidden: reaching the seal signal dest-side for a
-mutation would require parsing credential bodies, which this lane
-never does. Every C-c1 proof re-runs unchanged — the sealed core's
-three 410s relay byte-for-byte
+The three credential POSTs terminate natively as writers (Refs
+`eshu-hq/eshu-api#114`, core writer record `eshu-hq/eshu#10531`),
+with re-implementation forbidden: reaching the seal signal dest-side
+for a mutation would require parsing credential bodies, which this
+lane never does. The transport stays HTTP write-through — method,
+path, query, headers, and opaque body forward to the same core
+route, core bytes come back unmodified with exactly one forward
+attempt and no retry — while ownership and proof move to the
+family: the trio files its dispatch on the native lane ahead of the
+generic proxy (`TestSetupWriter_TerminatesAheadOfRelay`, the
+swap-mutant detector), and the dest-local answer (unconfigured
+origin) files `local_503` on the native lane
+(`TestSetupWriter_NilCore503Filed`). Every C-c1 proof re-runs
+unchanged — the sealed core's three 410s relay byte-for-byte
 (`TestSetupNative_SealedStateSuite`), credential bodies cross as
 opaque bytes never parsed, logged, or telemetered
 (`TestSetupNative_CredentialBodyNeverLogged`), dest never injects
@@ -165,16 +174,31 @@ forwarded POST is never retried
 `TestSetupNative_CanceledContextFailsClosedWithoutRetry`,
 `TestSetupNative_WriteThroughRelaysCoreBytes`), and a wrong
 bootstrap credential relays the core's single 401 with no added
-signal (`TestSetupNative_Indistinguishable401`).
+signal (`TestSetupNative_Indistinguishable401`) — and the
+native-vs-relay differential pins the full matrix byte-for-byte
+(200s, password-floor 400, indistinguishable 401, sealed 410 x3,
+MFA winner codes plus concurrent-loser 409, 500, permanent 503
+plus retryable `Retry-After` relay, unfollowed redirect) in both
+negotiated shapes (`TestSetupWriter_MatchesRelayByteForByte`).
+No pre-fetch invents upstream contact: no `SetupNeeded` or
+setup-state call precedes any POST, the upstream method and path are
+the writer route itself, and the claim/admin/mfa legs prove
+exactly one hit (`TestSetupNative_SealedCoreSingleHit`,
+`TestSetupWriter_TerminatesAheadOfRelay`).
 
-Scope honesty: label the POSTs native-dispatch (HTTP write-through,
-tier C) and the GET terminated-via-`SetupNeeded` — not removal-ready
-either way. Dest holds no setup gate and resolves no caller
-identity on the POSTs; the trust boundary there is the forwarded
-bootstrap-credential proof plus the core-side seal, exactly as on
-the monolith. This carve-out expires at the flip/removal review:
-Setup option-C transport plus carve-out retirement needs a later
-arbiter review before core Setup removal.
+Scope honesty: label the POSTs terminated-writers (HTTP
+write-through transport, W7 writers) and the GET
+terminated-via-`SetupNeeded` — not removal-ready either way. Dest
+holds no setup gate and resolves no caller identity on the POSTs;
+the trust boundary there is the forwarded bootstrap-credential proof
+plus the core-side seal, exactly as on the monolith. Exactly-once
+needs no dest machinery here: claim is replayable, admin is
+repeatable pre-seal, and only the MFA seal is exactly-once — the
+core's advisory-locked critical section decides the winner, dest
+forwards twice and relays both core answers at worst
+(`TestSetupNative_ParallelWriteThrough`). This carve-out expires at
+the flip/removal review: Setup option-C transport plus carve-out
+retirement needs a later arbiter review before core Setup removal.
 Proved, not faked: the MFA step's issued browser session is usable
 through dest end to end — the `__Host-eshu_session`/`eshu_session`
 cookie the core issues is the session-cookie shape the D8 gate
@@ -203,9 +227,12 @@ no-retry, and body-non-logging proofs above.
 Telemetry: the family stays `setup` on the existing `native` lane —
 extended, not renamed. The terminated GET files the closed outcome
 vocabulary (`core_ok` on a resolved seal, `local_503` on any closed
-failure) plus the port-fetch core latency; the POSTs keep their
-write-through rows. No authorizer judgment is filed on this family
-(the routes are public).
+failure) plus the port-fetch core latency; the writer trio files
+`local_503` on the dest-local answer (unconfigured origin) and the
+forwarded legs file through the shared forward path, on the native
+lane in both cases (`TestSetupWriter_NilCore503Filed`,
+`TestSetupWriter_TerminatesAheadOfRelay`). No authorizer judgment
+is filed on this family (the routes are public).
 (`TestSetupTerminated_TelemetryExtended`).
 
 Latency: `docs/setup-latency.md` records the before/after on all
