@@ -45,14 +45,17 @@ or DB handle — only prose mentions of core-side store outages).
   `contracts/signin-policy-admin-read-wave.md`) — same forward
   semantics the wave-gated loop served, now under the family
   authorizer with its own parity proof.
-- `PATCH /api/v0/auth/admin/sign-in-policy` stays on its RequireAuth
-  tier-C write-through.
+- `PATCH /api/v0/auth/admin/sign-in-policy` terminates behind the
+  family writer gate (`signInPolicyWriterGate`: shared-key terminates
+  natively, foreign classes relay explicitly).
 - Trailing-slash twins, deeper subtrees, and non-GET spellings of the
   two public paths stay on the generic relay behind RequireAuth:
   keyless callers keep the standing 401 with zero core contact;
   keyed callers get core's answer for the spelled path.
-- Docs/redoc shells, the D3/D4/D6 terminated waves, the D7/D8/D9
-  dispatch lanes, and the setup carve-out are untouched.
+- Docs/redoc shells, the D3/D4/D6 terminated waves, and the D7/D8/D9
+  dispatch lanes are untouched. The setup routes stay outside this
+  lane; their W7-writers termination lives in
+  `contracts/setup-admission.md`.
 
 ## Group gates (evidence)
 

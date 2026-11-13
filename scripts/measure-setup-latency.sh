@@ -3,7 +3,8 @@
 #
 # Owns the latency comparison the census assigns the satellite: the
 # terminated setup-state GET (via the SetupNeeded port) and the
-# tier-C setup claim POST (write-through) must not be slower than the
+# terminated-writer setup claim POST (write-through transport) must not
+# be slower than the
 # relay they replace. Hermetic by design: every leg runs against the
 # same in-process stub core, so the numbers isolate dest-side cost
 # (explicit route match plus, on the state leg, the single port fetch
@@ -26,7 +27,8 @@
 # terminated in its gap-04 lane); the
 # read-relay leg is GET /api/v0/dependencies, which stays on the
 # generic relay. The setup paths left the relay on the D10 wave (the
-# state GET terminates; the claim POST rides the tier-C clone); the
+# state GET terminates; the claim POST rides the terminated-writer
+# transport); the
 # legs compare different routes by necessity, and every leg does
 # exactly one server-side fetch, so the 1.50 bound stays a real
 # pathology check either way.

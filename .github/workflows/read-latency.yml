@@ -11,8 +11,9 @@
 # the D10 terminated setup-state GET plus tier-C setup claim POST,
 # the Wave-1 terminated Freshness reads, the Wave-2 terminated
 # Content point reads, the W4 terminated Content search reads, the
-# W7-read terminated admin sign-in-policy GET, and the W3 IaC-6
-# terminated legs
+# W7-read terminated admin sign-in-policy GET, the W7-writers
+# terminated admin sign-in-policy PATCH, and the W3 IaC-6 terminated
+# legs
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
@@ -26,6 +27,7 @@
 # scripts/measure-content-latency.sh,
 # scripts/measure-content-search-latency.sh,
 # scripts/measure-signinpolicy-admin-read-latency.sh,
+# scripts/measure-signinpolicy-admin-write-latency.sh,
 # scripts/measure-code-flow-latency.sh,
 # scripts/measure-iac-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
@@ -63,6 +65,7 @@ on:
       - 'scripts/measure-content-latency.sh'
       - 'scripts/measure-content-search-latency.sh'
       - 'scripts/measure-signinpolicy-admin-read-latency.sh'
+      - 'scripts/measure-signinpolicy-admin-write-latency.sh'
       - 'scripts/measure-code-flow-latency.sh'
       - 'scripts/measure-iac-latency.sh'
       - '.github/workflows/read-latency.yml'
@@ -218,6 +221,15 @@ jobs:
             echo "## W7-read admin sign-in-policy latency (stub-core, median ns/op)"
             echo '```'
             cat signinpolicy-admin-read-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: W7-writers admin sign-in-policy PATCH latency
+        run: |
+          bash scripts/measure-signinpolicy-admin-write-latency.sh 2>&1 | tee signinpolicy-admin-write-latency.log
+          {
+            echo "## W7-writers admin sign-in-policy PATCH latency (stub-core, median ns/op)"
+            echo '```'
+            cat signinpolicy-admin-write-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: W6a Code-flow termination latency

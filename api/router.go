@@ -154,14 +154,14 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
 		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.adminIdentityWriteThrough))))
 	}
-	// Native dispatch, Setup (D10: terminated GET plus tier-C POSTs):
-	// the four pre-auth first-run wizard routes are the strict
+	// Native dispatch, Setup (D10 GET plus W7-writers trio): the four
+	// pre-auth first-run wizard routes are the strict
 	// arbiter-approved carve-out (C-c1 APPROVED on eshu-hq/eshu#9669,
 	// graduated to D8-grade public-route handling on the D10 wave):
 	// registered explicitly OUTSIDE RequireAuth, ahead of the generic
 	// proxy. The setup-state GET terminates dest-side via the
 	// SetupNeeded port (see setup_terminate.go); the three credential
-	// POSTs stay tier-C HTTP write-through on the same native-public
+	// POSTs terminate natively as writers on the same native-public
 	// handler (see setup.go). Each trailing-slash spelling stays on
 	// its route's handler for the same never-split reason. No other
 	// /api/* route leaves RequireAuth in this lane: the carve-out is
@@ -424,7 +424,8 @@ func (s *Server) routes() *http.ServeMux {
 	// spellings keep the standing 401. The public registration is
 	// exactly these two; the admin sign-in-policy GET terminates on
 	// its family lane (see api/signinpolicy_admin_terminate.go) and
-	// the PATCH stays on its RequireAuth write-through.
+	// the PATCH terminates behind its family writer gate (see
+	// api/signin.go).
 	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
 	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
 	// D2 wave-public carve-out (core-public parity): the routes core

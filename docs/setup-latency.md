@@ -3,8 +3,9 @@
 D10 latency record for the setup lane (Refs `eshu-hq/eshu#9669`,
 part of `eshu-hq/eshu#6707`). The census assigns the satellite this
 gate: core keeps the contract-registry and static-contract gates;
-this repo proves the terminated setup-state GET and the tier-C setup
-claim POST are not slower than the relay they replace.
+this repo proves the terminated setup-state GET and the
+terminated-writer setup trio (claim/admin/mfa) are not slower than the
+relay they replace.
 
 ## Method
 
@@ -14,8 +15,9 @@ Hermetic stub-core comparison, same binary, same caller shape:
   rode (`BenchmarkSetupState` and `BenchmarkSetupWrite` against the
   pre-D10 tree, 2000x3).
 - After legs: the terminated setup-state GET (single SetupNeeded
-  port fetch plus the dest-synthesized 200) and the tier-C claim POST
-  (explicit public route plus the write-through forward) through the
+  port fetch plus the dest-synthesized 200) and the terminated-writer
+  claim POST (explicit public route plus the write-through forward)
+  through the
   full production chain (`BenchmarkSetupState` and
   `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
   `bash scripts/measure-setup-latency.sh`).

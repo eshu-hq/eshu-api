@@ -36,9 +36,8 @@ The minting rule forbids inventing pins beyond it: the providers
 list read (provider-config enumeration behind
 `GET /api/v0/auth/providers`) stays explicitly out per the pin
 record, and the sign-in-policy mutation (`PATCH
-/api/v0/auth/admin/sign-in-policy`) stays on its RequireAuth tier-C
-write-through under `SignInPolicyAdmission` v0 — neither rides this
-lane.
+/api/v0/auth/admin/sign-in-policy`) terminates behind its family writer
+gate under `SignInPolicyAdmission` v0 — neither rides this lane.
 
 ## What this lane proves per the D-wave ruling
 
@@ -104,8 +103,9 @@ Known divergences (disclosed, not hidden):
 - The LeafB census keeps the row with the `wave-family` serve kind;
   the gated loop skips it and the family registration serves it.
 - Non-GET spellings of the path are not registered: a keyless PATCH
-  keeps the standing 401 at the key gate; a keyed PATCH crosses the
-  tier-C write-through (unchanged); other keyed methods cross the
+  keeps the standing 401 at the key gate; a keyed PATCH terminates
+  behind the family writer gate (shared-key) or relays explicitly
+  (foreign class); other keyed methods cross the
   generic relay and core judges the method.
 - Deeper subtrees (`/api/v0/auth/admin/sign-in-policy/...`) enter the
   family gate via the trailing-slash twin registration (Go 1.22 subtree
