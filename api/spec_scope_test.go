@@ -26,9 +26,10 @@ import (
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Thirty-three mounted spellings stay out of the document by
+// Thirty-five mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
-// the 2 W4 Code search routes plus the 16 W8a routes),
+// the 2 W4 Code search routes plus the 16 W8a routes plus the 2 drift
+// routes),
 // each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
@@ -95,6 +96,8 @@ var specScopeAbsent = map[string]string{
 	"GET /api/v0/metrics/timeseries":                         "metrics fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
 	"POST /api/v0/search/semantic":                           "semantic fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
 	"POST /api/v0/terraform/config-state-drift/findings":     "terraform drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/cloud/runtime-drift/findings":              "cloud runtime-drift fragment stays core-side for the drift lane; the POST terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
+	"GET /api/v0/investigations/drift/packet":                "drift packet fragment stays core-side for the drift lane; the GET terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
 	"POST /api/v0/auth/setup/claim":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/admin":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/mfa":                            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
@@ -194,6 +197,9 @@ func specScopeMounted() []string {
 	for _, entry := range w8aWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range driftWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -229,28 +235,29 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // disclosed or lifted) moves these pins with the owning lane.
 //
 // Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
-// W8a + retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3
-// Wave-1 Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search
-// POSTs + 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow POSTs +
-// 16 W8a reads + 1 retire-unclaimed POST = 207 mounted (206 native + 1
-// explicit relay leg); the disclosed-absence count is 33 (11 prior + 4
-// W6a Code-flow keys + 2 W4 Code search keys + 16 W8a fragments, each
-// disclosed core-side by its owning lane; the W4 content-search
-// fragment ports entry-shaped with the lane, and the retire-unclaimed
-// fragment ports whole-file, so no new absence from those lanes).
+// W8a + drift + retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs
+// + 3 Wave-1 Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content
+// search POSTs + 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow
+// POSTs + 16 W8a reads + 2 drift reads + 1 retire-unclaimed POST = 209
+// mounted (208 native + 1 explicit relay leg); the disclosed-absence
+// count is 35 (11 prior + 4 W6a Code-flow keys + 2 W4 Code search keys
+// + 16 W8a fragments + 2 drift fragments, each disclosed core-side by
+// its owning lane; the W4 content-search fragment ports entry-shaped
+// with the lane, and the retire-unclaimed fragment ports whole-file,
+// so no new absence from those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 207 {
-		t.Fatalf("mounted operations = %d, want 207 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 16 W8a + 1 retire-unclaimed = 206 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 209 {
+		t.Fatalf("mounted operations = %d, want 209 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 16 W8a + 2 drift + 1 retire-unclaimed = 208 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 33 {
-		t.Fatalf("disclosed-absent operations = %d, want 33: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 35 {
+		t.Fatalf("disclosed-absent operations = %d, want 35: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (206 native + 1 explicit relay leg) has its served spec
+// API operation (208 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

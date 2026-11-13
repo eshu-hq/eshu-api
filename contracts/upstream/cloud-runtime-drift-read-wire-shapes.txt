@@ -1,0 +1,27 @@
+// CloudRuntimeDriftReadAdmissionContractVersion versions the #9669 W8b
+// admission-contract shape for the CloudRuntimeDrift family reads: the
+// bounded active-finding page and the total active count behind the
+// provider-neutral runtime drift readback and the drift investigation
+// packet. Canonical reads persist through explicit core-owned admission
+// contracts: eshu-api keeps the HTTP shape and calls this versioned
+// port, which the core-owned Postgres multi-cloud drift store satisfies.
+// A breaking change to the read shape fails the frozen method-set test
+// until that list is deliberately updated; bump this version alongside
+// (manually — the bump is convention, the frozen list is the
+// enforcement) so dest consumers can pin the shape.
+const CloudRuntimeDriftReadAdmissionContractVersion = "v0"
+type CloudRuntimeDriftReadAdmission interface {
+	// ListActiveMultiCloudRuntimeDriftFindings returns one bounded page
+	// of active findings for the caller's scope.
+	ListActiveMultiCloudRuntimeDriftFindings(
+		ctx context.Context,
+		filter MultiCloudRuntimeDriftFilter,
+	) ([]MultiCloudRuntimeDriftFindingRow, error)
+	// CountActiveMultiCloudRuntimeDriftFindings returns the total active
+	// finding count for the same bounded filters, used to report
+	// truncation.
+	CountActiveMultiCloudRuntimeDriftFindings(
+		ctx context.Context,
+		filter MultiCloudRuntimeDriftFilter,
+	) (int, error)
+}

@@ -109,6 +109,8 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/metrics/timeseries", "metrics"},
 		{"/api/v0/search/semantic", "semantic_search"},
 		{"/api/v0/terraform/config-state-drift/findings", "terraform"},
+		{"/api/v0/cloud/runtime-drift/findings", "iac"},
+		{"/api/v0/investigations/drift/packet", "evidence"},
 		{"/api/v0/some/future/route/with/param-123", "other"},
 		{"/api/v1/supply-chain/impact/suppressions", "suppression"},
 		{"/api/v0", "other"},

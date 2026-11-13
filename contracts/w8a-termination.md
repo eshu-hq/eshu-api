@@ -52,9 +52,10 @@ merge and `e504e328a7`):
 
 The lane consumes only these narrow pins and cites no shared-port
 pin; no other family may cite these pins as coverage. Recording a
-pin whole never authorizes terminating routes beyond the 16: `POST
-/api/v0/cloud/runtime-drift/findings` and the IaC legs outside the
-W3 IaC-6 slice, the index-status Neo4j-count legs, the
+pin whole never authorizes terminating routes beyond the 16: the
+two drift routes terminate in the Wave-4 Drift lane (see
+`contracts/cloud-runtime-drift-termination.md`) and the IaC legs
+outside the W3 IaC-6 slice, the index-status Neo4j-count legs, the
 impact packet, the suppressions mutation, and the
 code-graph-metrics POST stay relay (or on their tier-C lane) with
 per-route reasons, pinned by

@@ -303,7 +303,10 @@ func TestW8aTerminated_ForwardsCallerBytes(t *testing.T) {
 // tier-C write-through lane; Compare terminated in its gap-04 lane.
 // GET /api/v0/iac/resources left this list in the W3 IaC-6 lane: it
 // terminates natively on its supplemental SearchActive pin, pinned by
-// TestIaCResources_AheadOfRelay — see contracts/iac-read-admission.md.)
+// TestIaCResources_AheadOfRelay. POST /api/v0/cloud/runtime-drift/findings
+// left this list in the Wave-4 Drift lane: it terminates natively on the
+// CloudRuntimeDrift pin, pinned by TestDriftWaveAheadOfRelay — see
+// contracts/cloud-runtime-drift-termination.md.)
 func TestW8aExcludedRoutesStayRelay(t *testing.T) {
 	t.Parallel()
 
@@ -312,7 +315,6 @@ func TestW8aExcludedRoutesStayRelay(t *testing.T) {
 		path   string
 		body   string
 	}{
-		{http.MethodPost, "/api/v0/cloud/runtime-drift/findings", `{"scope_id":"scope_1"}`},
 		{http.MethodPost, "/api/v0/code/call-graph/metrics", `{"scope_id":"scope_1"}`},
 	}
 	for _, route := range excluded {

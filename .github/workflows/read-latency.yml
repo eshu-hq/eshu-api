@@ -30,6 +30,7 @@
 # scripts/measure-signinpolicy-admin-write-latency.sh,
 # scripts/measure-code-flow-latency.sh,
 # scripts/measure-code-search-latency.sh,
+# scripts/measure-drift-latency.sh,
 # scripts/measure-iac-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
@@ -69,6 +70,7 @@ on:
       - 'scripts/measure-signinpolicy-admin-write-latency.sh'
       - 'scripts/measure-code-flow-latency.sh'
       - 'scripts/measure-code-search-latency.sh'
+      - 'scripts/measure-drift-latency.sh'
       - 'scripts/measure-iac-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
@@ -250,6 +252,15 @@ jobs:
             echo "## W4 Code search latency (stub-core, median ns/op)"
             echo '```'
             cat code-search-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Satellite Wave-4 Drift termination latency
+        run: |
+          bash scripts/measure-drift-latency.sh 2>&1 | tee drift-latency.log
+          {
+            echo "## Satellite Wave-4 Drift latency (stub-core, median ns/op)"
+            echo '```'
+            cat drift-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: W3 IaC-6 termination latency
