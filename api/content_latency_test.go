@@ -63,9 +63,10 @@ func BenchmarkContentTerminatedRead(b *testing.B) {
 // BenchmarkContentRelayRead measures the generic relay path for the
 // same caller and stub shape: the before leg the lane must not
 // regress. The legs compare different routes by necessity (the wave
-// paths now terminate; the out-of-pin file search POST still relays);
-// both do exactly one server-side fetch, so the 1.50 bound stays a
-// real pathology check.
+// paths now terminate; the W4 search lane terminated the file search
+// POST too, so the relay leg rides the still-relayed code bundles POST
+// no wave table covers); both do exactly one server-side fetch, so the
+// 1.50 bound stays a real pathology check.
 func BenchmarkContentRelayRead(b *testing.B) {
 	_, srv := contentBenchServer(b, `{"results":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -74,7 +75,49 @@ func BenchmarkContentRelayRead(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, contentAuthedPost("/api/v0/content/files/search", `{"query":"render"}`, "application/json"))
+			handler.ServeHTTP(rec, contentAuthedPost("/api/v0/code/bundles", `{"query":"render"}`, "application/json"))
 		}
 	})
+}
+
+// TestContentRelayLegStaysRelayed proves the relay-leg premise the
+// benchmarks above rest on: POST /api/v0/code/bundles is covered by no
+// wave table, so a shared-key call files its dispatch on the relay
+// lane — the terminated-vs-relay comparison stays honest.
+func TestContentRelayLegStaysRelayed(t *testing.T) {
+	t.Parallel()
+
+	core := &stubCore{status: http.StatusOK, body: `{"results":[]}`}
+	mux := http.NewServeMux()
+	mux.Handle("/", core.handler())
+	upstream := httptest.NewServer(mux)
+	defer upstream.Close()
+
+	tel := NewTelemetry(nil)
+	srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
+	handler := srv.Handler(DefaultV0Sunset)
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, contentAuthedPost("/api/v0/code/bundles", `{"query":"render"}`, "application/json"))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
+	}
+	if core.lastPath != "/api/v0/code/bundles" {
+		t.Errorf("upstream path = %q, want the relay leg crossed intact", core.lastPath)
+	}
+	snap := tel.snapshot()
+	for family, lanes := range snap.dispatches {
+		if lanes[viaNative] != nil {
+			t.Errorf("family %q files a native lane row, want the relay leg on the relay lane only", family)
+		}
+	}
+	found := false
+	for _, lanes := range snap.dispatches {
+		if lanes[viaRelay] != nil {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("dispatches = %v, want a relay lane row for the relay leg", snap.dispatches)
+	}
 }

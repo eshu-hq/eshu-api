@@ -24,9 +24,10 @@ import (
 // contentWaveSpecKeys are the path keys the Wave-2 lane adds to the
 // served document: one entry per served wave route. No wave route
 // stays relay, so there is no relayed-keys list for this lane; the
-// out-of-pin content legs (search, list, scoped-entity) keep relaying
-// with their fragments core-side, disclosed in
-// contracts/content-point-reads-wave.md.
+// remaining out-of-pin content legs (list, scoped-entity) keep
+// relaying with their fragments core-side, disclosed in
+// contracts/content-point-reads-wave.md. The search legs now ride the
+// W4 lane (contracts/content-search-termination.md).
 var contentWaveSpecKeys = []string{
 	"/api/v0/content/files/read",
 	"/api/v0/content/files/lines",
@@ -108,12 +109,13 @@ func TestContentPointReadsOpenAPIStillKeyGated(t *testing.T) {
 	}
 }
 
-// TestContentPointReadsSearchKeysStayRelayed pins the disclosed
-// fragment boundary: the out-of-pin content search keys stay out of
-// the served document (their fragment stays core-side) while the
-// search legs keep relaying. A served search key would duplicate a
-// relayed route.
-func TestContentPointReadsSearchKeysStayRelayed(t *testing.T) {
+// TestContentPointReadsSearchKeysNowServed pins the W4 inversion: the
+// search keys the point pin sealed out now ride the W4 lane, so the
+// served document carries all four search paths with their pinned
+// operationIds. The fragment ports entry-shaped with the lane
+// (contracts/content-search-termination.md), so no served key
+// duplicates a relayed route.
+func TestContentPointReadsSearchKeysNowServed(t *testing.T) {
 	t.Parallel()
 
 	srv := NewServer("http://core.invalid", skeletonTestKey)
@@ -126,12 +128,17 @@ func TestContentPointReadsSearchKeysStayRelayed(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	body, _ := io.ReadAll(rec.Result().Body)
-	for _, path := range []string{
-		"/api/v0/content/files/search",
-		"/api/v0/content/entities/search",
+	for path, wantOp := range map[string]string{
+		"/api/v0/content/files/search":               "searchFiles",
+		"/api/v0/content/entities/search":            "searchEntities",
+		"/api/v0/content/dockerfile-installs/search": "searchDockerfileInstalls",
+		"/api/v0/content/php-config/search":          "searchPHPConfiguration",
 	} {
-		if strings.Contains(string(body), `"`+path+`"`) {
-			t.Errorf("served spec carries %s, want it core-side until the search lane ports it", path)
+		if !strings.Contains(string(body), `"`+path+`"`) {
+			t.Errorf("served spec lacks %s, want it served by the W4 search lane", path)
+		}
+		if !strings.Contains(string(body), `"operationId":"`+wantOp+`"`) && !strings.Contains(string(body), `"operationId": "`+wantOp+`"`) {
+			t.Errorf("served spec lacks operationId %s for %s", wantOp, path)
 		}
 	}
 }

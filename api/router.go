@@ -406,6 +406,12 @@ func (s *Server) routes() *http.ServeMux {
 	// register explicitly inside the wave gate, ahead of the generic
 	// proxy. See api/content_wave.go.
 	s.registerContentPointReads(mux)
+	// W4 Content search termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#111): the 4 pinned search POSTs register
+	// explicitly inside their own wave gate, ahead of the generic
+	// proxy — never merged into the Wave-2 point-read table. See
+	// api/content_search_wave.go.
+	s.registerContentSearchWave(mux)
 	// Signinpolicy-group native termination (Refs eshu-hq/eshu#9669,
 	// satellite eshu-hq/eshu-api#72): the two public login-picker
 	// reads terminate dest-side via the SignInPolicyReadAdmission v0

@@ -197,10 +197,12 @@ func TestContentPointReadsUnknownRouteFailClosed(t *testing.T) {
 }
 
 // TestContentPointReadsOutOfPinLegsNotInWave pins the wave boundary:
-// the content legs the pin seals out (search, list, scoped-entity)
-// keep relaying and never enter this wave. The /content family prefix
-// must not hijack them into the terminated table: each still crosses
-// the generic relay for a shared-key caller.
+// the legs the point pin seals out never enter the point-read wave.
+// The 4 search legs now terminate natively under their own W4 wave
+// (Refs eshu-hq/eshu-api#111); the /content family prefix must not
+// hijack them into the terminated point table. Each search leg still
+// resolves to the content family and now files its dispatch on the
+// native lane for a shared-key caller.
 func TestContentPointReadsOutOfPinLegsNotInWave(t *testing.T) {
 	t.Parallel()
 
@@ -210,6 +212,8 @@ func TestContentPointReadsOutOfPinLegsNotInWave(t *testing.T) {
 	}{
 		{"/api/v0/content/files/search", `{"query":"render"}`},
 		{"/api/v0/content/entities/search", `{"query":"render"}`},
+		{"/api/v0/content/dockerfile-installs/search", `{"package":"curl"}`},
+		{"/api/v0/content/php-config/search", `{"directive":"memory_limit"}`},
 	}
 	for _, tc := range others {
 		if got := classifyFamily(tc.path); got != "content" {
@@ -217,8 +221,17 @@ func TestContentPointReadsOutOfPinLegsNotInWave(t *testing.T) {
 		}
 		for _, entry := range contentWave {
 			if entry.Method+" "+entry.Path == http.MethodPost+" "+tc.path {
-				t.Errorf("out-of-pin leg %q is in contentWave, want it out", tc.path)
+				t.Errorf("search leg %q is in contentWave, want it in the W4 search wave only", tc.path)
 			}
+		}
+		found := false
+		for _, entry := range contentSearchWave {
+			if entry.Method+" "+entry.Path == http.MethodPost+" "+tc.path {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("search leg %q is in no wave table, want it in contentSearchWave", tc.path)
 		}
 	}
 
@@ -240,11 +253,11 @@ func TestContentPointReadsOutOfPinLegsNotInWave(t *testing.T) {
 		}
 	}
 	snap := tel.snapshot()
-	if lanes := snap.dispatches["content"]; lanes[viaRelay] == nil {
-		t.Errorf("content dispatches = %v, want a relay lane row for the out-of-pin search legs", snap.dispatches["content"])
+	if lanes := snap.dispatches["content"]; lanes[viaNative] == nil {
+		t.Errorf("content dispatches = %v, want a native lane row for the terminated search legs", snap.dispatches["content"])
 	}
-	if lanes := snap.dispatches["content"]; lanes[viaNative] != nil {
-		t.Errorf("content dispatches = %v, want no native lane row while only search legs ran", snap.dispatches["content"])
+	if lanes := snap.dispatches["content"]; lanes[viaRelay] != nil {
+		t.Errorf("content dispatches = %v, want no relay lane row while only search legs ran", snap.dispatches["content"])
 	}
 }
 

@@ -1,0 +1,248 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package search
+
+// ContentSearch is the OpenAPI path fragment documenting the W4
+// Content search routes: `/api/v0/content/files/search`,
+// `/api/v0/content/entities/search`,
+// `/api/v0/content/dockerfile-installs/search`, and
+// `/api/v0/content/php-config/search` (Refs eshu-hq/eshu#9669,
+// satellite eshu-hq/eshu-api#111). openapi.Spec concatenates it
+// into the published document; keep it in lockstep with the
+// handlers and contracts/content-search-termination.md.
+//
+// The four entries are a line-verbatim subset of the pinned core file
+// go/internal/query/openapi/paths/search/content.go at the W4 base
+// (see scripts/check-parity.sh): that file carries the lane entries
+// mid-list with separator commas — not a paths-closing entry shaped
+// like the Compare fragment — so the subset concatenates without
+// re-shaping and no disclosed absence is recorded.
+const ContentSearch = `
+    "/api/v0/content/files/search": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Search file content",
+        "description": "Searches file content by pattern. A search with no repository filter runs inside a work budget (ESHU_CONTENT_SEARCH_BUDGET_MS, default 2000 ms): when the budget ends before the page is proven complete the answer is still HTTP 200, with truncated true, a partial object (reason, rows_scanned_in_order, rows_matched, cursor, budget_ms, elapsed_ms, overrun_ms, progressed, hint) and truth level partial. The returned rows are an ordered prefix of the exact answer; resume with the cursor request field and offset max(0, offset - rows_matched) while progressed is true, or add repo_id to scope the search. A partial with progressed false scanned nothing inside the budget: resuming repeats the same request, so scope with repo_id, raise budget_ms for the next unscoped request (100..10000), or stop, and bound any resume loop.",
+        "operationId": "searchFiles",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "anyOf": [
+                  {"required": ["query"]},
+                  {"required": ["pattern"]}
+                ],
+                "properties": {
+                  "repo_id": {"type": "string"},
+                  "repo_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional repository selector list. Explicit multi-repo search is executed as one bounded PostgreSQL query."
+                  },
+                  "query": {"type": "string"},
+                  "pattern": {
+                    "type": "string",
+                    "description": "Alias for query used by MCP content-search tools."
+                  },
+                  "limit": {"type": "integer", "default": 50, "maximum": 200},
+                  "offset": {"type": "integer", "default": 0, "minimum": 0, "maximum": 10000},
+                  "budget_ms": {"type": "integer", "minimum": 100, "maximum": 10000, "description": "Optional per-request work budget in milliseconds for searches with no repository filter. Omitted uses ESHU_CONTENT_SEARCH_BUDGET_MS. Refused (400) when the search is scoped."},
+                  "cursor": {
+                    "type": "object",
+                    "description": "Resumes a search with no repository filter strictly after this key. Use the cursor of a previous partial result. Refused (400) on any search that has a repository filter, and refused (400) when it carries start_line or entity_id: that is an entity search cursor, and the file search resumes from repo_id and relative_path only.",
+                    "properties": {
+                      "repo_id": {"type": "string"},
+                      "relative_path": {"type": "string"}
+                    }
+                  },
+                  "rank_cursor": {"type": "string", "description": "Not supported on file search: any value answers 400 rank_cursor_unsupported (reason file_search). The relevance walk (#7746) is on POST /api/v0/content/entities/search and POST /api/v0/code/search."}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {"type": "array", "items": {"$ref": "#/components/schemas/FileContent"}},
+                    "count": {"type": "integer"},
+                    "limit": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "truncated": {"type": "boolean", "description": "True when another matching row follows the page, and always true when partial is present."},
+                    "partial": {
+                      "type": "object",
+                      "description": "Present only when a search with no repository filter ended at its work budget before the page was proven complete. results is then an ordered prefix of the exact answer.",
+                      "properties": {
+                        "reason": {"type": "string", "enum": ["candidate_budget_exceeded", "budget_exceeded_on_large_document", "pattern_has_no_trigram"]},
+                        "rows_scanned_in_order": {"type": "integer", "description": "Rows this call visited in repo_id, relative_path order, up to and including cursor; a resumed call counts from its request cursor."},
+                        "rows_matched": {"type": "integer", "description": "Matching rows found so far, before the request offset is applied."},
+                        "cursor": {
+                          "type": "object",
+                          "properties": {
+                            "repo_id": {"type": "string"},
+                            "relative_path": {"type": "string"}
+                          }
+                        },
+                        "budget_ms": {"type": "integer", "description": "The requested work budget."},
+                        "elapsed_ms": {"type": "integer", "description": "SQL wall time the server measured."},
+                        "overrun_ms": {"type": "integer", "description": "How far a cancelled statement ran past its own timeout; above 100 the reason is budget_exceeded_on_large_document."},
+                        "progressed": {"type": "boolean", "description": "True when this call advanced the cursor past the request cursor. False means it scanned nothing inside the budget and resuming repeats the identical request."},
+                        "hint": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/content/entities/search": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Search entity content",
+        "description": "Searches entity source code by pattern. Pages order by repository ID, relative path, start line, and entity ID; truncated reports whether another matching row follows. A search with no repository filter runs inside a work budget (ESHU_CONTENT_SEARCH_BUDGET_MS, default 2000 ms, shared with the file search): when the budget ends before the page is proven complete the answer is still HTTP 200, with truncated true, a partial object (reason, rows_scanned_in_order, rows_matched, cursor, budget_ms, elapsed_ms, overrun_ms, progressed, hint) and truth level partial. The returned rows are an ordered prefix of the exact answer; resume with the cursor request field (all four keys of partial.cursor) and offset max(0, offset - rows_matched) while progressed is true, or add repo_id to scope the search. A partial with progressed false scanned nothing inside the budget: resuming repeats the same request, so scope with repo_id, ask the operator to raise the server budget, or stop, and bound any resume loop. Through the MCP tool search_entity_content a reply over 262,144 bytes is cut to whole rows with budget_page and next_offset, and one reply can carry both partial and next_offset. Then page with next_offset first, keeping the same cursor; follow partial.cursor only from a reply without budget_page: partial.rows_matched also counts the rows the cap trimmed, so resuming from partial.cursor would skip them. A budget_page without next_offset has reached the 10,000 offset cap: repeat the call with a limit no larger than budget_page.rows_returned.",
+        "operationId": "searchEntities",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "anyOf": [
+                  {"required": ["query"]},
+                  {"required": ["pattern"]}
+                ],
+                "properties": {
+                  "repo_id": {"type": "string"},
+                  "repo_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional repository selector list. Explicit multi-repo search is executed as one bounded PostgreSQL query."
+                  },
+                  "query": {"type": "string"},
+                  "pattern": {
+                    "type": "string",
+                    "description": "Alias for query used by MCP content-search tools."
+                  },
+                  "limit": {"type": "integer", "default": 50, "maximum": 200},
+                  "offset": {"type": "integer", "default": 0, "minimum": 0, "maximum": 10000},
+                  "cursor": {
+                    "type": "object",
+                    "description": "Resumes a search with no repository filter strictly after this entity key. Use the cursor of a previous partial result. Refused (400) on any search that has a repository filter, and refused (400) when it has no entity_id: a file search cursor names no entity, and several entities share one file.",
+                    "properties": {
+                      "repo_id": {"type": "string"},
+                      "relative_path": {"type": "string"},
+                      "start_line": {"type": "integer"},
+                      "entity_id": {"type": "string"}
+                    }
+                  },
+                  "rank_cursor": {"type": "string", "description": "Opt-in relevance walk (#7746). \"start\" ranks the first 200 lexical rows of one repository (repo_id, or exactly one repo_ids entry) by hybrid BM25+vector relevance and returns the first page; pass rank_walk.next_cursor to read the next page. Needs the hybrid ranker, and refuses a positive offset and cursor (400 rank_cursor_unsupported). A changed window or ranked order answers 409 rank_cursor_basis_mismatch (schema RankCursorError); restart with \"start\". A malformed cursor answers 400 rank_cursor_invalid."}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/EntityContentSearchResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"$ref": "#/components/responses/RankCursorConflict"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/content/dockerfile-installs/search": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Search Dockerfile install declarations",
+        "description": "Finds persisted DockerfileInstall content entities by exact, case-sensitive install name across authorized repositories. Results use stable keyset pagination; follow next_cursor while truncated is true.",
+        "operationId": "searchDockerfileInstalls",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {
+            "type": "object",
+            "required": ["package"],
+            "properties": {
+              "package": {"type": "string", "description": "Exact declared install name"},
+              "repo_id": {"type": "string"},
+              "repo_ids": {"type": "array", "items": {"type": "string"}},
+              "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10},
+              "cursor": {"type": "object", "required": ["basis", "repo_id", "relative_path", "start_line", "entity_id"], "properties": {
+                "basis": {"type": "string"}, "repo_id": {"type": "string"}, "relative_path": {"type": "string"},
+                "start_line": {"type": "integer"}, "entity_id": {"type": "string"}
+              }}
+            }
+          }}}
+        },
+        "responses": {
+          "200": {"description": "Ordered install entity page with matches, truncated and optional next_cursor"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/content/php-config/search": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Search declared PHP configuration",
+        "description": "Finds repository files declaring a PHP directive or a mod_php/php-fpm server mode. Values are guarded parser evidence; source bodies are withheld. The response includes repository, path, line, count, and an opaque next_cursor whenever truncated is true. Repository grants are applied before paging. Dockerfile base-tag and a2enmod declarations are derived from the shared Dockerfile parser; source code is not returned.",
+        "operationId": "searchPHPConfiguration",
+        "x-scoped-token-support": true,
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object", "oneOf": [{"required": ["directive"]}, {"required": ["mode"]}],
+          "properties": {
+            "directive": {"type": "string", "maxLength": 128},
+            "mode": {"type": "string", "enum": ["mod_php", "php-fpm"]},
+            "repo_id": {"type": "string"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 50},
+            "cursor": {"type": "string", "description": "Opaque next_cursor from a preceding page of the same filter"}
+          }
+        }}}},
+        "responses": {
+          "200": {"description": "Guarded configuration entity page", "content": {"application/json": {"schema": {
+            "type": "object", "required": ["results", "count", "limit", "truncated"],
+            "properties": {
+              "results": {"type": "array", "items": {"$ref": "#/components/schemas/EntityContent"}},
+              "count": {"type": "integer"},
+              "limit": {"type": "integer"},
+              "truncated": {"type": "boolean"},
+              "next_cursor": {"type": "string", "description": "Present when truncated is true; pass as cursor to continue"}
+            }
+          }}}},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+`

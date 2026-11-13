@@ -18,14 +18,14 @@
 # server-side fetch, so any real pathology — a double fetch, a retry,
 # a body re-read — exceeds it loudly while scheduling noise does not).
 #
-# Relay-route disclosure (the Wave-2 lane terminates the point reads
-# but not the search legs): terminated POST
+# Relay-route disclosure (the Wave-2 lane terminates the point reads;
+# the W4 search lane terminated the search legs too): terminated POST
 # /api/v0/content/files/read, terminated POST
 # /api/v0/content/files/lines, and terminated POST
-# /api/v0/content/entities/read vs relay POST
-# /api/v0/content/files/search (the out-of-pin search leg, still on
-# the generic proxy). Same-method legs, so every lane gates
-# terminated-vs-relay again instead of terminated-vs-terminated.
+# /api/v0/content/entities/read vs relay POST /api/v0/code/bundles
+# (the still-relayed code POST no wave table covers, on the generic
+# proxy). Same-method legs, so every lane gates terminated-vs-relay
+# again instead of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-content-latency.sh
 # Needs: go (version in go.mod).

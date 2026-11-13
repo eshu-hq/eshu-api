@@ -138,6 +138,7 @@ func familyPaths() string {
 		strings.TrimSpace(cli.Compose) + "\n" +
 		strings.TrimSpace(search.Ask) + "\n" +
 		strings.TrimSpace(search.ContentPointReads) + "\n" +
+		strings.TrimSpace(search.ContentSearch) + "\n" +
 		strings.TrimSpace(service.IntelligenceReport) + "\n" +
 		strings.TrimSpace(auth.AuthProviders) + "\n" +
 		strings.TrimSpace(auth.AdminProviderConfigReads) + "\n" +
