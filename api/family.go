@@ -11,7 +11,7 @@ import (
 // the explicit per-family routes registered ahead of the proxy
 // (suppression, retirement, terminal-failure, retire-unclaimed,
 // admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
-// compare, content, freshness, code-flow, OIDC/GitHub/SAML, and
+// compare, content, freshness, code-flow, iac, OIDC/GitHub/SAML, and
 // setup), each filing its dispatch outcomes and authorizer judgments
 // on every return path; the relay lane is the generic byte-for-byte
 // proxy every other family crosses.
@@ -138,6 +138,7 @@ var familyPrefixes = []struct {
 	{"/content", "content"},
 	{"/supply-chain", "supply_chain"},
 	{"/investigations/supply-chain", "supply_chain"},
+	{"/iac/", "iac"},
 }
 
 // classifyFamily maps a request path to its closed family label. The

@@ -53,12 +53,14 @@ merge and `e504e328a7`):
 The lane consumes only these narrow pins and cites no shared-port
 pin; no other family may cite these pins as coverage. Recording a
 pin whole never authorizes terminating routes beyond the 16: `POST
-/api/v0/cloud/runtime-drift/findings`, `GET /api/v0/iac/resources`
-and every other IaC POST, the index-status Neo4j-count legs, the
+/api/v0/cloud/runtime-drift/findings` and the IaC legs outside the
+W3 IaC-6 slice, the index-status Neo4j-count legs, the
 impact packet, the suppressions mutation, and the
 code-graph-metrics POST stay relay (or on their tier-C lane) with
 per-route reasons, pinned by
-`TestW8aExcludedRoutesStayRelay`. No direct-store serving (no
+`TestW8aExcludedRoutesStayRelay`. (`GET /api/v0/iac/resources`
+terminated natively in the W3 lane on its supplemental SearchActive
+pin — see `contracts/iac-read-admission.md`.) No direct-store serving (no
 `*WithReadStore`/`*WithQueryer` satisfier) rides this lane: the
 transport is the proven forward model only (dest caller gate +
 family authorizer + bounded no-retry/no-redirect `forwardToCore`,

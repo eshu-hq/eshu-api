@@ -124,41 +124,26 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /readyz", s.ready)
 	mux.HandleFunc("GET /metrics", s.metrics)
-	// Native-dispatch pilot: the suppression upsert has its explicit
-	// per-family route with the AllScopes authorizer. It is registered
-	// ahead of the generic proxy; every other family still crosses the
-	// byte-relay below.
-	mux.Handle(suppressionRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
-	// The trailing-slash spelling is the same upsert (core mounts the
-	// exact path and decides; dest keeps both spellings on the native
-	// route so the family is never split across dispatch paths).
-	mux.Handle(suppressionRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.suppressionWriteThrough))))
-	// Native dispatch, SignInPolicyMutations (tier C-a): the admin
-	// sign-in policy PATCH has its explicit per-family route with the
-	// AllScopes authorizer, ahead of the generic proxy. The trailing
-	// slash stays on the native route for the same never-split reason;
-	// the family's GETs and every other family still cross the
-	// byte-relay below.
-	mux.Handle(signInPolicyRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
-	mux.Handle(signInPolicyRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.signInPolicyWriteThrough))))
-	// Native dispatch, AdminRetirement (tier C-a): the operator
-	// retirement trigger has its explicit per-family route with the
-	// AllScopes authorizer, ahead of the generic proxy. The trailing
-	// slash stays on the native route for the same never-split reason;
-	// every other family still crosses the byte-relay below.
-	mux.Handle(retirementRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
-	mux.Handle(retirementRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retirementWriteThrough))))
-	// Native dispatch, AdminTerminalFailure (tier C-a): the operator
-	// collector-failure acknowledgement POST has its explicit per-family
-	// route with the AllScopes authorizer, ahead of the generic proxy.
-	// The trailing slash stays on the native route for the same
-	// never-split reason; the family's query reads and every other
-	// family still cross the byte-relay below.
-	mux.Handle(terminalFailureRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
-	mux.Handle(terminalFailureRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.terminalFailureWriteThrough))))
+	// Native-dispatch singletons (suppression, sign-in-policy,
+	// retirement, terminal-failure): mounted in api/native_singles.go
+	// (pure move to hold the file cap; behavior identical).
+	s.registerNativeSingles(mux)
 	// AdminRetireUnclaimed writer: explicit route + slash twin ahead of the relay, AllScopes-gated (see api/retireunclaimed.go).
 	mux.Handle(retireUnclaimedRoute, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
 	mux.Handle(retireUnclaimedRoute+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.retireUnclaimedWriteThrough))))
+	// Native dispatch, IaC reads (W3 IaC-6, see api/iac.go): the four
+	// POST legs cleared on IaCReadAdmission v0, plus the resources
+	// candidate-page GET cleared on IaCInventorySearchAdmission v0
+	// (own slice, own pin, same write-through handler). POST
+	// /api/v0/iac/dead stays on the generic relay.
+	for _, route := range iacNativeRoutes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))
+	}
+	for _, route := range iacResourcesRoutes {
+		mux.Handle(route, s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))
+		mux.Handle(route+"/", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(s.iacWriteThrough))))
+	}
 	// Native dispatch, AdminIdentityMutations (tier C-b): the five
 	// tenant-scoped admin identity mutation routes have their explicit
 	// per-family routes with the AllScopes authorizer, ahead of the
