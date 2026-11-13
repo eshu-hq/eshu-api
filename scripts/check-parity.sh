@@ -1868,7 +1868,7 @@ for symbol in ContentStore ContentReader ListRepositories MatchRepositories List
     exit 1
   fi
 done
-for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"repo_ids"' '"families"' '"limit"' '"offset"'; do
+for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"repo_ids"' '"families"' '"limit"' '"offset"' 'slog.' 'tracing.' 'span.' 'json.Marshal' 'sync.' 'Mutex'; do
   if grep -qF "$call" "${REPO_ROOT}/api/iac.go"; then
     echo "FAIL: api/iac.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
     exit 1

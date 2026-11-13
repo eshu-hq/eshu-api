@@ -493,3 +493,53 @@ func TestIaCDead_ParallelProbe(t *testing.T) {
 		t.Errorf("upstream hits = %d, want %d (one forward per caller)", got, callers)
 	}
 }
+
+// TestIaCDeadNative_MatchesGenericRelay is the revert-to-relay proof:
+// the identical stub-core answer crosses the dead native route and the
+// generic relay with byte-identical status and body. If the native
+// registration is removed, the native leg files relay and the
+// lane-filing assertions below fail.
+func TestIaCDeadNative_MatchesGenericRelay(t *testing.T) {
+	t.Parallel()
+
+	const payload = `{"repo_ids":["repository:r1"],"limit":100}`
+	const stubBody = "{\"data\":{\"total\":1},\"error\":null}\n"
+
+	nativeCore := &stubCore{status: http.StatusOK, body: stubBody}
+	nativeMux := http.NewServeMux()
+	nativeMux.Handle("/", nativeCore.handler())
+	nativeUpstream := httptest.NewServer(nativeMux)
+	defer nativeUpstream.Close()
+
+	relayCore := &stubCore{status: http.StatusOK, body: stubBody}
+	relayMux := http.NewServeMux()
+	relayMux.Handle("/", relayCore.handler())
+	relayUpstream := httptest.NewServer(relayMux)
+	defer relayUpstream.Close()
+
+	nativeTel := NewTelemetry(nil)
+	nativeSrv := NewServer(nativeUpstream.URL, skeletonTestKey).WithTelemetry(nativeTel)
+	nativeRec := httptest.NewRecorder()
+	nativeReq := authedRequest(http.MethodPost, iacRoutePath(iacDeadRoute))
+	nativeReq.Body = io.NopCloser(strings.NewReader(payload))
+	nativeSrv.Handler(DefaultV0Sunset).ServeHTTP(nativeRec, nativeReq)
+
+	relayTel := NewTelemetry(nil)
+	relaySrv := NewServer(relayUpstream.URL, skeletonTestKey).WithTelemetry(relayTel)
+	relayRec := httptest.NewRecorder()
+	relayReq := authedRequest(http.MethodPost, iacRoutePath(iacDeadRoute))
+	relayReq.Body = io.NopCloser(strings.NewReader(payload))
+	relaySrv.instrumented(viaRelay, RequireAuth(skeletonTestKey, http.HandlerFunc(relaySrv.dispatch))).ServeHTTP(relayRec, relayReq)
+
+	nativeBody, _ := io.ReadAll(nativeRec.Result().Body)
+	relayBody, _ := io.ReadAll(relayRec.Result().Body)
+	if nativeRec.Code != relayRec.Code || string(nativeBody) != string(relayBody) {
+		t.Fatalf("native = (%d, %q), relay = (%d, %q): want byte-identical", nativeRec.Code, nativeBody, relayRec.Code, relayBody)
+	}
+	if got := nativeTel.snapshot().dispatches["iac"][viaNative][outcomeCoreOK]; got != 1 {
+		t.Errorf("native iac core_ok = %d, want 1", got)
+	}
+	if got := relayTel.snapshot().dispatches["iac"][viaRelay][outcomeCoreOK]; got != 1 {
+		t.Errorf("relay iac core_ok = %d, want 1", got)
+	}
+}
