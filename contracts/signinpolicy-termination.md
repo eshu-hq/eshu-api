@@ -52,8 +52,10 @@ or DB handle — only prose mentions of core-side store outages).
   two public paths stay on the generic relay behind RequireAuth:
   keyless callers keep the standing 401 with zero core contact;
   keyed callers get core's answer for the spelled path.
-- Docs/redoc shells, the D3/D4/D6 terminated waves, the D7/D8/D9
-  dispatch lanes, and the setup carve-out are untouched.
+- Docs/redoc shells, the D3/D4/D6 terminated waves, and the D7/D8/D9
+  dispatch lanes are untouched. The setup routes stay outside this
+  lane; their W7-writers termination lives in
+  `contracts/setup-admission.md`.
 
 ## Group gates (evidence)
 

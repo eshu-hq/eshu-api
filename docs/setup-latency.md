@@ -15,8 +15,9 @@ Hermetic stub-core comparison, same binary, same caller shape:
   rode (`BenchmarkSetupState` and `BenchmarkSetupWrite` against the
   pre-D10 tree, 2000x3).
 - After legs: the terminated setup-state GET (single SetupNeeded
-  port fetch plus the dest-synthesized 200) and the tier-C claim POST
-  (explicit public route plus the write-through forward) through the
+  port fetch plus the dest-synthesized 200) and the terminated-writer
+  claim POST (explicit public route plus the write-through forward)
+  through the
   full production chain (`BenchmarkSetupState` and
   `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
   `bash scripts/measure-setup-latency.sh`).
