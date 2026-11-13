@@ -292,6 +292,48 @@
           }
         }
       },
+      "EntityContentSearchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/EntityContent"}
+          },
+          "count": {"type": "integer"},
+          "limit": {"type": "integer"},
+          "offset": {"type": "integer"},
+          "truncated": {"type": "boolean", "description": "True when another matching row follows the page, and always true when partial is present."},
+          "partial": {
+            "type": "object",
+            "description": "Present only when a search with no repository filter ended at its work budget before the page was proven complete. results is then an ordered prefix of the exact answer.",
+            "properties": {
+              "reason": {"type": "string", "enum": ["candidate_budget_exceeded", "budget_exceeded_on_large_document"]},
+              "rows_scanned_in_order": {"type": "integer", "description": "Rows this call visited in repo_id, relative_path, start_line, entity_id order, up to and including cursor; a resumed call counts from its request cursor."},
+              "rows_matched": {"type": "integer", "description": "Matching rows found so far, before the request offset is applied."},
+              "cursor": {
+                "type": "object",
+                "properties": {
+                  "repo_id": {"type": "string"},
+                  "relative_path": {"type": "string"},
+                  "start_line": {"type": "integer", "description": "Omitted when zero."},
+                  "entity_id": {"type": "string"}
+                }
+              },
+              "budget_ms": {"type": "integer", "description": "The requested work budget."},
+              "elapsed_ms": {"type": "integer", "description": "SQL wall time the server measured."},
+              "overrun_ms": {"type": "integer", "description": "How far a cancelled statement ran past its own timeout; above 100 the reason is budget_exceeded_on_large_document."},
+              "progressed": {"type": "boolean", "description": "True when this call advanced the cursor past the request cursor. False means it scanned nothing inside the budget and resuming repeats the identical request."},
+              "hint": {"type": "string"}
+            }
+          },
+          "source_backend": {"type": "string"},
+          "source_cache_clip_bytes": {"type": "integer", "description": "Read-time source_cache ceiling in bytes (4096) applied to every row of this response; always present."},
+          "source_cache_clipped_rows": {"type": "integer", "description": "Number of returned rows whose source_cache was clipped to source_cache_clip_bytes; 0 when none. Clipped rows carry source_cache_clipped, source_cache_clip_bytes, and source_cache_total_bytes."},
+          "docstring_clip_bytes": {"type": "integer", "description": "Read-time docstring ceiling in bytes (512) applied to every row of this response; always present."},
+          "docstring_clipped_rows": {"type": "integer", "description": "Number of returned rows whose docstring was clipped; 0 when none."},
+          "rank_walk": {"$ref": "#/components/schemas/RankWalk"}
+        }
+      },
       "SkippedScopesReport": {
         "type": "object",
         "description": "Scopes a refinalize (POST /api/v0/admin/recover-generations, POST /api/v0/admin/refinalize) considered but did not re-enqueue, by reason. Always present in a performed recovery, with empty objects when nothing was skipped, so a partial graph rebuild is visible to the operator (#7116).",
@@ -479,6 +521,24 @@
           "stale": {"type": "boolean", "description": "Always false on a status route: a stored row that is too old is never served. The live statements answer and reason says stale. The runtime /metrics scrape reports staleness through eshu_runtime_status_summary_stale{model_key=\"coordinator_snapshot\"}."}
         }
       },
+      "RankWalk": {
+        "type": "object",
+        "description": "Present only on a page served for a rank_cursor request. The walk reads the first window_size rows of one lane once per request and serves each walkable row exactly once. Rows past the window are never read.",
+        "required": ["lane", "order", "ranked", "page_cursor", "position", "window_rows", "window_size", "window_end", "lexical_truncated", "excluded_rows"],
+        "properties": {
+          "lane": {"type": "string", "enum": ["graph", "content"], "description": "The lane page 1 picked (find_code: graph first, content when the graph has no rows or no graph is configured; search_entity_content: always content). A different lane on a later page answers 409 basis_changed."},
+          "order": {"type": "string", "enum": ["graph_name", "hybrid", "lexical"], "description": "graph_name: the graph lane's own order (the offset pages). hybrid: quantized hybrid BM25+vector score, then entity_id. lexical: the content lane's own order (exact=true, no ranker, or no scorable row)."},
+          "ranked": {"type": "boolean", "description": "True only when order is hybrid."},
+          "page_cursor": {"type": "string", "description": "Cursor this page was served from."},
+          "next_cursor": {"type": "string", "description": "Pass as rank_cursor to read the next page; absent when window_end is true."},
+          "position": {"type": "integer", "minimum": 0, "description": "Rows the walk has served through this page."},
+          "window_rows": {"type": "integer", "minimum": 0, "maximum": 200, "description": "Walkable rows in the window."},
+          "window_size": {"type": "integer", "minimum": 200, "maximum": 200, "description": "The fixed window bound (200)."},
+          "window_end": {"type": "boolean", "description": "True when this page served the last window row."},
+          "lexical_truncated": {"type": "boolean", "description": "True when more matches exist past the window; the walk does not read them."},
+          "excluded_rows": {"type": "integer", "minimum": 0, "description": "Window rows left out of the walk because they had no entity_id or repeated one."}
+        }
+      },
       "Relationship": {
         "type": "object",
         "properties": {
@@ -533,6 +593,14 @@
       },
       "Forbidden": {
         "description": "Permission denied",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "RankCursorConflict": {
+        "description": "rank_cursor_basis_mismatch (#7746): the walk's lane, window, or ranked order changed since the cursor was returned. error.details carries reason (basis_changed or order_changed) and restart_with=\"start\"; see the RankCursorError schema.",
         "content": {
           "application/json": {
             "schema": {"$ref": "#/components/schemas/ErrorResponse"}

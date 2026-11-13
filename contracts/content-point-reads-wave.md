@@ -27,11 +27,15 @@ Transport pins:
   `GetFileLines`, `POST /api/v0/content/entities/read` through
   `GetEntityContent`.
 
-The minting rule forbids inventing pins beyond it: the search legs
-(`SearchFileContent`, `SearchEntityContent`, twins), the list legs
-(`ListRepoFiles`, `ListRepoEntities`, twins), and the scoped-entity
+The minting rule forbids inventing pins beyond it: the list legs
+(`ListRepoFiles`, `ListRepoEntities`, twins) and the scoped-entity
 leg (`GetEntityContentInRepositories`) stay explicitly out per the pin
-record and stay relay with the reason disclosed per route below.
+record and stay relay with the reason disclosed per route below. The
+search legs (`SearchFileContent`, `SearchEntityContent`, twins) were
+out of this pin and relayed until the W4 lane terminated them under
+their own pin (`ContentSearchReadAdmission v0`,
+`contracts/content-search-termination.md`,
+satellite eshu-hq/eshu-api#111) — they are not claimed here.
 
 ## Content
 
@@ -43,7 +47,9 @@ relayed reference (including the line-range slicing-edge bodies the
 pin shape requires), the no-core-import check, extended
 `viaNative`/`viaRelay` telemetry, the satellite latency evidence
 (terminated-vs-proxy-relay ratios, no same-shape before/after: the
-baseline is the still-relaying file-search proxy route), and this
+baseline was the file-search proxy route until the W4 lane terminated
+it, then the still-relayed code bundles POST —
+`docs/content-latency.md`), and this
 contract section with rollback.
 
 ## Production binding
@@ -96,11 +102,11 @@ core contact.
 Known divergences (disclosed, not hidden):
 
 - No wave route stays relay: all 3 pinned POSTs terminate. The
-  out-of-pin legs stay out with no wire change: the search legs keep
-  crossing the generic relay (`content/files/search`,
-  `content/entities/search`), the list legs and the scoped-entity leg
-  were never served here and keep their own standing until a
-  deliberate pin covers them.
+  remaining out-of-pin legs stay out with no wire change: the list
+  legs and the scoped-entity leg were never served here and keep
+  their own standing until a deliberate pin covers them. (The search
+  legs left the relay with the W4 lane —
+  `contracts/content-search-termination.md`.)
 - Non-POST spellings of the 3 paths are not registered: a keyless GET
   keeps the standing 401 at the key gate; a keyed GET crosses the
   generic relay and core judges the method (core allowlists these
@@ -118,8 +124,10 @@ content fragment: the 3 point-read entries land in
 file carries the lane entries mid-list with separator commas — not a
 paths-closing entry shaped like the Compare fragment — so the subset
 concatenates without re-shaping and no disclosed absence is recorded.
-The core file's search entries stay core-side with the still-relaying
-search legs (no served key duplicates a relayed route). The lane adds
+The core file's search entries shipped with the W4 lane in
+`openapi/paths/search/content_search.go`
+(`contracts/content-search-termination.md`) — no served key duplicates
+a relayed route. The lane adds
 the two schemas its entries reference (`FileContent`,
 `EntityContent`), ported line-verbatim into `openapi/components.json`
 from the pinned core components source. No fragment carries a

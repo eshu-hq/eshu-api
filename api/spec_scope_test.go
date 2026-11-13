@@ -172,6 +172,9 @@ func specScopeMounted() []string {
 	for _, entry := range contentWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range contentSearchWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range compareWave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -215,19 +218,21 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // A lane change (route mounted, renamed, or removed; absence
 // disclosed or lifted) moves these pins with the owning lane.
 //
-// Arithmetic (trio + D6 + Wave-1 + Wave-2 + Compare + W6a + W8a +
-// retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1
-// Freshness GETs + 3 Wave-2 Content POSTs + 1 Compare POST + 4 Code-flow
-// POSTs + 16 W8a reads + 1 retire-unclaimed POST = 201 mounted (200
-// native + 1 explicit relay leg); the disclosed-absence count is 31
-// (11 prior + 4 W6a Code-flow keys + 16 W8a fragments, each disclosed
-// core-side by its owning lane; the retire-unclaimed fragment ports
-// whole-file, so no new absence from this lane).
+// Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
+// W8a + retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3
+// Wave-1 Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search
+// POSTs + 1 Compare POST + 4 Code-flow POSTs + 16 W8a reads + 1
+// retire-unclaimed POST = 205 mounted (204 native + 1 explicit relay
+// leg); the disclosed-absence count is 31 (11 prior + 4 W6a Code-flow
+// keys + 16 W8a fragments, each disclosed core-side by its owning
+// lane; the W4 search fragment ports entry-shaped with the lane, and
+// the retire-unclaimed fragment ports whole-file, so no new absence
+// from this lane).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 201 {
-		t.Fatalf("mounted operations = %d, want 201 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 1 Compare + 4 Code-flow + 16 W8a + 1 retire-unclaimed = 200 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 205 {
+		t.Fatalf("mounted operations = %d, want 205 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4-search + 1 Compare + 4 Code-flow + 16 W8a + 1 retire-unclaimed = 204 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
 	if got := len(specScopeAbsent); got != 31 {
 		t.Fatalf("disclosed-absent operations = %d, want 31: each absence needs its disclosing contract", got)
@@ -235,7 +240,7 @@ func TestSpecScope_Frozen(t *testing.T) {
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (200 native + 1 explicit relay leg) has its served spec
+// API operation (204 native + 1 explicit relay leg) has its served spec
 // entry, for both a configured and an unconfigured core origin. Only
 // the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

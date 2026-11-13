@@ -435,6 +435,16 @@ check_fragment_subset_named_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/opena
   "d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca" \
   "ContentPointReads"
 
+# W4 Content search spec (satellite eshu-hq/eshu-api#111): the four
+# search entries are the same line-verbatim mid-list subset pattern —
+# the core file is byte-identical between the Wave-2 SHA and the W4
+# base, so the recorded whole-file hash repeats. The dest fragment is a
+# NEW wave file, never an extension of the point-reads file.
+check_fragment_subset_named_at "$SRC_SHA_W4" "go/internal/query/openapi/paths/search/content.go" \
+  "openapi/paths/search/content_search.go" \
+  "d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca" \
+  "ContentSearch"
+
 # W6a Code-flow pin (eshu-hq/eshu#10552, unwired seam): the frozen
 # method-set test, byte-identical to the merge commit at e504e328a7.
 # The pin re-declares (never embeds) exactly the one CodeFlowStore
@@ -1288,6 +1298,16 @@ check_content_components_at() {
     || fail=1
   check_block '"EntityContent": {' "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/openapi/components.go" \
     || fail=1
+  # W4 search schemas the ported entries reference (satellite
+  # eshu-hq/eshu-api#111): the entity-search response with its rank
+  # walk, and the rank-cursor conflict response. Each dest block must
+  # appear verbatim in its pinned core source at the W4 base.
+  check_block '"EntityContentSearchResponse": {' "$SRC_SHA_W4" "go/internal/query/openapi/components_entity_search.go" \
+    || fail=1
+  check_block '"RankWalk": {' "$SRC_SHA_W4" "go/internal/query/openapi/components_rank_walk.go" \
+    || fail=1
+  check_block '"RankCursorConflict": {' "$SRC_SHA_W4" "go/internal/query/openapi/components_responses.go" \
+    || fail=1
   if [[ "$fail" != "0" ]]; then
     exit 1
   fi
@@ -1716,6 +1736,30 @@ for lane in content_terminate content_wave; do
   done
 done
 echo "OK: Wave-2 Content lane files carry no dest-side store or parse"
+
+# W4 Content search lane (satellite eshu-hq/eshu-api#111): no dest-side
+# store on the lane (arbiter W4 ruling, sealed 10-method admission).
+# api/content_search_terminate.go and api/content_search_wave.go must
+# name no dest-side store, reader port, or search/list leg symbol — the
+# pin's store and readers all stay core-side, and the lane forwards the
+# request bodies opaquely (no query, form, path, or body parse). Fails
+# closed on any match (the in-suite source test
+# TestContentSearchTerm_LaneFileHygiene proves the same list).
+for lane in content_search_terminate content_search_wave; do
+  for symbol in postgres ContentStore ContentReader ReadStore SearchFileContent SearchEntityContent ListRepoFiles ListRepoEntities GetEntityContentInRepositories 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"relative_path"' '"entity_id"' '"start_line"' '"end_line"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: W4 Content search lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

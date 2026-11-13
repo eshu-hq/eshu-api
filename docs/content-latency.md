@@ -12,11 +12,12 @@ replace.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkContentRelayRead`),
-  shared-key POST (`/api/v0/content/files/search`) through the full
+  shared-key POST (`/api/v0/code/bundles`) through the full
   production chain. The legs compare different routes by necessity
-  (the wave paths now terminate; the out-of-pin file search POST
-  still relays); every leg does exactly one server-side fetch, so the
-  1.50 bound stays a real pathology check.
+  (the wave paths now terminate; the W4 search lane terminated the
+  file search POST too, so the relay rides the still-relayed code
+  bundles POST no wave table covers); every leg does exactly one
+  server-side fetch, so the 1.50 bound stays a real pathology check.
 - After legs: the terminated Wave-2 reads
   (`BenchmarkContentTerminatedRead`), shared-key POSTs
   (`/api/v0/content/files/read`,
@@ -35,21 +36,23 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The Wave-2 lane terminates the point reads but not the search legs,
-so the lane relays against the out-of-pin search route that stays on
-the generic proxy: `POST /api/v0/content/files/search` (Content
-family, still relayed). Same-method legs, so every lane gates
+The Wave-2 lane terminates the point reads, and the W4 lane the
+search legs, so the lane relays against the still-relayed code route
+that no wave table covers: `POST /api/v0/code/bundles` (Code family,
+still relayed). Same-method legs, so every lane gates
 terminated-vs-relay again instead of terminated-vs-terminated.
 
-## Numbers (local, 2026-11-10 Wave-2 lane)
+## Numbers (local, 2026-11-12 W4 re-point)
 
-Shared host, in-process stub core (`go test` benchmarks, 2000x5):
+Shared host, in-process stub core (`go test` benchmarks, 2000x5).
+Re-measured when the W4 lane re-pointed the relay leg from the
+terminated file search POST to the still-relayed code bundles POST:
 
 | Leg | Terminated (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Files-read POST | 91531 | 93587 | 0.98 | ≤ 1.50 |
-| Files-lines POST | 92692 | 93587 | 0.99 | ≤ 1.50 |
-| Entities-read POST | 96961 | 93587 | 1.04 | ≤ 1.50 |
+| Files-read POST | 91327 | 92140 | 0.99 | ≤ 1.50 |
+| Files-lines POST | 90320 | 92140 | 0.98 | ≤ 1.50 |
+| Entities-read POST | 91511 | 92140 | 0.99 | ≤ 1.50 |
 
 Within budget on all three legs: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment
