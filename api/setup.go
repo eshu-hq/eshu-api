@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-// Setup native-dispatch routes (D10: tier-C POSTs plus a terminated
-// GET): the four pre-auth first-run wizard routes. They are
+// Setup native-dispatch routes (D10 GET plus W7-writers trio): the
+// four pre-auth first-run wizard routes. They are
 // registered explicitly OUTSIDE RequireAuth, ahead of the generic
 // /api/ proxy, because a fresh deployment has no session, bearer, or
 // prior credential to present. Route shapes are confirmed against
@@ -25,7 +25,7 @@ const (
 	setupMFARoute   = "POST /api/v0/auth/setup/mfa"
 )
 
-// setupMutationRoutes lists the three tier-C write-through routes of
+// setupMutationRoutes lists the three terminated-writer routes of
 // the Setup family in registration order. The setup-state GET is not
 // listed here: it terminates via the SetupNeeded port (see
 // setup_terminate.go). The carve-out stays exactly four public routes

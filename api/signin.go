@@ -9,10 +9,11 @@ import (
 )
 
 // signInPolicyRoute is the single native-dispatch route of the
-// SignInPolicyMutations family (tier C-a): the admin sign-in policy
-// partial update. It is registered explicitly inside RequireAuth, ahead
-// of the generic /api/ proxy, with the AllScopes family authorizer; the
-// family's reads and every other family still cross the byte-relay.
+// SignInPolicyMutations family (terminated writer): the admin sign-in
+// policy partial update. It is registered explicitly behind the
+// signInPolicyWriterGate family gate, ahead of the generic /api/ proxy,
+// with the AllScopes family authorizer; the family's reads and every
+// other family still cross the byte-relay.
 const signInPolicyRoute = "PATCH /api/v0/auth/admin/sign-in-policy"
 
 // signInPolicyWriteThrough is the W7-writers terminated writer for
@@ -44,8 +45,8 @@ func (s *Server) signInPolicyWriteThrough(w http.ResponseWriter, r *http.Request
 	s.signInPolicyWriteThroughAs(w, r, true)
 }
 
-// signInPolicyWriteThroughAs is the testable core of the tier C-a
-// handler: allScopes is the resolved caller scope. The route always
+// signInPolicyWriteThroughAs is the testable core of the terminated
+// writer: allScopes is the resolved caller scope. The route always
 // passes true today (the shared key maps to AllScopes in core); the
 // false branch is the hookup point for the day dest gains a
 // scoped/session resolver, and it stays a plain deny until then. Like

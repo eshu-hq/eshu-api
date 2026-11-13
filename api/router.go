@@ -424,7 +424,8 @@ func (s *Server) routes() *http.ServeMux {
 	// spellings keep the standing 401. The public registration is
 	// exactly these two; the admin sign-in-policy GET terminates on
 	// its family lane (see api/signinpolicy_admin_terminate.go) and
-	// the PATCH stays on its RequireAuth write-through.
+	// the PATCH terminates behind its family writer gate (see
+	// api/signin.go).
 	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
 	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
 	// D2 wave-public carve-out (core-public parity): the routes core

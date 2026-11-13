@@ -45,8 +45,9 @@ or DB handle — only prose mentions of core-side store outages).
   `contracts/signin-policy-admin-read-wave.md`) — same forward
   semantics the wave-gated loop served, now under the family
   authorizer with its own parity proof.
-- `PATCH /api/v0/auth/admin/sign-in-policy` stays on its RequireAuth
-  tier-C write-through.
+- `PATCH /api/v0/auth/admin/sign-in-policy` terminates behind the
+  family writer gate (`signInPolicyWriterGate`: shared-key terminates
+  natively, foreign classes relay explicitly).
 - Trailing-slash twins, deeper subtrees, and non-GET spellings of the
   two public paths stay on the generic relay behind RequireAuth:
   keyless callers keep the standing 401 with zero core contact;

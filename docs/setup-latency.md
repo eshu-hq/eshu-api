@@ -3,8 +3,9 @@
 D10 latency record for the setup lane (Refs `eshu-hq/eshu#9669`,
 part of `eshu-hq/eshu#6707`). The census assigns the satellite this
 gate: core keeps the contract-registry and static-contract gates;
-this repo proves the terminated setup-state GET and the tier-C setup
-claim POST are not slower than the relay they replace.
+this repo proves the terminated setup-state GET and the
+terminated-writer setup trio (claim/admin/mfa) are not slower than the
+relay they replace.
 
 ## Method
 
