@@ -72,13 +72,11 @@ func TestContentPointReadsTerminatedMatchesRelayByteForByte(t *testing.T) {
 					nativeMux := http.NewServeMux()
 					nativeMux.Handle("/", nativeCore.handler())
 					nativeUpstream := httptest.NewServer(nativeMux)
-					defer nativeUpstream.Close()
 
 					relayCore := &stubCore{status: outcome.status, header: relayHeaders(outcome.header), body: outcome.body}
 					relayMux := http.NewServeMux()
 					relayMux.Handle("/", relayCore.handler())
 					relayUpstream := httptest.NewServer(relayMux)
-					defer relayUpstream.Close()
 
 					build := func(target, body string) *http.Request {
 						req := contentAuthedPost(target, body, accept)
@@ -100,11 +98,13 @@ func TestContentPointReadsTerminatedMatchesRelayByteForByte(t *testing.T) {
 					relaySrv.instrumented(viaRelay, RequireAuth(skeletonTestKey, http.HandlerFunc(relaySrv.dispatch))).ServeHTTP(relayRec, build(route.path, route.body))
 
 					nativeRes, relayRes := nativeRec.Result(), relayRec.Result()
+					nativeBody, _ := io.ReadAll(nativeRes.Body)
+					relayBody, _ := io.ReadAll(relayRes.Body)
+					nativeUpstream.Close()
+					relayUpstream.Close()
 					if nativeRes.StatusCode != relayRes.StatusCode {
 						t.Fatalf("native status = %d, relay status = %d, want identical", nativeRes.StatusCode, relayRes.StatusCode)
 					}
-					nativeBody, _ := io.ReadAll(nativeRes.Body)
-					relayBody, _ := io.ReadAll(relayRes.Body)
 					if string(nativeBody) != string(relayBody) {
 						t.Errorf("native body = %q, relay body = %q, want identical", nativeBody, relayBody)
 					}

@@ -274,7 +274,6 @@ func TestD8Native_MatchesRelayByteForByte(t *testing.T) {
 				relayMux := http.NewServeMux()
 				relayMux.Handle("/", relayCore.handler())
 				relayUpstream := httptest.NewServer(relayMux)
-				defer relayUpstream.Close()
 
 				relaySrv := NewServer(relayUpstream.URL, skeletonTestKey)
 				legacy := relaySrv.instrumented(viaRelay, RequireAuth(relaySrv.apiKey, http.HandlerFunc(relaySrv.dispatch)))
@@ -287,6 +286,7 @@ func TestD8Native_MatchesRelayByteForByte(t *testing.T) {
 				legacy.ServeHTTP(relayRec, relayReq)
 				relayResult := relayRec.Result()
 				relayBody, _ := io.ReadAll(relayResult.Body)
+				relayUpstream.Close()
 
 				if nativeRec.Code != relayRec.Code {
 					t.Errorf("%s %s Accept %q: native status = %d, relay status = %d, want equal",
