@@ -42,6 +42,7 @@ SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
 SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
 SRC_SHA_DEAD="8b28c0dba5f12c3b1b11c90fac6b24cfe5d82875"
 SRC_SHA_GRAPH="0fd6db6deb38beaa9327ba015af5bd279729f8ae"
+SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -1651,6 +1652,24 @@ check_file_at "$SRC_SHA_GRAPH" "go/internal/query/codequery/code_graph_read_admi
 check_excerpt_at "$SRC_SHA_GRAPH" "contracts/upstream/code-graph-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_graph_read_admission.go"
 
+# Satellite divergence termination (eshu-hq/eshu-api#125): the
+# CodeDivergenceReadAdmission v0 pin, minted core-side (unwired,
+# arbiter-approved SUPPLEMENTAL-PIN-OWED). The vendored pin and contract
+# test are byte-identical at the merge commit; the wire-shapes excerpt
+# carries the version const stanza, the in-scope route list, the
+# 6-method interface, the divergenceStore/GraphQuery mirror assertion,
+# and the surrounding contract comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_DIVERGENCE" "go/internal/query/codequery/code_divergence_read_admission.go" \
+  "contracts/upstream/code_divergence_read_admission.go" \
+  "38ea53daa80291b1adc5a63c01e98a87310c7ebfb6a22679cb3323593086fd50"
+
+check_file_at "$SRC_SHA_DIVERGENCE" "go/internal/query/codequery/code_divergence_read_admission_contract_test.go" \
+  "contracts/upstream/code_divergence_read_admission_contract_test.go" \
+  "869d84a35deb8f02b508dab7f5370294ca263a11cf4b44201862e3f991c4c759"
+
+check_excerpt_at "$SRC_SHA_DIVERGENCE" "contracts/upstream/code-divergence-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_divergence_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1689,6 +1708,7 @@ grep -qF 'CodeSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts
 grep -qF 'CloudRuntimeDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt"
 grep -qF 'IaCDeadContentAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-dead-content-wire-shapes.txt"
 grep -qF 'CodeGraphReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-graph-read-wire-shapes.txt"
+grep -qF 'CodeDivergenceReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-divergence-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1922,6 +1942,33 @@ for lane in code_graph_terminate code_graph_wave; do
   done
 done
 echo "OK: Wave-7 G-a lane files carry no dest-side store or parse"
+
+# Satellite divergence termination (eshu-hq/eshu-api#125): no
+# dest-side store, port, or parse of the divergence reads on the
+# lane (arbiter SUPPLEMENTAL-PIN-OWED ruling, sealed 6-method
+# admission, no transport constructor by design).
+# api/divergence_terminate.go and api/divergence_wave.go must name no
+# dest-side store, reader port, or out-of-pin leg symbol — the pin's
+# graph reader, content reader, and out-of-pin search/list/summary/
+# ledger legs all stay core-side, and the lane forwards the request
+# bodies opaquely (no query, form, path, or body-key parse). Fails
+# closed on any match (the in-suite source test
+# TestDivergenceTerm_LaneFileHygiene proves the same list).
+for lane in divergence_terminate divergence_wave; do
+  for symbol in postgres CodeDivergenceReadAdmission GraphQuery ContentStore ContentReader ReadStore DivergenceGroupStats DivergenceMembers DriftedFinding 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"kind"' '"fingerprint"' '"limit"' '"offset"' '"include_tests"' '"top_per_kind"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: divergence lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

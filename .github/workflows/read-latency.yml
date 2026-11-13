@@ -13,7 +13,7 @@
 # Content point reads, the W4 terminated Content search reads, the
 # W4 Code search terminated reads, the W7-read terminated admin
 # sign-in-policy GET, the W7-writers terminated admin sign-in-policy
-# PATCH, and the W3 IaC-6 terminated legs
+# PATCH, the W3 IaC-6 terminated legs, and the divergence 3 terminated legs
 # must not regress past 1.50x of the generic byte-relay on the
 # hermetic stub-core legs (scripts/measure-leafb-latency.sh,
 # scripts/measure-d3-latency.sh, scripts/measure-d4-latency.sh,
@@ -32,7 +32,8 @@
 # scripts/measure-code-search-latency.sh,
 # scripts/measure-code-graph-latency.sh,
 # scripts/measure-drift-latency.sh,
-# scripts/measure-iac-latency.sh).
+# scripts/measure-iac-latency.sh,
+# scripts/measure-divergence-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -74,6 +75,7 @@ on:
       - 'scripts/measure-code-graph-latency.sh'
       - 'scripts/measure-drift-latency.sh'
       - 'scripts/measure-iac-latency.sh'
+      - 'scripts/measure-divergence-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -281,5 +283,14 @@ jobs:
             echo "## W3 IaC-6 latency (stub-core, median ns/op)"
             echo '```'
             cat iac-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Divergence 3 termination latency
+        run: |
+          bash scripts/measure-divergence-latency.sh 2>&1 | tee divergence-latency.log
+          {
+            echo "## Divergence 3 latency (stub-core, median ns/op)"
+            echo '```'
+            cat divergence-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
