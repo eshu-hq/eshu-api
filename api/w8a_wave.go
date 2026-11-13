@@ -60,14 +60,15 @@ import (
 // Scoping line (hard, from the pin contracts and the arbiter W8a
 // ruling): recording a pin whole never authorizes terminating routes
 // beyond these 16. The IaC legs outside the W3 IaC-6 slice, the
-// index-status Neo4j-count legs, the impact packet, and the
-// code-graph-metrics POST stay relay with the reason disclosed per
-// route in the contract; unused pin methods (the IaC
-// Run/Summary/Reachability trio on these routes) stay unconsumed.
-// (GET /api/v0/iac/resources terminated natively in the W3 lane on its
-// own supplemental pin; the two drift routes terminate natively in
-// the Wave-4 Drift lane on the CloudRuntimeDrift pin — see
-// api/drift_wave.go.)
+// index-status Neo4j-count legs, and the impact packet stay relay
+// with the reason disclosed per route in the contract; unused pin
+// methods (the IaC Run/Summary/Reachability trio on these routes)
+// stay unconsumed. (GET /api/v0/iac/resources terminated natively in
+// the W3 lane on its own supplemental pin; the two drift routes
+// terminate natively in the Wave-4 Drift lane on the CloudRuntimeDrift
+// pin — see api/drift_wave.go; POST /api/v0/code/call-graph/metrics
+// terminated natively in the Wave-7 G-a lane on the CodeGraph pin —
+// see api/code_graph_wave.go.)
 //
 // The route stays inside RequireAuth: the wave gate below answers
 // every credential shape (shared-key terminate, foreign-class relay,

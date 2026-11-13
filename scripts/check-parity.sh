@@ -41,6 +41,7 @@ SRC_SHA_DRIFT="d81bd1280212745a2a3215f988087e1b92bd828"
 SRC_SHA_RETIREUNCLAIMED="bc150cc0c6ff38cc0752f8a588af2afb5fafa9ae"
 SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
 SRC_SHA_DEAD="8b28c0dba5f12c3b1b11c90fac6b24cfe5d82875"
+SRC_SHA_GRAPH="0fd6db6deb38beaa9327ba015af5bd279729f8ae"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -1632,6 +1633,24 @@ check_file_at "$SRC_SHA_DEAD" "go/internal/query/iac/dead_content_admission_exte
 check_excerpt_at "$SRC_SHA_DEAD" "contracts/upstream/iac-dead-content-wire-shapes.txt" \
   "go/internal/query/iac/dead_content_admission.go"
 
+# Satellite Wave-7 G-a termination (eshu-hq/eshu-api#121): the
+# CodeGraphReadAdmission v0 pin, minted core-side (unwired,
+# arbiter-approved SPLIT). The vendored pin and contract test are
+# byte-identical at the merge commit; the wire-shapes excerpt carries
+# the version const stanza, the in-scope route list, the 3-method
+# interface, the GraphQuery/ContentStore mirror assertion, and the
+# surrounding contract comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_GRAPH" "go/internal/query/codequery/code_graph_read_admission.go" \
+  "contracts/upstream/code_graph_read_admission.go" \
+  "1ef71affe095a4fa9ca4732f6cff28601e159b6e26c21c1acb0ae864511fbeac"
+
+check_file_at "$SRC_SHA_GRAPH" "go/internal/query/codequery/code_graph_read_admission_contract_test.go" \
+  "contracts/upstream/code_graph_read_admission_contract_test.go" \
+  "d0a621c8d1d4ca4d809a5ce6acd9512cca651ee6efe9497b884f754e6de403ae"
+
+check_excerpt_at "$SRC_SHA_GRAPH" "contracts/upstream/code-graph-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_graph_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1669,6 +1688,7 @@ grep -qF 'ContentSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contra
 grep -qF 'CodeSearchReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-search-read-wire-shapes.txt"
 grep -qF 'CloudRuntimeDriftReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/cloud-runtime-drift-read-wire-shapes.txt"
 grep -qF 'IaCDeadContentAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/iac-dead-content-wire-shapes.txt"
+grep -qF 'CodeGraphReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-graph-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -1875,6 +1895,33 @@ for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"
   fi
 done
 echo "OK: Wave-5 dead-route lane file carries no dest-side Content or parse"
+
+# Satellite Wave-7 G-a termination (eshu-hq/eshu-api#121): no
+# dest-side store, port, or parse of the graph/content reads on the
+# lane (arbiter Wave-7 ruling, sealed 3-method admission, no transport
+# constructor by design). api/code_graph_terminate.go and
+# api/code_graph_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pin's graph
+# reader, content reader, and out-of-pin relationship/summary/ledger
+# legs all stay core-side, and the lane forwards the request bodies
+# opaquely (no query, form, path, or body-key parse). Fails closed on
+# any match (the in-suite source test
+# TestCodeGraphTerm_LaneFileHygiene proves the same list).
+for lane in code_graph_terminate code_graph_wave; do
+  for symbol in postgres CodeGraphReadAdmission GraphQuery ContentStore ContentReader ReadStore RunSingle SearchEntitiesByName 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"cross_repo"' '"start_repo_id"' '"end_repo_id"' '"max_depth"' '"max_paths"' '"metric_type"' '"limit"' '"offset"' '"method"' '"service_id"' '"service_name"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: Wave-7 G-a lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/
