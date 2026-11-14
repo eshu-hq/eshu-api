@@ -142,6 +142,22 @@ func (t *Telemetry) render() string {
 	writeCounter("eshu_api_authorizer_total",
 		"Family authorizer judgments by route family and decision.", authorizerRows)
 
+	var readinessRows []string
+	for _, result := range sortedKeys(snap.readiness) {
+		reasons := make([]string, 0, len(snap.readiness[result]))
+		for reason := range snap.readiness[result] {
+			reasons = append(reasons, reason)
+		}
+		sort.Strings(reasons)
+		for _, reason := range reasons {
+			readinessRows = append(readinessRows, fmt.Sprintf(
+				`eshu_api_readiness_total{result="%s",reason="%s"} %d`,
+				result, reason, snap.readiness[result][reason]))
+		}
+	}
+	writeCounter("eshu_api_readiness_total",
+		"Readiness probe verdicts by result and closed failure reason.", readinessRows)
+
 	writeCounter("eshu_api_audit_drops_total",
 		"Swallowed audit-append failures observed through the Leaf A drop-observer hook.",
 		[]string{"eshu_api_audit_drops_total " + strconv.FormatUint(snap.auditDrops, 10)})

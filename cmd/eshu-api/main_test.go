@@ -11,31 +11,26 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
-// TestHandlerServesHealthPins the binary surface: /health answers the
-// contract versions and the configured origin, /readyz answers the probe
-// shape, both without a credential, through the production chain.
+// TestHandlerServesHealth pins the binary surface: /health answers the
+// contract versions and the configured origin regardless of core
+// reachability, /readyz answers 200 with a live core and 503 with a
+// dead one, all without a credential, through the production chain.
 func TestHandlerServesHealth(t *testing.T) {
 	t.Parallel()
 
 	srv := newServer("https://core:8443", "key", slog.New(slog.NewTextHandler(io.Discard, nil)))
 	handler := srv.handler()
 
-	for _, path := range []string{"/health", "/readyz"} {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Fatalf("GET %s = %d, want 200", path, rec.Code)
-		}
-	}
-
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET /health = %d, want 200 with a dead core", rec.Code)
+	}
 	body, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
 		t.Fatalf("read /health body: %v", err)
@@ -44,11 +39,53 @@ func TestHandlerServesHealth(t *testing.T) {
 	if err := json.Unmarshal(body, &decoded); err != nil {
 		t.Fatalf("decode /health body %q: %v", body, err)
 	}
-	if decoded["core_read_contracts"] != "v0" || decoded["admission_contracts"] != "v0" {
+	if decoded["core_read_contracts"] != "v0" || decoded["suppression_admission_contracts"] != "v0" {
 		t.Errorf("/health contracts = %v, want the pinned v0 versions", decoded)
 	}
 	if decoded["core"] != "https://core:8443" {
 		t.Errorf("/health core = %q, want the configured origin", decoded["core"])
+	}
+
+	readyReq := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	readyRec := httptest.NewRecorder()
+	handler.ServeHTTP(readyRec, readyReq)
+	if readyRec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("GET /readyz with a dead core = %d, want 503", readyRec.Code)
+	}
+
+	live := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer live.Close()
+	liveSrv := newServer(live.URL, "key", slog.New(slog.NewTextHandler(io.Discard, nil)))
+	liveHandler := liveSrv.handler()
+	liveReq := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	liveRec := httptest.NewRecorder()
+	liveHandler.ServeHTTP(liveRec, liveReq)
+	if liveRec.Code != http.StatusOK {
+		t.Fatalf("GET /readyz with a live core = %d, want 200", liveRec.Code)
+	}
+}
+
+// TestBuildServerSetsTimeouts pins the production server bounds: every
+// connection timeout is set, so no slow client can hold a worker
+// indefinitely, and the write bound clears the 30 s relay budget.
+func TestBuildServerSetsTimeouts(t *testing.T) {
+	t.Parallel()
+
+	srv := buildServer(":0", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+
+	if srv.ReadHeaderTimeout != serverReadHeaderTimeout || serverReadHeaderTimeout <= 0 {
+		t.Errorf("ReadHeaderTimeout = %v, want the positive pinned bound", srv.ReadHeaderTimeout)
+	}
+	if srv.ReadTimeout != serverReadTimeout || serverReadTimeout <= 0 {
+		t.Errorf("ReadTimeout = %v, want the positive pinned bound", srv.ReadTimeout)
+	}
+	if srv.WriteTimeout != serverWriteTimeout || serverWriteTimeout <= 30*time.Second {
+		t.Errorf("WriteTimeout = %v, want a bound clearing the 30 s relay budget", srv.WriteTimeout)
+	}
+	if srv.IdleTimeout != serverIdleTimeout || serverIdleTimeout <= 0 {
+		t.Errorf("IdleTimeout = %v, want the positive pinned bound", srv.IdleTimeout)
 	}
 }
 

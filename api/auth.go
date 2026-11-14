@@ -24,6 +24,45 @@ const EnvelopeMIME = "application/eshu.envelope+json"
 // ("unauthenticated") so the extracted path keeps the live wire value.
 const unauthenticatedCode = "unauthenticated"
 
+// Local-error reasons: the closed details.reason vocabulary for
+// errors this server synthesizes itself. The relay-lane 503 reasons
+// (connection_refused, timeout, other, unconfigured) live in
+// dispatch.go and are shared, never redefined, so the probe body, the
+// readiness metric, and the relay lane read as one vocabulary. The
+// two gate reasons below complete the set: every local 401 names
+// authentication_required and every local 403 names forbidden,
+// uniformly, so callers get a reason beside the code.
+const (
+	reasonAuthenticationRequired = "authentication_required"
+	reasonForbidden              = "forbidden"
+)
+
+// localErrorDetails maps one locally synthesized error to its closed
+// details reason, or nil when the shape stays bare. 403 always names
+// forbidden. 503 with the backend_unavailable code names unconfigured
+// when the message says the origin is not configured (the fail-closed
+// shape every native lane shares) and other otherwise — the remaining
+// local 503s (an oversize ACS form, a failed terminated-lane core
+// fetch) are genuinely not configuration states, so they must not
+// borrow that reason. Every other status keeps the historical bare
+// shape, and relayed core bytes never reach this mapping.
+func localErrorDetails(status int, code, message string) map[string]string {
+	switch status {
+	case http.StatusForbidden:
+		return map[string]string{"reason": reasonForbidden}
+	case http.StatusServiceUnavailable:
+		if code != backendUnavailableCode {
+			return nil
+		}
+		if strings.Contains(message, "not configured") {
+			return map[string]string{"reason": reasonUnconfigured}
+		}
+		return map[string]string{"reason": reasonOther}
+	default:
+		return nil
+	}
+}
+
 // CorrelationID returns the request's correlation ID: the
 // X-Correlation-ID or X-Request-ID header when present, or a random
 // 16-byte hex identifier otherwise (falling back to a nanosecond
@@ -50,9 +89,10 @@ func acceptsEnvelope(r *http.Request) bool {
 // errorBody is the plain (non-envelope) error shape served to callers
 // that did not negotiate the envelope. Keyed to match the live
 // unauthenticated response: error_code, message, correlation_id.
-// Details carries the closed reason vocabulary on synthesized relay
-// failures (see dispatch.go); it stays absent otherwise so success and
-// unrelated error bytes never change.
+// Details carries the closed reason vocabulary on locally synthesized
+// errors (see localErrorDetails), including the relay-lane 503
+// reasons (see dispatch.go); it stays absent otherwise so success,
+// relayed core bytes, and unrelated error bytes never change.
 type errorBody struct {
 	ErrorCode     string            `json:"error_code"`
 	Message       string            `json:"message"`
@@ -61,8 +101,8 @@ type errorBody struct {
 }
 
 // envelopeError is the error section of the negotiated Eshu envelope.
-// Details mirrors the plain shape: present only on synthesized relay
-// failures, absent everywhere else.
+// Details mirrors the plain shape: present on locally synthesized
+// errors, absent everywhere else.
 type envelopeError struct {
 	Code          string            `json:"code"`
 	Message       string            `json:"message"`
@@ -92,17 +132,23 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 // WriteUnauthorized writes a 401 JSON error response. Its
 // WWW-Authenticate header is the bare "Bearer" challenge. Callers that
 // negotiated the envelope get the envelope error shape; everyone else
-// gets the plain error_code shape. Ported behavior from
-// querycontract.WriteUnauthorized in eshu.
+// gets the plain error_code shape. Both shapes name the closed
+// authentication_required reason in details. The reason stays uniform
+// across the missing-credential, wrong-credential, and
+// unconfigured-server paths on purpose: distinguishing them would leak
+// server configuration state to unauthenticated callers. Ported
+// behavior from querycontract.WriteUnauthorized in eshu.
 func WriteUnauthorized(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("WWW-Authenticate", "Bearer")
 	correlationID := CorrelationID(r)
+	details := map[string]string{"reason": reasonAuthenticationRequired}
 	if acceptsEnvelope(r) {
 		writeJSON(w, http.StatusUnauthorized, envelope{
 			Error: &envelopeError{
 				Code:          unauthenticatedCode,
 				Message:       "authentication is required",
 				CorrelationID: correlationID,
+				Details:       details,
 			},
 		})
 		return
@@ -111,6 +157,7 @@ func WriteUnauthorized(w http.ResponseWriter, r *http.Request) {
 		ErrorCode:     unauthenticatedCode,
 		Message:       "authentication is required",
 		CorrelationID: correlationID,
+		Details:       details,
 	})
 }
 

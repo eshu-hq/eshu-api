@@ -247,3 +247,87 @@ func TestR130_ApiDocDoesNotRouteReadsThroughReadclient(t *testing.T) {
 		t.Errorf("api/doc.go still routes versioned read-contract use through internal/readclient, which production code never calls")
 	}
 }
+
+// TestR130_ReadinessMetricFilesVerdict pins the operator signal for
+// item 1: every /readyz verdict files the readiness counter with the
+// closed result and reason, so a failing probe is visible on /metrics
+// without reading the probe body.
+func TestR130_ReadinessMetricFilesVerdict(t *testing.T) {
+	t.Parallel()
+
+	dead := NewServer("http://127.0.0.1:1", skeletonTestKey)
+	deadHandler := dead.Handler(DefaultV0Sunset)
+	deadRec := httptest.NewRecorder()
+	deadHandler.ServeHTTP(deadRec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if deadRec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("dead-core /readyz = %d, want 503", deadRec.Code)
+	}
+	deadSnap := dead.telemetry.snapshot()
+	deadTotal := uint64(0)
+	deadReason := ""
+	for reason, count := range deadSnap.readiness[readinessNotReady] {
+		deadTotal += count
+		deadReason = reason
+	}
+	if deadTotal != 1 || deadReason == "" {
+		t.Errorf("dead-core readiness = %v, want one not_ready verdict with a closed reason", deadSnap.readiness)
+	}
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+	live := NewServer(upstream.URL, skeletonTestKey)
+	liveRec := httptest.NewRecorder()
+	live.Handler(DefaultV0Sunset).ServeHTTP(liveRec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if liveRec.Code != http.StatusOK {
+		t.Fatalf("live-core /readyz = %d, want 200", liveRec.Code)
+	}
+	if got := live.telemetry.snapshot().readiness[readinessReady][readinessReasonNone]; got != 1 {
+		t.Errorf("live-core readiness = %v, want one ready/none verdict", live.telemetry.snapshot().readiness)
+	}
+
+	rendered := dead.telemetry.render()
+	if !strings.Contains(rendered, `eshu_api_readiness_total{result="not_ready",reason="`+deadReason+`"} 1`) {
+		t.Errorf("/metrics lacks the not_ready row:\n%s", rendered)
+	}
+}
+
+// TestR130_LocalErrorDetailsMapping pins the closed details vocabulary
+// for item 2: 403 always names forbidden, the fail-closed 503 names
+// unconfigured, other local 503s name other, and anything else stays
+// bare so unrelated error bytes never change.
+func TestR130_LocalErrorDetailsMapping(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		status  int
+		code    string
+		message string
+		want    string
+	}{
+		{"forbidden names forbidden", http.StatusForbidden, "Forbidden", "all-scopes operator authorization is required", "forbidden"},
+		{"fail-closed 503 names unconfigured", http.StatusServiceUnavailable, backendUnavailableCode, "eshu-api: core origin is not configured; no core routes are served", "unconfigured"},
+		{"oversize-form 503 names other", http.StatusServiceUnavailable, backendUnavailableCode, "eshu-api: ACS form exceeds the size bound; no core routes are served", "other"},
+		{"fetch-failed 503 names other", http.StatusServiceUnavailable, backendUnavailableCode, "eshu-api: core fetch failed; no core routes are served", "other"},
+		{"foreign-code 503 stays bare", http.StatusServiceUnavailable, "try_again", "something else", ""},
+		{"not-found stays bare", http.StatusNotFound, "Not Found", "eshu-api: unknown SAML terminated route; no core routes are served", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := localErrorDetails(tc.status, tc.code, tc.message)
+			if tc.want == "" {
+				if got != nil {
+					t.Errorf("localErrorDetails(%d, %q) = %v, want nil (bare shape)", tc.status, tc.code, got)
+				}
+				return
+			}
+			if got["reason"] != tc.want {
+				t.Errorf("localErrorDetails(%d, %q) = %v, want reason %q", tc.status, tc.code, got, tc.want)
+			}
+		})
+	}
+}

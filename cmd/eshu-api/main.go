@@ -62,12 +62,35 @@ func run(args []string, logOut *slog.Logger) error {
 		"admission_contracts", api.SuppressionAdmissionContractVersion,
 		"addr", *addr,
 	)
-	httpServer := &http.Server{
-		Addr:              *addr,
-		Handler:           srv.handler(),
-		ReadHeaderTimeout: 5 * time.Second,
+	return buildServer(*addr, srv.handler()).ListenAndServe()
+}
+
+// Server timeouts. ReadHeaderTimeout stays the first bound a slow
+// client meets; ReadTimeout then bounds the full request read so a
+// dripping body cannot hold a connection indefinitely. WriteTimeout
+// clears the 30 s relay bound (api.dispatchTimeout) with room for the
+// body copy, so it never cuts a relay that is still within its own
+// budget — it only bounds a genuinely stuck write. IdleTimeout
+// recycles idle keep-alive connections.
+const (
+	serverReadHeaderTimeout = 5 * time.Second
+	serverReadTimeout       = 10 * time.Second
+	serverWriteTimeout      = 45 * time.Second
+	serverIdleTimeout       = 60 * time.Second
+)
+
+// buildServer assembles the production HTTP server: the dispatch
+// chain with every connection bound set, so no slow client can hold
+// a worker indefinitely.
+func buildServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: serverReadHeaderTimeout,
+		ReadTimeout:       serverReadTimeout,
+		WriteTimeout:      serverWriteTimeout,
+		IdleTimeout:       serverIdleTimeout,
 	}
-	return httpServer.ListenAndServe()
 }
 
 func main() {

@@ -35,8 +35,9 @@ func authedRequest(method, target string) *http.Request {
 }
 
 // TestRouter_HealthAndReadyArePublic pins the unauthenticated probes:
-// health advertises the served contract versions, readyz answers the
-// probe shape, and neither requires a credential.
+// health advertises the served contract versions regardless of core
+// reachability, readyz reflects it (200 with a live core, 503 with a
+// dead or unconfigured one), and neither requires a credential.
 func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 	t.Parallel()
 
@@ -48,8 +49,8 @@ func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Fatalf("GET %s status = %d, want 200", path, rec.Code)
+		if path == "/health" && rec.Code != http.StatusOK {
+			t.Fatalf("GET %s status = %d, want 200 (health never reflects reachability)", path, rec.Code)
 		}
 		if got := rec.Header().Get("Deprecation"); got != "" {
 			t.Fatalf("GET %s Deprecation = %q, want empty on probes", path, got)
@@ -65,7 +66,7 @@ func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 	if health["status"] != "ok" || health["service"] != "eshu-api" {
 		t.Errorf("/health = %v, want status ok for eshu-api", health)
 	}
-	if health["core_read_contracts"] != "v0" || health["admission_contracts"] != "v0" {
+	if health["core_read_contracts"] != "v0" || health["suppression_admission_contracts"] != "v0" {
 		t.Errorf("/health contracts = %v, want the pinned v0 versions", health)
 	}
 	for _, key := range []string{
@@ -94,14 +95,41 @@ func TestRouter_HealthAndReadyArePublic(t *testing.T) {
 		t.Errorf("/health core = %q, want the configured origin", health["core"])
 	}
 
-	ready := func() map[string]string {
+	// With a dead core origin the probe reads not-ready: 503 with the
+	// closed failure reason, while /health above stayed 200.
+	readyNotReady := func() map[string]any {
 		req := httptest.NewRequest("GET", "/readyz", nil)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusServiceUnavailable {
+			t.Fatalf("GET /readyz with a dead core = %d, want 503", rec.Code)
+		}
+		return decodeBody(t, rec)
+	}()
+	if readyNotReady["status"] != "unavailable" {
+		t.Errorf("/readyz = %v, want status unavailable with a dead core", readyNotReady)
+	}
+	readyDetails, _ := readyNotReady["details"].(map[string]any)
+	if readyDetails["reason"] == nil || readyDetails["reason"] == "" {
+		t.Errorf("/readyz = %v, want a closed details.reason with a dead core", readyNotReady)
+	}
+
+	// With a live core the probe keeps the historical 200 shape.
+	live := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer live.Close()
+	liveReady := func() map[string]string {
+		req := httptest.NewRequest("GET", "/readyz", nil)
+		rec := httptest.NewRecorder()
+		NewServer(live.URL, skeletonTestKey).Handler(DefaultV0Sunset).ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("GET /readyz with a live core = %d, want 200", rec.Code)
+		}
 		return decodeMap(t, rec)
 	}()
-	if ready["service"] != "eshu-api" || ready["probe"] != "readyz" || ready["status"] != "ok" {
-		t.Errorf("/readyz = %v, want the service/probe/status shape", ready)
+	if liveReady["service"] != "eshu-api" || liveReady["probe"] != "readyz" || liveReady["status"] != "ok" {
+		t.Errorf("/readyz = %v, want the service/probe/status shape", liveReady)
 	}
 }
 
@@ -132,7 +160,7 @@ func TestRouter_FullChain(t *testing.T) {
 		if got := rec.Header().Get("Sunset"); got != DefaultV0Sunset {
 			t.Fatalf("Sunset = %q, want the default horizon", got)
 		}
-		decoded := decodeMap(t, rec)
+		decoded := decodeBody(t, rec)
 		if decoded["error_code"] != "unauthenticated" {
 			t.Errorf("error_code = %q, want 'unauthenticated'", decoded["error_code"])
 		}

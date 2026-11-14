@@ -51,6 +51,7 @@ type telemetrySnapshot struct {
 	dispatches         map[string]map[string]map[string]uint64
 	coreLatencies      map[string]map[string]histSnapshot
 	authorizer         map[string]map[string]uint64
+	readiness          map[string]map[string]uint64
 	auditDrops         uint64
 	auditDroppedEvents uint64
 }
@@ -67,6 +68,9 @@ type telemetrySnapshot struct {
 //     permanent 503 reads apart from a relayed retryable 503;
 //   - authorizer_total by family and allow/deny decision, so the
 //     unreachable deny branch stays observable;
+//   - readiness_total by result (ready vs not_ready) and closed
+//     failure reason, so an operator can see why /readyz failed
+//     without reading the probe body;
 //   - audit_drops_total wired to the Leaf A drop-observer contract;
 //   - one structured log line per dispatch request keyed on the
 //     correlation ID the auth gate echoes-or-mints.
@@ -83,6 +87,7 @@ type Telemetry struct {
 	dispatches         map[string]map[string]map[string]uint64
 	coreLatencies      map[string]map[string]*histogram
 	authorizer         map[string]map[string]uint64
+	readiness          map[string]map[string]uint64
 	auditDrops         uint64
 	auditDroppedEvents uint64
 }
@@ -97,6 +102,7 @@ func NewTelemetry(logger *slog.Logger) *Telemetry {
 		dispatches:    make(map[string]map[string]map[string]uint64),
 		coreLatencies: make(map[string]map[string]*histogram),
 		authorizer:    make(map[string]map[string]uint64),
+		readiness:     make(map[string]map[string]uint64),
 	}
 }
 
@@ -174,6 +180,22 @@ func (t *Telemetry) observeAuthorizer(family, decision string) {
 	decisions[decision]++
 }
 
+// observeReadiness files one /readyz verdict: the closed result
+// (ready vs not_ready, see probes.go) with the closed failure reason.
+// Probes never pass through the instrumented chain, so readiness is
+// the only signal that observes them; both labels stay in the closed
+// vocabulary, keeping /metrics cardinality bounded.
+func (t *Telemetry) observeReadiness(result, reason string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	reasons, ok := t.readiness[result]
+	if !ok {
+		reasons = make(map[string]uint64)
+		t.readiness[result] = reasons
+	}
+	reasons[reason]++
+}
+
 // snapshot copies the registry for test assertions.
 func (t *Telemetry) snapshot() telemetrySnapshot {
 	t.mu.Lock()
@@ -184,6 +206,7 @@ func (t *Telemetry) snapshot() telemetrySnapshot {
 		dispatches:    make(map[string]map[string]map[string]uint64),
 		coreLatencies: make(map[string]map[string]histSnapshot),
 		authorizer:    make(map[string]map[string]uint64),
+		readiness:     make(map[string]map[string]uint64),
 	}
 	for family, classes := range t.requests {
 		copied := make(map[string]uint64, len(classes))
@@ -219,6 +242,13 @@ func (t *Telemetry) snapshot() telemetrySnapshot {
 			copied[decision] = count
 		}
 		snap.authorizer[family] = copied
+	}
+	for result, reasons := range t.readiness {
+		copied := make(map[string]uint64, len(reasons))
+		for reason, count := range reasons {
+			copied[reason] = count
+		}
+		snap.readiness[result] = copied
 	}
 	snap.auditDrops = t.auditDrops
 	snap.auditDroppedEvents = t.auditDroppedEvents

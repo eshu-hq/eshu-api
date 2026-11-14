@@ -274,7 +274,6 @@ func TestHealthReportsPinnedContractVersions(t *testing.T) {
 	health := decodeMap(t, rec)
 	want := map[string]string{
 		"core_read_contracts":                               CoreReadContractsVersion,
-		"admission_contracts":                               SuppressionAdmissionContractVersion,
 		"suppression_admission_contracts":                   SuppressionAdmissionContractVersion,
 		"terminal_failure_admission_contracts":              TerminalFailureAdmissionContractVersion,
 		"replay_ledger_admission_contracts":                 ReplayLedgerAdmissionContractVersion,

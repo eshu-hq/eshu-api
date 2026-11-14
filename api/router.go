@@ -51,14 +51,20 @@ func (s *Server) WithTelemetry(tel *Telemetry) *Server {
 
 // writeError writes a status-coded JSON error in the caller's negotiated
 // shape: the envelope error section for envelope callers, the plain
-// error_code shape otherwise.
+// error_code shape otherwise. Local 403 and 503 answers carry the
+// closed reason in details (see localErrorDetails; local 401s carry
+// theirs via WriteUnauthorized); every other status keeps the
+// historical bare shape so unrelated error bytes never change.
+// Relayed core bytes never pass through here.
 func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
+	details := localErrorDetails(status, code, message)
 	if acceptsEnvelope(r) {
 		writeJSON(w, status, envelope{
 			Error: &envelopeError{
 				Code:          code,
 				Message:       message,
 				CorrelationID: CorrelationID(r),
+				Details:       details,
 			},
 		})
 		return
@@ -67,50 +73,7 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 		ErrorCode:     code,
 		Message:       message,
 		CorrelationID: CorrelationID(r),
-	})
-}
-
-// health reports the served contract versions and the intended core origin.
-// It takes no credential and never discloses the API key. Every admission
-// port has its own explicit key; admission_contracts stays as the legacy suppression alias.
-func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":                                            "ok",
-		"service":                                           "eshu-api",
-		"core_read_contracts":                               CoreReadContractsVersion,
-		"admission_contracts":                               SuppressionAdmissionContractVersion,
-		"suppression_admission_contracts":                   SuppressionAdmissionContractVersion,
-		"terminal_failure_admission_contracts":              TerminalFailureAdmissionContractVersion,
-		"replay_ledger_admission_contracts":                 ReplayLedgerAdmissionContractVersion,
-		"recovery_admission_contracts":                      RecoveryAdmissionContractVersion,
-		"sign_in_policy_admission_contracts":                SignInPolicyAdmissionContractVersion,
-		"retirement_admission_contracts":                    RetirementAdmissionContractVersion,
-		"admin_identity_admission_contracts":                AdminIdentityAdmissionContractVersion,
-		"setup_admission_contracts":                         SetupAdmissionContractVersion,
-		"provider_config_mutation_admission_contracts":      ProviderConfigMutationAdmissionContractVersion,
-		"provider_config_read_admission_contracts":          ProviderConfigReadAdmissionContractVersion,
-		"oidc_login_admission_contracts":                    OIDCLoginAdmissionContractVersion,
-		"github_login_admission_contracts":                  GitHubLoginAdmissionContractVersion,
-		"saml_login_admission_contracts":                    SAMLLoginAdmissionContractVersion,
-		"admin_read_admission_contracts":                    AdminReadAdmissionContractVersion,
-		"admin_identity_read_admission_contracts":           AdminIdentityReadAdmissionContractVersion,
-		"governance_audit_read_admission_contracts":         GovernanceAuditReadAdmissionContractVersion,
-		"terminal_failure_read_admission_contracts":         TerminalFailureReadAdmissionContractVersion,
-		"delta_union_completeness_read_admission_contracts": DeltaUnionCompletenessReadAdmissionContractVersion,
-		"reindex_progress_read_admission_contracts":         ReindexProgressReadAdmissionContractVersion,
-		"shared_projection_tuning_report_contracts":         SharedProjectionTuningReportContractVersion,
-		"retire_unclaimed_admission_contracts":              RetireUnclaimedAdmissionContractVersion,
-		"core":                                              s.coreBaseURL,
-	})
-}
-
-// ready reports readiness in the same key shape the live probe uses:
-// service, probe, status.
-func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"service": "eshu-api",
-		"probe":   "readyz",
-		"status":  "ok",
+		Details:       details,
 	})
 }
 

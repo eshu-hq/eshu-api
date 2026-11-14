@@ -84,6 +84,32 @@ public and answered locally. They never disclose the key. `/health`
 does disclose the configured core origin, so keep that in mind if you
 expose probes more widely than your cluster.
 
+`GET /health` always answers `200`: it reports what this process
+thinks, not whether the core is reachable. `GET /readyz` is the
+readiness gate: it dials the configured core origin (TCP connect,
+2 s bound, no TLS, no credential, no core route) and answers `200`
+with `{"service":"eshu-api","probe":"readyz","status":"ok"}` only when
+the connection opens. With no origin configured, or when the dial
+fails, it answers `503` with `status "unavailable"` and the closed
+failure reason in `details.reason` (`unconfigured`,
+`connection_refused`, `timeout`, `other` — the same vocabulary the
+relay lane reports). Every verdict also files
+`eshu_api_readiness_total{result,reason}`, so a failing probe is
+visible on `/metrics` without reading the probe body. Point the
+Kubernetes readiness probe at `/readyz`, never `/health`.
+
+## Server timeouts
+
+The production server bounds every connection, so no slow client can
+hold a worker indefinitely:
+
+| Bound | Value | Why |
+| --- | --- | --- |
+| `ReadHeaderTimeout` | 5 s | First bound a slow client meets |
+| `ReadTimeout` | 10 s | Bounds the full request read, body included |
+| `WriteTimeout` | 45 s | Clears the 30 s relay bound with room for the body copy, so it never cuts a relay that is still within its own budget |
+| `IdleTimeout` | 60 s | Recycles idle keep-alive connections |
+
 Foreign credential classes (a scoped token, an OIDC bearer, a session
 cookie) get a middle path on several native read lanes: instead of
 being judged here, they're relayed so the core can judge them, while
