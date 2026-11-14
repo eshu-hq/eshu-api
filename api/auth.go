@@ -50,17 +50,24 @@ func acceptsEnvelope(r *http.Request) bool {
 // errorBody is the plain (non-envelope) error shape served to callers
 // that did not negotiate the envelope. Keyed to match the live
 // unauthenticated response: error_code, message, correlation_id.
+// Details carries the closed reason vocabulary on synthesized relay
+// failures (see dispatch.go); it stays absent otherwise so success and
+// unrelated error bytes never change.
 type errorBody struct {
-	ErrorCode     string `json:"error_code"`
-	Message       string `json:"message"`
-	CorrelationID string `json:"correlation_id"`
+	ErrorCode     string            `json:"error_code"`
+	Message       string            `json:"message"`
+	CorrelationID string            `json:"correlation_id"`
+	Details       map[string]string `json:"details,omitempty"`
 }
 
 // envelopeError is the error section of the negotiated Eshu envelope.
+// Details mirrors the plain shape: present only on synthesized relay
+// failures, absent everywhere else.
 type envelopeError struct {
-	Code          string `json:"code"`
-	Message       string `json:"message"`
-	CorrelationID string `json:"correlation_id,omitempty"`
+	Code          string            `json:"code"`
+	Message       string            `json:"message"`
+	CorrelationID string            `json:"correlation_id,omitempty"`
+	Details       map[string]string `json:"details,omitempty"`
 }
 
 // envelope is the negotiated Eshu response envelope for errors.

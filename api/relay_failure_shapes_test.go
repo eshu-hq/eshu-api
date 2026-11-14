@@ -5,6 +5,7 @@ package api
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -130,6 +131,89 @@ func TestRelayFailureShapes_PreHeaderTimeoutNamesReason(t *testing.T) {
 	}
 	if !strings.Contains(string(body), `"reason":"timeout"`) {
 		t.Errorf("body = %q, want details.reason timeout distinguishing timeout from refused", body)
+	}
+}
+
+// TestRelayFailureShapes_RefusedEnvelopeNamesReason pins the envelope
+// spelling of shape (a): the negotiated envelope 503 carries the same
+// details.reason as the plain shape, with no Retry-After.
+func TestRelayFailureShapes_RefusedEnvelopeNamesReason(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("http://127.0.0.1:1", skeletonTestKey)
+	relay := httptest.NewServer(srv.Handler(DefaultV0Sunset))
+	defer relay.Close()
+
+	req, err := http.NewRequest(http.MethodGet, relay.URL+"/api/v0/repositories", nil)
+	if err != nil {
+		t.Fatalf("build request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+skeletonTestKey)
+	req.Header.Set("Accept", EnvelopeMIME)
+	resp, err := relayTestClient().Do(req)
+	if err != nil {
+		t.Fatalf("relay call: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503 (standing fail-closed contract)", resp.StatusCode)
+	}
+	if got := resp.Header.Get("Retry-After"); got != "" {
+		t.Errorf("Retry-After = %q, want absent (permanent 503)", got)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if !strings.Contains(string(body), `"code":"backend_unavailable"`) {
+		t.Errorf("body = %q, want envelope code backend_unavailable", body)
+	}
+	if !strings.Contains(string(body), `"reason":"connection_refused"`) {
+		t.Errorf("body = %q, want details.reason connection_refused in the envelope shape", body)
+	}
+}
+
+// TestRelayFailureShapes_FailureLogFieldDistinguishes pins the operator
+// signal: the structured api-request line carries the closed failure
+// field, so refused reads apart from timeout without touching the
+// outcome vocabulary the dispatch counters assert.
+func TestRelayFailureShapes_FailureLogFieldDistinguishes(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		origin string
+		reason string
+	}{
+		{"refused", "http://127.0.0.1:1", "connection_refused"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var logs strings.Builder
+			tel := NewTelemetry(slog.New(slog.NewJSONHandler(&logs, nil)))
+			srv := NewServer(tc.origin, skeletonTestKey)
+			srv.telemetry = tel
+			handler := srv.Handler(DefaultV0Sunset)
+
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, authedRequest("GET", "/api/v0/repositories"))
+			if rec.Code != http.StatusServiceUnavailable {
+				t.Fatalf("status = %d, want 503", rec.Code)
+			}
+			lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+			if len(lines) != 1 {
+				t.Fatalf("log lines = %d, want 1 structured line", len(lines))
+			}
+			if !strings.Contains(lines[0], `"failure":"`+tc.reason+`"`) {
+				t.Errorf("log line = %s, want failure %q", lines[0], tc.reason)
+			}
+			if !strings.Contains(lines[0], `"outcome":"local_503"`) {
+				t.Errorf("log line = %s, want the standing outcome local_503 beside failure", lines[0])
+			}
+		})
 	}
 }
 
