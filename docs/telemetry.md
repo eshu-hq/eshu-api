@@ -26,13 +26,23 @@ Outcome semantics follow the read-transport error rules: a `local_503`
 is synthesized by dest (unconfigured origin, unreachable core,
 unbuildable request) and never carries `Retry-After`; a relayed core
 503 keeps the `Retry-After` the core sent only when the verdict was
-marked retryable (`core_retryable_503` vs `core_503`).
+marked retryable (`core_retryable_503` vs `core_503`). A truncated
+mid-body relay keeps the already-sent core status and outcome: the
+caller sees a transport error instead of a clean end (Refs
+eshu-hq/eshu-api#129).
 
 ## Logs
 
 One `api request` line per dispatch request at info level with
 `method`, `family`, `via`, `status`, `status_class`, `outcome`,
-`duration_ms`, `core_latency_ms`, `retry_after`, and `correlation_id`.
+`failure`, `duration_ms`, `core_latency_ms`, `retry_after`, and
+`correlation_id`. `failure` is the closed relay-failure reason
+(`connection_refused`, `timeout`, `other`, `unconfigured`); it tells a
+dead core apart from a slow one and stays empty on success and on
+lanes that terminate without a relay failure. A mid-copy abort files
+`timeout` or `other` beside the already-filed core outcome. A copy
+failure also emits one `relay body copy failed` error line keyed on
+the same correlation ID.
 The credential never appears. The correlation ID is the caller's
 `X-Correlation-ID` (or `X-Request-ID`) when supplied, minted otherwise,
 and the dispatch response echoes it back on the `X-Correlation-ID`

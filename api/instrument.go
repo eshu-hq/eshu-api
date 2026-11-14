@@ -4,7 +4,10 @@
 package api
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"net"
 	"net/http"
 	"time"
 )
@@ -17,8 +20,10 @@ func (t *Telemetry) logRequest(r *http.Request, family, via, correlationID strin
 		return
 	}
 	outcome, coreLatency, retryAfter := "", time.Duration(0), false
+	failure := ""
 	if rec != nil {
 		outcome, coreLatency, retryAfter = rec.outcome, rec.coreLatency, rec.retryAfter
+		failure = rec.failure
 	}
 	t.logger.Info("api request",
 		"method", r.Method,
@@ -27,6 +32,7 @@ func (t *Telemetry) logRequest(r *http.Request, family, via, correlationID strin
 		"status", status,
 		"status_class", statusClass(status),
 		"outcome", outcome,
+		"failure", failure,
 		"duration_ms", duration.Milliseconds(),
 		"core_latency_ms", coreLatency.Milliseconds(),
 		"retry_after", retryAfter,
@@ -42,10 +48,15 @@ type dispatchRecordKey struct{}
 
 // dispatchRecord is the per-request dispatch note the middleware reads
 // after next returns. outcome stays empty when no dispatch step ran
-// (the auth gate denied first).
+// (the auth gate denied first). failure carries the closed relay
+// failure reason (connection_refused, timeout, other, unconfigured);
+// it stays empty on success and on lanes that terminate without a
+// relay failure. A mid-copy abort files timeout or other beside the
+// already-filed core outcome, since the core status went out first.
 type dispatchRecord struct {
 	via         string
 	outcome     string
+	failure     string
 	coreLatency time.Duration
 	retryAfter  bool
 }
@@ -68,6 +79,25 @@ type statusWriter struct {
 func (w *statusWriter) WriteHeader(status int) {
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
+}
+
+// Flush forwards a flush to the underlying writer when it supports
+// it. The statusWriter embeds only http.ResponseWriter, whose method
+// set lacks Flush and Hijack, so without these forwarders the relay's
+// mid-body flush and abort would silently no-op behind this writer.
+func (w *statusWriter) Flush() {
+	if fw, ok := w.ResponseWriter.(http.Flusher); ok {
+		fw.Flush()
+	}
+}
+
+// Hijack forwards a hijack to the underlying writer so the relay can
+// abort a truncated mid-body response on HTTP/1.x connections.
+func (w *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("api: underlying writer does not support hijacking")
 }
 
 // instrumented wraps one dispatch handler with the telemetry chain:
