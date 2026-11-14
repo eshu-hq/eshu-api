@@ -121,6 +121,8 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/code/divergence/findings", "code_divergence"},
 		{"/api/v0/code/divergence/investigate", "code_divergence"},
 		{"/api/v0/code/divergence/report", "code_divergence"},
+		{"/api/v0/code/relationships", "code_relationships"},
+		{"/api/v0/code/relationships/story", "code_relationships"},
 		{"/api/v0/some/future/route/with/param-123", "other"},
 		{"/api/v1/supply-chain/impact/suppressions", "suppression"},
 		{"/api/v0", "other"},

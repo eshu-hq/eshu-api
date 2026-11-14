@@ -349,6 +349,7 @@ func (s *Server) routes() *http.ServeMux {
 	s.registerCodeGraphWave(mux)
 	s.registerDeadCodeWave(mux)
 	s.registerCodeDivergenceWave(mux)
+	s.registerRelationshipWave(mux)
 	s.registerCodeFlowWave(mux)
 	// W4 Code search termination (Refs eshu-hq/eshu#9669, satellite
 	// eshu-hq/eshu-api#113): the 2 pinned code search POSTs register
