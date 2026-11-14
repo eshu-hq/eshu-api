@@ -44,6 +44,7 @@ SRC_SHA_DEAD="8b28c0dba5f12c3b1b11c90fac6b24cfe5d82875"
 SRC_SHA_GRAPH="0fd6db6deb38beaa9327ba015af5bd279729f8ae"
 SRC_SHA_DEADCODE="589d55ec024e0bdd7699176c04711b056b8af871"
 SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
+SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -1688,6 +1689,25 @@ check_file_at "$SRC_SHA_DIVERGENCE" "go/internal/query/codequery/code_divergence
 check_excerpt_at "$SRC_SHA_DIVERGENCE" "contracts/upstream/code-divergence-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_divergence_read_admission.go"
 
+# Satellite G-b relationships termination (eshu-hq/eshu-api#122): the
+# CodeRelationshipReadAdmission v0 pin, minted core-side (unwired,
+# arbiter SUFFICIENT ruling, grant reads IN). The vendored pin and
+# contract test are byte-identical at the merge commit; the
+# wire-shapes excerpt carries the version const stanza, the in-scope
+# route list, the 17-method interface, the GraphQuery/ContentStore
+# plus grant-ports mirror assertion, and the surrounding contract
+# comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_RELATIONSHIPS" "go/internal/query/codequery/code_relationships_read_admission.go" \
+  "contracts/upstream/code_relationships_read_admission.go" \
+  "8ff8d761f402ff97848f1524ae705c3f59f9ba6085bd772ffcf315044726d166"
+
+check_file_at "$SRC_SHA_RELATIONSHIPS" "go/internal/query/codequery/code_relationships_read_admission_contract_test.go" \
+  "contracts/upstream/code_relationships_read_admission_contract_test.go" \
+  "421ec9bdbee33bb303573d64d4784d0d9c9a04b67001b800a578cb0b940d9245"
+
+check_excerpt_at "$SRC_SHA_RELATIONSHIPS" "contracts/upstream/code-relationships-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_relationships_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1728,6 +1748,7 @@ grep -qF 'IaCDeadContentAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts
 grep -qF 'CodeGraphReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-graph-read-wire-shapes.txt"
 grep -qF 'CodeDeadCodeReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-dead-code-read-wire-shapes.txt"
 grep -qF 'CodeDivergenceReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-divergence-read-wire-shapes.txt"
+grep -qF 'CodeRelationshipReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-relationships-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -2015,6 +2036,32 @@ for lane in code_divergence_terminate code_divergence_wave; do
   done
 done
 echo "OK: divergence lane files carry no dest-side store or parse"
+# Satellite G-b relationships termination (eshu-hq/eshu-api#122): no
+# dest-side store, port, or parse of the G-b reads on the lane
+# (arbiter SUFFICIENT ruling, sealed 17-method admission, no transport
+# constructor by design). api/relationship_terminate.go and
+# api/relationship_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pin's graph and
+# content readers and the out-of-pin file-content/ledger/summary legs
+# all stay core-side, and the lane forwards the request bodies
+# opaquely (no query, form, path, or body-key parse). Fails closed on
+# any match (the in-suite source test
+# TestRelationshipTerm_LaneFileHygiene proves the same list).
+for lane in relationship_terminate relationship_wave; do
+  for symbol in postgres CodeRelationshipReadAdmission GraphQuery ContentStore ContentReader ReadStore GetEntityContent SearchEntitiesByName ListRepoFiles 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"entity_id"' '"transitive"' '"query_type"' '"relationship_type"' '"direction"' '"max_depth"' '"limit"' '"offset"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: relationships lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

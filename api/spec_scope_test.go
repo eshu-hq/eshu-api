@@ -19,17 +19,18 @@ import (
 //
 // The mounted set is rebuilt here from the exact tables and route
 // constants the router registers (leafbWave, d3Wave, d4Wave, d6Wave,
-// compareWave, codeFlowWave, codeGraphWave, deadCodeWave, codeDivergenceWave,
+// compareWave, codeFlowWave, codeGraphWave, deadCodeWave, codeDivergenceWave, relationshipWave,
 // codeSearchWave, the per-family route lists, the mux-level probes),// never from a second frozen copy: a lane change moves the router
 // tables and this proof together. The spec side is read through the real route as a
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Forty-two mounted spellings stay out of the document by
+// Forty-seven mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
 // the 4 G-a Code-graph routes plus the 3 dead-code routes plus the 3
-// divergence routes plus the 2 W4 Code search routes plus the 16 W8a
-// routes plus the 2 drift routes),// each with its owning contract: the three mux-level non-API mounts
+// divergence routes plus the 2 G-b relationship routes plus the 2 W4
+// Code search routes plus the 16 W8a routes plus the 2 drift
+// routes),// each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
 // whose fragment waits on its helper port (the repositories story
@@ -63,7 +64,11 @@ import (
 // fragments stay core-side for the relay-leg lane (the divergence.go
 // entries port entry-shaped with their referenced schemas in the
 // follow-up lane — contracts/code-divergence-termination.md, pinned
-// by openapi/spec_divergence_test.go), and the 16 W8a routes whose// fragments stay core-side for the satellite termination lane
+// by openapi/spec_divergence_test.go), the 2 G-b relationship POSTs
+// whose fragments stay core-side for the relay-leg lane (the routes.go
+// entries port entry-shaped with their referenced schemas in the
+// follow-up lane — contracts/code-relationships-termination.md), and
+// the 16 W8a routes whose// fragments stay core-side for the satellite termination lane
 // (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go).
 // Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
@@ -99,7 +104,9 @@ var specScopeAbsent = map[string]string{
 	"POST /api/v0/code/dead-code/investigate":  "dead-code fragment stays core-side for the relay-leg lane (the investigation.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-dead-code-termination.md, openapi/spec_dead_code_test.go)",
 	"POST /api/v0/code/divergence/findings":    "divergence fragment stays core-side for the relay-leg lane (the divergence.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-divergence-termination.md, openapi/spec_divergence_test.go)",
 	"POST /api/v0/code/divergence/investigate": "divergence fragment stays core-side for the relay-leg lane (the divergence.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-divergence-termination.md, openapi/spec_divergence_test.go)",
-	"POST /api/v0/code/divergence/report":      "divergence fragment stays core-side for the relay-leg lane (the divergence.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-divergence-termination.md, openapi/spec_divergence_test.go)", "POST /api/v0/code/search": "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
+	"POST /api/v0/code/divergence/report":      "divergence fragment stays core-side for the relay-leg lane (the divergence.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-divergence-termination.md, openapi/spec_divergence_test.go)",
+	"POST /api/v0/code/relationships":          "relationships fragment stays core-side for the relay-leg lane (the routes.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-relationships-termination.md)",
+	"POST /api/v0/code/relationships/story":    "relationships fragment stays core-side for the relay-leg lane (the routes.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-relationships-termination.md)", "POST /api/v0/code/search": "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
 	"POST /api/v0/code/symbols/search":                       "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
 	"GET /api/v0/secrets-iam/identity-trust-chains":          "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
 	"GET /api/v0/secrets-iam/privilege-posture-observations": "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
@@ -221,6 +228,9 @@ func specScopeMounted() []string {
 	for _, entry := range codeDivergenceWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range relationshipWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range codeSearchWave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -265,27 +275,28 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // disclosed or lifted) moves these pins with the owning lane.
 //
 // Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
-// W7-graph + dead-code + divergence + W8a + drift + retire-unclaimed
-// lanes): 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3
-// Wave-2 Content POSTs + 4 W4 Content search POSTs + 2 W4 Code search
-// POSTs + 1 Compare POST + 4 Code-flow POSTs + 4 G-a Code-graph POSTs
-// + 3 dead-code POSTs + 3 divergence POSTs + 16 W8a reads + 2 drift
-// reads + 1 retire-unclaimed POST = 219 mounted (218 native + 1
-// explicit relay leg); the disclosed-absence count is 45 (11 prior +
-// 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code keys + 3
-// divergence keys + 2 W4 Code search keys + 16 W8a fragments + 2 drift
-// fragments, each disclosed core-side by its owning lane; the W4
-// content-search fragment ports entry-shaped with the lane, and the
+// W7-graph + dead-code + divergence + G-b + W8a + drift +
+// retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1
+// Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search POSTs +
+// 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow POSTs + 4 G-a
+// Code-graph POSTs + 3 dead-code POSTs + 3 divergence POSTs + 2 G-b
+// relationship POSTs + 16 W8a reads + 2 drift reads + 1
+// retire-unclaimed POST = 221 mounted (220 native + 1 explicit relay
+// leg); the disclosed-absence count is 47 (11 prior + 4 W6a Code-flow
+// keys + 4 G-a Code-graph keys + 3 dead-code keys + 3 divergence keys +
+// 2 G-b relationship keys + 2 W4 Code search keys + 16 W8a fragments +
+// 2 drift fragments, each disclosed core-side by its owning lane; the
+// W4 content-search fragment ports entry-shaped with the lane, and the
 // retire-unclaimed fragment ports whole-file, so no new absence from
 // those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 219 {
-		t.Fatalf("mounted operations = %d, want 219 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 16 W8a + 2 drift + 1 retire-unclaimed = 218 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 221 {
+		t.Fatalf("mounted operations = %d, want 221 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 1 retire-unclaimed = 220 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 45 {
-		t.Fatalf("disclosed-absent operations = %d, want 42: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 47 {
+		t.Fatalf("disclosed-absent operations = %d, want 47: each absence needs its disclosing contract", got)
 	}
 }
 
