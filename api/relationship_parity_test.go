@@ -18,9 +18,11 @@ import (
 // narrowed builder closure, the transitive CALLS 200, the
 // scoped-grant 200s and denials, the story class_hierarchy and
 // overrides 200s with their enrichment blocks, plus validation and
-// selector 400s, grant-denied 403s, unknown-entity 404s, capability
+// selector 400s, unknown-entity 404s, capability
 // 501s, fixed-message 500s, configuration-state 503s, retryable 503s
 // with Retry-After, and gateway 504s, in both negotiated shapes.
+// (The family-403 deny branch is unreachable pre-D8 and stays out of
+// this matrix; TestRelationshipDenyBranchShapePinned pins its shape.)
 
 type relationshipParityOutcome struct {
 	name   string
@@ -38,7 +40,7 @@ var relationshipRetryable503 = http.Header{"Retry-After": []string{"5"}}
 // matrix drives: the direct graph 200, the content-fallback 200 (no
 // graph row, builder closure answers), the transitive CALLS 200, the
 // scoped-grant 200 (neighbours clipped to the grant before the row
-// ceiling), the validation and selector 400s, the grant-denied 403,
+// ceiling), the validation and selector 400s,
 // the unknown-entity 404, the 501 capability, the fixed-message 500s,
 // the configuration-state and retryable 503s, and the gateway 504.
 func relationshipOutcomes() []relationshipParityOutcome {
