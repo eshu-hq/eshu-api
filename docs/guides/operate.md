@@ -30,7 +30,13 @@ All three probes are public, so you can curl them without a token:
   per contract family, and the core origin you configured. Good for
   "is the process up, and what does it think it's talking to?"
 - `GET /readyz` returns `200` with
-  `{"service":"eshu-api","probe":"readyz","status":"ok"}`.
+  `{"service":"eshu-api","probe":"readyz","status":"ok"}` when the
+  relay can reach its core origin, and `503` with `status
+  "unavailable"` plus a closed `details.reason` when it cannot (no
+  origin configured, or the core unreachable). This is the gate to
+  point the Kubernetes readiness probe at — not `/health`, which
+  stays `200` either way. Each verdict also files
+  `eshu_api_readiness_total{result,reason}` on `/metrics`.
 - `GET /metrics` returns Prometheus text with per-family request and
   dispatch counts. [Telemetry](../telemetry.md) explains each series
   and how to split "core is slow" from "we are slow".

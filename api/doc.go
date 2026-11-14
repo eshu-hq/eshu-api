@@ -14,7 +14,10 @@
 // in-tree surface it replaces (go/cmd/api in eshu). This package takes
 // no core implementation handles and no shared-table shortcuts: core
 // truth arrives only over HTTP to the configured origin — relayed
-// through dispatch for /api/*, called through internal/readclient for
-// versioned read-contract use — and durable mutations persist only
-// through versioned core admission contracts.
+// through dispatch for /api/*, terminated natively on the versioned
+// admission ports — and durable mutations persist only through
+// versioned core admission contracts. internal/readclient offers the
+// same timeout and byte budget for versioned read-contract use, but no
+// production lane calls it yet: the relay carries its own bounded
+// client pinned to the same bound by test.
 package api

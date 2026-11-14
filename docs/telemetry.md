@@ -20,6 +20,7 @@ cardinality is bounded by (families x classes x lanes x outcomes).
 | `eshu_api_dispatch_total` | `family`, `via` (`native`, `relay`), `outcome` | Which lane served it, and what happened: `core_ok`, `core_503`, `core_retryable_503`, `local_503`, `denied`. |
 | `eshu_api_core_latency_seconds` | `family`, `via` | Core-side latency. Compare with the request duration to split core-slow from dest-slow. |
 | `eshu_api_authorizer_total` | `family`, `decision` (`allow`, `deny`) | Family authorizer judgments. The deny branch is unreachable in production today (shared key maps to AllScopes), so a `deny` here is the canary for the scoped-resolver day. |
+| `eshu_api_readiness_total` | `result` (`ready`, `not_ready`), `reason` (`none`, `unconfigured`, `connection_refused`, `timeout`, `other`) | Readiness probe verdicts. Probes never pass through the instrumented chain, so this is the only series that observes them. A `not_ready` here explains the matching `local_503` spell on `/api/*`. |
 | `eshu_api_audit_drops_total`, `eshu_api_audit_dropped_events_total` | none | Swallowed audit-append failures observed through the Leaf A drop-observer hook. Dest emits no audits today, so these rest at zero until the audit-append port lands. |
 
 Outcome semantics follow the read-transport error rules: a `local_503`
@@ -30,6 +31,17 @@ marked retryable (`core_retryable_503` vs `core_503`). A truncated
 mid-body relay keeps the already-sent core status and outcome: the
 caller sees a transport error instead of a clean end (Refs
 eshu-hq/eshu-api#129).
+
+Locally synthesized errors carry the closed reason in
+`details.reason`, in both the plain and the negotiated-envelope
+shapes: every local `401` names `authentication_required`, every
+local `403` names `forbidden`, and a local `503 backend_unavailable`
+names `unconfigured` when the origin is not configured and `other`
+otherwise. The relay-lane `503` keeps its own closed set
+(`connection_refused`, `timeout`, `other`, `unconfigured`; Refs
+eshu-hq/eshu-api#129), and relayed core bytes never gain a `details`
+field — dest only annotates errors it owns (Refs
+eshu-hq/eshu-api#130).
 
 ## Logs
 
