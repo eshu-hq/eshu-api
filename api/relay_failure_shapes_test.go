@@ -260,6 +260,50 @@ func TestRelayFailureShapes_PostHeaderStallAborts(t *testing.T) {
 	}
 }
 
+// TestRelayFailureShapes_GetWithBodyRelaysUntouched pins the request-body
+// half of the GET with/without body box: a GET carrying a body forwards
+// the bytes to the core (the echo proves the upstream saw them) and the
+// core's answer relays byte-for-byte. Every other test in this file uses
+// a bodyless GET; without this pin a regression that dropped GET bodies
+// would stay silent.
+func TestRelayFailureShapes_GetWithBodyRelaysUntouched(t *testing.T) {
+	t.Parallel()
+
+	const payload = `{"q":"body-on-get"}`
+	core := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.Copy(w, r.Body)
+	}))
+	defer core.Close()
+
+	srv := NewServer(core.URL, skeletonTestKey)
+	relay := httptest.NewServer(srv.Handler(DefaultV0Sunset))
+	defer relay.Close()
+
+	req, err := http.NewRequest(http.MethodGet, relay.URL+"/api/v0/repositories", strings.NewReader(payload))
+	if err != nil {
+		t.Fatalf("build request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+skeletonTestKey)
+	resp, err := relayTestClient().Do(req)
+	if err != nil {
+		t.Fatalf("relay call: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if string(body) != payload {
+		t.Errorf("body = %q, want the echoed bytes %q (GET body forwarded, answer relayed)", body, payload)
+	}
+}
+
 // TestRelayFailureShapes_MidCopyErrorAborts pins shape (d): a core that
 // declares more bytes than it sends (headers, then a short close) fails
 // the relay copy, and that failure must NOT end clean — the caller sees
