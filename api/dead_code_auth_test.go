@@ -187,14 +187,9 @@ func TestDeadCodeWaveRelayExplicitForUnresolvableIdentities(t *testing.T) {
 					t.Errorf("%s: body = %q, want the relayed core bytes %q", tc.name, body, core.body)
 				}
 				snap := tel.snapshot()
-				found := false
-				for _, lanes := range snap.dispatches {
-					if lanes[viaRelay] != nil {
-						found = true
-					}
-				}
-				if !found {
-					t.Errorf("%s: dispatches = %v, want a relay lane row (never invented)", tc.name, snap.dispatches)
+				lanes, ok := snap.dispatches["code_dead_code"]
+				if !ok || lanes[viaRelay] == nil {
+					t.Errorf("%s: dispatches = %v, want a relay lane row on exactly the code_dead_code family (never invented, never misfiled)", tc.name, snap.dispatches)
 				}
 			})
 		}

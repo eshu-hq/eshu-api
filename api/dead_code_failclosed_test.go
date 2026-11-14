@@ -78,6 +78,7 @@ func TestDeadCodeRelayExplicit_NilCore503(t *testing.T) {
 	}{
 		{deadCodeScanPath, deadCodeScanBodies[0]},
 		{deadCodeCrossRepoPath, deadCodeCrossRepoBodies[0]},
+		{deadCodeInvestigatePath, deadCodeInvestigateBodies[0]},
 	} {
 		t.Run("POST "+leg.path, func(t *testing.T) {
 			t.Parallel()
