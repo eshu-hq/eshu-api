@@ -11,7 +11,7 @@ import (
 // the explicit per-family routes registered ahead of the proxy
 // (suppression, retirement, terminal-failure, retire-unclaimed,
 // admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
-// compare, content, freshness, code-flow, code-search, code-graph, code-dead-code, iac, w8a,
+// compare, content, freshness, code-flow, code-search, code-graph, code-dead-code, code-divergence, iac, w8a,
 // OIDC/GitHub/SAML, and setup), each filing its dispatch outcomes
 // and authorizer judgments
 // on every return path; the relay lane is the generic byte-for-byte
@@ -119,6 +119,7 @@ var familyPrefixes = []struct {
 	{"/code/call-graph", "code_graph"},
 	{"/code/routes", "code_graph"},
 	{"/code/dead-code", "code_dead_code"},
+	{"/code/divergence", "code_divergence"},
 	{"/code/symbols", "code_search"},
 	{"/code/search", "code_search"},
 	{"/openapi.json", "api_router"},
