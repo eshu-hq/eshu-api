@@ -4,11 +4,16 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -16,19 +21,19 @@ import (
 // Relay failure shapes (eshu-hq/eshu-api#129, part of eshu-hq/eshu#9669
 // relay hardening).
 //
-// TDD RED file: each test below pins the post-fix contract and FAILS on
-// the current forwardToCore (api/dispatch.go:116-165). The four shapes:
+// Pinned failure-shape contract (eshu-hq/eshu-api#129 relay hardening):
+// each test below pins the fixed forwardToCore behavior. The four shapes:
 //
-// (a) refused connection: 503 backend_unavailable, no Retry-After, and no
-// reason naming the failure (dispatch.go:137 fail path).
-// (b) pre-header client timeout: the SAME 503 body as (a), so callers and
-// operators cannot tell refused from timeout apart (dispatch.go:137).
-// (c) post-header stall: status 200 already written (:163), then io.Copy
-// hits the client timeout and the error is discarded (:164) — a real
-// client reads a clean 200 end with a body cut off mid-JSON, and the
-// outcome stays core_ok.
-// (d) mid-copy core error: the copy error is discarded (:164) — same
-// clean truncated 200 as (c), with nothing logged.
+// (a) refused connection: 503 backend_unavailable, no Retry-After, with
+// details.reason naming connection_refused.
+// (b) pre-header client timeout: the same standing 503, with
+// details.reason naming timeout so callers and operators can tell
+// refused apart from timeout.
+// (c) post-header stall: the relay aborts the copy instead of ending
+// clean — a real client sees a transport error, never a 200 with a body
+// cut off mid-JSON.
+// (d) mid-copy core error: the copy failure is logged and the connection
+// aborted — same transport error as (c), nothing discarded silently.
 //
 // The reason vocabulary below follows the issue's recommended option
 // (details.reason: connection refused, timeout, other) pending the
@@ -58,7 +63,7 @@ func relayGet(t *testing.T, relayURL, path string) (*http.Response, error) {
 // TestRelayFailureShapes_RefusedConnectionNamesReason pins shape (a):
 // a refused core connection keeps the standing fail-closed 503 with no
 // Retry-After, and names the reason so it is distinguishable from a
-// pre-header timeout. RED today: the body carries no reason.
+// pre-header timeout.
 func TestRelayFailureShapes_RefusedConnectionNamesReason(t *testing.T) {
 	t.Parallel()
 
@@ -92,8 +97,7 @@ func TestRelayFailureShapes_RefusedConnectionNamesReason(t *testing.T) {
 
 // TestRelayFailureShapes_PreHeaderTimeoutNamesReason pins shape (b): a
 // core that never answers before the dispatch bound keeps 503, and names
-// the timeout reason so it differs from shape (a). RED today: the body
-// is byte-identical to the refused-connection 503.
+// the timeout reason so it differs from shape (a).
 func TestRelayFailureShapes_PreHeaderTimeoutNamesReason(t *testing.T) {
 	t.Parallel()
 
@@ -220,8 +224,7 @@ func TestRelayFailureShapes_FailureLogFieldDistinguishes(t *testing.T) {
 // TestRelayFailureShapes_PostHeaderStallAborts pins shape (c): a core
 // that answers headers plus a partial body, then stalls past the dispatch
 // bound, must NOT yield a clean 200 end — the relay aborts the copy so
-// the caller sees a transport error instead of truncated JSON. RED
-// today: the caller reads a clean EOF with the body cut off mid-JSON.
+// the caller sees a transport error instead of truncated JSON.
 func TestRelayFailureShapes_PostHeaderStallAborts(t *testing.T) {
 	t.Parallel()
 
@@ -307,8 +310,7 @@ func TestRelayFailureShapes_GetWithBodyRelaysUntouched(t *testing.T) {
 // TestRelayFailureShapes_MidCopyErrorAborts pins shape (d): a core that
 // declares more bytes than it sends (headers, then a short close) fails
 // the relay copy, and that failure must NOT end clean — the caller sees
-// a transport error instead of truncated JSON. RED today: the copy
-// error is discarded and the caller reads a clean 200 end.
+// a transport error instead of truncated JSON.
 func TestRelayFailureShapes_MidCopyErrorAborts(t *testing.T) {
 	t.Parallel()
 
@@ -336,6 +338,58 @@ func TestRelayFailureShapes_MidCopyErrorAborts(t *testing.T) {
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err == nil {
-		t.Errorf("body read ended clean with %q, want a transport error: the mid-copy failure is discarded today", body)
+		t.Errorf("body read ended clean with %q, want a transport error: the mid-copy failure must abort, never discard", body)
+	}
+}
+
+// TestRelayFailureShapes_ClassifierPinsTimeout pins the socket-free
+// classifier mapping: timeouts (url timeout, deadlines) map to the
+// timeout reason, refused connections map apart, and everything else is
+// other — the vocabulary the log failure field and details.reason carry.
+func TestRelayFailureShapes_ClassifierPinsTimeout(t *testing.T) {
+	t.Parallel()
+
+	timeoutURL := &url.Error{Op: "Get", URL: "http://core.invalid/", Err: context.DeadlineExceeded}
+	refusedURL := &url.Error{Op: "Get", URL: "http://core.invalid/", Err: syscall.ECONNREFUSED}
+	for _, tc := range []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"url timeout", timeoutURL, reasonTimeout},
+		{"context deadline", context.DeadlineExceeded, reasonTimeout},
+		{"os deadline", os.ErrDeadlineExceeded, reasonTimeout},
+		{"timeout prose", errors.New("Client.Timeout exceeded"), reasonTimeout},
+		{"refused errno", syscall.ECONNREFUSED, reasonConnectionRefused},
+		{"refused url", refusedURL, reasonConnectionRefused},
+		{"refused prose", errors.New("connect: connection refused"), reasonConnectionRefused},
+		{"cancel", context.Canceled, reasonOther},
+		{"other", errors.New("tls: first record does not look like a handshake"), reasonOther},
+	} {
+		if got := dispatchFailureReason(tc.err); got != tc.want {
+			t.Errorf("%s: reason = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+// TestRelayFailureShapes_UnconfiguredNamesReason pins the unconfigured
+// origin path socket-free: dispatch with no core origin answers the
+// standing 503 with details.reason unconfigured and no Retry-After.
+func TestRelayFailureShapes_UnconfiguredNamesReason(t *testing.T) {
+	t.Parallel()
+
+	srv := NewServer("", skeletonTestKey)
+	req := httptest.NewRequest(http.MethodPost, "/api/v0/repositories", nil)
+	rec := httptest.NewRecorder()
+	srv.dispatch(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503 (standing fail-closed contract)", rec.Code)
+	}
+	if got := rec.Header().Get("Retry-After"); got != "" {
+		t.Errorf("Retry-After = %q, want absent (permanent 503)", got)
+	}
+	if body := rec.Body.String(); !strings.Contains(body, `"reason":"unconfigured"`) {
+		t.Errorf("body = %q, want details.reason unconfigured", body)
 	}
 }
