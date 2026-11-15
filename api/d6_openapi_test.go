@@ -65,16 +65,17 @@ var d6WaveSpecKeys = []string{
 }
 
 // d6RelayedSpecKeys are the path keys the D6 lane deliberately does
-// NOT serve: the impact packet keeps its core-served posture via the
-// relay, so its key must not appear in the dest-assembled document.
-// The governance, answer-narration, and hosted-readiness aspects left
-// this list when the W8a lane terminated them natively with their
-// fragments disclosed core-side (see api/w8a_openapi_test.go);
-// Compare left earlier when its gap-04 lane mounted natively the
-// same way (see openapi/spec_compare_test.go).
-var d6RelayedSpecKeys = []string{
-	"/api/v0/investigations/supply-chain/impact/packet",
-}
+// NOT serve. The impact packet left this list when the W5 packet lane
+// terminated it natively with its fragment disclosed core-side (see
+// openapi/spec_w5_test.go): its key stays out of the dest-assembled
+// document, pinned there now. The governance, answer-narration, and
+// hosted-readiness aspects left this list when the W8a lane terminated
+// them natively with their fragments disclosed core-side (see
+// api/w8a_openapi_test.go); Compare left earlier when its gap-04 lane
+// mounted natively the same way (see openapi/spec_compare_test.go).
+// The list stays empty so a future relay-only key rejoins a live gate
+// instead of a deleted test.
+var d6RelayedSpecKeys = []string{}
 
 func TestD6WaveSpecKeyCount(t *testing.T) {
 	t.Parallel()

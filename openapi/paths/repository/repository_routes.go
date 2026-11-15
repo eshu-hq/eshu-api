@@ -9,11 +9,12 @@ package repository
 // The mux-health entry is excluded: dest serves /health from its own
 // probe with a dest-owned shape, so the core health entry must not
 // ride the served document. The story entry is excluded: the story GET
-// stays on the generic relay (it interpolates the shared
-// schema.EvidenceBoundaries helper, which has no line-verbatim port
-// without a core import (forbidden)), so its fragment never lands;
-// TestD4StoryRelayLegOnGenericProxy carries that leg until the helper
-// ports as a component and the lane terminates the route.
+// terminates natively (storyWave) but its fragment stays core-side (it
+// interpolates the shared schema.EvidenceBoundaries helper, which has
+// no line-verbatim port without a core import (forbidden)), so its
+// fragment never lands; the story parity corpus plus
+// openapi/spec_w5_test.go carry that leg until the helper ports as a
+// component and the follow-up spec-port lane vendors the entry.
 //
 // Provenance: every payload line below is verbatim from the pinned core
 // file go/internal/query/openapi/paths/repository/routes.go

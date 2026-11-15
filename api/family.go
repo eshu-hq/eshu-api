@@ -12,7 +12,8 @@ import (
 // (suppression, retirement, terminal-failure, retire-unclaimed,
 // admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
 // compare, content, freshness, code-flow, code-search, code-graph, code-dead-code, code-divergence, code-relationships, iac, w8a,
-// OIDC/GitHub/SAML, and setup), each filing its dispatch outcomes
+// entities, workloads, graph-entities, impact, OIDC/GitHub/SAML, and
+// setup), each filing its dispatch outcomes
 // and authorizer judgments
 // on every return path; the relay lane is the generic byte-for-byte
 // proxy every other family crosses.
@@ -123,6 +124,10 @@ var familyPrefixes = []struct {
 	{"/code/relationships", "code_relationships"},
 	{"/code/symbols", "code_search"},
 	{"/code/search", "code_search"},
+	{"/entities", "entities"},
+	{"/workloads", "workloads"},
+	{"/graph/entities", "graph_entities"},
+	{"/impact", "impact"},
 	{"/openapi.json", "api_router"},
 	{"/docs", "api_router"},
 	{"/redoc", "api_router"},
@@ -155,7 +160,6 @@ var familyPrefixes = []struct {
 	{"/work-items", "work_items"},
 	{"/semantic/", "semantic"},
 	{"/dependencies", "dependencies"},
-	{"/graph/entities", "graph_entities"},
 	{"/images", "images"},
 	{"/incidents", "incidents"},
 	{"/runtime-declarations", "runtime_declarations"},

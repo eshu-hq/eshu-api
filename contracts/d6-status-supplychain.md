@@ -138,9 +138,13 @@ Known divergences (disclosed, not hidden):
   field, not a port, riding core-side under the forward transport).
   They left the D6 relay disclosure when the W8a lane mounted them
   natively with their fragments disclosed core-side.
-- The `investigations/supply-chain/impact/packet` read stays relay:
-  it admits through the writer `ImpactPacketResponder` plus the shared
-  graph/content ports the SupplyChain pin explicitly excludes.
+- The `investigations/supply-chain/impact/packet` read terminated in
+  the W5 packet lane (see
+  `contracts/supply-chain-impact-packet-termination.md`): it admits
+  through `SupplyChainImpactPacketReadAdmission v0` (the two reducer
+  reads plus the shared selector closure the D6 SupplyChain pin
+  explicitly excluded), with the writer `ImpactPacketResponder` and the
+  composers staying core-side by design under the forward transport.
 - Compare (`POST /api/v0/compare/environments`) terminated in its
   gap-04 lane (see `contracts/compare-termination.md`): it admitted
   only through the shared graph/content ports, never through

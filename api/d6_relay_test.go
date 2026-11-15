@@ -162,13 +162,14 @@ func TestD6WaveCredentiallessStays401(t *testing.T) {
 // the scoping line is observable from dest signals. The governance,
 // answer-narration, and hosted-readiness aspects left this list when
 // the W8a lane terminated them natively (see api/w8a_conformance_test.go);
-// the impact packet stays relay-only.
+// the impact packet left this list when the W5 packet lane terminated
+// it natively (see api/packet_conformance_test.go) — the list stays
+// empty so a future relay-only route rejoins a live gate instead of a
+// deleted test.
 func TestD6RelayedRoutesCarryRelayLane(t *testing.T) {
 	t.Parallel()
 
-	relayed := []string{
-		"/api/v0/investigations/supply-chain/impact/packet",
-	}
+	relayed := []string{}
 	for _, target := range relayed {
 		t.Run("GET "+target, func(t *testing.T) {
 			t.Parallel()

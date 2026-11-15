@@ -23,10 +23,9 @@ import (
 // explicitly. Until the lane lands, the wave registers nothing and every
 // wave call crosses the generic byte-relay (or the key gate), so the
 // ahead-of-relay assertions fail first. That red is the recorded
-// expectation, not a defect. The repositories story GET is the wave's
-// one relay leg (its fragment waits on the schema helper port):
-// TestD4StoryRelayLegOnGenericProxy below pins it on the generic proxy
-// instead of in the frozen wave.
+// expectation, not a defect. The repositories story GET terminated
+// natively in the W5 story lane (storyWave): the story parity corpus
+// carries it instead of the frozen wave.
 
 // TestD4WaveFrozen pins the exact Native-next surface the satellite
 // must terminate. A wave change (route added, removed, renamed, or
@@ -103,108 +102,17 @@ func TestD4WaveFrozen(t *testing.T) {
 	}
 }
 
-// d4StoryRelayPath is the concrete story path the reverted route
-// serves through the generic byte-relay. The story GET left the D4
-// wave (its spec entry waits on the schema.EvidenceBoundaries helper
-// port), so it is no longer a wave route with a d4ConcretePaths entry:
-// the router carries it in d4RelayLegs on the keyed generic-relay
-// stack, and this constant carries the relay leg for the proof below.
+// d4StoryRelayPath is retired with the carried D4 relay leg: the story
+// GET terminated natively in the W5 story lane (storyWave). The relay
+// posture this constant and TestD4StoryRelayLegOnGenericProxy pinned
+// (shared-key relay, foreign-class key-gate 401, unconfigured 503) is
+// superseded by the native parity corpus — TestStoryWaveAheadOfRelay,
+// TestStoryByteParity, TestStoryScopedEmptyGrantRelay, and the story
+// gate suite — which pin the same shapes on the native lane plus the
+// explicit-relay rule for foreign classes. See
+// contracts/repository-story-termination.md for the supersession
+// record. storyConcretePath carries the concrete story path now.
 const d4StoryRelayPath = "/api/v0/repositories/repo_1/story"
-
-// TestD4StoryRelayLegOnGenericProxy pins the carried relay leg: the
-// reverted story GET relays core bytes untouched on the relay lane
-// for shared-key callers (never the native lane — the explicit relay
-// registration shadows the list route's subtree twin, which would
-// otherwise terminate it under the D4 gate), in both negotiated
-// shapes, and fails closed with the standing permanent 503 when no
-// core origin is configured. A foreign credential class or a
-// junk-cookie carrier meets the generic relay's key gate (dest 401,
-// zero core contact) instead of the wave's explicit relay — the
-// pre-lane posture, restored.
-func TestD4StoryRelayLegOnGenericProxy(t *testing.T) {
-	t.Parallel()
-
-	for _, accept := range []string{EnvelopeMIME, "application/json"} {
-		core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
-		mux := http.NewServeMux()
-		mux.Handle("/", core.handler())
-		upstream := httptest.NewServer(mux)
-		defer upstream.Close()
-
-		tel := NewTelemetry(nil)
-		srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
-		handler := srv.Handler(DefaultV0Sunset)
-
-		req := authedRequest(http.MethodGet, d4StoryRelayPath)
-		req.Header.Set("Accept", accept)
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Fatalf("Accept %q: status = %d, want 200 from the relayed core", accept, rec.Code)
-		}
-		body, _ := io.ReadAll(rec.Result().Body)
-		if string(body) != core.body {
-			t.Fatalf("Accept %q: body = %q, want the relayed core bytes %q", accept, body, core.body)
-		}
-		snap := tel.snapshot()
-		lanes, ok := snap.dispatches["repositories"]
-		if !ok {
-			t.Fatalf("Accept %q: family repositories has no dispatch rows, want the relay leg", accept)
-		}
-		if lanes[viaNative] != nil {
-			t.Errorf("Accept %q: repositories dispatches = %v, want no native lane row (route relays)", accept, lanes)
-		}
-		if got := lanes[viaRelay][outcomeCoreOK]; got != 1 {
-			t.Errorf("Accept %q: repositories relay core_ok = %d, want 1", accept, got)
-		}
-		if core.hits != 1 {
-			t.Errorf("Accept %q: upstream hits = %d, want exactly 1 (no retry on the relay leg)", accept, core.hits)
-		}
-	}
-
-	scoped := &stubCore{status: http.StatusOK, body: `{"data":[]}`}
-	scopedMux := http.NewServeMux()
-	scopedMux.Handle("/", scoped.handler())
-	scopedUpstream := httptest.NewServer(scopedMux)
-	defer scopedUpstream.Close()
-
-	scopedSrv := NewServer(scopedUpstream.URL, skeletonTestKey)
-	scopedHandler := scopedSrv.Handler(DefaultV0Sunset)
-	for _, accept := range []string{EnvelopeMIME, "application/json"} {
-		req := httptest.NewRequest(http.MethodGet, d4StoryRelayPath, nil)
-		req.Header.Set("Authorization", "Bearer [REDACTED]")
-		req.Header.Set("Accept", accept)
-		rec := httptest.NewRecorder()
-		scopedHandler.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusUnauthorized {
-			t.Errorf("Accept %q: scoped-bearer status = %d, want 401 from the relay key gate", accept, rec.Code)
-		}
-
-		junk := httptest.NewRequest(http.MethodGet, d4StoryRelayPath, nil)
-		junk.Header.Set("Accept", accept)
-		junk.Header.Set("Cookie", "theme=dark")
-		junkRec := httptest.NewRecorder()
-		scopedHandler.ServeHTTP(junkRec, junk)
-
-		if junkRec.Code != http.StatusUnauthorized {
-			t.Errorf("Accept %q: junk-cookie status = %d, want 401 from the relay key gate", accept, junkRec.Code)
-		}
-	}
-	if scoped.hits != 0 {
-		t.Errorf("upstream hits = %d, want 0 (foreign classes never reach the core on the relay leg)", scoped.hits)
-	}
-
-	bare := NewServer("", skeletonTestKey)
-	bareHandler := bare.Handler(DefaultV0Sunset)
-	req := authedRequest(http.MethodGet, d4StoryRelayPath)
-	rec := httptest.NewRecorder()
-	bareHandler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Errorf("unconfigured origin: status = %d, want the permanent local 503", rec.Code)
-	}
-}
 
 // d4ConcretePaths fills the wave's path wildcards so the behavior
 // tests drive real mux matches. Trailing-slash spellings ride the same

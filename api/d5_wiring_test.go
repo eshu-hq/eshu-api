@@ -22,8 +22,8 @@ import (
 // TDD record: the strict bijection (every wave GET has a spec get
 // entry, zero carve-outs) ran RED first on exactly the disclosed
 // absences below (the /health, /docs, /redoc mux-level entries — the
-// repositories story GET left the wave for the generic relay, so it is
-// no longer a wave GET at all) with the other 54 GETs present; this
+// repositories story GET terminated in the W5 story lane, so it is
+// no longer a D4 wave GET at all) with the other 54 GETs present; this
 // file pins that outcome. It extends the wave-gated pattern — frozen
 // tables mirrored off the wave tables, behavior proved against the
 // served document — and invents no new pattern: the probe reuses
@@ -50,8 +50,9 @@ type d5ProbeGET struct {
 // D3 reads (six admin-identity GETs plus the two governance-audit
 // GETs), and 37 D4 reads (CICD, Documentation, Infra, PackageRegistry,
 // Repositories, Evidence, InvestigationWorkflows, Playbooks — the
-// story GET relays, so every D4 wave GET is probed). Order follows the
-// waves (D2, D3, D4); within D4, ruling family order.
+// story GET terminated in the W5 story lane, so every D4 wave GET is
+// probed). Order follows the waves (D2, D3, D4); within D4, ruling
+// family order.
 var d5ProbeGETs = []d5ProbeGET{
 	{Path: "/api/v0/openapi.json", OperationID: "getOpenAPISpec"},
 	{Path: "/api/v0/capabilities", OperationID: "listCapabilities"},
@@ -169,8 +170,8 @@ func d5ServedPaths(t *testing.T, origin string) map[string]any {
 
 // TestD5ProbeFrozen pins the probe surface against the wave tables: 57
 // terminated GETs across D2-D4, of which 54 carry a served spec entry
-// and 3 stay absent by disclosure (the story GET relays instead of
-// terminating, so it is no wave GET at all). A wave change (route
+// and 3 stay absent by disclosure (the story GET terminated in the W5
+// story lane, so it is no D4 wave GET at all). A wave change (route
 // added, removed, renamed) fails here until the probe table, the
 // expected absences, and the owning lane move together.
 func TestD5ProbeFrozen(t *testing.T) {
@@ -255,8 +256,9 @@ func TestD5Wiring_ServedGETShapes(t *testing.T) {
 
 // TestD5Wiring_ExpectedAbsentStaysAbsent pins the disclosed drift:
 // the mux-level GETs never gain a spec path key. (The story route
-// carries no key either, but it is no longer a wave GET — it relays,
-// and TestD4StoryRelayLegOnGenericProxy carries that leg.)
+// carries no key either, but it is no longer a D4 wave GET — it
+// terminates in the W5 story lane, and the story parity corpus plus
+// openapi/spec_w5_test.go carry that leg.)
 func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 	t.Parallel()
 
