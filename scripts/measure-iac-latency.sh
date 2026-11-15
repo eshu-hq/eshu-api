@@ -23,7 +23,7 @@
 #
 # Relay-route disclosure: no IaC read rides the generic relay now that
 # the dead leg terminates natively, so the before-shape is POST
-# /api/v0/code/bundles — a route no wave table covers (drift-style) —
+# /api/v0/impact/change-surface — a route no wave table covers (drift-style) —
 # with the small page for the cleared legs and the same worst-case
 # derived page for the dead 10k leg.
 #

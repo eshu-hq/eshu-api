@@ -10,7 +10,7 @@ core or network time.
 
 - `BenchmarkCodeFlowTerminatedPOST/cfg-summary`: ~106–114 µs/op.
 - `BenchmarkCodeFlowTerminatedPOST/taint-path`: ~108–112 µs/op.
-- `BenchmarkCodeFlowRelayPOST/bundles-relay`: ~113–120 µs/op.
+- `BenchmarkCodeFlowRelayPOST/change-surface-relay`: ~113–120 µs/op (relay leg re-pointed from bundles by the W6 scan lane; same single-fetch shape).
 
 The terminated legs ride at or below the relay cost on the same
 single-fetch shape: no latency regression from the gate plus

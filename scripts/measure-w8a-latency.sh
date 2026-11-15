@@ -20,7 +20,7 @@
 # Relay-route disclosure (the W8a lane terminates no earlier relay
 # leg): terminated legs are the 8 per-family W8a representatives vs
 # relay GET /api/v0/dependencies (the D2-D4-pinned relay read leg)
-# and relay POST /api/v0/code/bundles (the D3/D4-pinned relay POST
+# and relay POST /api/v0/impact/change-surface (the D3/D4-pinned relay POST
 # leg). GET legs gate against the relay GET, POST legs against the
 # relay POST.
 #

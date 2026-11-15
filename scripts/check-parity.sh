@@ -47,6 +47,7 @@ SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
 SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
+SRC_SHA_W6="dd4a32718aa47fbfb6fd435e4b3e5904580d0f6a"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -1923,6 +1924,100 @@ check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/repository-story-
 
 check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/supply-chain-impact-packet-read-wire-shapes.txt" \
   "go/internal/query/supply/chain/packet_impact_read_admission.go"
+# Satellite W6 remainder termination (eshu-hq/eshu-api#98, W6b scan):
+# the CodeGraphScanReadAdmission v0 pin, minted core-side (unwired,
+# arbiter supplemental ruling §2A). The vendored pin and contract test
+# are byte-identical at the merge commit; the wire-shapes excerpt
+# carries the version const stanza, the in-scope route list, the
+# 2-method interface, the GraphQuery/ContentStore mirror assertion,
+# and the surrounding contract comment, line-verbatim from the pin
+# file.
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_graph_scan_read_admission.go" \
+  "contracts/upstream/code_graph_scan_read_admission.go" \
+  "9acd171e7e129e547c6b32580c7bdc60924469f2de09787e65f292fd8026b87b"
+
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_graph_scan_read_admission_contract_test.go" \
+  "contracts/upstream/code_graph_scan_read_admission_contract_test.go" \
+  "636e3a5bac4c4ba057c5ed10840db39f73d385150b4e1aab336b879b926e7ae"
+
+check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-graph-scan-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_graph_scan_read_admission.go"
+
+# Satellite W6 remainder termination (eshu-hq/eshu-api#98, W6c
+# investigation): the CodeContentInvestigationReadAdmission v0 pin,
+# minted core-side (unwired, arbiter supplemental ruling §2B). The
+# vendored pin and contract test are byte-identical at the merge
+# commit; the wire-shapes excerpt carries the version const stanza,
+# the in-scope route list, the 3-method interface, the mirror
+# assertion, and the surrounding contract comment, line-verbatim from
+# the pin file.
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_content_investigation_read_admission.go" \
+  "contracts/upstream/code_content_investigation_read_admission.go" \
+  "fdb764ac0d8d9971e715f81d9fe2bec01e92b7767946bc73557f2b7b1bfcbefe"
+
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_content_investigation_read_admission_contract_test.go" \
+  "contracts/upstream/code_content_investigation_read_admission_contract_test.go" \
+  "f1c2ac20c92979615df9e6352d5bc27da807066a0639ce052e11e0c38494"
+
+check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-content-investigation-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_content_investigation_read_admission.go"
+
+# Satellite W6 remainder termination (eshu-hq/eshu-api#98, W6c
+# secret): the CodeHardcodedSecretReadAdmission v0 pin, minted
+# core-side (unwired, arbiter supplemental ruling §2C, isolated
+# least-privilege). The vendored pin and contract test are
+# byte-identical at the merge commit; the wire-shapes excerpt carries
+# the version const stanza, the in-scope route list, the 2-method
+# interface, the mirror assertion, and the surrounding contract
+# comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_hardcoded_secret_read_admission.go" \
+  "contracts/upstream/code_hardcoded_secret_read_admission.go" \
+  "8bc2c647ee174f65894b9d44f4b1825c8b3778bc0a88e0fb1fa28c865649d617"
+
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_hardcoded_secret_read_admission_contract_test.go" \
+  "contracts/upstream/code_hardcoded_secret_read_admission_contract_test.go" \
+  "b298b01aa7f89154cd7ede108f597b4e1c33cecad7cb648dc836e45426eeb"
+
+check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-hardcoded-secret-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_hardcoded_secret_read_admission.go"
+
+# Satellite W6 remainder termination (eshu-hq/eshu-api#98, W6d
+# cypher): the CodeCypherReadAdmission v0 pin, minted core-side
+# (unwired, arbiter supplemental ruling §2D). The vendored pin and
+# contract test are byte-identical at the merge commit; the
+# wire-shapes excerpt carries the version const stanza, the in-scope
+# route list, the 1-method interface, the GraphQuery mirror
+# assertion, and the surrounding contract comment, line-verbatim from
+# the pin file.
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_cypher_read_admission.go" \
+  "contracts/upstream/code_cypher_read_admission.go" \
+  "682fe64ac9690d0f5fb5afaefff159dc361439a5bc9a61acf626ddc8455821e6"
+
+check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_cypher_read_admission_contract_test.go" \
+  "contracts/upstream/code_cypher_read_admission_contract_test.go" \
+  "df96757e855ec0beda449818f1eefec9f6079d1be83c89c51e0026886827e"
+
+check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-cypher-read-wire-shapes.txt" \
+  "go/internal/query/codequery/code_cypher_read_admission.go"
+
+# Satellite W6 remainder termination (eshu-hq/eshu-api#98, W6c
+# language-query): the CodeLanguageQueryReadAdmission v0 pin, minted
+# core-side in package language (unwired, arbiter supplemental ruling
+# §2E). The vendored pin and contract test are byte-identical at the
+# merge commit; the wire-shapes excerpt carries the version const
+# stanza, the in-scope route list, the 4-method interface, the
+# GraphQuery/ContentStore/grant mirror assertion, and the surrounding
+# contract comment, line-verbatim from the pin file.
+check_file_at "$SRC_SHA_W6" "go/internal/query/language/code_query_read_admission.go" \
+  "contracts/upstream/code_query_read_admission.go" \
+  "f8472d1165f2dd4366e2a9a8d2f86b32e3fb527e9f42a51d8794285257e9f45"
+
+check_file_at "$SRC_SHA_W6" "go/internal/query/language/code_query_read_admission_contract_test.go" \
+  "contracts/upstream/code_query_read_admission_contract_test.go" \
+  "06a4667bf0de291fc3e6fa3b7121469dc1c697c16e5223e9e62cd829c51e0026886827e"
+
+check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-query-read-wire-shapes.txt" \
+  "go/internal/query/language/code_query_read_admission.go"
 
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
@@ -1983,6 +2078,11 @@ grep -qF 'EntityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/ups
 grep -qF 'ImpactReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/impact-read-wire-shapes.txt"
 grep -qF 'RepositoryStoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/repository-story-read-wire-shapes.txt"
 grep -qF 'SupplyChainImpactPacketReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-impact-packet-read-wire-shapes.txt"
+grep -qF 'CodeGraphScanReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-graph-scan-read-wire-shapes.txt"
+grep -qF 'CodeContentInvestigationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-content-investigation-read-wire-shapes.txt"
+grep -qF 'CodeHardcodedSecretReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-hardcoded-secret-read-wire-shapes.txt"
+grep -qF 'CodeCypherReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-cypher-read-wire-shapes.txt"
+grep -qF 'CodeLanguageQueryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-query-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -2296,6 +2396,139 @@ for lane in relationship_terminate relationship_wave; do
   done
 done
 echo "OK: relationships lane files carry no dest-side store or parse"
+# Satellite W6b scan termination (eshu-hq/eshu-api#98): no dest-side
+# store, port, or parse of the W6b reads on the lane (arbiter
+# supplemental ruling §2A, sealed 2-method admission, no transport
+# constructor by design). api/code_scan_terminate.go and
+# api/code_scan_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pin's graph and
+# content readers and the out-of-pin file-content/ledger/summary legs
+# all stay core-side, and the lane forwards the request bodies
+# opaquely (no query, form, path, or body-key parse). Fails closed on
+# any match (the in-suite source test
+# TestCodeScanTerm_LaneFileHygiene proves the same list).
+for lane in code_scan_terminate code_scan_wave; do
+  for symbol in postgres CodeGraphScanReadAdmission GraphQuery ContentStore ContentReader ReadStore ListRepoEntitiesByIDs 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"query"' '"ecosystem"' '"unique_only"' '"limit"' '"offset"' '"repo_id"' '"entity_id"' '"function_name"' '"check"' '"language"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: scan lane files carry no dest-side store or parse"
+# Satellite W6c investigation termination (eshu-hq/eshu-api#98): no
+# dest-side store, port, or parse of the W6c investigation reads on
+# the lane (arbiter supplemental ruling §2B, sealed 3-method
+# admission, no constructor surface by design).
+# api/code_investigation_terminate.go and
+# api/code_investigation_wave.go must name no dest-side store, reader
+# port, graph/content leg, or out-of-pin leg symbol — the pin's
+# content readers and the out-of-pin graph, file-content,
+# ledger/summary/snapshot legs all stay core-side, and the lane
+# forwards the request bodies opaquely (no query, form, path, or
+# body-key parse). Fails closed on any match (the in-suite source
+# test TestCodeInvestigationTerm_LaneFileHygiene proves the same
+# list).
+for lane in code_investigation_terminate code_investigation_wave; do
+  for symbol in postgres CodeContentInvestigationReadAdmission GraphQuery ContentStore ContentReader ReadStore InspectStructuralInventory InvestigateCodeTopic CountStructuralInventoryByFile 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"topic"' '"intent"' '"repo_id"' '"limit"' '"offset"' '"inventory_kind"' '"entity_kind"' '"file_path"' '"symbol"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: investigation lane files carry no dest-side store or parse"
+# Satellite W6c secrets termination (eshu-hq/eshu-api#98): no
+# dest-side store, port, or parse of the W6c secret read on the lane
+# (arbiter supplemental ruling §2C, isolated least-privilege, sealed
+# 2-method admission, no constructor surface by design).
+# api/code_secrets_terminate.go and api/code_secrets_wave.go must name
+# no dest-side store, reader port, graph/content leg, or out-of-pin
+# leg symbol — the pin's content readers and the out-of-pin graph,
+# file-content, ledger/summary/snapshot legs all stay core-side, and
+# the lane forwards the request body opaquely (no query, form, path,
+# or body-key parse). Fails closed on any match (the in-suite source
+# test TestCodeSecretsTerm_LaneFileHygiene proves the same list).
+for lane in code_secrets_terminate code_secrets_wave; do
+  for symbol in postgres CodeHardcodedSecretReadAdmission GraphQuery ContentStore ContentReader ReadStore InvestigateHardcodedSecrets 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"finding_kinds"' '"limit"' '"offset"' '"include_suppressed"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: secrets lane files carry no dest-side store or parse"
+# Satellite W6d cypher termination (eshu-hq/eshu-api#98): no dest-side
+# store, port, or parse of the W6d reads on the lane (arbiter
+# supplemental ruling §2D, sealed 1-method admission, no constructor
+# surface by design, shared-key-only grant-class gate ported by the
+# wave gate). api/code_cypher_terminate.go and api/code_cypher_wave.go
+# must name no dest-side store, reader port, graph leg, or out-of-pin
+# leg symbol — the pin's graph reader and the out-of-pin
+# file-content/ledger/summary/snapshot legs all stay core-side, and
+# the lane forwards the request bodies opaquely (no query, form,
+# path, or body-key parse). Fails closed on any match (the in-suite
+# source test TestCodeCypherTerm_LaneFileHygiene proves the same
+# list).
+for lane in code_cypher_terminate code_cypher_wave; do
+  for symbol in postgres CodeCypherReadAdmission GraphQuery ContentStore ContentReader ReadStore ValidateReadOnlyCypher 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"cypher_query"' '"limit"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: cypher lane files carry no dest-side store or parse"
+# Satellite W6c language-query termination (eshu-hq/eshu-api#98): no
+# dest-side store, port, or parse of the W6c language read on the lane
+# (arbiter supplemental ruling §2E, sealed 4-method admission, no
+# constructor surface by design). api/code_language_terminate.go and
+# api/code_language_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pin's graph and
+# content readers and the out-of-pin file-content, ledger, summary,
+# and snapshot legs all stay core-side, and the lane forwards the
+# request bodies opaquely (no query, form, path, or body-key parse).
+# Fails closed on any match (the in-suite source test
+# TestCodeLanguageTerm_LaneFileHygiene proves the same list).
+for lane in code_language_terminate code_language_wave; do
+  for symbol in postgres CodeLanguageQueryReadAdmission CodeQueryReadAdmission GraphQuery ContentStore ContentReader ReadStore SearchEntitiesByLanguageAndType ListEntityMetadataByIDsForAccess 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"language"' '"entity_type"' '"query"' '"repo_id"' '"limit"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: language lane files carry no dest-side store or parse"
 
 # W8b-narrow lane: no dest-side store, port, or parse on the lane
 # (arbiter SUPPLEMENTAL-PIN-OWED rulings, sealed narrow admissions,

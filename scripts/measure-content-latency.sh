@@ -22,8 +22,8 @@
 # the W4 search lane terminated the search legs too): terminated POST
 # /api/v0/content/files/read, terminated POST
 # /api/v0/content/files/lines, and terminated POST
-# /api/v0/content/entities/read vs relay POST /api/v0/code/bundles
-# (the still-relayed code POST no wave table covers, on the generic
+# /api/v0/content/entities/read vs relay POST /api/v0/impact/change-surface
+# (the still-relayed impact POST no wave table covers, on the generic
 # proxy). Same-method legs, so every lane gates terminated-vs-relay
 # again instead of terminated-vs-terminated.
 #

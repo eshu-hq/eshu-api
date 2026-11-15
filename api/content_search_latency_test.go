@@ -84,10 +84,10 @@ func BenchmarkContentSearchRelayPOST(b *testing.B) {
 	_, srv := contentSearchBenchServer(b, `{"results":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	b.Run("bundles-relay", func(b *testing.B) {
+	b.Run("change-surface-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"query":"render"}`))
 			post.ContentLength = int64(len(`{"query":"render"}`))
 			rec := httptest.NewRecorder()

@@ -63,10 +63,10 @@ func BenchmarkContentTerminatedRead(b *testing.B) {
 // BenchmarkContentRelayRead measures the generic relay path for the
 // same caller and stub shape: the before leg the lane must not
 // regress. The legs compare different routes by necessity (the wave
-// paths now terminate; the W4 search lane terminated the file search
-// POST too, so the relay leg rides the still-relayed code bundles POST
-// no wave table covers); both do exactly one server-side fetch, so the
-// 1.50 bound stays a real pathology check.
+// paths now terminate; the W6 scan lane terminated the last code POST
+// too, so the relay leg rides the still-relayed impact change-surface
+// POST no wave table covers); both do exactly one server-side fetch,
+// so the 1.50 bound stays a real pathology check.
 func BenchmarkContentRelayRead(b *testing.B) {
 	_, srv := contentBenchServer(b, `{"results":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -75,13 +75,13 @@ func BenchmarkContentRelayRead(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, contentAuthedPost("/api/v0/code/bundles", `{"query":"render"}`, "application/json"))
+			handler.ServeHTTP(rec, contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json"))
 		}
 	})
 }
 
 // TestContentRelayLegStaysRelayed proves the relay-leg premise the
-// benchmarks above rest on: POST /api/v0/code/bundles is covered by no
+// benchmarks above rest on: POST /api/v0/impact/change-surface is covered by no
 // wave table, so a shared-key call files its dispatch on the relay
 // lane — the terminated-vs-relay comparison stays honest.
 func TestContentRelayLegStaysRelayed(t *testing.T) {
@@ -98,11 +98,11 @@ func TestContentRelayLegStaysRelayed(t *testing.T) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, contentAuthedPost("/api/v0/code/bundles", `{"query":"render"}`, "application/json"))
+	handler.ServeHTTP(rec, contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json"))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
 	}
-	if core.lastPath != "/api/v0/code/bundles" {
+	if core.lastPath != "/api/v0/impact/change-surface" {
 		t.Errorf("upstream path = %q, want the relay leg crossed intact", core.lastPath)
 	}
 	snap := tel.snapshot()

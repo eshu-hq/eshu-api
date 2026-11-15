@@ -10,7 +10,7 @@ core or network time.
 
 - `BenchmarkCodeSearchTerminatedPOST/code-search`: ~93 µs/op.
 - `BenchmarkCodeSearchTerminatedPOST/symbols-search`: ~94 µs/op.
-- `BenchmarkCodeSearchRelayPOST/bundles-relay`: ~94 µs/op.
+- `BenchmarkCodeSearchRelayPOST/change-surface-relay`: ~94 µs/op (relay leg re-pointed from bundles by the W6 scan lane; same single-fetch shape).
 
 Ratios 0.99–1.01, inside the 1.50 budget
 (`scripts/measure-code-search-latency.sh`, wired into

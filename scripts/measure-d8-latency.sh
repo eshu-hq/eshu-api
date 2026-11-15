@@ -20,7 +20,7 @@
 # it loudly while scheduling noise does not.
 #
 # Relay-route disclosure: the write-relay leg is POST
-# /api/v0/code/bundles, which stays on the generic relay (the
+# /api/v0/impact/change-surface, which stays on the generic relay (the
 # D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
 # terminated in its gap-04 lane); the
 # read-relay leg is GET /api/v0/dependencies, which stays on the

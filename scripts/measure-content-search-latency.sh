@@ -12,7 +12,7 @@
 # (D11); this gate runs on every PR and in CI.
 #
 # Method: go test benchmarks BenchmarkContentSearchTerminatedPOST (one
-# leg per wave route) vs BenchmarkContentSearchRelayPOST (bundles-relay,
+# leg per wave route) vs BenchmarkContentSearchRelayPOST (change-surface-relay,
 # the still-relayed code POST no wave table covers, on the generic
 # proxy), -count=5, take the median ns/op. FAIL when terminated exceeds
 # relay by more than 50% on any leg (generous: every leg does one
@@ -56,7 +56,7 @@ term_files_search="$(bench 'BenchmarkContentSearchTerminatedPOST/files-search' |
 term_entities_search="$(bench 'BenchmarkContentSearchTerminatedPOST/entities-search' | median)"
 term_dockerfile_search="$(bench 'BenchmarkContentSearchTerminatedPOST/dockerfile-search' | median)"
 term_php_config_search="$(bench 'BenchmarkContentSearchTerminatedPOST/php-config-search' | median)"
-relay_post="$(bench 'BenchmarkContentSearchRelayPOST/bundles-relay' | median)"
+relay_post="$(bench 'BenchmarkContentSearchRelayPOST/change-surface-relay' | median)"
 
 check_leg files-search "$term_files_search" "$relay_post"
 check_leg entities-search "$term_entities_search" "$relay_post"

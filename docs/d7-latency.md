@@ -11,8 +11,8 @@ slower than the relay they replace.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkD7RelayWrite`), POST
-  `/api/v0/code/bundles` through the full production chain. The
-  code-bundles route stays on the generic relay (the D3/D4/Leaf B
+  `/api/v0/impact/change-surface` through the full production chain. The
+  change-surface route stays on the generic relay (the D3/D4/Leaf B
   lanes pin it as their relay POST leg); the Compare POST it replaces
   terminated in its gap-04 lane.
 - After legs: the D7 clones (`BenchmarkD7NativeWrite`), shared-key
@@ -29,19 +29,24 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The relay leg is POST `/api/v0/code/bundles`: it is the still-relaying
-write the D3/D4/Leaf B lanes pin as their relay POST leg. Both legs do
+The relay leg is POST `/api/v0/impact/change-surface`: the W6 scan lane
+re-pointed it there when it terminated the last code POST; it is the still-relaying
+write both legs compare against. Both legs do
 exactly one server-side fetch, so the 1.50 bound stays a real
 pathology check.
 
-## Numbers (local, 2026-11-07)
+## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
 Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 | Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Dead-letter POST | 85242 | 93171 | 0.91 | ≤ 1.50 |
-| Reindex POST | 84142 | 93171 | 0.90 | ≤ 1.50 |
+| Dead-letter POST | 83493 | 83737 | 1.00 | ≤ 1.50 |
+| Reindex POST | 82477 | 83737 | 0.98 | ≤ 1.50 |
+
+Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
+leg from the terminated code bundles POST to the still-relayed
+impact change-surface POST.
 
 Within budget on both legs: the lane adds the explicit route match and
 one authorizer call around the same single fetch. Absolute deployment

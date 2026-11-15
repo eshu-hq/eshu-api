@@ -11,11 +11,11 @@ not slower than the relay they replace.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkContentSearchRelayPOST`),
-  shared-key POST (`/api/v0/code/bundles`) through the full production
+  shared-key POST (`/api/v0/impact/change-surface`) through the full production
   chain. The legs compare different routes by necessity (the 4 search
-  paths now terminate; the still-relayed code bundles POST no wave table
-  covers still relays); every leg does exactly one server-side fetch, so
-  the 1.50 bound stays a real pathology check.
+  paths now terminate; the still-relayed impact change-surface POST no
+  wave table covers still relays); every leg does exactly one
+  server-side fetch, so the 1.50 bound stays a real pathology check.
 - After legs: the terminated W4 search reads
   (`BenchmarkContentSearchTerminatedPOST`), shared-key POSTs
   (`/api/v0/content/files/search`,
@@ -36,21 +36,25 @@ Hermetic stub-core comparison, same binary, same caller shape:
 ## Relay-route disclosure
 
 The W4 lane terminates the search legs, so the lane relays against a
-still-relayed code route that no wave table covers:
-`POST /api/v0/code/bundles` (Code family, still relayed).
+still-relayed impact route that no wave table covers:
+`POST /api/v0/impact/change-surface` (Impact family, still relayed).
 Same-method legs, so every lane gates terminated-vs-relay again
 instead of terminated-vs-terminated.
 
-## Numbers (local, 2026-11-12 W4 lane)
+## Numbers (local, 2026-11-12 W4 lane; relay leg re-pointed 2026-11-15)
 
 Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 | Leg | Terminated (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Files-search POST | 92521 | 91376 | 1.01 | ≤ 1.50 |
-| Entities-search POST | 95571 | 91376 | 1.05 | ≤ 1.50 |
-| Dockerfile-search POST | 92121 | 91376 | 1.01 | ≤ 1.50 |
-| PHP-config-search POST | 90640 | 91376 | 0.99 | ≤ 1.50 |
+| Files-search POST | 90996 | 91572 | 0.99 | ≤ 1.50 |
+| Entities-search POST | 91995 | 91572 | 1.00 | ≤ 1.50 |
+| Dockerfile-search POST | 91726 | 91572 | 1.00 | ≤ 1.50 |
+| PHP-config-search POST | 92210 | 91572 | 1.01 | ≤ 1.50 |
+
+Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
+leg from the terminated code bundles POST to the still-relayed
+impact change-surface POST.
 
 Within budget on all four legs: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment

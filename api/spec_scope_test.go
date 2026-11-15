@@ -19,19 +19,22 @@ import (
 //
 // The mounted set is rebuilt here from the exact tables and route
 // constants the router registers (leafbWave, d3Wave, d4Wave, d6Wave,
-// compareWave, codeFlowWave, codeGraphWave, deadCodeWave, codeDivergenceWave, relationshipWave,
+// compareWave, codeFlowWave, codeGraphWave, deadCodeWave, codeDivergenceWave, relationshipWave, codeScanWave, codeInvestigationWave, codeSecretsWave, codeCypherWave, codeLanguageWave,
 // codeSearchWave, the per-family route lists, the mux-level probes),// never from a second frozen copy: a lane change moves the router
 // tables and this proof together. The spec side is read through the real route as a
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Eighty-four mounted spellings stay out of the document by
+// Ninety-five mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
 // the 4 G-a Code-graph routes plus the 3 dead-code routes plus the 3
 // divergence routes plus the 2 G-b relationship routes plus the 2 W4
 // Code search routes plus the 16 W8a routes plus the 2 drift routes
 // plus the 15 W8b-narrow routes plus the 8 W5 entity routes plus the
-// 13 W5 impact POSTs plus the W5f packet single — with the W5f story
+// 13 W5 impact POSTs plus the W5f packet single plus the W5
+// investigations hold single plus the 4 W6b scan POSTs plus the 2 W6c
+// investigation POSTs plus the 1 W6c secret POST plus the 2 W6d cypher
+// POSTs plus the 1 W6c language-query POST — with the W5f story
 // relay entry rewritten as a terminated-but-disclosed absence),// each with its owning contract: the three mux-level non-API mounts
 
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
@@ -71,13 +74,31 @@ import (
 // by openapi/spec_divergence_test.go), the 2 G-b relationship POSTs
 // whose fragments stay core-side for the relay-leg lane (the routes.go
 // entries port entry-shaped with their referenced schemas in the
-// follow-up lane — contracts/code-relationships-termination.md),
+// follow-up lane — contracts/code-relationships-termination.md), the
+// 4 W6b scan POSTs whose fragments stay core-side for the relay-leg
+// lane (the routes.go, quality.go, symbols.go, and graph.go entries
+// port entry-shaped with their referenced schemas in the follow-up
+// lane — contracts/code-scan-termination.md), the 2 W6c investigation
+// POSTs whose fragments stay core-side for the relay-leg lane (the
+// symbols.go entries port entry-shaped with their referenced schemas
+// in the follow-up lane —
+// contracts/code-investigation-termination.md), the 1 W6c secret POST
+// whose fragment stays core-side for the relay-leg lane (the
+// security.go entry ports entry-shaped with its referenced schemas in
+// the follow-up lane — contracts/code-secrets-termination.md), the 2
+// W6d cypher POSTs whose fragments stay core-side for the relay-leg
+// lane (the graph.go entries port entry-shaped with their referenced
+// schemas in the follow-up lane — contracts/code-cypher-termination.md),
+// the 1 W6c language-query POST whose fragment stays core-side for the
+// relay-leg lane (the routes.go entry ports entry-shaped with its
+// referenced schemas in the follow-up lane —
 // the 16 W8a routes whose// fragments stay core-side for the satellite termination lane
 // (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go),
 // and the 15 W8b-narrow routes whose fragments stay core-side for
 // the satellite termination lane
 // (contracts/w8b-narrow-termination.md, pinned by
 // openapi/spec_w8bnarrow_test.go).
+
 // Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
 // core surface) stay out with the unbounded proxy itself. A newly
@@ -175,6 +196,16 @@ var specScopeAbsent = map[string]string{
 	"POST /api/v0/impact/trace-resource-to-code":                "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
 	"POST /api/v0/impact/explain-dependency-path":               "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
 	"GET /api/v0/investigations/supply-chain/impact/packet":     "packet fragment stays core-side for the W5 packet lane (the investigations.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/supply-chain-impact-packet-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/code/complexity":                              "scan fragment stays core-side for the relay-leg lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-scan-termination.md)",
+	"POST /api/v0/code/quality/inspect":                         "scan fragment stays core-side for the relay-leg lane (the quality.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-scan-termination.md)",
+	"POST /api/v0/code/imports/investigate":                     "scan fragment stays core-side for the relay-leg lane (the symbols.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-scan-termination.md)",
+	"POST /api/v0/code/bundles":                                 "scan fragment stays core-side for the relay-leg lane (the graph.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-scan-termination.md)",
+	"POST /api/v0/code/structure/inventory":                     "investigation fragment stays core-side for the relay-leg lane (the symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-investigation-termination.md)",
+	"POST /api/v0/code/topics/investigate":                      "investigation fragment stays core-side for the relay-leg lane (the symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-investigation-termination.md)",
+	"POST /api/v0/code/security/secrets/investigate":            "secrets fragment stays core-side for the relay-leg lane (the security.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-secrets-termination.md)",
+	"POST /api/v0/code/cypher":                                  "cypher fragment stays core-side for the relay-leg lane (the graph.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-cypher-termination.md)",
+	"POST /api/v0/code/visualize":                               "cypher fragment stays core-side for the relay-leg lane (the graph.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-cypher-termination.md)",
+	"POST /api/v0/code/language-query":                          "language fragment stays core-side for the relay-leg lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-language-termination.md)",
 }
 
 // specScopeMounted rebuilds every explicitly mounted Method+Path the
@@ -277,6 +308,21 @@ func specScopeMounted() []string {
 	for _, entry := range relationshipWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range codeScanWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range codeInvestigationWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range codeSecretsWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range codeCypherWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range codeLanguageWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	for _, entry := range codeSearchWave {
 		add(entry.Method + " " + entry.Path)
 	}
@@ -337,19 +383,19 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 //
 // Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
 // Wave-7 graph + dead-code + divergence + G-b + W8a + drift +
-// retire-unclaimed + W5 entity/impact/story/packet lanes): 167 + 3 trio
+// retire-unclaimed + W5 entity/impact/story/packet + W6 code lanes): 167 + 3 trio
 // GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2 Content POSTs +
 // 4 W4 Content search POSTs + 4 W4 Code search POSTs + 1 Compare POST +
 // 4 Code-flow POSTs + 4 G-a Code-graph POSTs + 3 dead-code POSTs + 3
 // divergence POSTs + 2 G-b relationship POSTs + 16 W8a reads + 2 drift
-// reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 8 W5 entity
-// reads + 13 W5 impact POSTs + 1 W5 packet GET = 259 mounted (255
+// reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 4 W6b scan POSTs + 2 W6c investigation POSTs + 1 W6c secret POST + 2 W6d cypher POSTs + 1 W6c language-query POST + 8 W5 entity
+// reads + 13 W5 impact POSTs + 1 W5 packet GET = 269 mounted (265
 // native + 4 explicit relay holds, including the W5 story single
 // flipped relay-to-native); the disclosed-absence count is 85
 // (11 prior + 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code
 // keys + 3 divergence keys + 2 G-b relationship keys + 2 W4 Code search
 // keys + 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments
-// + 8 W5 entity keys + 13 W5 impact keys + 1 W5 packet key + 1 W5
+// + 8 W5 entity keys + 13 W5 impact keys + 1 W5 packet key + 4 W6b scan keys + 2 W6c investigation keys + 1 W6c secret key + 2 W6d cypher keys + 1 W6c language-query key + 1 W5
 // investigations hold key, each
 // disclosed core-side by its owning lane, and the W4 content-search
 // fragment ports entry-shaped with the lane, and the retire-unclaimed
@@ -357,11 +403,11 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 259 {
-		t.Fatalf("mounted operations = %d, want 259 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 8 W5 entity + 13 W5 impact + 1 W5 packet + 1 W5 investigations hold = 255 native + 4 explicit relay holds): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 269 {
+		t.Fatalf("mounted operations = %d, want 259 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 4 W6b scan + 2 W6c investigation + 1 W6c secret + 2 W6d cypher + 1 W6c language-query + 8 W5 entity + 13 W5 impact + 1 W5 packet + 1 W5 investigations hold = 265 native + 4 explicit relay holds): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 85 {
-		t.Fatalf("disclosed-absent operations = %d, want 85: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 95 {
+		t.Fatalf("disclosed-absent operations = %d, want 95: each absence needs its disclosing contract", got)
 	}
 }
 

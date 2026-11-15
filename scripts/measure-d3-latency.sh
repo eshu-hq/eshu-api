@@ -18,7 +18,7 @@
 # loudly while scheduling noise does not).
 #
 # Relay-route disclosure (D4 moved the legs): the relay GET is
-# /api/v0/dependencies and the relay POST is /api/v0/code/bundles —
+# /api/v0/dependencies and the relay POST is /api/v0/impact/change-surface —
 # both still cross the generic proxy (the pre-D4 repositories legs
 # terminate natively since the D4 wave).
 #

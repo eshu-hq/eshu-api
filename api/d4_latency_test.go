@@ -74,7 +74,7 @@ func BenchmarkD4RelayRead(b *testing.B) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
-	post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 	post.Body = io.NopCloser(strings.NewReader(`{"surface":"x"}`))
 
 	b.Run("get", func(b *testing.B) {
