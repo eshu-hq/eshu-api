@@ -12,7 +12,7 @@
 # (D11); this gate runs on every PR and in CI.
 #
 # Method: go test benchmarks BenchmarkCodeSearchTerminatedPOST (one leg
-# per wave route) vs BenchmarkCodeSearchRelayPOST (bundles-relay, the
+# per wave route) vs BenchmarkCodeSearchRelayPOST (change-surface-relay, the
 # still-relayed code POST no wave table covers, on the generic proxy),
 # -count=5, take the median ns/op. FAIL when terminated exceeds relay by
 # more than 50% on any leg (generous: every leg does one server-side
@@ -54,7 +54,7 @@ check_leg() {
 
 term_code_search="$(bench 'BenchmarkCodeSearchTerminatedPOST/code-search' | median)"
 term_symbols_search="$(bench 'BenchmarkCodeSearchTerminatedPOST/symbols-search' | median)"
-relay_post="$(bench 'BenchmarkCodeSearchRelayPOST/bundles-relay' | median)"
+relay_post="$(bench 'BenchmarkCodeSearchRelayPOST/change-surface-relay' | median)"
 
 check_leg code-search "$term_code_search" "$relay_post"
 check_leg symbols-search "$term_symbols_search" "$relay_post"

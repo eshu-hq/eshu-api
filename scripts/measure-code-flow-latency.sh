@@ -12,7 +12,7 @@
 # (D11); this gate runs on every PR and in CI.
 #
 # Method: go test benchmarks BenchmarkCodeFlowTerminatedPOST (one leg
-# per wave route) vs BenchmarkCodeFlowRelayPOST (bundles-relay,
+# per wave route) vs BenchmarkCodeFlowRelayPOST (change-surface-relay,
 # still-relayed code POST on the generic proxy), -count=5, take the
 # median ns/op. FAIL when terminated exceeds relay by more than 50%
 # on any leg (generous: every leg does one server-side fetch, so any
@@ -56,7 +56,7 @@ term_cfg_summary="$(bench 'BenchmarkCodeFlowTerminatedPOST/cfg-summary' | median
 term_taint_path="$(bench 'BenchmarkCodeFlowTerminatedPOST/taint-path' | median)"
 term_pdg_summary="$(bench 'BenchmarkCodeFlowTerminatedPOST/pdg-summary' | median)"
 term_reaching_def="$(bench 'BenchmarkCodeFlowTerminatedPOST/reaching-def' | median)"
-relay_post="$(bench 'BenchmarkCodeFlowRelayPOST/bundles-relay' | median)"
+relay_post="$(bench 'BenchmarkCodeFlowRelayPOST/change-surface-relay' | median)"
 
 check_leg cfg-summary "$term_cfg_summary" "$relay_post"
 check_leg taint-path "$term_taint_path" "$relay_post"

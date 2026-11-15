@@ -17,7 +17,7 @@
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
 #
-# Relay-route disclosure: the relay leg is POST /api/v0/code/bundles,
+# Relay-route disclosure: the relay leg is POST /api/v0/impact/change-surface,
 # which stays on the generic relay (the D3/D4/Leaf B lanes pin it as
 # their relay POST leg; the Compare POST terminated in its gap-04
 # lane). The D6

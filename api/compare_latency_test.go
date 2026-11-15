@@ -63,7 +63,7 @@ func BenchmarkCompareTerminatedPOST(b *testing.B) {
 }
 
 // BenchmarkCompareRelayPOST measures the generic relay path for the
-// same caller shape: POST /api/v0/code/bundles, which still crosses
+// same caller shape: POST /api/v0/impact/change-surface, which still crosses
 // the generic proxy (the D3/D4/Leaf B lanes pin it as their relay
 // POST leg). Both legs do exactly one server-side fetch, so the 1.50
 // bound stays a real pathology check.
@@ -74,7 +74,7 @@ func BenchmarkCompareRelayPOST(b *testing.B) {
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(compareParityBody))
 			post.ContentLength = int64(len(compareParityBody))
 			rec := httptest.NewRecorder()

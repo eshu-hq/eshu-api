@@ -64,14 +64,14 @@ func BenchmarkD7NativeWrite(b *testing.B) {
 // The legs compare different routes by necessity (the D7 paths now
 // clone); both do exactly one server-side fetch, so the 1.50 bound
 // stays a real pathology check. The relay leg is POST
-// /api/v0/code/bundles, which stays on the generic relay (the
+// /api/v0/impact/change-surface, which stays on the generic relay (the
 // D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare
 // POST terminated in its gap-04 lane).
 func BenchmarkD7RelayWrite(b *testing.B) {
 	_, srv := d7BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()

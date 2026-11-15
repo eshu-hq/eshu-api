@@ -12,11 +12,11 @@ replace.
 Hermetic stub-core comparison, same binary, same caller shape:
 
 - Before leg: the generic byte-relay (`BenchmarkContentRelayRead`),
-  shared-key POST (`/api/v0/code/bundles`) through the full
+  shared-key POST (`/api/v0/impact/change-surface`) through the full
   production chain. The legs compare different routes by necessity
   (the wave paths now terminate; the W4 search lane terminated the
-  file search POST too, so the relay rides the still-relayed code
-  bundles POST no wave table covers); every leg does exactly one
+  file search POST too, so the relay rides the still-relayed impact
+  change-surface POST no wave table covers); every leg does exactly one
   server-side fetch, so the 1.50 bound stays a real pathology check.
 - After legs: the terminated Wave-2 reads
   (`BenchmarkContentTerminatedRead`), shared-key POSTs
@@ -37,22 +37,29 @@ Hermetic stub-core comparison, same binary, same caller shape:
 ## Relay-route disclosure
 
 The Wave-2 lane terminates the point reads, and the W4 lane the
-search legs, so the lane relays against the still-relayed code route
-that no wave table covers: `POST /api/v0/code/bundles` (Code family,
+search legs, so the lane relays against the still-relayed impact route
+that no wave table covers: `POST /api/v0/impact/change-surface` (Impact family,
 still relayed). Same-method legs, so every lane gates
 terminated-vs-relay again instead of terminated-vs-terminated.
 
-## Numbers (local, 2026-11-12 W4 re-point)
+## Numbers (local, 2026-11-12 W4 re-point; relay leg re-pointed 2026-11-15)
 
 Shared host, in-process stub core (`go test` benchmarks, 2000x5).
 Re-measured when the W4 lane re-pointed the relay leg from the
-terminated file search POST to the still-relayed code bundles POST:
+terminated file search POST to the still-relayed code bundles POST
+(historical; the W6 scan lane later re-pointed the relay leg to the
+still-relayed impact change-surface POST when it terminated the
+last code POST):
 
 | Leg | Terminated (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Files-read POST | 91327 | 92140 | 0.99 | ≤ 1.50 |
-| Files-lines POST | 90320 | 92140 | 0.98 | ≤ 1.50 |
-| Entities-read POST | 91511 | 92140 | 0.99 | ≤ 1.50 |
+| Files-read POST | 91875 | 92625 | 0.99 | ≤ 1.50 |
+| Files-lines POST | 92760 | 92625 | 1.00 | ≤ 1.50 |
+| Entities-read POST | 92158 | 92625 | 0.99 | ≤ 1.50 |
+
+Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
+leg from the terminated code bundles POST to the still-relayed
+impact change-surface POST.
 
 Within budget on all three legs: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment

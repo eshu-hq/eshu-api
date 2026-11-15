@@ -123,7 +123,7 @@ func BenchmarkIaCResourcesRead(b *testing.B) {
 }
 
 // BenchmarkIaCRelayRead measures the relay legs through the full
-// production chain: POST /api/v0/code/bundles rides the generic relay
+// production chain: POST /api/v0/impact/change-surface rides the generic relay
 // (a route no wave table covers, drift-style), so it is the
 // before-shape for every cleared leg above — no IaC read rides the
 // relay now that the dead leg terminates natively. Both legs do
@@ -137,7 +137,7 @@ func BenchmarkIaCRelayRead(b *testing.B) {
 		handler := srv.Handler(DefaultV0Sunset)
 
 		b.ReportAllocs()
-		req := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+		req := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req.Clone(req.Context()))
@@ -148,7 +148,7 @@ func BenchmarkIaCRelayRead(b *testing.B) {
 		handler := srv.Handler(DefaultV0Sunset)
 
 		b.ReportAllocs()
-		req := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+		req := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req.Clone(req.Context()))

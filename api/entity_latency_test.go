@@ -77,10 +77,11 @@ func BenchmarkEntityTerminatedRead(b *testing.B) {
 }
 
 // BenchmarkEntityRelayRead measures the relay path for the same
-// caller shape: the hold leg (shared-key relay on the explicit relay
-// stack) plus still-relayed routes no wave table covers, which cross
-// the generic proxy. Each does exactly one server-side fetch, so the
-// 1.50 bound stays a real pathology check.
+// caller shape: the hold leg plus the change-surface leg (shared-key
+// relay on the explicit relay stack), with the wave-mounted dependencies
+// GET as a native control on the same single-fetch shape. Each does
+// exactly one server-side fetch, so the 1.50 bound stays a real
+// pathology check.
 func BenchmarkEntityRelayRead(b *testing.B) {
 	_, srv := entityBenchServer(b, `{"data":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -92,7 +93,7 @@ func BenchmarkEntityRelayRead(b *testing.B) {
 			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/entities/ent_1/context"))
 		}
 	})
-	b.Run("get-relay", func(b *testing.B) {
+	b.Run("get-native-control", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
@@ -102,9 +103,9 @@ func BenchmarkEntityRelayRead(b *testing.B) {
 	b.Run("post-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
-			post.Body = io.NopCloser(strings.NewReader(`{"scope_id":"scope_1"}`))
-			post.ContentLength = int64(len(`{"scope_id":"scope_1"}`))
+			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+			post.Body = io.NopCloser(strings.NewReader(`{"repo_id":"repo_1"}`))
+			post.ContentLength = int64(len(`{"repo_id":"repo_1"}`))
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

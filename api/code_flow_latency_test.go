@@ -96,10 +96,10 @@ func BenchmarkCodeFlowRelayPOST(b *testing.B) {
 	_, srv := codeFlowBenchServer(b, `{"data":[],"truth":{"coverage":"exact"}}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	b.Run("bundles-relay", func(b *testing.B) {
+	b.Run("change-surface-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(codeFlowParityBody))
 			post.ContentLength = int64(len(codeFlowParityBody))
 			rec := httptest.NewRecorder()

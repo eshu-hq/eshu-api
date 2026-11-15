@@ -21,9 +21,10 @@ Hermetic stub-core comparison, same binary, same caller shape:
   full production chain (`BenchmarkSetupState` and
   `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
   `bash scripts/measure-setup-latency.sh`).
-- Relay legs: POST `/api/v0/code/bundles` for
+- Relay legs: POST `/api/v0/impact/change-surface` for
   writes and GET `/api/v0/dependencies` for reads, which stay on the
-  generic relay (the D3/D4/Leaf B lanes pin them as their relay legs;
+  generic relay (the W6 scan lane re-pointed the write leg when it
+  terminated the last code POST;
   the Compare POST previously used for writes terminated in its
   gap-04 lane). Both legs hit the same
   in-process stub core, so the numbers isolate dest-side cost, not
@@ -36,21 +37,25 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is POST `/api/v0/code/bundles` (the still-relaying
+The write-relay leg is POST `/api/v0/impact/change-surface` (the still-relaying
 write the D3/D4/Leaf B lanes pin as their relay POST leg); the
 read-relay leg is GET
 `/api/v0/dependencies` (the still-relaying read the D6 lane
 disclosed). Both legs do exactly one server-side fetch, so the 1.50
 bound stays a real pathology check.
 
-## Numbers (local, 2026-11-07)
+## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
 Shared host, in-process stub core (`go test` benchmarks):
 
 | Leg | Before (median ns/op) | After (median ns/op) | Relay (median ns/op) | Ratio (after/relay) | Budget |
 | --- | --- | --- | --- | --- | --- |
-| Setup-state GET | 80898 | 74232 | 84021 | 0.88 | ≤ 1.50 |
-| Claim POST | 85844 | 84379 | 83561 | 1.01 | ≤ 1.50 |
+| Setup-state GET | 80898 | 74173 | 84281 | 0.88 | ≤ 1.50 |
+| Claim POST | 85844 | 83072 | 84172 | 0.99 | ≤ 1.50 |
+
+Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
+leg from the terminated code bundles POST to the still-relayed
+impact change-surface POST (before column unchanged).
 
 No regression on either route: the terminated GET is faster than
 the write-through it replaces (no body relay — dest synthesizes the

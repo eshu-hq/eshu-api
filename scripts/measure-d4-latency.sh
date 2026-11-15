@@ -20,7 +20,7 @@
 # Relay-route disclosure (the D4 wave terminated the earlier relay
 # legs): terminated GET /api/v0/repositories vs relay GET
 # /api/v0/dependencies; terminated POST /api/v0/infra/resources/search
-# vs relay POST /api/v0/code/bundles. The D2/D3 relay legs moved to the
+# vs relay POST /api/v0/impact/change-surface. The D2/D3 relay legs moved to the
 # same still-relaying routes in this lane, so every lane gates
 # terminated-vs-relay again instead of terminated-vs-terminated.
 #

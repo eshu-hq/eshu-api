@@ -20,7 +20,7 @@
 #
 # Relay-route disclosure: the terminated leg is the Compare POST
 # (/api/v0/compare/environments), which terminates natively in its
-# gap-04 wave gate; the relay leg is POST /api/v0/code/bundles, which
+# gap-04 wave gate; the relay leg is POST /api/v0/impact/change-surface, which
 # stays on the generic relay (the D3/D4/Leaf B lanes pin it as their
 # relay POST leg).
 #

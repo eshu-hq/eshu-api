@@ -105,7 +105,7 @@ func BenchmarkD8NativeRead(b *testing.B) {
 }
 
 // BenchmarkD8RelayWrite measures the generic relay path for the same
-// caller shape: POST /api/v0/code/bundles, which stays on the generic
+// caller shape: POST /api/v0/impact/change-surface, which stays on the generic
 // relay (the D3/D4/Leaf B lanes pin it as their relay POST leg; the
 // Compare POST terminated in its gap-04 lane). The legs compare
 // different routes by necessity (the D8 paths now clone);
@@ -115,7 +115,7 @@ func BenchmarkD8RelayWrite(b *testing.B) {
 	_, srv := d8BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()

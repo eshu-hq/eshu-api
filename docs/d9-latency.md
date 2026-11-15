@@ -13,7 +13,7 @@ Hermetic stub-core comparison, same binary, same caller shape:
 - Before legs: the generic byte-relay (`BenchmarkD8RelayWrite` for
   writes, `BenchmarkD8RelayRead` for reads) through the full
   production chain. The write-relay leg is POST
-  `/api/v0/code/bundles`, which stays on the generic relay (the
+  `/api/v0/impact/change-surface`, which stays on the generic relay (the
   D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
   it replaces terminated in its gap-04 lane);
   the read-relay leg is GET `/api/v0/dependencies`, which stays on
@@ -34,23 +34,27 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is POST `/api/v0/code/bundles` (the still-relaying
-write the D3/D4/Leaf B lanes pin as their relay POST leg); the
+The write-relay leg is POST `/api/v0/impact/change-surface` (the still-relaying
+write the W6 scan lane re-pointed when it terminated the last code POST); the
 read-relay leg is GET `/api/v0/dependencies`
 (the still-relaying read the D6 lane disclosed). Both legs do exactly
 one server-side fetch, so the 1.50 bound stays a real pathology check.
 
-## Numbers (local, 2026-11-07)
+## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
 Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 | Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Login-start GET, bare | 76645 | 85922 | 0.89 | ≤ 1.50 |
-| Login-start GET, full query | 76351 | 85922 | 0.89 | ≤ 1.50 |
-| Callback GET, state + code | 81259 | 85922 | 0.95 | ≤ 1.50 |
-| Login-start GET vs relay POST | 76351 | 104978 | 0.73 | ≤ 1.50 |
-| Callback GET vs relay POST | 81259 | 104978 | 0.77 | ≤ 1.50 |
+| Login-start GET, bare | 66240 | 83797 | 0.79 | ≤ 1.50 |
+| Login-start GET, full query | 65434 | 83797 | 0.78 | ≤ 1.50 |
+| Callback GET, state + code | 71210 | 83797 | 0.85 | ≤ 1.50 |
+| Login-start GET vs relay POST | 65434 | 84704 | 0.77 | ≤ 1.50 |
+| Callback GET vs relay POST | 71210 | 84704 | 0.84 | ≤ 1.50 |
+
+Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
+leg from the terminated code bundles POST to the still-relayed
+impact change-surface POST.
 
 Within budget on all five legs: the lane adds the explicit route
 match around the same single fetch, with no gate and no authorizer on
@@ -96,7 +100,7 @@ Within budget on all five legs, same hermetic method as the OIDC and
 GitHub lanes: the SAML clones add the explicit route match around the
 same single fetch, with no gate and no authorizer on the public
 carve-out. The ACS leg compares against same-bytes relay leg
-`BenchmarkD9SAMLRelayLargePost` (a keyed code-bundles POST carrying the
+`BenchmarkD9SAMLRelayLargePost` (a keyed change-surface POST carrying the
 identical ~288KiB form through the generic relay): the 1.00 ratio
 proves the streaming forward adds no per-byte dest cost beyond the
 relay itself. The D9 wave is complete with this lane.

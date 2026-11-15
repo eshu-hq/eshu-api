@@ -11,7 +11,7 @@ import (
 // the explicit per-family routes registered ahead of the proxy
 // (suppression, retirement, terminal-failure, retire-unclaimed,
 // admin-identity, provider-config, d7/d8, leafb, sign-in-policy,
-// compare, content, freshness, code-flow, code-search, code-graph, code-dead-code, code-divergence, code-relationships, iac, w8a,
+// compare, content, freshness, code-flow, code-search, code-graph, code-dead-code, code-divergence, code-relationships, code-scan, code-investigation, code-secrets, code-cypher, code-language, iac, w8a,
 // entities, workloads, graph-entities, impact, OIDC/GitHub/SAML, and
 // setup), each filing its dispatch outcomes
 // and authorizer judgments
@@ -123,6 +123,16 @@ var familyPrefixes = []struct {
 	{"/code/dead-code", "code_dead_code"},
 	{"/code/divergence", "code_divergence"},
 	{"/code/relationships", "code_relationships"},
+	{"/code/complexity", "code_scan"},
+	{"/code/quality", "code_scan"},
+	{"/code/imports", "code_scan"},
+	{"/code/bundles", "code_scan"},
+	{"/code/structure", "code_investigation"},
+	{"/code/topics", "code_investigation"},
+	{"/code/security", "code_secrets"},
+	{"/code/cypher", "code_cypher"},
+	{"/code/visualize", "code_cypher"},
+	{"/code/language-query", "code_language"},
 	{"/code/symbols", "code_search"},
 	{"/code/search", "code_search"},
 	{"/entities", "entities"},

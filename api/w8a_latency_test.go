@@ -107,7 +107,7 @@ func BenchmarkW8aRelayRead(b *testing.B) {
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/code/bundles")
+			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"scope_id":"scope_1"}`))
 			post.ContentLength = int64(len(`{"scope_id":"scope_1"}`))
 			rec := httptest.NewRecorder()
