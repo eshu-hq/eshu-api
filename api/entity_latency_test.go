@@ -78,9 +78,10 @@ func BenchmarkEntityTerminatedRead(b *testing.B) {
 
 // BenchmarkEntityRelayRead measures the relay path for the same
 // caller shape: the hold leg plus the change-surface leg (shared-key
-// relay on the explicit relay stack) plus the still-relayed dependencies
-// route, which crosses the generic proxy. Each does exactly one
-// server-side fetch, so the 1.50 bound stays a real pathology check.
+// relay on the explicit relay stack), with the wave-mounted dependencies
+// GET as a native control on the same single-fetch shape. Each does
+// exactly one server-side fetch, so the 1.50 bound stays a real
+// pathology check.
 func BenchmarkEntityRelayRead(b *testing.B) {
 	_, srv := entityBenchServer(b, `{"data":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -92,7 +93,7 @@ func BenchmarkEntityRelayRead(b *testing.B) {
 			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/entities/ent_1/context"))
 		}
 	})
-	b.Run("get-relay", func(b *testing.B) {
+	b.Run("get-native-control", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
