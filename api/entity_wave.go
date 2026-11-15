@@ -93,7 +93,7 @@ type entityRoute struct {
 	Fragment string
 }
 
-// entityWave is the frozen W5 entity termination target: exactly the 9
+// entityWave is the frozen W5 entity termination target: exactly the 8
 // entity routes behind the versioned entity pin, v0, 7 terminating
 // natively and 1 (the context fallback leg) on relay hold. GET
 // /api/v0/graph/entities stays out: the merged W8b-narrow lane owns it

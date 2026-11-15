@@ -4,7 +4,6 @@
 package api
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -197,66 +196,25 @@ func TestD6SuppressionsMutationNotInWave(t *testing.T) {
 	}
 }
 
-// TestD6RelayedRoutesStayRelay pins the scoping line: the routes the
-// D6 pins do not cover are NOT D6 wave routes and must not file a
-// native dispatch. A shared-key call to each still answers from the
-// stub core on the generic relay lane — the pin never widens silently.
-// (The suppressions mutation above stays on its tier-C write-through
-// lane, Compare terminated in its gap-04 lane — see
-// api/compare_conformance_test.go — and the governance,
-// answer-narration, and hosted-readiness aspects terminated in the W8a
-// lane — see api/w8a_conformance_test.go. The impact packet left this
-// list when the W5 packet lane terminated it natively — see
-// api/packet_conformance_test.go — so the list stays empty until a
-// future relay-only route rejoins it.)
+// TestD6RelayedRoutesStayRelay pins the scoping line: the D6 relay set
+// is intentionally empty. The suppressions mutation stays on its tier-C
+// write-through lane, Compare terminated in its gap-04 lane (see
+// api/compare_conformance_test.go), the governance, answer-narration,
+// and hosted-readiness aspects terminated in the W8a lane (see
+// api/w8a_conformance_test.go), and the impact packet left when the W5
+// packet lane terminated it natively (see api/packet_conformance_test.go
+// TestPacketByteParity). A rejoining relay-only route must add a real
+// subtest here, not just a list entry: an empty table executes zero
+// subtests and cannot fail.
 func TestD6RelayedRoutesStayRelay(t *testing.T) {
 	t.Parallel()
 
-	relayed := []struct {
+	var relayed []struct {
 		method string
 		path   string
 		body   string
-	}{}
-	for _, route := range relayed {
-		t.Run(route.method+" "+route.path, func(t *testing.T) {
-			t.Parallel()
-
-			for _, entry := range d6Wave {
-				if entry.Method+" "+entry.Path == route.method+" "+route.path {
-					t.Fatalf("relayed route %q is in d6Wave, want it out (pin does not cover it)", route.method+" "+route.path)
-				}
-			}
-			key := route.method + " " + route.path
-			if _, ok := d6ConcretePaths[key]; ok {
-				t.Fatalf("relayed route %q has a concrete wave path, want it out of the wave harness", key)
-			}
-
-			core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
-			mux := http.NewServeMux()
-			mux.Handle("/", core.handler())
-			upstream := httptest.NewServer(mux)
-			defer upstream.Close()
-
-			tel := NewTelemetry(nil)
-			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
-			handler := srv.Handler(DefaultV0Sunset)
-
-			req := authedRequest(route.method, route.path)
-			if route.body != "" {
-				req.Body = io.NopCloser(http.NoBody)
-			}
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
-			}
-			snap := tel.snapshot()
-			family := classifyFamily(route.path)
-			lanes := snap.dispatches[family]
-			if lanes[viaNative] != nil {
-				t.Errorf("family %q dispatches = %v, want no native lane row for the relayed route", family, lanes)
-			}
-		})
+	}
+	if len(relayed) != 0 {
+		t.Fatalf("D6 relay set holds %d routes, want intentionally empty; add a real relay assertion per route (see api/packet_conformance_test.go TestPacketByteParity)", len(relayed))
 	}
 }

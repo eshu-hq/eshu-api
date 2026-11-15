@@ -343,7 +343,8 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // divergence POSTs + 2 G-b relationship POSTs + 16 W8a reads + 2 drift
 // reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 8 W5 entity
 // reads + 13 W5 impact POSTs + 1 W5 packet GET = 258 mounted (255
-// native + 3 explicit relay holds); the disclosed-absence count is 84
+// native + 3 explicit relay holds, including the W5 story single
+// flipped relay-to-native); the disclosed-absence count is 84
 // (11 prior + 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code
 // keys + 3 divergence keys + 2 G-b relationship keys + 2 W4 Code search
 // keys + 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments
