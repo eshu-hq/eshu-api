@@ -1938,7 +1938,7 @@ check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_graph_scan_read_ad
 
 check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_graph_scan_read_admission_contract_test.go" \
   "contracts/upstream/code_graph_scan_read_admission_contract_test.go" \
-  "636e3a5bac4c4ba057c5ed10840db39f73d385150b4e1aab336b879b926e7ae"
+  "636e3a5bac4c4ba057c5edc10840db39f73d385150b4e1aab336b879b926e7ae"
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-graph-scan-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_graph_scan_read_admission.go"
