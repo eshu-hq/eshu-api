@@ -45,6 +45,7 @@ SRC_SHA_GRAPH="0fd6db6deb38beaa9327ba015af5bd279729f8ae"
 SRC_SHA_DEADCODE="589d55ec024e0bdd7699176c04711b056b8af871"
 SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
 SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
+SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -1708,6 +1709,168 @@ check_file_at "$SRC_SHA_RELATIONSHIPS" "go/internal/query/codequery/code_relatio
 check_excerpt_at "$SRC_SHA_RELATIONSHIPS" "contracts/upstream/code-relationships-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_relationships_read_admission.go"
 
+# Satellite W8b-narrow termination (eshu-hq/eshu-api#101): the fourteen
+# narrow pins, minted core-side (unwired, arbiter
+# SUPPLEMENTAL-PIN-OWED rulings). Each vendored port plus its frozen
+# method-set contract test is byte-identical at the core HEAD; each
+# wire-shapes excerpt carries the version-const stanza, the in-scope
+# route list, the interface, and the surrounding contract comment,
+# line-verbatim from the pin file. SemanticEvidence covers BOTH
+# semantic GETs.
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/kubernetes/correlation_read_admission.go" \
+  "contracts/upstream/kubernetes_correlation_read_admission.go" \
+  "177f03166de0f17a0d31047c859d4b7f93df170b17a32ac58671721f927beea1"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/kubernetes/correlation_read_admission_contract_test.go" \
+  "contracts/upstream/kubernetes_correlation_read_admission_contract_test.go" \
+  "f333cae438a363a9f1a30629a117c3ed4930f4bb070ba3912dbd58523e078dc2"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/kubernetes-correlation-read-wire-shapes.txt" \
+  "go/internal/query/kubernetes/correlation_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/observability/coverage/correlation_read_admission.go" \
+  "contracts/upstream/observability_coverage_correlation_read_admission.go" \
+  "77d9f61a355ae021fed5f825dab0380edee7604782b7e936ce184825418fc8df"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/observability/coverage/correlation_read_admission_contract_test.go" \
+  "contracts/upstream/observability_coverage_correlation_read_admission_contract_test.go" \
+  "84e662c3577fb78f4a2193af12ab3904ac4be766f1236656469ad0407fafb794"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/observability-coverage-correlation-read-wire-shapes.txt" \
+  "go/internal/query/observability/coverage/correlation_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/workitem/evidence_read_admission.go" \
+  "contracts/upstream/workitem_evidence_read_admission.go" \
+  "cc3c56d162b9038b509231e719e56af83e79ba2b30ac5179778766e7be09a6dc"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/workitem/evidence_read_admission_contract_test.go" \
+  "contracts/upstream/workitem_evidence_read_admission_contract_test.go" \
+  "316d3fd6ee4f005ff632c70db240c122893808e6515059b5078d4608f260182a"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/work-item-evidence-read-wire-shapes.txt" \
+  "go/internal/query/workitem/evidence_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/semantic_evidence_read_admission.go" \
+  "contracts/upstream/semantic_evidence_read_admission.go" \
+  "ffdc66dc3e7e589396c6590e7032ce77d8029230c1a96a485adabfb554e1e86c"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/semantic_evidence_read_admission_contract_test.go" \
+  "contracts/upstream/semantic_evidence_read_admission_contract_test.go" \
+  "9690e92a1feff9a5941a03572c7db236e9f122e5d8463349f57802a1576d008c"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/semantic-evidence-read-wire-shapes.txt" \
+  "go/internal/query/semantic_evidence_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/dependency/read_admission.go" \
+  "contracts/upstream/dependency_read_admission.go" \
+  "52785618cabdf2fc6061947550ac3797902a16a4b5805359b8b6029825571a78"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/dependency/read_admission_contract_test.go" \
+  "contracts/upstream/dependency_read_admission_contract_test.go" \
+  "78794e2d4102ecbb53044469960a2e9625458b61276348a964eec494e5f09033"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/dependency-read-wire-shapes.txt" \
+  "go/internal/query/dependency/read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/image_read_admission.go" \
+  "contracts/upstream/image_read_admission.go" \
+  "b14633bc1f46e9a4002b4ebc1637cd415d0d78818f46f2d030f31480fb357765"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/image_read_admission_contract_test.go" \
+  "contracts/upstream/image_read_admission_contract_test.go" \
+  "77ceb88a0e5619bdd9b09711a203cc59220aca6e196ba706d6de7c2d443392f0"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/image-read-wire-shapes.txt" \
+  "go/internal/query/image_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/entities_read_admission.go" \
+  "contracts/upstream/graph_entity_inventory_read_admission.go" \
+  "9114eb6aa77b5f7b23350063b3a4034d7e1f5a2d249813d104a22bd0b48ee08c"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/entities_read_admission_contract_test.go" \
+  "contracts/upstream/graph_entity_inventory_read_admission_contract_test.go" \
+  "99cb6ad92dbb8c17e8195cc73b566ac33eb84f170cc4903a41bdabccedd8bc3e"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/graph-entity-inventory-read-wire-shapes.txt" \
+  "go/internal/query/entities_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/tag_history_read_admission.go" \
+  "contracts/upstream/tag_history_read_admission.go" \
+  "5dc8e78ba6f1208a45addf7659df79cde66e80463d57e75505b9a82ff35b568d"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/tag_history_read_admission_contract_test.go" \
+  "contracts/upstream/tag_history_read_admission_contract_test.go" \
+  "a4b3852562c05fc4fa2484af942cf81ceba2c69babae7d5782ab0a0ea28b5bf8"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/tag-history-read-wire-shapes.txt" \
+  "go/internal/query/tag_history_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/runtime/declaration/read_admission.go" \
+  "contracts/upstream/runtime_declaration_read_admission.go" \
+  "4c4507c4959f3920ab45924288ca4a855d8a5976227ef11c4fe7bc60ef2d67fe"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/runtime/declaration/read_admission_contract_test.go" \
+  "contracts/upstream/runtime_declaration_read_admission_contract_test.go" \
+  "05d9393302ce4b3b71ae5dfd884c058c79e19e26ba2e1dc8ff54fac3cfd3f9a2"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/runtime-declaration-read-wire-shapes.txt" \
+  "go/internal/query/runtime/declaration/read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/cloud_inventory_read_admission.go" \
+  "contracts/upstream/cloud_inventory_read_admission.go" \
+  "a2f232ef8d63631896364a031f50f970ffcf966623e8a68693dc833d8051b067"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/cloud_inventory_read_admission_contract_test.go" \
+  "contracts/upstream/cloud_inventory_read_admission_contract_test.go" \
+  "c5fd8665c17aec3ca6aa96b17c3043a417445a83907482d430f20bcab3815175"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/cloud-inventory-read-wire-shapes.txt" \
+  "go/internal/query/cloud_inventory_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/incident/context_read_admission.go" \
+  "contracts/upstream/incident_context_read_admission.go" \
+  "41992d662a150adffd0afd8837d24fe64a3765ea3d45258f8c346b502f89e8c8"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/incident/context_read_admission_contract_test.go" \
+  "contracts/upstream/incident_context_read_admission_contract_test.go" \
+  "c6ddac1566147c9d23bed5b9b18f1cb609d0d6dcf85199940acf7943e6ae11e9"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/incident-context-read-wire-shapes.txt" \
+  "go/internal/query/incident/context_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/ssm_host_inventory_read_admission.go" \
+  "contracts/upstream/ssm_host_inventory_read_admission.go" \
+  "2163b493dac66754a0680f85a332b43538d5217801a7825bf76ff53175ee4a0a"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/ssm_host_inventory_read_admission_contract_test.go" \
+  "contracts/upstream/ssm_host_inventory_read_admission_contract_test.go" \
+  "e7b2a9718bef94cbb656bf020d60063da3583bf93cf662ab9eb62b6dd7c907c7"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/ssm-host-inventory-read-wire-shapes.txt" \
+  "go/internal/query/ssm_host_inventory_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/service/catalog_correlation_read_admission.go" \
+  "contracts/upstream/service_catalog_correlation_read_admission.go" \
+  "fa9739304a6c858c0eb3de974c5eb2260c43d077d5cd2a2995f7bd2a5572bd32"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/service/catalog_correlation_read_admission_contract_test.go" \
+  "contracts/upstream/service_catalog_correlation_read_admission_contract_test.go" \
+  "01415c3849eac2f62b3d333438b91ef86d0881720a73246bf368e3b098a8c321"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/service-catalog-correlation-read-wire-shapes.txt" \
+  "go/internal/query/service/catalog_correlation_read_admission.go"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/codeowners/ownership_read_admission.go" \
+  "contracts/upstream/codeowners_ownership_read_admission.go" \
+  "1ff07ee55e3c873747efecb7feae925c786ff6fb543ff395153bac96478c361f"
+
+check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/codeowners/ownership_read_admission_contract_test.go" \
+  "contracts/upstream/codeowners_ownership_read_admission_contract_test.go" \
+  "75e862d6736eaf377e2f40ed7dfbfa51f029a1b2ee93ad39aac09d119a3a8bd8"
+
+check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/codeowners-ownership-read-wire-shapes.txt" \
+  "go/internal/query/codeowners/ownership_read_admission.go"
+
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
 grep -qF 'SuppressionAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/suppression-wire-shapes.txt"
@@ -1749,6 +1912,20 @@ grep -qF 'CodeGraphReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/
 grep -qF 'CodeDeadCodeReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-dead-code-read-wire-shapes.txt"
 grep -qF 'CodeDivergenceReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-divergence-read-wire-shapes.txt"
 grep -qF 'CodeRelationshipReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/code-relationships-read-wire-shapes.txt"
+grep -qF 'KubernetesCorrelationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/kubernetes-correlation-read-wire-shapes.txt"
+grep -qF 'ObservabilityCoverageCorrelationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/observability-coverage-correlation-read-wire-shapes.txt"
+grep -qF 'WorkItemEvidenceReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/work-item-evidence-read-wire-shapes.txt"
+grep -qF 'SemanticEvidenceReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/semantic-evidence-read-wire-shapes.txt"
+grep -qF 'DependencyReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/dependency-read-wire-shapes.txt"
+grep -qF 'ImageReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/image-read-wire-shapes.txt"
+grep -qF 'GraphEntityInventoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/graph-entity-inventory-read-wire-shapes.txt"
+grep -qF 'TagHistoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/tag-history-read-wire-shapes.txt"
+grep -qF 'RuntimeDeclarationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/runtime-declaration-read-wire-shapes.txt"
+grep -qF 'CloudInventoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/cloud-inventory-read-wire-shapes.txt"
+grep -qF 'IncidentContextReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/incident-context-read-wire-shapes.txt"
+grep -qF 'SSMHostInventoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/ssm-host-inventory-read-wire-shapes.txt"
+grep -qF 'ServiceCatalogCorrelationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/service-catalog-correlation-read-wire-shapes.txt"
+grep -qF 'CodeownersOwnershipReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/codeowners-ownership-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -2062,6 +2239,31 @@ for lane in relationship_terminate relationship_wave; do
   done
 done
 echo "OK: relationships lane files carry no dest-side store or parse"
+
+# W8b-narrow lane: no dest-side store, port, or parse on the lane
+# (arbiter SUPPLEMENTAL-PIN-OWED rulings, sealed narrow admissions,
+# no transport constructor by design). api/w8bnarrow_terminate.go and
+# api/w8bnarrow_wave.go must name no dest-side store, reader port,
+# graph/content leg, or out-of-pin leg symbol — the pins' readers and
+# the out-of-pin grant/summary legs all stay core-side, and the lane
+# forwards the request bodies opaquely (no query, form, path, or
+# body-key parse). Fails closed on any match (the in-suite source test
+# TestW8bNarrowTerm_LaneFileHygiene proves the same list).
+for lane in w8bnarrow_terminate w8bnarrow_wave; do
+  for symbol in postgres KubernetesCorrelationReadAdmission ObservabilityCoverageCorrelationReadAdmission WorkItemEvidenceReadAdmission SemanticEvidenceReadAdmission DependencyReadAdmission ImageReadAdmission GraphEntityInventoryReadAdmission TagHistoryReadAdmission RuntimeDeclarationReadAdmission CloudInventoryReadAdmission IncidentContextReadAdmission SSMHostInventoryReadAdmission ServiceCatalogCorrelationReadAdmission CodeownersOwnershipReadAdmission GraphQuery ContentStore ContentReader ReadStore 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"repo_id"' '"limit"' '"offset"' '"incident_id"' '"image"' '"kind"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: w8bnarrow lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

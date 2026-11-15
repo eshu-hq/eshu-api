@@ -150,6 +150,19 @@ var familyPrefixes = []struct {
 	{"/supply-chain", "supply_chain"},
 	{"/investigations/supply-chain", "supply_chain"},
 	{"/iac/", "iac"},
+	{"/kubernetes", "kubernetes"},
+	{"/observability", "observability"},
+	{"/work-items", "work_items"},
+	{"/semantic/", "semantic"},
+	{"/dependencies", "dependencies"},
+	{"/graph/entities", "graph_entities"},
+	{"/images", "images"},
+	{"/incidents", "incidents"},
+	{"/runtime-declarations", "runtime_declarations"},
+	{"/cloud/inventory", "cloud_inventory"},
+	{"/cloud/ssm-host-inventory", "cloud_inventory"},
+	{"/service-catalog", "service_catalog"},
+	{"/codeowners", "codeowners"},
 }
 
 // classifyFamily maps a request path to its closed family label. The
