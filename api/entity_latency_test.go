@@ -42,7 +42,8 @@ func entityBenchRequest(leg struct {
 	method string
 	target string
 	body   string
-}) *http.Request {
+},
+) *http.Request {
 	var req *http.Request
 	if leg.method == http.MethodPost {
 		req = authedRequest(http.MethodPost, leg.target)

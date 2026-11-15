@@ -102,18 +102,6 @@ func TestD4WaveFrozen(t *testing.T) {
 	}
 }
 
-// d4StoryRelayPath is retired with the carried D4 relay leg: the story
-// GET terminated natively in the W5 story lane (storyWave). The relay
-// posture this constant and TestD4StoryRelayLegOnGenericProxy pinned
-// (shared-key relay, foreign-class key-gate 401, unconfigured 503) is
-// superseded by the native parity corpus — TestStoryWaveAheadOfRelay,
-// TestStoryByteParity, TestStoryScopedEmptyGrantRelay, and the story
-// gate suite — which pin the same shapes on the native lane plus the
-// explicit-relay rule for foreign classes. See
-// contracts/repository-story-termination.md for the supersession
-// record. storyConcretePath carries the concrete story path now.
-const d4StoryRelayPath = "/api/v0/repositories/repo_1/story"
-
 // d4ConcretePaths fills the wave's path wildcards so the behavior
 // tests drive real mux matches. Trailing-slash spellings ride the same
 // native registration (never-split), so each entry also names its slash
