@@ -1957,7 +1957,7 @@ check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_content_investigat
 
 check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_content_investigation_read_admission_contract_test.go" \
   "contracts/upstream/code_content_investigation_read_admission_contract_test.go" \
-  "f1c2ac20c92979615df9e6352d5bc27da807066a0639ce052e11e0c38494"
+  "f1c2ac20c92979615df9e6352d5bc27da807066a0633cd9e06059e11e0c38494"
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-content-investigation-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_content_investigation_read_admission.go"
@@ -1976,7 +1976,7 @@ check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_hardcoded_secret_r
 
 check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_hardcoded_secret_read_admission_contract_test.go" \
   "contracts/upstream/code_hardcoded_secret_read_admission_contract_test.go" \
-  "b298b01aa7f89154cd7ede108f597b4e1c33cecad7cb648dc836e45426eeb"
+  "b298b01aa7f89154cd7ede108f597b4e1b33cecad7cb648dcb83664e45426eeb"
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-hardcoded-secret-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_hardcoded_secret_read_admission.go"
@@ -1995,7 +1995,7 @@ check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_cypher_read_admiss
 
 check_file_at "$SRC_SHA_W6" "go/internal/query/codequery/code_cypher_read_admission_contract_test.go" \
   "contracts/upstream/code_cypher_read_admission_contract_test.go" \
-  "df96757e855ec0beda449818f1eefec9f6079d1be83c89c51e0026886827e"
+  "df96757e855ec0beda449818f1eefec9f6079d1be2fe83c89c51e0026886827e"
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-cypher-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_cypher_read_admission.go"
@@ -2010,11 +2010,11 @@ check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-cypher-read-wire-shapes.
 # contract comment, line-verbatim from the pin file.
 check_file_at "$SRC_SHA_W6" "go/internal/query/language/code_query_read_admission.go" \
   "contracts/upstream/code_query_read_admission.go" \
-  "f8472d1165f2dd4366e2a9a8d2f86b32e3fb527e9f42a51d8794285257e9f45"
+  "f8472d1165f2dd4366c2e2a9a8d2f86b32e3fb527e9f45c929a51d8794284257"
 
 check_file_at "$SRC_SHA_W6" "go/internal/query/language/code_query_read_admission_contract_test.go" \
   "contracts/upstream/code_query_read_admission_contract_test.go" \
-  "06a4667bf0de291fc3e6fa3b7121469dc1c697c16e5223e9e62cd829c51e0026886827e"
+  "06a4667bf0de291fc3e6fa3b7121469dc1c697c62cd829e86f3c6c57ce0c08b3"
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-query-read-wire-shapes.txt" \
   "go/internal/query/language/code_query_read_admission.go"
