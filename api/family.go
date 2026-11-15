@@ -106,6 +106,7 @@ var familyPrefixes = []struct {
 	{"/report/bundle/validate", "cli_support"},
 	{"/service/report/compose", "cli_support"},
 	{"/services/", "service_intel"},
+	{"/investigations/services", "service_intel"},
 	{"/secrets-iam", "secrets_iam"},
 	{"/search/semantic", "semantic_search"},
 	{"/replatforming", "iac"},

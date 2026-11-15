@@ -160,6 +160,7 @@ var specScopeAbsent = map[string]string{
 	"GET /api/v0/services/{service_name}/story":                 "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
 	"GET /api/v0/services/{service_name}/api-surface/endpoints": "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
 	"GET /api/v0/services/{service_name}/downstream-consumers":  "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/investigations/services/{service_name}":        "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET holds on explicit relay until the Entity pin extension lands (contracts/entity-termination.md, openapi/spec_w5_test.go)",
 	"POST /api/v0/impact/trace-deployment-chain":                "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
 	"POST /api/v0/impact/blast-radius":                          "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
 	"POST /api/v0/impact/change-surface":                        "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST holds on explicit relay until the code-surface seam lands (contracts/impact-termination.md, openapi/spec_w5_test.go)",
@@ -342,29 +343,30 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // 4 Code-flow POSTs + 4 G-a Code-graph POSTs + 3 dead-code POSTs + 3
 // divergence POSTs + 2 G-b relationship POSTs + 16 W8a reads + 2 drift
 // reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 8 W5 entity
-// reads + 13 W5 impact POSTs + 1 W5 packet GET = 258 mounted (255
-// native + 3 explicit relay holds, including the W5 story single
-// flipped relay-to-native); the disclosed-absence count is 84
+// reads + 13 W5 impact POSTs + 1 W5 packet GET = 259 mounted (255
+// native + 4 explicit relay holds, including the W5 story single
+// flipped relay-to-native); the disclosed-absence count is 85
 // (11 prior + 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code
 // keys + 3 divergence keys + 2 G-b relationship keys + 2 W4 Code search
 // keys + 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments
-// + 8 W5 entity keys + 13 W5 impact keys + 1 W5 packet key, each
+// + 8 W5 entity keys + 13 W5 impact keys + 1 W5 packet key + 1 W5
+// investigations hold key, each
 // disclosed core-side by its owning lane, and the W4 content-search
 // fragment ports entry-shaped with the lane, and the retire-unclaimed
 // fragment ports whole-file, so no new absence from those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 258 {
-		t.Fatalf("mounted operations = %d, want 258 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 8 W5 entity + 13 W5 impact + 1 W5 packet = 255 native + 3 explicit relay holds): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 259 {
+		t.Fatalf("mounted operations = %d, want 259 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 8 W5 entity + 13 W5 impact + 1 W5 packet + 1 W5 investigations hold = 255 native + 4 explicit relay holds): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 84 {
-		t.Fatalf("disclosed-absent operations = %d, want 84: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 85 {
+		t.Fatalf("disclosed-absent operations = %d, want 85: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (255 native + 3 explicit relay holds) has its served
+// API operation (255 native + 4 explicit relay holds) has its served
 // spec entry, for both a configured and an unconfigured core origin.
 // Only the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

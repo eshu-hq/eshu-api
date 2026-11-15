@@ -22,22 +22,28 @@ import (
 // fail first.
 
 // TestEntityWaveFrozen pins the exact surface the satellite
-// terminates plus the one it holds: the 7 proceed legs behind
-// EntityReadAdmission v0 plus the context fallback leg on explicit
-// relay hold (GET /api/v0/graph/entities stays out: the merged W8b
-// lane owns it natively). The hold keeps its standing until core provides a
-// satellite-consumable content-fallback satisfier
+// terminates plus the two it holds: the 7 proceed legs behind
+// EntityReadAdmission v0 plus the context fallback leg and the
+// investigations service leg on explicit relay hold. The holds keep
+// their standing until core provides a satellite-consumable
+// content-fallback satisfier
 // (TODO-eshu-9669-w5: terminate GET
 // /api/v0/entities/{entity_id}/context once the core satisfier for
 // ContentRelationshipBuilder.BuildContentRelationships lands; until
 // then the leg relays explicitly and the relay pin in
-// entity_parity_test.go carries it). A wave change moves the
+// entity_parity_test.go carries it) and extends EntityReadAdmission
+// with the three investigations reads
+// (TODO-eshu-9669-w5: terminate GET
+// /api/v0/investigations/services/{service_name} natively once the
+// pin covers ListRepoEntitiesByTypes, RepositoryReadModelSummary,
+// and SearchFileReferenceAnyRepo). A wave change moves the
 // ownership note, the fragment reference, and this mirror together.
 func TestEntityWaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
 		"GET /api/v0/entities/{entity_id}/context entities relay_hold go/internal/query/openapi/paths/search/entities.go",
+		"GET /api/v0/investigations/services/{service_name} service_intel relay_hold go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/api-surface/endpoints service_intel gated go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/context service_intel gated go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/downstream-consumers service_intel gated go/internal/query/openapi/paths/search/entities.go",
@@ -73,6 +79,7 @@ var entityConcretePaths = map[string]string{
 	"GET /api/v0/services/{service_name}/story":                 "/api/v0/services/payments/story",
 	"GET /api/v0/services/{service_name}/api-surface/endpoints": "/api/v0/services/payments/api-surface/endpoints",
 	"GET /api/v0/services/{service_name}/downstream-consumers":  "/api/v0/services/payments/downstream-consumers",
+	"GET /api/v0/investigations/services/{service_name}":        "/api/v0/investigations/services/payments",
 }
 
 // TestEntityWaveAheadOfRelay pins that the wave proceed legs are

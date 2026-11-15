@@ -20,8 +20,9 @@ import (
 // per leg (resolve POST bodies, context/story/edge GET targets), the
 // scoped-empty-grant refusal (a scoped bearer outside the grant relays
 // explicitly and the core refusal packet crosses untouched), and the
-// relay hold (the context fallback leg relays explicitly on the relay
-// lane, never the catch-all, per the hold TODO in entity_wave.go).
+// relay holds (the context fallback leg and the investigations service
+// leg relay explicitly on the relay lane, never the catch-all, per the
+// hold TODOs in entity_wave.go).
 
 // entityParityLegs drives one representative request per wave row.
 var entityParityLegs = []struct {
@@ -227,7 +228,7 @@ func TestEntityScopedHoldKeepsKeyGate(t *testing.T) {
 }
 
 // TestEntityContextHoldStaysRelayed pins the relay hold: the entity
-// context fallback leg (the only relay_hold row) never terminates —
+// context fallback leg (a relay_hold row) never terminates —
 // even a shared-key call relays explicitly on the relay lane with core
 // bytes untouched, until the TODO-eshu-9669-w5 satisfier lands.
 func TestEntityContextHoldStaysRelayed(t *testing.T) {
@@ -266,6 +267,53 @@ func TestEntityContextHoldStaysRelayed(t *testing.T) {
 			}
 			if got := snap.dispatches["entities"][viaRelay][outcomeCoreOK]; got != 1 {
 				t.Errorf("entities relay core_ok = %d, want 1", got)
+			}
+		})
+	}
+}
+
+// TestEntityInvestigationsHoldStaysRelayed pins the relay hold: the
+// investigations service leg (a relay_hold row) never terminates —
+// even a shared-key call relays explicitly on the relay lane with core
+// bytes untouched, until the owed EntityReadAdmission extension lands
+// (TODO-eshu-9669-w5: ListRepoEntitiesByTypes,
+// RepositoryReadModelSummary, SearchFileReferenceAnyRepo).
+func TestEntityInvestigationsHoldStaysRelayed(t *testing.T) {
+	t.Parallel()
+
+	for _, accept := range []string{EnvelopeMIME, "application/json"} {
+		t.Run(accept, func(t *testing.T) {
+			t.Parallel()
+
+			coreBody := `{"service_name":"payments","context":null,"truth":null}`
+			core := &stubCore{status: http.StatusOK, body: coreBody}
+			mux := http.NewServeMux()
+			mux.Handle("/", core.handler())
+			upstream := httptest.NewServer(mux)
+			defer upstream.Close()
+
+			tel := NewTelemetry(nil)
+			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
+			handler := srv.Handler(DefaultV0Sunset)
+
+			req := authedRequest(http.MethodGet, "/api/v0/investigations/services/payments")
+			req.Header.Set("Accept", accept)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want 200 from the relayed core", rec.Code)
+			}
+			got, _ := io.ReadAll(rec.Result().Body)
+			if string(got) != coreBody {
+				t.Errorf("body = %q, want the untouched core bytes %q", got, coreBody)
+			}
+			snap := tel.snapshot()
+			if snap.dispatches["service_intel"][viaNative] != nil {
+				t.Errorf("service_intel dispatches = %v, want no native lane row (leg holds on relay)", snap.dispatches["service_intel"])
+			}
+			if got := snap.dispatches["service_intel"][viaRelay][outcomeCoreOK]; got != 1 {
+				t.Errorf("service_intel relay core_ok = %d, want 1", got)
 			}
 		})
 	}
