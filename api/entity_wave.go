@@ -128,7 +128,7 @@ func (s *Server) registerEntityWave(mux *http.ServeMux) {
 			// provides a satellite-consumable satisfier for
 			// ContentRelationshipBuilder.BuildContentRelationships, and
 			// GET /api/v0/investigations/services/{service_name} once
-			// core extends EntityReadAdmission with the three
+			// core extends the versioned entity pin with the three
 			// investigations reads (ListRepoEntitiesByTypes,
 			// RepositoryReadModelSummary, SearchFileReferenceAnyRepo);
 			// until then these legs relay explicitly (never the
