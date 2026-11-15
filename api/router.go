@@ -332,19 +332,19 @@ func (s *Server) routes() *http.ServeMux {
 			mux.Handle(pattern+"/", gated)
 		}
 	}
-	// D4 story relay leg (Refs eshu-hq/eshu#9669): the reverted story
-	// GET rides the keyed generic-relay stack (RequireAuth + dispatch),
-	// registered explicitly ahead of the generic proxy. The explicit
-	// wildcard is load-bearing: the list route's slash twin above is a
-	// subtree that would otherwise swallow the story path back under
-	// the D4 gate, so only the explicit registration restores true
-	// relay behavior. The trailing-slash twin relays with it for the
-	// same never-split reason.
-	for _, pattern := range d4RelayLegs {
-		relayed := s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
-		mux.Handle(pattern, relayed)
-		mux.Handle(pattern+"/", relayed)
-	}
+	// W5 story termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#97): the pinned story single terminates
+	// explicitly inside its own wave gate ahead of the generic proxy,
+	// superseding the retired D4 relay leg. The explicit registration
+	// still shadows the list route's slash subtree (which would
+	// otherwise swallow the story path back under the D4 gate). See
+	// api/story_wave.go.
+	s.registerStoryWave(mux)
+	// W5 packet termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#97): the pinned packet single terminates
+	// explicitly inside its own wave gate ahead of the generic proxy.
+	// See api/packet_wave.go.
+	s.registerPacketWave(mux)
 	s.registerCompareWave(mux)
 	s.registerCodeGraphWave(mux)
 	s.registerDeadCodeWave(mux)
@@ -357,6 +357,18 @@ func (s *Server) routes() *http.ServeMux {
 	// proxy — never merged into the W6a Code-flow table. See
 	// api/code_search_wave.go.
 	s.registerCodeSearchWave(mux)
+	// W5 entity termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#97): the 8 pinned entity proceed legs terminate
+	// explicitly inside their own wave gate ahead of the generic proxy;
+	// the context fallback leg rides the explicit relay hold in the
+	// same table. See api/entity_wave.go.
+	s.registerEntityWave(mux)
+	// W5 impact termination (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#97): the 11 pinned impact proceed legs terminate
+	// explicitly inside their own wave gate ahead of the generic proxy;
+	// the two code-surface adapter legs ride the explicit relay hold in
+	// the same table. See api/impact_wave.go.
+	s.registerImpactWave(mux)
 	// Satellite Wave-4 Drift termination (Refs eshu-hq/eshu#9669,
 	// satellite eshu-hq/eshu-api#117): the 2 pinned drift routes
 	// register explicitly inside their own wave gate, ahead of the

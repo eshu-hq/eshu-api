@@ -158,44 +158,19 @@ func TestD6WaveCredentiallessStays401(t *testing.T) {
 }
 
 // TestD6RelayedRoutesCarryRelayLane pins that the disclosed relay-only
-// routes file their dispatch on the relay lane, never the native lane:
-// the scoping line is observable from dest signals. The governance,
-// answer-narration, and hosted-readiness aspects left this list when
-// the W8a lane terminated them natively (see api/w8a_conformance_test.go);
-// the impact packet stays relay-only.
+// set is intentionally empty: the governance, answer-narration, and
+// hosted-readiness aspects left when the W8a lane terminated them natively
+// (see api/w8a_conformance_test.go); the impact packet left when the W5
+// packet lane terminated it natively (see api/packet_conformance_test.go
+// TestPacketByteParity). A rejoining relay-only route must add a real
+// subtest here, not just a list entry: an empty table executes zero
+// subtests and cannot fail.
 func TestD6RelayedRoutesCarryRelayLane(t *testing.T) {
 	t.Parallel()
 
-	relayed := []string{
-		"/api/v0/investigations/supply-chain/impact/packet",
-	}
-	for _, target := range relayed {
-		t.Run("GET "+target, func(t *testing.T) {
-			t.Parallel()
-
-			core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
-			mux := http.NewServeMux()
-			mux.Handle("/", core.handler())
-			upstream := httptest.NewServer(mux)
-			defer upstream.Close()
-
-			tel := NewTelemetry(nil)
-			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
-			handler := srv.Handler(DefaultV0Sunset)
-
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, authedRequest(http.MethodGet, target))
-
-			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
-			}
-			snap := tel.snapshot()
-			family := classifyFamily(target)
-			lanes := snap.dispatches[family]
-			if lanes[viaNative] != nil {
-				t.Errorf("family %q dispatches = %v, want no native lane row for the relayed route", family, lanes)
-			}
-		})
+	var relayed []string
+	if len(relayed) != 0 {
+		t.Fatalf("D6 relay set holds %d routes, want intentionally empty; add a real relay-lane assertion per route", len(relayed))
 	}
 }
 

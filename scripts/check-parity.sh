@@ -46,6 +46,7 @@ SRC_SHA_DEADCODE="589d55ec024e0bdd7699176c04711b056b8af871"
 SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
 SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
+SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -1870,6 +1871,58 @@ check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/codeowners/ownership_read_
 
 check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/codeowners-ownership-read-wire-shapes.txt" \
   "go/internal/query/codeowners/ownership_read_admission.go"
+# Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
+# the EntityReadAdmission v0 (extended Mint A, 27 methods), ImpactReadAdmission
+# v0 (14 methods), RepositoryStoryReadAdmission v0 (15 methods), and
+# SupplyChainImpactPacketReadAdmission v0 (5 methods) pins, minted core-side
+# (unwired, supplemental arbiter ruling on eshu-hq/eshu-api#97). The vendored
+# pins and contract tests are byte-identical at the W5 mint merge; each
+# wire-shapes excerpt carries the version const stanza, the in-scope route
+# list, the re-declared method interface, and the surrounding contract
+# comment, line-verbatim from its pin file.
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/entity/read_admission.go" \
+  "contracts/upstream/entity_read_admission.go" \
+  "a11ac7015901638b5431bec69b0e14577c76b73064c2bc595e10fd48b30225d5"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/entity/read_admission_contract_test.go" \
+  "contracts/upstream/entity_read_admission_contract_test.go" \
+  "64c2dc40cc2694579b676b532ea9e2d8657c7559838d2a4905ae3df4452b0aa5"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/impact/read_admission.go" \
+  "contracts/upstream/impact_read_admission.go" \
+  "93cccd9e76dba1d56990c097beacc8ee811c3848ac3baf48be69fc331a30350c"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/impact/read_admission_contract_test.go" \
+  "contracts/upstream/impact_read_admission_contract_test.go" \
+  "7d868c8d758e2dadcea308c4d28ffa850b983b9b9d4be544fc25f571b7faade9"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/repository/read_admission.go" \
+  "contracts/upstream/repository_story_read_admission.go" \
+  "0793d287497f556dfe637be41625c26afa99d9aabd0a888078b62f380391af47"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/repository/read_admission_contract_test.go" \
+  "contracts/upstream/repository_story_read_admission_contract_test.go" \
+  "aa8cc714edfa7f1fea939abc0038fa028cd9d60393b2b819e5e16ed412b3d364"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/supply/chain/packet_impact_read_admission.go" \
+  "contracts/upstream/supply_chain_impact_packet_read_admission.go" \
+  "7034f5586c7123143ac2f12b71bcf40ce8774bb020063247d95b27e493d7166e"
+
+check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/supply/chain/packet_impact_read_admission_contract_test.go" \
+  "contracts/upstream/supply_chain_impact_packet_read_admission_contract_test.go" \
+  "d127963d6680a81249571efb8ff4f49f28aeb099c9723c7642118f2d39a527b3"
+
+check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/entity-read-wire-shapes.txt" \
+  "go/internal/query/entity/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/impact-read-wire-shapes.txt" \
+  "go/internal/query/impact/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/repository-story-read-wire-shapes.txt" \
+  "go/internal/query/repository/read_admission.go"
+
+check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/supply-chain-impact-packet-read-wire-shapes.txt" \
+  "go/internal/query/supply/chain/packet_impact_read_admission.go"
 
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
@@ -1926,6 +1979,10 @@ grep -qF 'IncidentContextReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/cont
 grep -qF 'SSMHostInventoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/ssm-host-inventory-read-wire-shapes.txt"
 grep -qF 'ServiceCatalogCorrelationReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/service-catalog-correlation-read-wire-shapes.txt"
 grep -qF 'CodeownersOwnershipReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/codeowners-ownership-read-wire-shapes.txt"
+grep -qF 'EntityReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/entity-read-wire-shapes.txt"
+grep -qF 'ImpactReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/impact-read-wire-shapes.txt"
+grep -qF 'RepositoryStoryReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/repository-story-read-wire-shapes.txt"
+grep -qF 'SupplyChainImpactPacketReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-impact-packet-read-wire-shapes.txt"
 grep -qF 'StatusReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-read-wire-shapes.txt"
 grep -qF 'SupplyChainReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/supply-chain-read-wire-shapes.txt"
 grep -qF 'StatusExtraReadAdmissionContractVersion = "v0"' "${REPO_ROOT}/contracts/upstream/status-extra-read-wire-shapes.txt"
@@ -2264,6 +2321,34 @@ for lane in w8bnarrow_terminate w8bnarrow_wave; do
   done
 done
 echo "OK: w8bnarrow lane files carry no dest-side store or parse"
+
+# Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
+# no dest-side store, port, or parse of the W5 reads on the lane
+# (supplemental arbiter ruling, sealed 27/14/15/5-method admissions, no
+# transport constructor by design). The 8 W5 lane files
+# (api/entity_terminate.go, api/entity_wave.go, api/impact_terminate.go,
+# api/impact_wave.go, api/story_terminate.go, api/story_wave.go,
+# api/packet_terminate.go, api/packet_wave.go) must name no dest-side
+# store, reader port, graph/content/topic/live/ECS/explanation/readiness
+# leg, or out-of-pin leg symbol — the pins' stores all stay core-side,
+# and the lane forwards the request bodies opaquely (no query, form,
+# path, or body-key parse). Fails closed on any match (the in-suite
+# source test TestW5LaneFileHygiene proves the same list).
+for lane in entity_terminate entity_wave impact_terminate impact_wave story_terminate story_wave packet_terminate packet_wave; do
+  for symbol in postgres EntityReadAdmission ImpactReadAdmission RepositoryStoryReadAdmission SupplyChainImpactPacketReadAdmission GraphQuery ContentStore ContentReader ReadStore GetEntityContent SearchEntitiesByName ListRepoFiles MatchRepositories RunSingle InvestigateCodeTopic ListRunningTasks ListLiveIdentityMatches HasLiveIdentityMatch ExplainSupplyChainImpact ReadSupplyChainImpactReadiness 'database/sql' sql.DB sql.Open; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"Location"' '"Set-Cookie"' '"entity_id"' '"service_name"' '"repo_id"' '"scope_id"' '"topic"' '"max_depth"' '"limit"' '"offset"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: W5 lane files carry no dest-side store or parse"
 
 # W7-read admin sign-in-policy lane: no dest-side store on the lane
 # (arbiter W7 ruling, sealed 1-method admission). api/

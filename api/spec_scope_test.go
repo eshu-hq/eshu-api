@@ -25,16 +25,20 @@ import (
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Sixty-two mounted spellings stay out of the document by
+// Eighty-four mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
 // the 4 G-a Code-graph routes plus the 3 dead-code routes plus the 3
 // divergence routes plus the 2 G-b relationship routes plus the 2 W4
-// Code search routes plus the 16 W8a routes plus the 2 drift
-// routes plus the 15 W8b-narrow routes),// each with its owning contract: the three mux-level non-API mounts
+// Code search routes plus the 16 W8a routes plus the 2 drift routes
+// plus the 15 W8b-narrow routes plus the 8 W5 entity routes plus the
+// 13 W5 impact POSTs plus the W5f packet single — with the W5f story
+// relay entry rewritten as a terminated-but-disclosed absence),// each with its owning contract: the three mux-level non-API mounts
+
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
-// (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
-// whose fragment waits on its helper port (the repositories story
-// GET, on the generic-relay stack in d4RelayLegs), the four D10
+// (/api/v0/docs, /api/v0/redoc), the three explicitly mounted W5 relay
+// holds (the entity context fallback leg plus the two code-surface
+// adapter legs, each on its wave's explicit relay stack with a TODO
+// naming the owed core seam), the four D10
 // setup-wizard routes whose fragment stays core-side by the recorded
 // eshu-hq/eshu-api#44 posture outcome (contracts/setup-admission.md,
 // pinned by TestSetupSpecPosture_StaysCoreSide), the gap-04 Compare
@@ -92,7 +96,7 @@ var specScopeAbsent = map[string]string{
 	"GET /metrics":      "Prometheus exposition, public like the probes (docs/telemetry.md)",
 	"GET /api/v0/docs":  "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
 	"GET /api/v0/redoc": "compiled doc-UI shell, never an OpenAPI path (contracts/leafb-native-now.md)",
-	"GET /api/v0/repositories/{repo_id}/story": "explicitly mounted relay leg on the generic-relay stack (d4RelayLegs); fragment waits on the schema.EvidenceBoundaries helper port (contracts/d4-native-next.md, TestD4StoryRelayLegOnGenericProxy)",
+	"GET /api/v0/repositories/{repo_id}/story": "story fragment stays core-side for the W5 story lane (it interpolates the shared schema.EvidenceBoundaries helper, which has no line-verbatim port without a core import); the GET terminates regardless (contracts/repository-story-termination.md, story parity corpus, openapi/spec_w5_test.go)",
 	"GET /api/v0/auth/setup-state":             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the GET terminates regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/compare/environments":        "compare fragment stays core-side for the relay-leg lane (core shapes it as its paths-closing entry); the POST terminates regardless (contracts/compare-termination.md, TestSpec_CompareStaysDisclosedAbsent)",
 	"POST /api/v0/code/flow/cfg-summary":       "code-flow fragment stays core-side for the relay-leg lane (four-key flow.go block ports entry-shaped in the follow-up lane); the POST terminates regardless (contracts/code-flow-termination.md, TestSpec_CodeFlowStaysDisclosedAbsent)",
@@ -111,43 +115,65 @@ var specScopeAbsent = map[string]string{
 	"POST /api/v0/code/divergence/report":      "divergence fragment stays core-side for the relay-leg lane (the divergence.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-divergence-termination.md, openapi/spec_divergence_test.go)",
 	"POST /api/v0/code/relationships":          "relationships fragment stays core-side for the relay-leg lane (the routes.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-relationships-termination.md)",
 	"POST /api/v0/code/relationships/story":    "relationships fragment stays core-side for the relay-leg lane (the routes.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-relationships-termination.md)", "POST /api/v0/code/search": "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
-	"POST /api/v0/code/symbols/search":                       "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
-	"GET /api/v0/secrets-iam/identity-trust-chains":          "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/secrets-iam/privilege-posture-observations": "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/secrets-iam/secret-access-paths":            "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/secrets-iam/posture-gaps":                   "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/secrets-iam/posture-summary":                "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/status/governance":                          "status governance fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/status/answer-narration":                    "status answer-narration fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/status/hosted-readiness":                    "status hosted-readiness fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/aws/runtime-drift/findings":                "cloud aws-runtime-drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/replatforming/selectors":                    "iac selectors fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/replatforming/rollups":                     "iac rollups fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/replatforming/plans":                       "iac plans fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/replatforming/ownership-packets":           "iac ownership-packets fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"GET /api/v0/metrics/timeseries":                         "metrics fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/search/semantic":                           "semantic fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/terraform/config-state-drift/findings":     "terraform drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
-	"POST /api/v0/cloud/runtime-drift/findings":              "cloud runtime-drift fragment stays core-side for the drift lane; the POST terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
-	"GET /api/v0/investigations/drift/packet":                "drift packet fragment stays core-side for the drift lane; the GET terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
-	"POST /api/v0/auth/setup/claim":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"POST /api/v0/auth/setup/admin":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"POST /api/v0/auth/setup/mfa":                            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
-	"GET /api/v0/kubernetes/correlations":                    "kubernetes fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/observability/coverage/correlations":        "observability coverage fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/work-items/evidence":                        "work-item fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/semantic/code-hints":                        "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/semantic/documentation-observations":        "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/dependencies":                               "dependencies fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/graph/entities":                             "graph-entities fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/images":                                     "images fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/images/tag-history":                         "tag-history fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/incidents/{incident_id}/context":            "incident-context fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"POST /api/v0/runtime-declarations/query":                "runtime-declarations fragment stays core-side for the W8b-narrow lane; the POST terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/cloud/inventory":                            "cloud-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/cloud/ssm-host-inventory":                   "ssm-host-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/service-catalog/correlations":               "service-catalog fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
-	"GET /api/v0/codeowners/ownership":                       "codeowners fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"POST /api/v0/code/symbols/search":                          "code-search fragments stay core-side for the relay-leg lane (the routes.go and symbols.go entries port entry-shaped with their referenced schemas in the follow-up lane); the POST terminates regardless (contracts/code-search-termination.md, TestSpec_CodeSearchStaysDisclosedAbsent)",
+	"GET /api/v0/secrets-iam/identity-trust-chains":             "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/privilege-posture-observations":    "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/secret-access-paths":               "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/posture-gaps":                      "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/secrets-iam/posture-summary":                   "secrets-iam fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/governance":                             "status governance fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/answer-narration":                       "status answer-narration fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/status/hosted-readiness":                       "status hosted-readiness fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/aws/runtime-drift/findings":                   "cloud aws-runtime-drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/replatforming/selectors":                       "iac selectors fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/rollups":                        "iac rollups fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/plans":                          "iac plans fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/replatforming/ownership-packets":              "iac ownership-packets fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"GET /api/v0/metrics/timeseries":                            "metrics fragment stays core-side for the W8a lane; the GET terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/search/semantic":                              "semantic fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/terraform/config-state-drift/findings":        "terraform drift fragment stays core-side for the W8a lane; the POST terminates regardless (contracts/w8a-termination.md, openapi/spec_w8a_test.go)",
+	"POST /api/v0/cloud/runtime-drift/findings":                 "cloud runtime-drift fragment stays core-side for the drift lane; the POST terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
+	"GET /api/v0/investigations/drift/packet":                   "drift packet fragment stays core-side for the drift lane; the GET terminates regardless (contracts/cloud-runtime-drift-termination.md, openapi/spec_drift_test.go)",
+	"POST /api/v0/auth/setup/claim":                             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/auth/setup/admin":                             "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"POST /api/v0/auth/setup/mfa":                               "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"GET /api/v0/kubernetes/correlations":                       "kubernetes fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/observability/coverage/correlations":           "observability coverage fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/work-items/evidence":                           "work-item fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/semantic/code-hints":                           "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/semantic/documentation-observations":           "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/dependencies":                                  "dependencies fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/graph/entities":                                "graph-entities fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/images":                                        "images fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/images/tag-history":                            "tag-history fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/incidents/{incident_id}/context":               "incident-context fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"POST /api/v0/runtime-declarations/query":                   "runtime-declarations fragment stays core-side for the W8b-narrow lane; the POST terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/cloud/inventory":                               "cloud-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/cloud/ssm-host-inventory":                      "ssm-host-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/service-catalog/correlations":                  "service-catalog fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/codeowners/ownership":                          "codeowners fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"POST /api/v0/entities/resolve":                             "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/entities/{entity_id}/context":                  "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET holds on explicit relay until the content-fallback satisfier lands (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/workloads/{workload_id}/context":               "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/workloads/{workload_id}/story":                 "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/services/{service_name}/context":               "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/services/{service_name}/story":                 "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/services/{service_name}/api-surface/endpoints": "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/services/{service_name}/downstream-consumers":  "entities fragment stays core-side for the W5 entity lane (the entities.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/entity-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/trace-deployment-chain":                "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/blast-radius":                          "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/change-surface":                        "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST holds on explicit relay until the code-surface seam lands (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/change-surface/investigate":            "impact fragment stays core-side for the W5 impact lane (the routes.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST holds on explicit relay until the code-surface seam lands (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/contracts":                             "impact fragment stays core-side for the W5 impact lane (the contract.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/deployment-config-influence":           "impact fragment stays core-side for the W5 impact lane (the deployment_config_influence.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/trace-exposure-path":                   "impact fragment stays core-side for the W5 impact lane (the exposure.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/pre-change":                            "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/developer-change-plan":                 "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/entity-map":                            "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/resource-investigation":                "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/trace-resource-to-code":                "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"POST /api/v0/impact/explain-dependency-path":               "impact fragment stays core-side for the W5 impact lane (the rest.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the POST terminates regardless (contracts/impact-termination.md, openapi/spec_w5_test.go)",
+	"GET /api/v0/investigations/supply-chain/impact/packet":     "packet fragment stays core-side for the W5 packet lane (the investigations.go entry ports entry-shaped with its referenced schemas in the follow-up lane); the GET terminates regardless (contracts/supply-chain-impact-packet-termination.md, openapi/spec_w5_test.go)",
 }
 
 // specScopeMounted rebuilds every explicitly mounted Method+Path the
@@ -262,6 +288,18 @@ func specScopeMounted() []string {
 	for _, entry := range w8bNarrowWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range entityWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range impactWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range storyWave {
+		add(entry.Method + " " + entry.Path)
+	}
+	for _, entry := range packetWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -297,36 +335,38 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // disclosed or lifted) moves these pins with the owning lane.
 //
 // Arithmetic (trio + D6 + Wave-1 + Wave-2 + W4-search + Compare + W6a +
-// W7-graph + dead-code + divergence + G-b + W8a + drift +
-// retire-unclaimed lanes): 167 + 3 trio GETs + 3 D6 legs + 3 Wave-1
-// Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search POSTs +
-// 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow POSTs + 4 G-a
-// Code-graph POSTs + 3 dead-code POSTs + 3 divergence POSTs + 2 G-b
-// relationship POSTs + 16 W8a reads + 2 drift reads + 15 W8b-narrow
-// reads + 1 retire-unclaimed POST = 236 mounted (235 native + 1
-// explicit relay leg); the disclosed-absence count is 62 (11 prior +
-// 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code keys + 3
-// divergence keys + 2 G-b relationship keys + 2 W4 Code search keys +
-// 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments,
-// each disclosed core-side by its owning lane; the W4 content-search
-// fragment ports entry-shaped with the lane, and the
-// retire-unclaimed fragment ports whole-file, so no new absence from
-// those lanes).
+// Wave-7 graph + dead-code + divergence + G-b + W8a + drift +
+// retire-unclaimed + W5 entity/impact/story/packet lanes): 167 + 3 trio
+// GETs + 3 D6 legs + 3 Wave-1 Freshness GETs + 3 Wave-2 Content POSTs +
+// 4 W4 Content search POSTs + 4 W4 Code search POSTs + 1 Compare POST +
+// 4 Code-flow POSTs + 4 G-a Code-graph POSTs + 3 dead-code POSTs + 3
+// divergence POSTs + 2 G-b relationship POSTs + 16 W8a reads + 2 drift
+// reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 8 W5 entity
+// reads + 13 W5 impact POSTs + 1 W5 packet GET = 258 mounted (255
+// native + 3 explicit relay holds, including the W5 story single
+// flipped relay-to-native); the disclosed-absence count is 84
+// (11 prior + 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code
+// keys + 3 divergence keys + 2 G-b relationship keys + 2 W4 Code search
+// keys + 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments
+// + 8 W5 entity keys + 13 W5 impact keys + 1 W5 packet key, each
+// disclosed core-side by its owning lane, and the W4 content-search
+// fragment ports entry-shaped with the lane, and the retire-unclaimed
+// fragment ports whole-file, so no new absence from those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 236 {
-		t.Fatalf("mounted operations = %d, want 236 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed = 235 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 258 {
+		t.Fatalf("mounted operations = %d, want 258 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 8 W5 entity + 13 W5 impact + 1 W5 packet = 255 native + 3 explicit relay holds): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 62 {
-		t.Fatalf("disclosed-absent operations = %d, want 62: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 84 {
+		t.Fatalf("disclosed-absent operations = %d, want 84: each absence needs its disclosing contract", got)
 	}
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (215 native + 1 explicit relay leg) has its served spec
-// entry, for both a configured and an unconfigured core origin. Only
-// the disclosed absences stay out.
+// API operation (255 native + 3 explicit relay holds) has its served
+// spec entry, for both a configured and an unconfigured core origin.
+// Only the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {
 	t.Parallel()
 

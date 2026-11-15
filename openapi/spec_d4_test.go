@@ -15,7 +15,9 @@ import (
 // stats/coverage, freshness, evidence bundle, investigation workflows,
 // playbooks) and three line-verbatim subsets (evidence routes without
 // the dangling 501, the deployable-unit packet entry, the repository
-// routes without the mux-health entry and the relay-leg story entry).
+// routes without the mux-health entry and the terminated story entry
+// (the story GET terminates in the W5 story lane; its absence is
+// disclosed there).
 // Byte identity of every ported line rides scripts/check-parity.sh;
 // these tests pin the served assembly around those bytes.
 //
@@ -132,25 +134,22 @@ func TestSpec_ServesD4Families(t *testing.T) {
 }
 
 // TestSpec_D4DisclosedOmissions pins the documented spec gaps so they
-// cannot silently widen: the story key (the route relays until its
-// schema-interpolated entry ports), the admission-decisions 501
-// (dangling core $ref), and the relay-only packets sharing the
-// investigations file. (The drift packet left this list in the
-// Wave-4 Drift lane: it is disclosed-absent there, pinned by
-// TestSpec_DriftStaysDisclosedAbsent.)
+// cannot silently widen: the admission-decisions 501 (dangling core
+// $ref) and the relay-only packets sharing the investigations file.
+// (The drift packet left this list in the Wave-4 Drift lane: it is
+// disclosed-absent there, pinned by
+// TestSpec_DriftStaysDisclosedAbsent. The story key left this list in
+// the W5 story lane: the route terminates there and its absence is
+// disclosed-absent-as-terminated, pinned by
+// TestSpec_W5StaysDisclosedAbsent. The supply-chain impact packet key
+// left this list in the W5 packet lane the same way.)
 func TestSpec_D4DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
 	served := decodePaths(t, Spec())
 
-	if _, ok := served["/api/v0/repositories/{repo_id}/story"]; ok {
-		t.Errorf("served spec carries the story key, want it omitted while the route relays")
-	}
 	if _, ok := served["/health"]; ok {
 		t.Errorf("served spec carries the mux-health entry, want it core-side only (dest serves its own probe shape)")
-	}
-	if _, ok := served["/api/v0/investigations/supply-chain/impact/packet"]; ok {
-		t.Errorf("served spec carries the supply-chain packet, want it relay-only until its lane")
 	}
 	if _, ok := served["/api/v0/investigations/services/{service_name}"]; ok {
 		t.Errorf("served spec carries the services packet, want it relay-only until its lane")

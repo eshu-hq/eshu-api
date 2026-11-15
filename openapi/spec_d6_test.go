@@ -133,24 +133,10 @@ func TestSpec_ServesD6Families(t *testing.T) {
 	}
 }
 
-// TestSpec_D6DisclosedOmissions pins the documented spec gap so it
-// cannot silently widen: the impact packet (writer responder +
-// shared ports) stays relay-only, so its key stays out of the served
-// document. The governance, answer-narration, and hosted-readiness
-// aspects left this list when the W8a lane terminated them natively
-// with their fragments disclosed core-side (see
-// openapi/spec_w8a_test.go); Compare left earlier with its gap-04
-// lane (see openapi/spec_compare_test.go).
-func TestSpec_D6DisclosedOmissions(t *testing.T) {
-	t.Parallel()
-
-	served := decodePaths(t, Spec())
-
-	for _, path := range []string{
-		"/api/v0/investigations/supply-chain/impact/packet",
-	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it relay-only until its pin lands", path)
-		}
-	}
-}
+// TestSpec_D6DisclosedOmissions is retired with the W5 packet lane:
+// its only gap (the impact packet key) moved to
+// TestSpec_W5StaysDisclosedAbsent as disclosed-absent-as-terminated,
+// and the remaining relay-only investigations keys stay pinned by
+// TestSpec_D4DisclosedOmissions. The function is removed rather than
+// left empty so a future D6 omission rejoins a live gate instead of a
+// vacuous test.
