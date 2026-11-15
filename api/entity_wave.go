@@ -9,7 +9,9 @@ import (
 
 // Entity relay-leg termination (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#97). This file owns the frozen wave table:
-// exactly the 9 W5 entity routes the versioned entity pin admits:
+// exactly the 9 W5 entity routes in the versioned entity pin's route
+// census (method coverage holds 8 natively; the investigations leg
+// awaits the 3-read extension):
 // 7 terminate natively (the resolve POST, the workload/service context
 // GETs, the workload/service story GETs, and the service api-surface
 // and downstream-consumers GETs) plus 2 explicit relay holds (the
@@ -52,9 +54,10 @@ import (
 // contracts/entity-termination.md.
 //
 // Transport pin: the versioned Entity pin, v0 (recorded at the W5 mint
-// 76240fda9f), covers all 9 wave rows — the resolve POST, the
-// context/story GETs, the service enrichment GETs, and the graph
-// entities GET. The pin carries no transport constructor by design:
+// 76240fda9f route census), covers 8 wave rows at method level — the resolve
+// POST, the context/story GETs, and the service enrichment GETs; the
+// investigations service GET holds on explicit relay pending the
+// 3-read pin extension. The pin carries no transport constructor by design:
 // dest serves the reads through the existing graph reader plus the
 // guarded Postgres content reader plus the reducer-owned stores, the
 // same backends cmd/api wiring builds today, and any other backend
