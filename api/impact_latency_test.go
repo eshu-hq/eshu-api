@@ -79,10 +79,9 @@ func impactWaveEntryForBench(key string) impactRoute {
 }
 
 // BenchmarkImpactRelayRead measures the relay path for the same caller
-// shape: the two adapter holds (shared-key relay on the explicit relay
-// stack) plus still-relayed routes no wave table covers, which cross
-// the generic proxy. Each does exactly one server-side fetch, so the
-// 1.50 bound stays a real pathology check.
+// shape: the two adapter holds plus the change-surface leg, all on the
+// explicit relay-hold stack (shared-key relay). Each does exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkImpactRelayRead(b *testing.B) {
 	_, srv := impactBenchServer(b, `{"data":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -94,7 +93,7 @@ func BenchmarkImpactRelayRead(b *testing.B) {
 	}{
 		{"hold-change-surface", "/api/v0/impact/change-surface", `{"repo_id":"repo_1"}`},
 		{"hold-change-surface-investigate", "/api/v0/impact/change-surface/investigate", `{"repo_id":"repo_1"}`},
-		{"post-relay", "/api/v0/code/bundles", `{"scope_id":"scope_1"}`},
+		{"post-relay", "/api/v0/impact/change-surface", `{"repo_id":"repo_1"}`},
 	}
 	for _, leg := range relayPosts {
 		b.Run(leg.name, func(b *testing.B) {
