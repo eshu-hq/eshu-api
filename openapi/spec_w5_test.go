@@ -8,14 +8,12 @@ import (
 )
 
 // W5 entity/impact/story/packet termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97). The 24 W5 routes
-// mount natively (21 terminate; the entity context fallback leg and
-// the two code-surface adapter legs hold on explicit relay), but
-// their Decision 5(c) fragments stay core-side for this lane: the
-// entity entries live in
-// go/internal/query/openapi/paths/search/entities.go (plus the graph
-// entities entry in
-// go/internal/query/openapi/paths/search/graph_entities.go), the
+// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97). 20 of the 24 W5
+// routes terminate natively; the entity context fallback leg, the two
+// code-surface adapter legs, and the investigations service leg hold
+// on explicit relay, but their Decision 5(c) fragments stay core-side
+// for this lane: the entity entries live in
+// go/internal/query/openapi/paths/search/entities.go, the
 // impact entries live in
 // go/internal/query/openapi/paths/impact/routes.go, contract.go,
 // deployment_config_influence.go, exposure.go, and rest.go, the story
@@ -58,7 +56,7 @@ func TestSpec_W5StaysDisclosedAbsent(t *testing.T) {
 		"/api/v0/services/{service_name}/story",
 		"/api/v0/services/{service_name}/api-surface/endpoints",
 		"/api/v0/services/{service_name}/downstream-consumers",
-		"/api/v0/graph/entities",
+		"/api/v0/investigations/services/{service_name}",
 		"/api/v0/impact/trace-deployment-chain",
 		"/api/v0/impact/blast-radius",
 		"/api/v0/impact/change-surface",

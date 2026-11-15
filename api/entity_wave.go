@@ -9,14 +9,13 @@ import (
 
 // Entity relay-leg termination (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#97). This file owns the frozen wave table:
-// exactly the 8 W5 entity routes the versioned entity pin admits that
-// this lane terminates (the resolve POST, the entity/workload/service
-// context GETs, the workload/service story GETs, and the service
-// api-surface and downstream-consumers GETs), plus the one explicit
-// relay hold (the entity context fallback leg, whose builder seam core
-// has not made satellite-consumable). GET /api/v0/graph/entities is
-// admitted by the pin but terminates in the merged W8b-narrow lane,
-// so it stays out of this table (see the wave comment). Behavior lives in
+// exactly the 9 W5 entity routes the versioned entity pin admits:
+// 7 terminate natively (the resolve POST, the workload/service context
+// GETs, the workload/service story GETs, and the service api-surface
+// and downstream-consumers GETs) plus 2 explicit relay holds (the
+// entity context fallback leg, whose builder seam core has not made
+// satellite-consumable, and the investigations service leg, pending a
+// pin extension). Behavior lives in
 // entity_terminate.go; proofs in entity_conformance_test.go,
 // entity_parity_test.go, and entity_gate_test.go; spec posture stays
 // disclosed (no openapi port in this lane); the record in
@@ -93,12 +92,10 @@ type entityRoute struct {
 	Fragment string
 }
 
-// entityWave is the frozen W5 entity termination target: exactly the 8
+// entityWave is the frozen W5 entity termination target: exactly the 9
 // entity routes behind the versioned entity pin, v0, 7 terminating
-// natively and 1 (the context fallback leg) on relay hold. GET
-// /api/v0/graph/entities stays out: the merged W8b-narrow lane owns it
-// natively (contracts/graph-entity-inventory-read-admission.md), so
-// this wave must not register it a second time.
+// natively and 2 on explicit relay hold (the context fallback leg and
+// the investigations service leg, pending the owed core seams).
 // TestEntityWaveFrozen pins it entry by entry; a wave change moves the
 // ownership note, the fragment reference, and this mirror together.
 var entityWave = []entityRoute{
@@ -110,6 +107,7 @@ var entityWave = []entityRoute{
 	{Method: "GET", Path: "/api/v0/services/{service_name}/story", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/api-surface/endpoints", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/downstream-consumers", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
+	{Method: "GET", Path: "/api/v0/investigations/services/{service_name}", Family: "service_intel", Serve: entityServeRelayHold, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 }
 
 // registerEntityWave mounts the entity wave ahead of the generic
@@ -128,9 +126,13 @@ func (s *Server) registerEntityWave(mux *http.ServeMux) {
 			// TODO-eshu-9669-w5: terminate GET
 			// /api/v0/entities/{entity_id}/context natively once core
 			// provides a satellite-consumable satisfier for
-			// ContentRelationshipBuilder.BuildContentRelationships;
-			// until then this leg relays explicitly (never the
-			// catch-all) so the hold stays observable in telemetry
+			// ContentRelationshipBuilder.BuildContentRelationships, and
+			// GET /api/v0/investigations/services/{service_name} once
+			// core extends EntityReadAdmission with the three
+			// investigations reads (ListRepoEntitiesByTypes,
+			// RepositoryReadModelSummary, SearchFileReferenceAnyRepo);
+			// until then these legs relay explicitly (never the
+			// catch-all) so each hold stays observable in telemetry
 			// and the spec absence stays disclosed.
 			relayed := s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
 			mux.Handle(pattern, relayed)

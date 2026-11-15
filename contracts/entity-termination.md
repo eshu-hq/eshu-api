@@ -2,9 +2,11 @@
 
 Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97. This lane
 terminates the 7 W5 entity proceed legs natively ahead of the generic
-relay and holds the context fallback leg on explicit relay; the 9th
-admitted route (`GET /api/v0/graph/entities`) terminates in the merged
-W8b-narrow lane and is deferred here.
+relay and holds 2 legs on explicit relay: the context fallback leg
+(owed a satellite-consumable ContentRelationshipBuilder satisfier)
+and the investigations service leg (owed a pin extension covering
+ListRepoEntitiesByTypes, RepositoryReadModelSummary, and
+SearchFileReferenceAnyRepo).
 
 ## Pin
 
@@ -30,13 +32,6 @@ re-signed rejection, and production-store mirror.
 | `GET /api/v0/services/{service_name}/api-surface/endpoints` | service_intel | entityReadGate |
 | `GET /api/v0/services/{service_name}/downstream-consumers` | service_intel | entityReadGate |
 
-## Deferred to the merged W8b-narrow lane (1)
-
-`GET /api/v0/graph/entities` terminates natively in merged
-eshu-hq/eshu-api#143 (`contracts/graph-entity-inventory-read-admission.md`);
-this lane records no second registration for it (a duplicate
-`ServeMux` pattern would panic at startup).
-
 The wave gate (api/entity_wave.go, served by api/entity_terminate.go)
 answers every credential shape: a valid shared key terminates on the
 native lane; a foreign credential class (scoped token, OIDC bearer,
@@ -50,19 +45,26 @@ the gate 401, the future-resolver family 403
 ("all-scopes operator authorization is required"), and the permanent
 local 503 when no core origin is configured (never Retry-After).
 
-## Held on relay (1)
+## Held on relay (2)
 
 | Route | Standing | Owed |
 |---|---|---|
 | `GET /api/v0/entities/{entity_id}/context` | explicit relay stack (never the catch-all), same key-gate posture as the pre-lane generic relay | TODO-eshu-9669-w5: terminate natively once core provides a satellite-consumable satisfier for `ContentRelationshipBuilder.BuildContentRelationships` |
+| `GET /api/v0/investigations/services/{service_name}` | explicit relay stack (never the catch-all), same key-gate posture as the pre-lane generic relay | TODO-eshu-9669-w5: terminate natively once core extends `EntityReadAdmission` with `ListRepoEntitiesByTypes`, `RepositoryReadModelSummary`, and `SearchFileReferenceAnyRepo` |
 
 The hold keeps its standing because the only production satisfier for
 the content-fallback builder is root's ContentIndexRelationshipBuilder
 — a stateless adapter over root's unexported per-language extraction
 closure with no satellite-consumable constructor — while the pin
-freezes only its two exercised reads. Pinning: TestEntityWaveFrozen
-(relay_hold row), TestEntityWaveAheadOfRelay (relay lane filed
-explicitly), TestEntityContextHoldStaysRelayed (shared-key relay,
+freezes only its two exercised reads; the investigations hold keeps
+its standing because three of its reads
+(`ListRepoEntitiesByTypes`, `RepositoryReadModelSummary`,
+`SearchFileReferenceAnyRepo`) fall outside the frozen 27-method pin
+and would change answers if forwarded through the narrow contract.
+Pinning: TestEntityWaveFrozen (relay_hold rows),
+TestEntityWaveAheadOfRelay (relay lane filed explicitly),
+TestEntityContextHoldStaysRelayed and
+TestEntityInvestigationsHoldStaysRelayed (shared-key relay,
 byte-identical), TestEntityScopedHoldKeepsKeyGate (foreign classes
 keep the key-gate 401), and the nil-core 503 leg in
 TestEntityTerminatedAs_NilCore503.
@@ -92,10 +94,9 @@ route may cite this pin as coverage.
   BenchmarkEntityRelayRead, bounded by scripts/measure-w5-latency.sh
   (1.50 budget) and wired into .github/workflows/read-latency.yml;
   numbers in docs/w5-latency.md.
-- Spec: the 8 routes mount explicitly and stay disclosed-absent until
-  the follow-up spec-port lane (api/spec_scope_test.go,
-  openapi/spec_w5_test.go); the graph_entities row stays disclosed-absent
-  under the W8b-narrow lane (see the wave comment).
+- Spec: the 9 routes mount explicitly (7 native + 2 relay holds) and
+  stay disclosed-absent until the follow-up spec-port lane
+  (api/spec_scope_test.go, openapi/spec_w5_test.go).
 
 ## Scope honesty
 

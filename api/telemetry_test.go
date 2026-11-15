@@ -146,6 +146,7 @@ func TestClassifyFamily_KnownRoutes(t *testing.T) {
 		{"/api/v0/services/payments/story", "service_intel"},
 		{"/api/v0/services/payments/api-surface/endpoints", "service_intel"},
 		{"/api/v0/services/payments/downstream-consumers", "service_intel"},
+		{"/api/v0/investigations/services/payments", "service_intel"},
 		{"/api/v0/impact/trace-deployment-chain", "impact"},
 		{"/api/v0/impact/blast-radius", "impact"},
 		{"/api/v0/impact/change-surface", "impact"},
