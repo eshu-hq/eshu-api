@@ -363,6 +363,13 @@ func (s *Server) routes() *http.ServeMux {
 	// generic proxy — never merged into the W8a table. See
 	// api/drift_wave.go.
 	s.registerDriftWave(mux)
+	// W8b-narrow satellite termination (Refs eshu-hq/eshu#9669,
+	// satellite eshu-hq/eshu-api#101): the 15 pinned narrow-family
+	// reads register explicitly inside their own wave gate, ahead of
+	// the generic proxy — never merged into the W8a or drift tables.
+	// See api/w8bnarrow_wave.go and
+	// contracts/w8b-narrow-termination.md.
+	s.registerW8bNarrowWave(mux)
 	// D6 Status + SupplyChain reads termination (see api/d6_wave.go).
 	s.registerD6Wave(mux)
 	// W8a satellite termination (Refs eshu-hq/eshu#9669, satellite

@@ -25,12 +25,12 @@ import (
 // keyed caller, for both a configured and an unconfigured core
 // origin, since the document serves with no core fetch.
 //
-// Forty-seven mounted spellings stay out of the document by
+// Sixty-two mounted spellings stay out of the document by
 // disclosure (eleven pre-W6a/W8a plus the 4 W6a Code-flow routes plus
 // the 4 G-a Code-graph routes plus the 3 dead-code routes plus the 3
 // divergence routes plus the 2 G-b relationship routes plus the 2 W4
 // Code search routes plus the 16 W8a routes plus the 2 drift
-// routes),// each with its owning contract: the three mux-level non-API mounts
+// routes plus the 15 W8b-narrow routes),// each with its owning contract: the three mux-level non-API mounts
 // (/health, /readyz, /metrics), the two compiled doc-UI shells
 // (/api/v0/docs, /api/v0/redoc), the one explicitly mounted relay leg
 // whose fragment waits on its helper port (the repositories story
@@ -67,9 +67,13 @@ import (
 // by openapi/spec_divergence_test.go), the 2 G-b relationship POSTs
 // whose fragments stay core-side for the relay-leg lane (the routes.go
 // entries port entry-shaped with their referenced schemas in the
-// follow-up lane — contracts/code-relationships-termination.md), and
+// follow-up lane — contracts/code-relationships-termination.md),
 // the 16 W8a routes whose// fragments stay core-side for the satellite termination lane
-// (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go).
+// (contracts/w8a-termination.md, pinned by openapi/spec_w8a_test.go),
+// and the 15 W8b-narrow routes whose fragments stay core-side for
+// the satellite termination lane
+// (contracts/w8b-narrow-termination.md, pinned by
+// openapi/spec_w8bnarrow_test.go).
 // Only explicitly
 // mounted routes are in scope: catch-all riders (the still-relayed
 // core surface) stay out with the unbounded proxy itself. A newly
@@ -129,6 +133,21 @@ var specScopeAbsent = map[string]string{
 	"POST /api/v0/auth/setup/claim":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/admin":                          "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
 	"POST /api/v0/auth/setup/mfa":                            "setup fragment stays core-side by the eshu-hq/eshu-api#44 posture outcome; the POST rides tier-C dispatch regardless (contracts/setup-admission.md, TestSetupSpecPosture_StaysCoreSide)",
+	"GET /api/v0/kubernetes/correlations":                    "kubernetes fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/observability/coverage/correlations":        "observability coverage fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/work-items/evidence":                        "work-item fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/semantic/code-hints":                        "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/semantic/documentation-observations":        "semantic fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/dependencies":                               "dependencies fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/graph/entities":                             "graph-entities fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/images":                                     "images fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/images/tag-history":                         "tag-history fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/incidents/{incident_id}/context":            "incident-context fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"POST /api/v0/runtime-declarations/query":                "runtime-declarations fragment stays core-side for the W8b-narrow lane; the POST terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/cloud/inventory":                            "cloud-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/cloud/ssm-host-inventory":                   "ssm-host-inventory fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/service-catalog/correlations":               "service-catalog fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
+	"GET /api/v0/codeowners/ownership":                       "codeowners fragment stays core-side for the W8b-narrow lane; the GET terminates regardless (contracts/w8b-narrow-termination.md, openapi/spec_w8bnarrow_test.go)",
 }
 
 // specScopeMounted rebuilds every explicitly mounted Method+Path the
@@ -240,6 +259,9 @@ func specScopeMounted() []string {
 	for _, entry := range driftWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	for _, entry := range w8bNarrowWave {
+		add(entry.Method + " " + entry.Path)
+	}
 	out := make([]string, 0, len(mounted))
 	for key := range mounted {
 		out = append(out, key)
@@ -280,23 +302,24 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // Freshness GETs + 3 Wave-2 Content POSTs + 4 W4 Content search POSTs +
 // 2 W4 Code search POSTs + 1 Compare POST + 4 Code-flow POSTs + 4 G-a
 // Code-graph POSTs + 3 dead-code POSTs + 3 divergence POSTs + 2 G-b
-// relationship POSTs + 16 W8a reads + 2 drift reads + 1
-// retire-unclaimed POST = 221 mounted (220 native + 1 explicit relay
-// leg); the disclosed-absence count is 47 (11 prior + 4 W6a Code-flow
-// keys + 4 G-a Code-graph keys + 3 dead-code keys + 3 divergence keys +
-// 2 G-b relationship keys + 2 W4 Code search keys + 16 W8a fragments +
-// 2 drift fragments, each disclosed core-side by its owning lane; the
-// W4 content-search fragment ports entry-shaped with the lane, and the
+// relationship POSTs + 16 W8a reads + 2 drift reads + 15 W8b-narrow
+// reads + 1 retire-unclaimed POST = 236 mounted (235 native + 1
+// explicit relay leg); the disclosed-absence count is 62 (11 prior +
+// 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code keys + 3
+// divergence keys + 2 G-b relationship keys + 2 W4 Code search keys +
+// 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments,
+// each disclosed core-side by its owning lane; the W4 content-search
+// fragment ports entry-shaped with the lane, and the
 // retire-unclaimed fragment ports whole-file, so no new absence from
 // those lanes).
 func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
-	if got := len(specScopeMounted()); got != 221 {
-		t.Fatalf("mounted operations = %d, want 221 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 1 retire-unclaimed = 220 native + 1 explicit relay leg): move the scope with the owning lane", got)
+	if got := len(specScopeMounted()); got != 236 {
+		t.Fatalf("mounted operations = %d, want 236 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed = 235 native + 1 explicit relay leg): move the scope with the owning lane", got)
 	}
-	if got := len(specScopeAbsent); got != 47 {
-		t.Fatalf("disclosed-absent operations = %d, want 47: each absence needs its disclosing contract", got)
+	if got := len(specScopeAbsent); got != 62 {
+		t.Fatalf("disclosed-absent operations = %d, want 62: each absence needs its disclosing contract", got)
 	}
 }
 
