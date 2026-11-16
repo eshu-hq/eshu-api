@@ -10,14 +10,10 @@ import (
 // Entity relay-leg termination (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#97). This file owns the frozen wave table:
 // exactly the 9 W5 entity routes in the versioned entity pin's route
-// census (method coverage holds 8 natively; the investigations leg
-// awaits the 3-read extension):
-// 7 terminate natively (the resolve POST, the workload/service context
-// GETs, the workload/service story GETs, and the service api-surface
-// and downstream-consumers GETs) plus 2 explicit relay holds (the
-// entity context fallback leg, whose builder seam core has not made
-// satellite-consumable, and the investigations service leg, pending a
-// pin extension). Behavior lives in
+// census, all terminating natively on the 30-method pin (Wave-2:
+// the context fallback leg's satisfier merged core-side, #10745 +
+// #10779; the investigations leg's 3 reads landed in the pin
+// extension 27->30, #10747). Behavior lives in
 // entity_terminate.go; proofs in entity_conformance_test.go,
 // entity_parity_test.go, and entity_gate_test.go; spec posture stays
 // disclosed (no openapi port in this lane); the record in
@@ -34,9 +30,9 @@ import (
 // Server.routes in api/router.go, which calls registerEntityWave ahead
 // of the generic proxy; phase order is pin record first, wave
 // registration second, parity proofs third; data dependency is the
-// Entity pin at 76240fda9f (recorded satellite-side in
+// Entity pin at 9bf29e53 (recorded satellite-side in
 // contracts/entity-read-admission.md plus the vendored upstream
-// copies, v0, exact 27-method set, no transport constructor by design);
+// copies, v0, exact 30-method set, no transport constructor by design);
 // re-trigger is dispatchNote/telemetry per family plus spec_scope and
 // the disclosed absences that move with this lane.
 //
@@ -53,11 +49,10 @@ import (
 // mode-dependent denials come from). The contract record is
 // contracts/entity-termination.md.
 //
-// Transport pin: the versioned Entity pin, v0 (recorded at the W5 mint
-// 76240fda9f route census), covers 8 wave rows at method level — the resolve
-// POST, the context/story GETs, and the service enrichment GETs; the
-// investigations service GET holds on explicit relay pending the
-// 3-read pin extension. The pin carries no transport constructor by design:
+// Transport pin: the versioned Entity pin, v0 (recorded at the Wave-2
+// 9bf29e53 re-vendor), covers all 9 wave rows at method level — the resolve
+// POST, the context/story GETs, the service enrichment GETs, and the
+// investigations service GET. The pin carries no transport constructor by design:
 // dest serves the reads through the existing graph reader plus the
 // guarded Postgres content reader plus the reducer-owned stores, the
 // same backends cmd/api wiring builds today, and any other backend
@@ -72,9 +67,10 @@ import (
 // credential-less 401), so no keyless caller gains a new public
 // surface here. There is no public carve-out in this lane.
 
-// entityServeGated terminates natively; entityServeRelayHold rides the
-// explicit relay stack (never the catch-all) until the owed core
-// satisfier lands.
+// entityServeGated terminates natively. entityServeRelayHold is the
+// retired hold kind: no W5 row uses it since Wave-2 terminated both
+// former hold legs; the constant stays as the serve-kind vocabulary
+// the frozen mirror and the conformance wantVia branch name.
 const (
 	entityServeGated     = "gated"
 	entityServeRelayHold = "relay_hold"
@@ -96,52 +92,36 @@ type entityRoute struct {
 }
 
 // entityWave is the frozen W5 entity termination target: exactly the 9
-// entity routes behind the versioned entity pin, v0, 7 terminating
-// natively and 2 on explicit relay hold (the context fallback leg and
-// the investigations service leg, pending the owed core seams).
-// TestEntityWaveFrozen pins it entry by entry; a wave change moves the
-// ownership note, the fragment reference, and this mirror together.
+// entity routes behind the versioned entity pin, v0, all terminating
+// natively (Wave-2: the context fallback leg's owed satisfier landed
+// core-side in the C2 leaf, #10745 + #10779; the investigations
+// service leg's three reads landed in the pin extension 27->30,
+// #10747). TestEntityWaveFrozen pins it entry by entry; a wave
+// change moves the ownership note, the fragment reference, and this
+// mirror together.
 var entityWave = []entityRoute{
 	{Method: "POST", Path: "/api/v0/entities/resolve", Family: "entities", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
-	{Method: "GET", Path: "/api/v0/entities/{entity_id}/context", Family: "entities", Serve: entityServeRelayHold, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
+	{Method: "GET", Path: "/api/v0/entities/{entity_id}/context", Family: "entities", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/workloads/{workload_id}/context", Family: "workloads", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/workloads/{workload_id}/story", Family: "workloads", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/context", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/story", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/api-surface/endpoints", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 	{Method: "GET", Path: "/api/v0/services/{service_name}/downstream-consumers", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
-	{Method: "GET", Path: "/api/v0/investigations/services/{service_name}", Family: "service_intel", Serve: entityServeRelayHold, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
+	{Method: "GET", Path: "/api/v0/investigations/services/{service_name}", Family: "service_intel", Serve: entityServeGated, Fragment: "go/internal/query/openapi/paths/search/entities.go"},
 }
 
 // registerEntityWave mounts the entity wave ahead of the generic
-// proxy: gated rows terminate on the native lane for a valid shared
-// key and relay explicitly for foreign credential classes; the
-// relay_hold row rides the explicit relay stack on the relay lane for
-// every caller shape (pinned by TestEntityWaveAheadOfRelay), with the
-// standing 401 for credential-less callers. Each trailing-slash
-// spelling stays on the wave route for the same never-split reason.
-// Lives here (not in routes()) so the shared router stays under the
-// file-size cap.
+// proxy: every row terminates on the native lane for a valid shared
+// key and relays explicitly for foreign credential classes (both
+// former hold rows terminated natively in Wave-2; the relay-hold
+// branch is gone, see contracts/entity-termination.md). Each
+// trailing-slash spelling stays on the wave route for the same
+// never-split reason. Lives here (not in routes()) so the shared
+// router stays under the file-size cap.
 func (s *Server) registerEntityWave(mux *http.ServeMux) {
 	for _, entry := range entityWave {
 		pattern := entry.Method + " " + entry.Path
-		if entry.Serve == entityServeRelayHold {
-			// TODO-eshu-9669-w5: terminate GET
-			// /api/v0/entities/{entity_id}/context natively once core
-			// provides a satellite-consumable satisfier for
-			// ContentRelationshipBuilder.BuildContentRelationships, and
-			// GET /api/v0/investigations/services/{service_name} once
-			// core extends the versioned entity pin with the three
-			// investigations reads (ListRepoEntitiesByTypes,
-			// RepositoryReadModelSummary, SearchFileReferenceAnyRepo);
-			// until then these legs relay explicitly (never the
-			// catch-all) so each hold stays observable in telemetry
-			// and the spec absence stays disclosed.
-			relayed := s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
-			mux.Handle(pattern, relayed)
-			mux.Handle(pattern+"/", relayed)
-			continue
-		}
 		gated := s.instrumented(viaNative, s.entityReadGate(http.HandlerFunc(s.serveEntityTerminated)))
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)

@@ -32,7 +32,7 @@ import (
 // hasSessionCookie from the D3 lane — one shape check, not four.
 //
 // Rollback is revert-to-relay: remove the s.registerEntityWave(mux)
-// call in routes() (or this lane's files) and the 8 terminated entity
+// call in routes() (or this lane's files) and the 9 terminated entity
 // routes return to the generic relay behind RequireAuth. The spec
 // absences stay disclosed either way. No data migrates and no other
 // family moves.
@@ -46,7 +46,7 @@ import (
 // mode-dependent denials come from). The false branch is the hookup
 // point for the day dest gains a scoped/session resolver; until then
 // it stays a plain deny (no invented reason codes, no audit
-// widening). One shared authorizer covers all 8 terminated wave rows
+// widening). One shared authorizer covers all 9 terminated wave rows
 // (plus the dual-pin TraceContext enrichment the impact lane cites):
 // they share the shared-key trust root until D8 resolves per-class
 // handling, and the contract record (contracts/entity-termination.md)
@@ -103,7 +103,7 @@ func (s *Server) serveEntityTerminated(w http.ResponseWriter, r *http.Request) {
 	s.serveEntityTerminatedAs(w, r, true)
 }
 
-// entityReadGate fronts the 8 terminated entity routes. A valid shared
+// entityReadGate fronts the 9 terminated entity routes. A valid shared
 // key terminates (next); a request carrying any other credential — a
 // non-key Bearer [REDACTED] a foreign credential class (scoped token,
 // OIDC) or a session-cookie-shaped Cookie — relays explicitly to the

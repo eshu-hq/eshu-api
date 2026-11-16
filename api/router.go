@@ -363,10 +363,9 @@ func (s *Server) routes() *http.ServeMux {
 	// api/code_search_wave.go.
 	s.registerCodeSearchWave(mux)
 	// W5 entity termination (Refs eshu-hq/eshu#9669, satellite
-	// eshu-hq/eshu-api#97): the 7 pinned entity proceed legs terminate
-	// explicitly inside their own wave gate ahead of the generic proxy;
-	// the context fallback and investigations service legs ride explicit
-	// relay holds in the same table. See api/entity_wave.go.
+	// eshu-hq/eshu-api#97): all 9 pinned entity legs terminate
+	// explicitly inside their own wave gate ahead of the generic proxy.
+	// See api/entity_wave.go.
 	s.registerEntityWave(mux)
 	// W5 impact termination (Refs eshu-hq/eshu#9669, satellite
 	// eshu-hq/eshu-api#97): the 11 pinned impact proceed legs terminate

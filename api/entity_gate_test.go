@@ -187,7 +187,7 @@ func TestEntityWaveJunkCookieStays401(t *testing.T) {
 // TestEntityTerminatedAs_NilCore503 pins that the native routes with
 // no core origin configured answer the permanent local 503 in both
 // negotiated shapes, with zero upstream contact — for every proceed
-// leg. The hold leg answers the same 503 on the relay lane.
+// leg.
 func TestEntityTerminatedAs_NilCore503(t *testing.T) {
 	t.Parallel()
 

@@ -14,8 +14,8 @@ import (
 // Entity latency evidence (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#97). The terminated reader does the same single
 // server-side fetch as the generic relay plus the wave gate and the
-// family authorizer; these benchmarks bound that overhead for the 8
-// proceed legs plus the relay hold. The stub core answers from memory
+// family authorizer; these benchmarks bound that overhead for all 9
+// terminated legs. The stub core answers from memory
 // — the numbers isolate dest-side cost, not core or network time.
 // Absolute deployment numbers ride the pinned-core-image leg at flip
 // prep (D11).
@@ -59,8 +59,8 @@ func entityBenchRequest(leg struct {
 // BenchmarkEntityTerminatedRead measures the terminated path for
 // shared-key entity calls through the full production chain: one leg
 // per wave row through the same wave gate and family authorizer (the
-// relay_hold row relays explicitly, which the relay benchmark below
-// compares against the same single-fetch shape).
+// relay benchmark below compares the still-relayed change-surface leg
+// against the same single-fetch shape).
 func BenchmarkEntityTerminatedRead(b *testing.B) {
 	_, srv := entityBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -77,20 +77,20 @@ func BenchmarkEntityTerminatedRead(b *testing.B) {
 }
 
 // BenchmarkEntityRelayRead measures the relay path for the same
-// caller shape: the hold leg plus the change-surface leg (shared-key
-// relay on the explicit relay stack), with the wave-mounted dependencies
-// GET as a native control on the same single-fetch shape. Each does
+// caller shape: the change-surface leg (shared-key relay on the
+// explicit relay stack; Wave-3's leg, still relayed), with wave-mounted
+// native controls on the same single-fetch shape. Each does
 // exactly one server-side fetch, so the 1.50 bound stays a real
 // pathology check.
 func BenchmarkEntityRelayRead(b *testing.B) {
 	_, srv := entityBenchServer(b, `{"data":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	b.Run("hold-get-relay", func(b *testing.B) {
+	b.Run("investigations-native", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/entities/ent_1/context"))
+			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/investigations/services/payments"))
 		}
 	})
 	b.Run("get-native-control", func(b *testing.B) {

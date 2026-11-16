@@ -47,6 +47,7 @@ SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
 SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
+SRC_SHA_W5ENTITY30="9bf29e5380e51e1c774122bfec22ab58898babd7"
 SRC_SHA_W6="dd4a32718aa47fbfb6fd435e4b3e5904580d0f6a"
 SRC_SHA_COMP_EXT="9bf29e5380e51e1c774122bfec22ab58898babd7"
 tmpdir="$(mktemp -d)"
@@ -1899,13 +1900,15 @@ check_excerpt_at "$SRC_SHA_COMP_EXT" "contracts/upstream/component-extension-rea
 # wire-shapes excerpt carries the version const stanza, the in-scope route
 # list, the re-declared method interface, and the surrounding contract
 # comment, line-verbatim from its pin file.
-check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/entity/read_admission.go" \
+# Wave-2: the entity pin re-vendored at the 27->30 extension (core
+# #10747, recorded at core 9bf29e53 with zero drift since that merge).
+check_file_at "$SRC_SHA_W5ENTITY30" "go/internal/query/entity/read_admission.go" \
   "contracts/upstream/entity_read_admission.go" \
-  "a11ac7015901638b5431bec69b0e14577c76b73064c2bc595e10fd48b30225d5"
+  "0f7338a5ee62bb257dddaed08e993e00db456973e94e6a9e51dd62b0d3ce6a05"
 
-check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/entity/read_admission_contract_test.go" \
+check_file_at "$SRC_SHA_W5ENTITY30" "go/internal/query/entity/read_admission_contract_test.go" \
   "contracts/upstream/entity_read_admission_contract_test.go" \
-  "64c2dc40cc2694579b676b532ea9e2d8657c7559838d2a4905ae3df4452b0aa5"
+  "7266947516c740ec0bea278505c2bde92a7d67a7abec4a96dfaa15ec3c8d8bb9"
 
 check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/impact/read_admission.go" \
   "contracts/upstream/impact_read_admission.go" \
@@ -1931,7 +1934,7 @@ check_file_at "$SRC_SHA_W5ENTITYIMPACT" "go/internal/query/supply/chain/packet_i
   "contracts/upstream/supply_chain_impact_packet_read_admission_contract_test.go" \
   "d127963d6680a81249571efb8ff4f49f28aeb099c9723c7642118f2d39a527b3"
 
-check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/entity-read-wire-shapes.txt" \
+check_excerpt_at "$SRC_SHA_W5ENTITY30" "contracts/upstream/entity-read-wire-shapes.txt" \
   "go/internal/query/entity/read_admission.go"
 
 check_excerpt_at "$SRC_SHA_W5ENTITYIMPACT" "contracts/upstream/impact-read-wire-shapes.txt" \

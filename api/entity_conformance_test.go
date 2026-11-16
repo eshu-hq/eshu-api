@@ -22,28 +22,20 @@ import (
 // fail first.
 
 // TestEntityWaveFrozen pins the exact surface the satellite
-// terminates plus the two it holds: the 7 proceed legs behind
-// EntityReadAdmission v0 plus the context fallback leg and the
-// investigations service leg on explicit relay hold. The holds keep
-// their standing until core provides a satellite-consumable
-// content-fallback satisfier
-// (TODO-eshu-9669-w5: terminate GET
-// /api/v0/entities/{entity_id}/context once the core satisfier for
-// ContentRelationshipBuilder.BuildContentRelationships lands; until
-// then the leg relays explicitly and the relay pin in
-// entity_parity_test.go carries it) and extends EntityReadAdmission
-// with the three investigations reads
-// (TODO-eshu-9669-w5: terminate GET
-// /api/v0/investigations/services/{service_name} natively once the
-// pin covers ListRepoEntitiesByTypes, RepositoryReadModelSummary,
-// and SearchFileReferenceAnyRepo). A wave change moves the
+// terminates: all 9 wave legs behind EntityReadAdmission v0,
+// including the context fallback leg and the investigations service
+// leg. The context leg's owed satisfier landed core-side (C2 leaf,
+// entity/content/fallback.Builder, merged via #10745 + #10779) and
+// the investigations reads landed in the pin extension (27->30 via
+// #10747: ListRepoEntitiesByTypes, RepositoryReadModelSummary,
+// SearchFileReferenceAnyRepo). A wave change moves the
 // ownership note, the fragment reference, and this mirror together.
 func TestEntityWaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
-		"GET /api/v0/entities/{entity_id}/context entities relay_hold go/internal/query/openapi/paths/search/entities.go",
-		"GET /api/v0/investigations/services/{service_name} service_intel relay_hold go/internal/query/openapi/paths/search/entities.go",
+		"GET /api/v0/entities/{entity_id}/context entities gated go/internal/query/openapi/paths/search/entities.go",
+		"GET /api/v0/investigations/services/{service_name} service_intel gated go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/api-surface/endpoints service_intel gated go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/context service_intel gated go/internal/query/openapi/paths/search/entities.go",
 		"GET /api/v0/services/{service_name}/downstream-consumers service_intel gated go/internal/query/openapi/paths/search/entities.go",
@@ -85,10 +77,8 @@ var entityConcretePaths = map[string]string{
 // TestEntityWaveAheadOfRelay pins that the wave proceed legs are
 // explicit registrations ahead of the generic proxy: a shared-key
 // call must file its dispatch on the native lane (viaNative), not
-// the relay lane. The relay_hold context leg asserts the opposite:
-// it files on the relay lane explicitly (never the catch-all), per
-// the hold TODO above. Until the lane lands, the proceed calls cross
-// the generic relay and this test is RED.
+// the relay lane, for every wave row. Until the lane lands, the
+// proceed calls cross the generic relay and this test is RED.
 func TestEntityWaveAheadOfRelay(t *testing.T) {
 	t.Parallel()
 
