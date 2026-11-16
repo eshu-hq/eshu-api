@@ -57,9 +57,9 @@ check_leg() {
   fi
 }
 
-term_readiness="$(bench 'BenchmarkG2TerminatedRead/readiness' | median)"
+term_readiness="$(bench 'BenchmarkG2TerminatedRead/readiness$' | median)"
 term_readiness_family="$(bench 'BenchmarkG2TerminatedRead/readiness-family' | median)"
-term_factschema="$(bench 'BenchmarkG2TerminatedRead/fact-schema' | median)"
+term_factschema="$(bench 'BenchmarkG2TerminatedRead/fact-schema$' | median)"
 term_factschema_kind="$(bench 'BenchmarkG2TerminatedRead/fact-schema-kind' | median)"
 term_surface="$(bench 'BenchmarkG2TerminatedRead/surface-inventory' | median)"
 term_visualizations="$(bench 'BenchmarkG2TerminatedRead/visualizations-derive' | median)"
