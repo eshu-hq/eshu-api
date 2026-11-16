@@ -25,8 +25,11 @@ import (
 // families out explicitly).
 //
 // The 6 no-port routes (readiness x2, fact-schema x2,
-// surface-inventory, visualizations/derive) carry no core mint and
-// stay on the relay (see contracts/w8b-narrow-termination.md).
+// surface-inventory, visualizations/derive) carry no core mint; the
+// readiness x2 stay on the relay while fact-schema x2,
+// surface-inventory, and visualizations/derive terminated in the G2
+// wave (see contracts/w8b-narrow-termination.md and
+// contracts/g2-wave.md).
 //
 // Pre-edit gate (MUST read before editing): entry point is
 // Server.routes in api/router.go, which calls
