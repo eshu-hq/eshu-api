@@ -184,7 +184,12 @@ jobs:
     needs: [changes]
     if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && (needs.changes.outputs.parity == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true'))
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # The fetch loop re-verifies every pinned file over the network; wave
+    # lanes keep appending pins and the 5-minute budget no longer fits
+    # (eshu-hq/eshu-api#152: two consecutive timeout cancels with all
+    # byte-checks green). Bump, do not split: one sequential fetch pass
+    # keeps the failure output in file order.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Contract parity vs pinned source

@@ -57,23 +57,25 @@ exercised by its route) stay disclosed per pin record.
   terminated in the Wave-1b lane on the `ComponentExtensionReadAdmission v0`
   pin (see `contracts/component-extension-termination.md`).
   The TODO(w8b-followup) above is done.
-- The 6 no-port routes stay on the generic relay — each names the
-  owed item:
+- The 6 no-port routes rode the generic relay — each named an
+  owed item. Four terminated in the G2 lane
+  (api/g2_wave.go, contracts/g2-wave.md); the readiness pair below
+  stays on the relay:
   - TODO(w8b-followup): readiness x2 (`GET
     /api/v0/collector-readiness`, `GET
     /api/v0/status/collector-readiness`) — owed: a readiness
     read-admission mint; the #130 readiness probe behavior is
     unchanged.
-  - TODO(w8b-followup): fact-schema x2 (`GET
+  - DONE (G2 wave): fact-schema x2 (`GET
     /api/v0/fact-schema-versions`, `GET
-    /api/v0/fact-schema-versions/{fact_kind}`) — owed: a
-    fact-schema read-admission mint.
-  - TODO(w8b-followup): surface-inventory (`GET
-    /api/v0/surface-inventory`) — owed: a surface-inventory
-    read-admission mint.
-  - TODO(w8b-followup): visualizations/derive (`POST
-    /api/v0/visualizations/derive`) — owed: a visualization
-    read-admission mint.
+    /api/v0/fact-schema-versions/{fact_kind}`) — terminated on the
+    FactSchemaReadAdmission v0 pin.
+  - DONE (G2 wave): surface-inventory (`GET
+    /api/v0/surface-inventory`) — terminated on the
+    SurfaceInventoryReadAdmission v0 pin.
+  - DONE (G2 wave): visualizations/derive (`POST
+    /api/v0/visualizations/derive`) — terminated on the
+    VisualizationReadAdmission v0 pin.
 
 ## Census (per route per method)
 
