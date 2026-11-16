@@ -35,7 +35,8 @@
 # scripts/measure-drift-latency.sh,
 # scripts/measure-iac-latency.sh,
 # scripts/measure-dead-code-latency.sh,
-# scripts/measure-w5-latency.sh).
+# scripts/measure-w5-latency.sh,
+# scripts/measure-g2-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -80,6 +81,7 @@ on:
       - 'scripts/measure-iac-latency.sh'
       - 'scripts/measure-dead-code-latency.sh'
       - 'scripts/measure-w5-latency.sh'
+      - 'scripts/measure-g2-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -314,5 +316,14 @@ jobs:
             echo "## W5 latency (stub-core, median ns/op)"
             echo '```'
             cat w5-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: G2 reads termination latency
+        run: |
+          bash scripts/measure-g2-latency.sh 2>&1 | tee g2-latency.log
+          {
+            echo "## G2 latency (stub-core, median ns/op)"
+            echo '```'
+            cat g2-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -2602,6 +2602,31 @@ for lane in compext_terminate compext_wave; do
 done
 echo "OK: compext lane files carry no dest-side store or parse"
 
+# G2 reads termination (eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101
+# RE:G2V2): no dest-side store, port, or parse on the lane (the 5 v0
+# pins' readers all stay core-side; the pin names are cited in comments
+# and contracts/g2-wave.md only, never imported). The lane files must
+# name no pin admission type, store handle, reader port, query/form
+# parser, request-URI sighting, path-param key sighting, logger/tracer
+# reference, or serialization primitive or lock. Fails closed on any
+# match (the in-suite source test TestG2Term_LaneFileHygiene proves the
+# same list).
+for lane in g2_terminate g2_wave; do
+  for symbol in ExtractionReadinessReadAdmission FactSchemaReadAdmission SurfaceInventoryReadAdmission VisualizationReadAdmission ManifestDependenciesReadAdmission postgres ReadStore 'database/sql' sql.DB sql.Open slog. tracing. span. json.Marshal sync. Mutex; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store or pin import on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"Location"' '"Set-Cookie"' '"family"' '"fact_kind"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: g2 lane files carry no dest-side store or parse"
+
 # Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
 # no dest-side store, port, or parse of the W5 reads on the lane
 # (supplemental arbiter ruling, sealed 30/14/15/5-method admissions, no

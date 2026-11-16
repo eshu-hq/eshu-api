@@ -152,10 +152,10 @@ func TestG2UnknownRouteFailClosed(t *testing.T) {
 	srv := NewServer("http://core.invalid", skeletonTestKey)
 
 	for _, route := range []string{
-		"GET /api/v0/collector-extraction-readiness/bogus/extra",
-		"GET /api/v0/fact-schema-versions",
-		"POST /api/v0/surface-inventory",
-		"GET /api/v0/visualizations/derive",
+		"/api/v0/collector-extraction-readiness/bogus/extra",
+		"/api/v0/fact-schema-versions/bogus-kind",
+		"/api/v0/visualizations/derive/extra",
+		"/api/v0/unregistered-route",
 		"",
 	} {
 		rec := httptest.NewRecorder()

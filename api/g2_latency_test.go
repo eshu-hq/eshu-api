@@ -13,7 +13,7 @@ import (
 // eshu-hq/eshu-api#101 RE:G2V2). The terminated reader does the same
 // single server-side fetch as the generic relay plus the wave gate
 // and the family authorizer; these benchmarks bound that overhead
-// per representative route so scripts/measure-freshness-latency.sh
+// per representative route so scripts/measure-g2-latency.sh
 // gates it in CI. The stub core answers from memory — the numbers
 // isolate dest-side cost, not core or network time. Absolute
 // deployment numbers ride the pinned-core image leg at flip prep

@@ -43,10 +43,11 @@ these pins as coverage.
 | `GET /api/v0/repository/manifest-dependencies` | ManifestDependencies | `ManifestDependenciesReadAdmission v0` | `paths/repository/manifest_dependencies.go` |
 
 What this lane proves per the D-wave ruling is the required proof
-list: explicit routes ahead of relay, byte-identical fragments under
-`scripts/check-parity.sh`, authorizer + deny-shape tests with the
-scope-honesty label, byte-parity dispatch/conformance tests vs the
-relayed reference, the no-core-import check, extended
+list: explicit routes ahead of relay, lane-file hygiene under
+`scripts/check-parity.sh` (no dest-side store/parse/pin-import; no
+vendored fragments — disclosed absent), authorizer + deny-shape tests
+with the scope-honesty label, byte-parity dispatch/conformance tests
+vs the relayed reference, the no-core-import check, extended
 `viaNative`/`viaRelay` telemetry, the satellite latency evidence
 (terminated-vs-proxy-relay ratios, no same-shape before/after: the
 baseline is the still-relaying proxy route), and this contract
