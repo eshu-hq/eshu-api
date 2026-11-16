@@ -387,6 +387,14 @@ func (s *Server) routes() *http.ServeMux {
 	// See api/w8bnarrow_wave.go and
 	// contracts/w8b-narrow-termination.md.
 	s.registerW8bNarrowWave(mux)
+	// Wave-1b component-extensions termination (Refs
+	// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101, Wave-1b
+	// ruling PROCEED): the 2 pinned component-extension reads
+	// register explicitly inside their own wave gate, ahead of the
+	// generic proxy — never merged into the W8b-narrow table. See
+	// api/compext_wave.go and
+	// contracts/component-extension-termination.md.
+	s.registerCompextWave(mux)
 	// D6 Status + SupplyChain reads termination (see api/d6_wave.go).
 	s.registerD6Wave(mux)
 	// W8a satellite termination (Refs eshu-hq/eshu#9669, satellite

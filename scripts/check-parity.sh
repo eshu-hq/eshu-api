@@ -48,6 +48,7 @@ SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W6="dd4a32718aa47fbfb6fd435e4b3e5904580d0f6a"
+SRC_SHA_COMP_EXT="9bf29e5380e51e1c774122bfec22ab58898babd7"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -1872,6 +1873,23 @@ check_file_at "$SRC_SHA_W8BNARROW" "go/internal/query/codeowners/ownership_read_
 
 check_excerpt_at "$SRC_SHA_W8BNARROW" "contracts/upstream/codeowners-ownership-read-wire-shapes.txt" \
   "go/internal/query/codeowners/ownership_read_admission.go"
+# Wave-1b component-extensions pin (eshu-hq/eshu-api#101, Wave-1b
+# ruling PROCEED): the ComponentExtensionReadAdmission v0 pin,
+# minted core-side (unwired, single re-declared Readback). The
+# vendored pin and contract test are whole-file byte-identical at
+# the Wave-1b record base; the wire-shapes excerpt carries the
+# version-const stanza, the interface, and the in-scope route list,
+# line-verbatim from the pin file at the same base.
+check_file_at "$SRC_SHA_COMP_EXT" "go/internal/query/component_extension_read_admission.go" \
+  "contracts/upstream/component_extension_read_admission.go" \
+  "6ee1e46874fc0a5a7471925ced6da2b09e7f3ab152774781af2e31fdaad0c371"
+
+check_file_at "$SRC_SHA_COMP_EXT" "go/internal/query/component_extension_read_admission_contract_test.go" \
+  "contracts/upstream/component_extension_read_admission_contract_test.go" \
+  "601c577ee7f906928e7779ed58b31d9104898b76180d951ea3e2b140666a8f19"
+
+check_excerpt_at "$SRC_SHA_COMP_EXT" "contracts/upstream/component-extension-read-wire-shapes.txt" \
+  "go/internal/query/component_extension_read_admission.go"
 # Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
 # the EntityReadAdmission v0 (extended Mint A, 27 methods), ImpactReadAdmission
 # v0 (14 methods), RepositoryStoryReadAdmission v0 (15 methods), and
@@ -2554,6 +2572,32 @@ for lane in w8bnarrow_terminate w8bnarrow_wave; do
   done
 done
 echo "OK: w8bnarrow lane files carry no dest-side store or parse"
+
+# Wave-1b lane: no dest-side store, port, parse, or component home
+# on the lane (Wave-1b ruling, sealed single-method admission, no
+# transport constructor by design, FS conditions). The lane files
+# must name no dest-local ESHU_COMPONENT_HOME — core reads its own
+# registry on the forwarded call — and no reader port, query/form
+# parse, or out-of-pin leg symbol (the pin's registry read plus the
+# install/enable/disable/list legs all stay core-side, and the lane
+# forwards the request bodies opaquely). Fails closed on any match
+# (the in-suite source test TestCompextTerm_LaneFileHygiene proves
+# the same list).
+for lane in compext_terminate compext_wave; do
+  for symbol in ESHU_COMPONENT_HOME ComponentExtensionReadAdmission GraphQuery ContentStore ContentReader ReadStore 'database/sql' sql.DB sql.Open slog. tracing. span. json.Marshal sync. Mutex; do
+    if grep -qF "$symbol" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go names ${symbol}: no dest-side store on this lane" >&2
+      exit 1
+    fi
+  done
+  for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"component_id"' '"limit"' '"offset"'; do
+    if grep -qF "$call" "${REPO_ROOT}/api/${lane}.go"; then
+      echo "FAIL: api/${lane}.go contains ${call}: no dest-side query/form/path/body-key parse on this lane" >&2
+      exit 1
+    fi
+  done
+done
+echo "OK: compext lane files carry no dest-side store or parse"
 
 # Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
 # no dest-side store, port, or parse of the W5 reads on the lane

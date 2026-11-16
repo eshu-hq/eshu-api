@@ -13,8 +13,9 @@ import (
 // the fourteen versioned narrow pins, v0. A wave change moves the
 // ownership note, the fragment reference, and this mirror together.
 // The 2 drift routes stay out (Wave-4 Drift lane,
-// eshu-hq/eshu-api#117); the component-extensions pair and the 6
-// no-port routes stay out (no core mint, relay with a TODO).
+// eshu-hq/eshu-api#117); the 6 no-port routes stay out (no core
+// mint, relay with a TODO). The component-extensions pair moved to
+// the Wave-1b lane (api/compext_wave.go).
 func TestW8bNarrowWaveFrozen(t *testing.T) {
 	t.Parallel()
 

@@ -1,0 +1,6 @@
+// ComponentExtensionReadAdmissionContractVersion versions the #9669
+const ComponentExtensionReadAdmissionContractVersion = "v0"
+type ComponentExtensionReadAdmission interface {
+	Readback(component.Policy) ([]component.RegistryReadbackComponent, error)
+//   - GET /api/v0/component-extensions
+//   - GET /api/v0/component-extensions/{component_id}/diagnostics

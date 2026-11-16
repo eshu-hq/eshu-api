@@ -53,10 +53,10 @@ exercised by its route) stay disclosed per pin record.
   `contracts/cloud-runtime-drift-termination.md`). This lane does not
   touch them.
 - The component-extensions pair (`GET /api/v0/component-extensions`,
-  `GET /api/v0/component-extensions/{component_id}/diagnostics`) has
-  no core mint and stays on the generic relay.
-  TODO(w8b-followup): mint a ComponentExtensions read admission and
-  terminate the pair on it.
+  `GET /api/v0/component-extensions/{component_id}/diagnostics`)
+  terminated in the Wave-1b lane on the `ComponentExtensionReadAdmission v0`
+  pin (see `contracts/component-extension-termination.md`).
+  The TODO(w8b-followup) above is done.
 - The 6 no-port routes stay on the generic relay — each names the
   owed item:
   - TODO(w8b-followup): readiness x2 (`GET

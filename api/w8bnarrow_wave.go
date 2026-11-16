@@ -26,11 +26,12 @@ import (
 // The 2 drift routes (POST /api/v0/cloud/runtime-drift/findings,
 // GET /api/v0/investigations/drift/packet) already terminated in the
 // Wave-4 Drift lane under eshu-hq/eshu-api#117 and stay out of this
-// table. The component-extensions pair and the 6 no-port routes
-// (readiness x2, fact-schema x2, surface-inventory,
-// visualizations/derive) carry no core mint and stay on the relay
-// with the TODO naming the owed item (see
-// contracts/w8b-narrow-termination.md).
+// table. The 6 no-port routes (readiness x2, fact-schema x2,
+// surface-inventory, visualizations/derive) carry no core mint and
+// stay on the relay with the TODO naming the owed item (see
+// contracts/w8b-narrow-termination.md). The component-extensions
+// pair terminated in the Wave-1b lane (see api/compext_wave.go and
+// contracts/component-extension-termination.md).
 //
 // Pre-edit gate (MUST read before editing): entry point is
 // Server.routes in api/router.go, which calls
