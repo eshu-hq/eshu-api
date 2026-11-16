@@ -386,10 +386,10 @@ func specScopeServed(t *testing.T, origin string) map[string]bool {
 // 4 W4 Content search POSTs + 4 W4 Code search POSTs + 1 Compare POST +
 // 4 Code-flow POSTs + 4 G-a Code-graph POSTs + 3 dead-code POSTs + 3
 // divergence POSTs + 2 G-b relationship POSTs + 16 W8a reads + 2 drift
-// reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 4 W6b scan POSTs + 2 W6c investigation POSTs + 1 W6c secret POST + 2 W6d cypher POSTs + 1 W6c language-query POST + 8 W5 entity
-// reads + 13 W5 impact POSTs + 1 W5 packet GET = 269 mounted (265
-// native + 4 explicit relay holds, including the W5 story single
-// flipped relay-to-native); the disclosed-absence count is 95
+// reads + 15 W8b-narrow reads + 1 retire-unclaimed POST + 4 W6b scan POSTs + 2 W6c investigation POSTs + 1 W6c secret POST + 2 W6d cypher POSTs + 1 W6c language-query POST + 9 W5 entity
+// reads + 13 W5 impact POSTs + 1 W5 packet GET = 269 mounted (269
+// native + 0 explicit relay holds: the last holds terminated natively
+// in Wave-2 and Wave-3); the disclosed-absence count is 95
 // (11 prior + 4 W6a Code-flow keys + 4 G-a Code-graph keys + 3 dead-code
 // keys + 3 divergence keys + 2 G-b relationship keys + 2 W4 Code search
 // keys + 16 W8a fragments + 2 drift fragments + 15 W8b-narrow fragments
@@ -402,7 +402,7 @@ func TestSpecScope_Frozen(t *testing.T) {
 	t.Parallel()
 
 	if got := len(specScopeMounted()); got != 269 {
-		t.Fatalf("mounted operations = %d, want 269 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 4 W6b scan + 2 W6c investigation + 1 W6c secret + 2 W6d cypher + 1 W6c language-query + 9 W5 entity + 13 W5 impact + 1 W5 packet = 267 native + 2 explicit relay holds): move the scope with the owning lane", got)
+		t.Fatalf("mounted operations = %d, want 269 (167 + 3 trio + 3 D6 + 3 Wave-1 + 3 Wave-2 + 4 W4 content-search + 2 W4 code-search + 1 Compare + 4 Code-flow + 4 G-a Code-graph + 3 dead-code + 3 divergence + 2 G-b relationships + 16 W8a + 2 drift + 15 W8b-narrow + 1 retire-unclaimed + 4 W6b scan + 2 W6c investigation + 1 W6c secret + 2 W6d cypher + 1 W6c language-query + 9 W5 entity + 13 W5 impact + 1 W5 packet = 269 native + 0 explicit relay holds): move the scope with the owning lane", got)
 	}
 	if got := len(specScopeAbsent); got != 95 {
 		t.Fatalf("disclosed-absent operations = %d, want 95: each absence needs its disclosing contract", got)
@@ -410,7 +410,7 @@ func TestSpecScope_Frozen(t *testing.T) {
 }
 
 // TestSpecScope_MountedHasSpec pins the forward wiring: every mounted
-// API operation (267 native + 2 explicit relay holds) has its served
+// API operation (269 native + 0 explicit relay holds) has its served
 // spec entry, for both a configured and an unconfigured core origin.
 // Only the disclosed absences stay out.
 func TestSpecScope_MountedHasSpec(t *testing.T) {

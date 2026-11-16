@@ -161,7 +161,7 @@ func TestImpactWaveJunkCookieStays401(t *testing.T) {
 // TestImpactTerminatedAs_NilCore503 pins that the native POSTs with no
 // core origin configured answer the permanent local 503 in both
 // negotiated shapes, with zero upstream contact — for every proceed
-// leg. The holds answer the same 503 on the relay lane.
+// leg.
 func TestImpactTerminatedAs_NilCore503(t *testing.T) {
 	t.Parallel()
 

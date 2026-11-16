@@ -2604,7 +2604,7 @@ echo "OK: compext lane files carry no dest-side store or parse"
 
 # Satellite W5 entity/impact/story/packet termination (eshu-hq/eshu-api#97):
 # no dest-side store, port, or parse of the W5 reads on the lane
-# (supplemental arbiter ruling, sealed 27/14/15/5-method admissions, no
+# (supplemental arbiter ruling, sealed 30/14/15/5-method admissions, no
 # transport constructor by design). The 8 W5 lane files
 # (api/entity_terminate.go, api/entity_wave.go, api/impact_terminate.go,
 # api/impact_wave.go, api/story_terminate.go, api/story_wave.go,

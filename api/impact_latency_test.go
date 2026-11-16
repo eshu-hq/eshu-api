@@ -14,8 +14,8 @@ import (
 // Impact latency evidence (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#97). The terminated reader does the same single
 // server-side fetch as the generic relay plus the wave gate and the
-// family authorizer; these benchmarks bound that overhead for the 11
-// proceed legs plus the two adapter holds. The stub core answers from
+// family authorizer; these benchmarks bound that overhead for all 13
+// terminated legs. The stub core answers from
 // memory — the numbers isolate dest-side cost, not core or network
 // time. Absolute deployment numbers ride the pinned-core-image leg at
 // flip prep (D11).
@@ -79,9 +79,11 @@ func impactWaveEntryForBench(key string) impactRoute {
 }
 
 // BenchmarkImpactRelayRead measures the relay path for the same caller
-// shape: the two adapter holds plus the change-surface leg, all on the
-// explicit relay-hold stack (shared-key relay). Each does exactly one
-// server-side fetch, so the 1.50 bound stays a real pathology check.
+// shape on the explicit relay lane: every sub-bench carries a foreign
+// credential class (scoped bearer), so core judges it on the relay
+// lane even though the legs terminate natively for shared-key callers.
+// Each does exactly one server-side fetch, so the 1.50 bound stays a
+// real pathology check.
 func BenchmarkImpactRelayRead(b *testing.B) {
 	_, srv := impactBenchServer(b, `{"data":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -99,9 +101,8 @@ func BenchmarkImpactRelayRead(b *testing.B) {
 		b.Run(leg.name, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				post := authedRequest(http.MethodPost, leg.target)
-				post.Body = io.NopCloser(strings.NewReader(leg.body))
-				post.ContentLength = int64(len(leg.body))
+				post := httptest.NewRequest(http.MethodPost, leg.target, strings.NewReader(leg.body))
+				post.Header.Set("Authorization", "Bearer [REDACTED]")
 				post.Header.Set("Content-Type", "application/json")
 				rec := httptest.NewRecorder()
 				handler.ServeHTTP(rec, post)

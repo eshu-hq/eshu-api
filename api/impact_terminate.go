@@ -32,7 +32,7 @@ import (
 // hasSessionCookie from the D3 lane — one shape check, not four.
 //
 // Rollback is revert-to-relay: remove the s.registerImpactWave(mux)
-// call in routes() (or this lane's files) and the 11 terminated impact
+// call in routes() (or this lane's files) and the 13 terminated impact
 // POSTs return to the generic relay behind RequireAuth. The spec
 // absences stay disclosed either way. No data migrates and no other
 // family moves.
@@ -46,7 +46,7 @@ import (
 // mode-dependent denials come from). The false branch is the hookup
 // point for the day dest gains a scoped/session resolver; until then
 // it stays a plain deny (no invented reason codes, no audit
-// widening). One shared authorizer covers all 11 terminated wave rows
+// widening). One shared authorizer covers all 13 terminated wave rows
 // (including the two trace legs whose TraceContext enrichment rides
 // the Entity dual-pin cite): they share the shared-key trust root
 // until D8 resolves per-class handling, and the contract record
@@ -103,7 +103,7 @@ func (s *Server) serveImpactTerminated(w http.ResponseWriter, r *http.Request) {
 	s.serveImpactTerminatedAs(w, r, true)
 }
 
-// impactReadGate fronts the 11 terminated impact POSTs. A valid shared
+// impactReadGate fronts the 13 terminated impact POSTs. A valid shared
 // key terminates (next); a request carrying any other credential — a
 // non-key Bearer [REDACTED] a foreign credential class (scoped token,
 // OIDC) or a session-cookie-shaped Cookie — relays explicitly to the

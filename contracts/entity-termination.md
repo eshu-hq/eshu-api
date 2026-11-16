@@ -82,9 +82,10 @@ route may cite this pin as coverage.
   family 403, both shapes, zero core contact), relay-explicit and
   junk-cookie suites, empty-key fail-closed, nil-core 503.
 - Latency: BenchmarkEntityTerminatedRead vs
-  BenchmarkEntityRelayRead, bounded by scripts/measure-w5-latency.sh
-  (1.50 budget) and wired into .github/workflows/read-latency.yml;
-  numbers in docs/w5-latency.md.
+  BenchmarkImpactRelayRead (explicit-relay reference; the entity relay
+  bench retired with the last hold row), bounded by
+  scripts/measure-w5-latency.sh (1.50 budget) and wired into
+  .github/workflows/read-latency.yml; numbers in docs/w5-latency.md.
 - Spec: the 9 routes mount explicitly (all 9 native) and
   stay disclosed-absent until the follow-up spec-port lane
   (api/spec_scope_test.go, openapi/spec_w5_test.go).

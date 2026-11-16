@@ -368,10 +368,10 @@ func (s *Server) routes() *http.ServeMux {
 	// See api/entity_wave.go.
 	s.registerEntityWave(mux)
 	// W5 impact termination (Refs eshu-hq/eshu#9669, satellite
-	// eshu-hq/eshu-api#97): the 11 pinned impact proceed legs terminate
-	// explicitly inside their own wave gate ahead of the generic proxy;
-	// the two code-surface adapter legs ride the explicit relay hold in
-	// the same table. See api/impact_wave.go.
+	// eshu-hq/eshu-api#97): all 13 pinned impact legs terminate
+	// explicitly inside their own wave gate ahead of the generic proxy
+	// (Wave-3 terminated the 2 change-surface adapter legs natively).
+	// See api/impact_wave.go.
 	s.registerImpactWave(mux)
 	// Satellite Wave-4 Drift termination (Refs eshu-hq/eshu#9669,
 	// satellite eshu-hq/eshu-api#117): the 2 pinned drift routes

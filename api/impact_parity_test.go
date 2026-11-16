@@ -18,11 +18,10 @@ import (
 // come back unmodified — for every proceed leg, in both negotiated
 // shapes. The corpus below covers the representative request shapes
 // per leg (service/workload trace bodies, blast-radius, contracts,
-// config-influence, exposure, and the six rest legs), the
-// scoped-empty-grant refusal (a scoped bearer outside the grant relays
-// explicitly and the core refusal packet crosses untouched), and the
-// two adapter holds (they relay explicitly on the relay lane, never
-// the catch-all, per the hold TODO in impact_wave.go).
+// config-influence, exposure, the six rest legs, and the two
+// change-surface legs), and the scoped-empty-grant refusal (a scoped
+// bearer outside the grant relays explicitly and the core refusal
+// packet crosses untouched).
 
 // TestImpactByteParity pins the forward contract: shared-key calls on
 // the proceed legs terminate natively with core bytes untouched, and
@@ -31,9 +30,6 @@ func TestImpactByteParity(t *testing.T) {
 	t.Parallel()
 
 	for _, leg := range impactParityLegs {
-		if impactWaveEntryFor(t, leg.key).Serve != impactServeGated {
-			continue
-		}
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
 			name := leg.target + " " + leg.body + " " + accept
 			t.Run(name, func(t *testing.T) {
@@ -96,9 +92,6 @@ func TestImpactScopedEmptyGrantRelay(t *testing.T) {
 
 	refusal := `{"error":"forbidden","error_detail":"grant does not cover this service","truth":null}`
 	for _, leg := range impactParityLegs {
-		if impactWaveEntryFor(t, leg.key).Serve != impactServeGated {
-			continue
-		}
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
 			name := leg.target + " " + accept
 			t.Run(name, func(t *testing.T) {
@@ -139,23 +132,24 @@ func TestImpactScopedEmptyGrantRelay(t *testing.T) {
 	}
 }
 
-// TestImpactAdapterHoldsStayRelayed pins the two adapter holds: the
-// change-surface legs (the only relay_hold rows) never terminate —
-// even a shared-key call relays explicitly on the relay lane with core
-// bytes untouched, until the TODO-eshu-9669-w5 seam lands. Foreign
-// credential classes keep the pre-lane key-gate posture (dest 401,
-// zero core contact).
-func TestImpactAdapterHoldsStayRelayed(t *testing.T) {
+// TestImpactAdapterTerminatedNatively pins the Wave-3 termination:
+// both change-surface legs (gated rows) terminate natively for a
+// shared-key call on the native lane with core bytes untouched. Every
+// leg read (target resolve + traversal via Neo4j.Run, code-topic and
+// path-symbol reads via the W5 impact pin) executes core-side on the
+// forwarded call, so no new pin is owed: the legs ride the existing
+// 14-method ImpactReadAdmission plus the forward transport.
+func TestImpactAdapterTerminatedNatively(t *testing.T) {
 	t.Parallel()
 
-	holds := []struct {
+	legs := []struct {
 		target string
 		body   string
 	}{
 		{"/api/v0/impact/change-surface", `{"repo_id":"repo_1","relative_paths":["src/a.go"]}`},
 		{"/api/v0/impact/change-surface/investigate", `{"repo_id":"repo_1","topic":"auth refresh"}`},
 	}
-	for _, leg := range holds {
+	for _, leg := range legs {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
 			name := leg.target + " " + accept
 			t.Run(name, func(t *testing.T) {
@@ -181,28 +175,31 @@ func TestImpactAdapterHoldsStayRelayed(t *testing.T) {
 				handler.ServeHTTP(rec, req)
 
 				if rec.Code != http.StatusOK {
-					t.Fatalf("status = %d, want 200 from the relayed core", rec.Code)
+					t.Fatalf("status = %d, want 200 from the native core", rec.Code)
 				}
 				got, _ := io.ReadAll(rec.Result().Body)
 				if string(got) != coreBody {
 					t.Errorf("body = %q, want the untouched core bytes %q", got, coreBody)
 				}
 				snap := tel.snapshot()
-				if snap.dispatches["impact"][viaNative] != nil {
-					t.Errorf("impact dispatches = %v, want no native lane row (legs hold on relay)", snap.dispatches["impact"])
+				if snap.dispatches["impact"][viaRelay] != nil {
+					t.Errorf("impact dispatches = %v, want no relay lane row (legs terminate natively)", snap.dispatches["impact"])
 				}
-				if got := snap.dispatches["impact"][viaRelay][outcomeCoreOK]; got != 1 {
-					t.Errorf("impact relay core_ok = %d, want 1", got)
+				if got := snap.dispatches["impact"][viaNative][outcomeCoreOK]; got != 1 {
+					t.Errorf("impact native core_ok = %d, want 1", got)
 				}
 
 				scoped := httptest.NewRequest(http.MethodPost, leg.target, strings.NewReader(leg.body))
-				scoped.Header.Set("Authorization", "Bearer v2.scoped.token")
+				scoped.Header.Set("Authorization", "Bearer [REDACTED]")
 				scoped.Header.Set("Accept", accept)
 				rec = httptest.NewRecorder()
 				handler.ServeHTTP(rec, scoped)
 
-				if rec.Code != http.StatusUnauthorized {
-					t.Errorf("scoped status = %d, want the standing dest 401 (pre-lane key-gate posture)", rec.Code)
+				if rec.Code != http.StatusOK {
+					t.Fatalf("scoped status = %d, want core's 200 on the explicit relay lane", rec.Code)
+				}
+				if got := tel.snapshot().dispatches["impact"][viaRelay][outcomeCoreOK]; got != 1 {
+					t.Errorf("impact relay core_ok = %d, want 1 (foreign class relays explicitly)", got)
 				}
 			})
 		}

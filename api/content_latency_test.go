@@ -60,12 +60,12 @@ func BenchmarkContentTerminatedRead(b *testing.B) {
 	}
 }
 
-// BenchmarkContentRelayRead measures the generic relay path for the
+// BenchmarkContentRelayRead measures the explicit relay path for the
 // same caller and stub shape: the before leg the lane must not
 // regress. The legs compare different routes by necessity (the wave
 // paths now terminate; the W6 scan lane terminated the last code POST
-// too, so the relay leg rides the still-relayed impact change-surface
-// POST no wave table covers); both do exactly one server-side fetch,
+// too, so the relay leg rides the wave-mounted impact change-surface
+// POST via a foreign bearer (explicit relay); both do exactly one server-side fetch,
 // so the 1.50 bound stays a real pathology check.
 func BenchmarkContentRelayRead(b *testing.B) {
 	_, srv := contentBenchServer(b, `{"results":[]}`)
@@ -75,14 +75,16 @@ func BenchmarkContentRelayRead(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json"))
+			req := contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json")
+			req.Header.Set("Authorization", "Bearer [REDACTED]")
+			handler.ServeHTTP(rec, req)
 		}
 	})
 }
 
 // TestContentRelayLegStaysRelayed proves the relay-leg premise the
-// benchmarks above rest on: POST /api/v0/impact/change-surface is covered by no
-// wave table, so a shared-key call files its dispatch on the relay
+// benchmarks above rest on: a foreign bearer on the wave-mounted
+// POST /api/v0/impact/change-surface relays explicitly on the relay
 // lane — the terminated-vs-relay comparison stays honest.
 func TestContentRelayLegStaysRelayed(t *testing.T) {
 	t.Parallel()
@@ -98,7 +100,9 @@ func TestContentRelayLegStaysRelayed(t *testing.T) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json"))
+	req := contentAuthedPost("/api/v0/impact/change-surface", `{"query":"render"}`, "application/json")
+	req.Header.Set("Authorization", "Bearer [REDACTED]")
+	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 from the stub core", rec.Code)
 	}
