@@ -59,8 +59,9 @@ func entityBenchRequest(leg struct {
 // BenchmarkEntityTerminatedRead measures the terminated path for
 // shared-key entity calls through the full production chain: one leg
 // per wave row through the same wave gate and family authorizer (the
-// relay benchmark below compares the still-relayed change-surface leg
-// against the same single-fetch shape).
+// relay comparators live in BenchmarkImpactRelayRead, which rides the
+// explicit relay lane via foreign-bearer callers on the same
+// single-fetch shape).
 func BenchmarkEntityTerminatedRead(b *testing.B) {
 	_, srv := entityBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -74,40 +75,4 @@ func BenchmarkEntityTerminatedRead(b *testing.B) {
 			}
 		})
 	}
-}
-
-// BenchmarkEntityRelayRead measures the relay path for the same
-// caller shape: the change-surface leg (shared-key relay on the
-// explicit relay stack; Wave-3's leg, still relayed), with wave-mounted
-// native controls on the same single-fetch shape. Each does
-// exactly one server-side fetch, so the 1.50 bound stays a real
-// pathology check.
-func BenchmarkEntityRelayRead(b *testing.B) {
-	_, srv := entityBenchServer(b, `{"data":[]}`)
-	handler := srv.Handler(DefaultV0Sunset)
-
-	b.Run("investigations-native", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/investigations/services/payments"))
-		}
-	})
-	b.Run("get-native-control", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/dependencies"))
-		}
-	})
-	b.Run("post-relay", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-			post.Body = io.NopCloser(strings.NewReader(`{"repo_id":"repo_1"}`))
-			post.ContentLength = int64(len(`{"repo_id":"repo_1"}`))
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, post)
-		}
-	})
 }

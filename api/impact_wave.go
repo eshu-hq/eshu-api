@@ -11,8 +11,9 @@ import (
 // eshu-hq/eshu-api#97). This file owns the frozen wave table:
 // exactly the 13 W5 impact POSTs the versioned impact pin admits (the
 // trace, blast-radius, change-surface, contracts, config-influence,
-// exposure, and rest legs), with the two code-surface adapter legs on
-// explicit relay hold. Behavior lives in impact_terminate.go; proofs
+// exposure, and rest legs), all terminating natively since Wave-3
+// (the change-surface legs' reads sit inside the pin, so no new pin
+// is owed). Behavior lives in impact_terminate.go; proofs
 // in impact_conformance_test.go, impact_parity_test.go, and
 // impact_gate_test.go; spec posture stays disclosed (no openapi port
 // in this lane); the record in contracts/impact-termination.md.
@@ -72,9 +73,9 @@ import (
 // credential-less 401), so no keyless caller gains a new public
 // surface here. There is no public carve-out in this lane.
 
-// impactServeGated terminates natively; impactServeRelayHold rides the
-// explicit relay stack (never the catch-all) until the owed core seam
-// lands.
+// impactServeGated terminates natively. impactServeRelayHold is the
+// retired hold kind: no W5 row uses it since Wave-3 terminated both
+// adapter legs; the constant stays as the serve-kind vocabulary.
 const (
 	impactServeGated     = "gated"
 	impactServeRelayHold = "relay_hold"
@@ -96,15 +97,16 @@ type impactRoute struct {
 }
 
 // impactWave is the frozen W5 impact termination target: exactly the
-// 13 impact POSTs behind the versioned impact pin, v0, 11 terminating
-// natively and 2 (the code-surface adapter legs) on relay hold.
-// TestImpactWaveFrozen pins it entry by entry; a wave change moves the
-// ownership note, the fragment reference, and this mirror together.
+// 13 impact POSTs behind the versioned impact pin, v0, all 13
+// terminating natively since Wave-3 (the change-surface adapter legs
+// ride the pin, so no new pin is owed). TestImpactWaveFrozen pins it
+// entry by entry; a wave change moves the ownership note, the fragment
+// reference, and this mirror together.
 var impactWave = []impactRoute{
 	{Method: "POST", Path: "/api/v0/impact/trace-deployment-chain", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
 	{Method: "POST", Path: "/api/v0/impact/blast-radius", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
-	{Method: "POST", Path: "/api/v0/impact/change-surface", Family: "impact", Serve: impactServeRelayHold, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
-	{Method: "POST", Path: "/api/v0/impact/change-surface/investigate", Family: "impact", Serve: impactServeRelayHold, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
+	{Method: "POST", Path: "/api/v0/impact/change-surface", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
+	{Method: "POST", Path: "/api/v0/impact/change-surface/investigate", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/routes.go"},
 	{Method: "POST", Path: "/api/v0/impact/contracts", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/contract.go"},
 	{Method: "POST", Path: "/api/v0/impact/deployment-config-influence", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/deployment_config_influence.go"},
 	{Method: "POST", Path: "/api/v0/impact/trace-exposure-path", Family: "impact", Serve: impactServeGated, Fragment: "go/internal/query/openapi/paths/impact/exposure.go"},
@@ -117,10 +119,9 @@ var impactWave = []impactRoute{
 }
 
 // registerImpactWave mounts the impact wave ahead of the generic
-// proxy: gated rows terminate on the native lane for a valid shared
-// key and relay explicitly for foreign credential classes; the two
-// relay_hold adapter rows ride the explicit relay stack on the relay
-// lane for every caller shape (pinned by TestImpactWaveAheadOfRelay),
+// proxy: every row terminates on the native lane for a valid shared
+// key and relays explicitly for foreign credential classes (Wave-3
+// removed the relay-hold branch; see contracts/impact-termination.md),
 // with the standing 401 for credential-less callers. Each
 // trailing-slash spelling stays on the wave route for the same
 // never-split reason. Lives here (not in routes()) so the shared
@@ -128,20 +129,6 @@ var impactWave = []impactRoute{
 func (s *Server) registerImpactWave(mux *http.ServeMux) {
 	for _, entry := range impactWave {
 		pattern := entry.Method + " " + entry.Path
-		if entry.Serve == impactServeRelayHold {
-			// TODO-eshu-9669-w5: terminate POST
-			// /api/v0/impact/change-surface and POST
-			// /api/v0/impact/change-surface/investigate natively once
-			// core provides a satellite-consumable seam for
-			// ChangeSurfaceCodeBackend.FetchCodeSurface; until then
-			// these legs relay explicitly (never the catch-all) so
-			// the holds stay observable in telemetry and the spec
-			// absences stay disclosed.
-			relayed := s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch)))
-			mux.Handle(pattern, relayed)
-			mux.Handle(pattern+"/", relayed)
-			continue
-		}
 		gated := s.instrumented(viaNative, s.impactReadGate(http.HandlerFunc(s.serveImpactTerminated)))
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)

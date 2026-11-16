@@ -15,11 +15,10 @@
 # POST + one story GET), BenchmarkImpactTerminatedRead (trace POST),
 # BenchmarkStoryTerminatedRead (story GET),
 # BenchmarkPacketTerminatedRead (packet GET) vs relay legs
-# (BenchmarkEntityRelayRead post-relay,
-# BenchmarkImpactRelayRead holds + post-relay — still-relayed
-# routes on the explicit relay stack or the generic proxy; no entity
-# GET remains on relay since Wave-2, so the entity GET comparators
-# share the post-relay reference on the same single-fetch shape),
+# (BenchmarkImpactRelayRead holds + post-relay, all riding the
+# explicit relay lane via foreign-bearer callers — no wave leg relays
+# for shared-key callers anymore, so the relay reference is the
+# explicit-relay shape on the same single-fetch shape),
 # -count=5, take the median ns/op. FAIL when a terminated leg exceeds
 # its same-method relay leg by more than 50% (generous: every leg does
 # one server-side fetch, so any real pathology — a double fetch, a
@@ -64,14 +63,14 @@ entity_get="$(bench 'BenchmarkEntityTerminatedRead/workloads-wl_1-story' | media
 impact_post="$(bench 'BenchmarkImpactTerminatedRead/trace-deployment-chain' | median)"
 story_get="$(bench 'BenchmarkStoryTerminatedRead/story-get' | median)"
 packet_get="$(bench 'BenchmarkPacketTerminatedRead/packet-get' | median)"
-relay_hold_get="$(bench 'BenchmarkEntityRelayRead/post-relay' | median)"
-relay_get="$(bench 'BenchmarkEntityRelayRead/post-relay' | median)"
-relay_post="$(bench 'BenchmarkEntityRelayRead/post-relay' | median)"
+relay_explicit_get="$(bench 'BenchmarkImpactRelayRead/hold-change-surface' | median)"
+relay_get="$(bench 'BenchmarkImpactRelayRead/hold-change-surface-investigate' | median)"
+relay_post="$(bench 'BenchmarkImpactRelayRead/post-relay' | median)"
 impact_hold_surface="$(bench 'BenchmarkImpactRelayRead/hold-change-surface' | median)"
 impact_hold_investigate="$(bench 'BenchmarkImpactRelayRead/hold-change-surface-investigate' | median)"
 
 check_leg entity-post "$entity_post" "$relay_post"
-check_leg entity-get "$entity_get" "$relay_hold_get"
+check_leg entity-get "$entity_get" "$relay_explicit_get"
 check_leg impact-post "$impact_post" "$relay_post"
 check_leg story-get "$story_get" "$relay_get"
 check_leg packet-get "$packet_get" "$relay_get"

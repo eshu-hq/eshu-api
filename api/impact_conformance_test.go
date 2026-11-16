@@ -21,25 +21,20 @@ import (
 // crosses the generic byte-relay, so the ahead-of-relay assertions
 // fail first.
 
-// TestImpactWaveFrozen pins the exact surface the satellite terminates
-// plus the two it holds: the 11 proceed legs behind ImpactReadAdmission
-// v0 (with the explicit Entity dual-pin cite on the two trace legs)
-// plus the two code-surface adapter legs on explicit relay hold. The
-// holds keep their standing until core provides satellite-consumable
-// adapter seams (TODO-eshu-9669-w5: terminate POST
-// /api/v0/impact/change-surface and POST
-// /api/v0/impact/change-surface/investigate once the core seam for
-// ChangeSurfaceCodeBackend.FetchCodeSurface lands; until then the legs
-// relay explicitly and the relay pins in impact_parity_test.go carry
-// them). A wave change moves the ownership note, the fragment
-// reference, and this mirror together.
+// TestImpactWaveFrozen pins the exact surface the satellite terminates:
+// all 13 impact legs behind ImpactReadAdmission v0 (with the explicit
+// Entity dual-pin cite on the two trace legs), Wave-3 having terminated
+// the two change-surface legs natively on the forward transport (every
+// leg read sits inside the pin's 14 methods, so no new pin is owed).
+// A wave change moves the ownership note, the fragment reference, and
+// this mirror together.
 func TestImpactWaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
 		"POST /api/v0/impact/blast-radius impact gated go/internal/query/openapi/paths/impact/routes.go",
-		"POST /api/v0/impact/change-surface impact relay_hold go/internal/query/openapi/paths/impact/routes.go",
-		"POST /api/v0/impact/change-surface/investigate impact relay_hold go/internal/query/openapi/paths/impact/routes.go",
+		"POST /api/v0/impact/change-surface impact gated go/internal/query/openapi/paths/impact/routes.go",
+		"POST /api/v0/impact/change-surface/investigate impact gated go/internal/query/openapi/paths/impact/routes.go",
 		"POST /api/v0/impact/contracts impact gated go/internal/query/openapi/paths/impact/contract.go",
 		"POST /api/v0/impact/deployment-config-influence impact gated go/internal/query/openapi/paths/impact/deployment_config_influence.go",
 		"POST /api/v0/impact/developer-change-plan impact gated go/internal/query/openapi/paths/impact/rest.go",
@@ -95,11 +90,9 @@ var impactParityLegs = []struct {
 
 // TestImpactWaveAheadOfRelay pins that the wave proceed legs are
 // explicit registrations ahead of the generic proxy: a shared-key
-// call must file its dispatch on the native lane (viaNative). The two
-// relay_hold adapter legs assert the opposite: they file on the relay
-// lane explicitly (never the catch-all), per the hold TODO above.
-// Until the lane lands, the proceed calls cross the generic relay and
-// this test is RED.
+// call must file its dispatch on the native lane (viaNative) for every
+// wave row. Until the lane lands, the proceed calls cross the generic
+// relay and this test is RED.
 func TestImpactWaveAheadOfRelay(t *testing.T) {
 	t.Parallel()
 

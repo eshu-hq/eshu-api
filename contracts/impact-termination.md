@@ -1,8 +1,9 @@
 # Impact termination (W5 satellite record)
 
 Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97. This lane
-terminates the 11 W5 impact proceed legs natively ahead of the generic
-relay and holds the two code-surface adapter legs on explicit relay.
+terminates all 13 W5 impact legs natively ahead of the generic
+relay (Wave-3 terminated the two change-surface adapter legs: every
+leg read sits inside the 14-method pin, so no new pin is owed).
 
 ## Pin
 
@@ -16,7 +17,7 @@ byte-identical at core `76240fda9f`) and the wire-shapes excerpt
 core-side frozen method-set test, satisfiability witness, seeded
 re-signed rejection, and production-store mirror.
 
-## Terminated (11)
+## Terminated (13)
 
 | Route | Family | TraceContext dual-pin |
 |---|---|---|
@@ -31,6 +32,8 @@ re-signed rejection, and production-store mirror.
 | `POST /api/v0/impact/resource-investigation` | impact | no |
 | `POST /api/v0/impact/trace-resource-to-code` | impact | no |
 | `POST /api/v0/impact/explain-dependency-path` | impact | no |
+| `POST /api/v0/impact/change-surface` | impact | no |
+| `POST /api/v0/impact/change-surface/investigate` | impact | no |
 
 The two trace legs' TraceContext enrichment rides the Entity pin by
 explicit dual-pin cite (recorded in both pins); this lane forwards the
@@ -42,21 +45,20 @@ identity; the only dest-synthesized errors are the gate 401, the
 future-resolver family 403, and the permanent local 503 (never
 Retry-After).
 
-## Held on relay (2)
+## Terminated in Wave-3 (was: held on relay)
 
-| Route | Standing | Owed |
+| Route | Standing | Owed item (met) |
 |---|---|---|
-| `POST /api/v0/impact/change-surface` | explicit relay stack (never the catch-all), same key-gate posture as the pre-lane generic relay | TODO-eshu-9669-w5: terminate natively once core provides a satellite-consumable seam for `ChangeSurfaceCodeBackend.FetchCodeSurface` |
-| `POST /api/v0/impact/change-surface/investigate` | explicit relay stack (never the catch-all) | same TODO as above |
+| `POST /api/v0/impact/change-surface` | native (shared-key gate, forward transport) | none owed: target resolve + traversal run through `h.Neo4j.Run`, covered by the pin's `Run`/`RunSingle` |
+| `POST /api/v0/impact/change-surface/investigate` | native (shared-key gate, forward transport) | none owed: code-surface reads run through `InvestigateCodeTopic` + `ListRepoEntitiesByPaths`, both frozen in the pin; the FetchCodeSurface seam executes core-side on the forwarded call |
 
-The holds keep their standing because the code-surface legs run
-through the core logic adapter seam (FetchCodeSurface), not through
-reads the pin could freeze: the topic search the code-surface leg
-exercises IS frozen in the pin (InvestigateCodeTopic), but the seam
-itself is core logic. Pinning: TestImpactWaveFrozen (relay_hold rows),
-TestImpactWaveAheadOfRelay (relay lane filed explicitly), and
-TestImpactAdapterHoldsStayRelayed (shared-key relay byte-identical;
-foreign classes keep the key-gate 401; nil-core 503 on the relay lane).
+The holds needed no new seam: the adapter seam (`FetchCodeSurface`) is
+core-side handler wiring, and the satellite never implements core
+seams — it forwards the call and core executes it. Pinning:
+TestImpactWaveFrozen (all 13 rows gated),
+TestImpactWaveAheadOfRelay (native lane filed explicitly), and
+TestImpactAdapterTerminatedNatively (shared-key native byte-identical;
+foreign classes relay explicitly; nil-core 503 on the native lane).
 
 ## Explicitly OUT
 
@@ -86,6 +88,5 @@ lane.
 ## Rollback
 
 Remove the `s.registerImpactWave(mux)` call in routes() (or this
-lane's files): the 11 terminated POSTs return to the generic relay
-behind RequireAuth and the holds keep their explicit relay. No data
-migrates and no other family moves.
+lane's files): all 13 POSTs return to the generic relay
+behind RequireAuth. No data migrates and no other family moves.
