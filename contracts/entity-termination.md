@@ -1,22 +1,22 @@
 # Entity termination (W5 satellite record)
 
 Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97. This lane
-terminates the 7 W5 entity proceed legs natively ahead of the generic
-relay and holds 2 legs on explicit relay: the context fallback leg
-(owed a satellite-consumable ContentRelationshipBuilder satisfier)
-and the investigations service leg (owed a pin extension covering
-ListRepoEntitiesByTypes, RepositoryReadModelSummary, and
-SearchFileReferenceAnyRepo).
+terminates all 9 W5 entity legs natively ahead of the generic
+relay. Wave-2 terminated the last 2: the context fallback leg (owed
+satisfier landed core-side as `entity/content/fallback.Builder`,
+#10745 + #10779) and the investigations service leg (owed pin
+extension landed in the 27->30 pin, #10747).
 
 ## Pin
 
-`EntityReadAdmission v0` (extended Mint A, 27 re-declared methods),
+`EntityReadAdmission v0` (extended Mint A, 30 re-declared methods),
 recorded satellite-side in contracts/entity-read-admission.md plus the
 vendored upstream copies (contracts/upstream/entity_read_admission.go,
 contracts/upstream/entity_read_admission_contract_test.go, byte-identical
-at core `76240fda9f`) and the wire-shapes excerpt
-(contracts/upstream/entity-read-wire-shapes.txt). Enforcement:
-`scripts/check-parity.sh` (`SRC_SHA_W5ENTITYIMPACT` block) plus the
+at core `9bf29e53`) and the wire-shapes excerpt
+(contracts/upstream/entity-read-wire-shapes.txt, rebuilt from the new
+pin). Enforcement:
+`scripts/check-parity.sh` (`SRC_SHA_W5ENTITY30` block) plus the
 core-side frozen method-set test, satisfiability witness, seeded
 re-signed rejection, and production-store mirror.
 
@@ -45,29 +45,20 @@ the gate 401, the future-resolver family 403
 ("all-scopes operator authorization is required"), and the permanent
 local 503 when no core origin is configured (never Retry-After).
 
-## Held on relay (2)
+## Terminated in Wave-2 (was: held on relay)
 
-| Route | Standing | Owed |
+| Route | Standing | Owed item (met) |
 |---|---|---|
-| `GET /api/v0/entities/{entity_id}/context` | explicit relay stack (never the catch-all), same key-gate posture as the pre-lane generic relay | TODO-eshu-9669-w5: terminate natively once core provides a satellite-consumable satisfier for `ContentRelationshipBuilder.BuildContentRelationships` |
-| `GET /api/v0/investigations/services/{service_name}` | explicit relay stack (never the catch-all), same key-gate posture as the pre-lane generic relay | TODO-eshu-9669-w5: terminate natively once core extends `EntityReadAdmission` with `ListRepoEntitiesByTypes`, `RepositoryReadModelSummary`, and `SearchFileReferenceAnyRepo` |
+| `GET /api/v0/entities/{entity_id}/context` | native (shared-key gate, forward transport) | satisfier `entity/content/fallback.Builder` merged core-side (#10745 + #10779); the pin freezes its two exercised reads |
+| `GET /api/v0/investigations/services/{service_name}` | native (shared-key gate, forward transport) | pin extension 27->30 merged core-side (#10747): `ListRepoEntitiesByTypes`, `RepositoryReadModelSummary`, `SearchFileReferenceAnyRepo` |
 
-The hold keeps its standing because the only production satisfier for
-the content-fallback builder is root's ContentIndexRelationshipBuilder
-— a stateless adapter over root's unexported per-language extraction
-closure with no satellite-consumable constructor — while the pin
-freezes only its two exercised reads; the investigations hold keeps
-its standing because three of its reads
-(`ListRepoEntitiesByTypes`, `RepositoryReadModelSummary`,
-`SearchFileReferenceAnyRepo`) fall outside the frozen 27-method pin
-and would change answers if forwarded through the narrow contract.
-Pinning: TestEntityWaveFrozen (relay_hold rows),
-TestEntityWaveAheadOfRelay (relay lane filed explicitly),
-TestEntityContextHoldStaysRelayed and
-TestEntityInvestigationsHoldStaysRelayed (shared-key relay,
-byte-identical), TestEntityScopedHoldKeepsKeyGate (foreign classes
-keep the key-gate 401), and the nil-core 503 leg in
-TestEntityTerminatedAs_NilCore503.
+Pinning: TestEntityWaveFrozen (all 9 rows gated),
+TestEntityWaveAheadOfRelay (native lane filed explicitly),
+TestEntityContextTerminatedNatively and
+TestEntityInvestigationsTerminatedNatively (shared-key native,
+byte-identical), TestEntityContextForeignBearerRelaysExplicitly
+(foreign classes relay explicitly, never the catch-all), and the
+nil-core 503 leg in TestEntityTerminatedAs_NilCore503.
 
 ## Dual-pin cite
 
@@ -94,7 +85,7 @@ route may cite this pin as coverage.
   BenchmarkEntityRelayRead, bounded by scripts/measure-w5-latency.sh
   (1.50 budget) and wired into .github/workflows/read-latency.yml;
   numbers in docs/w5-latency.md.
-- Spec: the 9 routes mount explicitly (7 native + 2 relay holds) and
+- Spec: the 9 routes mount explicitly (all 9 native) and
   stay disclosed-absent until the follow-up spec-port lane
   (api/spec_scope_test.go, openapi/spec_w5_test.go).
 
@@ -109,6 +100,5 @@ serialization, no worker or batch reduction anywhere in this lane.
 ## Rollback
 
 Remove the `s.registerEntityWave(mux)` call in routes() (or this
-lane's files): the 8 terminated routes return to the generic relay
-behind RequireAuth and the hold keeps its explicit relay. No data
-migrates and no other family moves.
+lane's files): all 9 routes return to the generic relay
+behind RequireAuth. No data migrates and no other family moves.

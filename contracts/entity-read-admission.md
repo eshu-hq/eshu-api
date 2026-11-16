@@ -1,7 +1,9 @@
 # EntityReadAdmission v0 (core pin record)
 
 Refs eshu-hq/eshu#9669. W5 Mint A extended core pin, per the supplemental
-arbiter ruling on eshu-hq/eshu-api#97. Minted core-side at `76240fda9f`
+arbiter ruling on eshu-hq/eshu-api#97, plus the C5 27->30 extension
+(merge of `eshu-hq/eshu#10747`, recorded here at core `9bf29e53` with
+zero drift since that merge). Minted core-side at `76240fda9f`
 (merge of `eshu-hq/eshu#10705`); the satellite records this pin here. A
 satellite PR consuming an unminted pin is invalid. The mint-diff CONFIRM
 precedes satellite termination of the entity legs.
@@ -11,10 +13,11 @@ precedes satellite termination of the entity legs.
 Version: `EntityReadAdmissionContractVersion = "v0"`
 (go/internal/query/entity/read_admission.go).
 
-Ceiling 27 re-declared (never embedded) methods — the two bounded graph
-traversals, the seventeen ContentStore reads the family closure proves
+Ceiling 30 re-declared (never embedded) methods — the two bounded graph
+traversals, the nineteen ContentStore reads the family closure proves
 exercised, the three reducer-store reads, the type-asserted
-EntityNameSearcher facet, and the three narrow read-model facets — sealed:
+EntityNameSearcher facet, the content-reference search facet, and the
+four narrow read-model facets — sealed:
 
 | # | Method | Mirrors | Serves (per pin closure) |
 |---|---|---|---|
@@ -45,6 +48,9 @@ EntityNameSearcher facet, and the three narrow read-model facets — sealed:
 | 25 | `ServiceStoryTargetSupportEvidence` | narrow read-model facet | service-story operation |
 | 26 | `DocumentationFindings` | narrow read-model facet | service-story operation |
 | 27 | `RepositoryDeploymentEvidence` | narrow read-model facet | deployment-evidence fast path |
+| 28 | `SearchFileReferenceAnyRepo` | `ContentStore` (indexed scan, wider bounds) | consumer-evidence search; investigations service leg |
+| 29 | `ListRepoEntitiesByTypes` | `ContentStore` | repository infrastructure panel; investigations service leg |
+| 30 | `RepositoryReadModelSummary` | narrow read-model facet | read-model identity fallback; investigations service leg |
 
 There is deliberately no constructor on this pin: the entity seam spans
 the guarded Postgres content reader, the concurrent-safe graph reader,
@@ -56,7 +62,7 @@ only the read shape the handlers may call through.
 Enforcement (all in go/internal/query/entity, plus the query-level mirror):
 
 - `read_admission_contract_test.go` — frozen method-set test plus
-  version pin (`TestEntityReadAdmissionContractIsVersioned` — exactly 27
+  version pin (`TestEntityReadAdmissionContractIsVersioned` — exactly 30
   methods), the satisfiability witness, the seeded re-signed rejection,
   and the widening-is-caught proof.
 - `read_admission_wire_shapes_test.go` — the pin-satisfying canned store
@@ -100,14 +106,14 @@ time, not in this pin.
 ## Explicitly OUT (not widened by this pin)
 
 - `ContentRelationshipBuilder.BuildContentRelationships` (the GET
-  entities/{entity_id}/context fallback): the only production satisfier
-  is root's ContentIndexRelationshipBuilder, a stateless adapter over
-  root's unexported per-language extraction closure with no
-  satellite-consumable constructor. The METHOD stays out — its two
+  entities/{entity_id}/context fallback): the production satisfier is
+  now the satellite-consumable `entity/content/fallback.Builder` (merged
+  core-side via #10745 + #10779). The METHOD stays out by construction —
+  do not freeze a builder method on this read pin — while its two
   exercised reads (SearchEntitiesReferencingComponent,
   ListRepoEntitiesByType) are frozen here, so a satisfier built to this
-  pin serves the fallback leg's reads. That fallback leg terminates only
-  when core provides a satisfier, and it keeps its standing until then.
+  pin serves the fallback leg's reads. Wave-2 terminates the leg on
+  this pin plus the merged C2 leaf executing core-side.
 - The optional image-candidate explainer facet
   (ExplainContainerImageCandidate): StoryImageCandidateMissingExplanation
   degrades to a generic detail when the store does not implement it.

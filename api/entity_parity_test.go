@@ -17,12 +17,10 @@ import (
 // headers, credential, and correlation ID cross intact and core bytes
 // come back unmodified — for every proceed leg, in both negotiated
 // shapes. The corpus below covers the representative request shapes
-// per leg (resolve POST bodies, context/story/edge GET targets), the
-// scoped-empty-grant refusal (a scoped bearer outside the grant relays
-// explicitly and the core refusal packet crosses untouched), and the
-// relay holds (the context fallback leg and the investigations service
-// leg relay explicitly on the relay lane, never the catch-all, per the
-// hold TODOs in entity_wave.go).
+// per leg (resolve POST bodies, context/story/edge GET targets,
+// investigations service target), and the scoped-empty-grant refusal
+// (a scoped bearer outside the grant relays explicitly and the core
+// refusal packet crosses untouched).
 
 // entityParityLegs drives one representative request per wave row.
 var entityParityLegs = []struct {
@@ -34,6 +32,7 @@ var entityParityLegs = []struct {
 	{"POST /api/v0/entities/resolve", http.MethodPost, "/api/v0/entities/resolve", `{"name":"handleWire","entity_type":"Function"}`},
 	{"POST /api/v0/entities/resolve", http.MethodPost, "/api/v0/entities/resolve", `{"name":"handleWire","entity_type":"Function","repo_id":"repo_1"}`},
 	{"GET /api/v0/entities/{entity_id}/context", http.MethodGet, "/api/v0/entities/ent_1/context", ""},
+	{"GET /api/v0/investigations/services/{service_name}", http.MethodGet, "/api/v0/investigations/services/payments", ""},
 	{"GET /api/v0/workloads/{workload_id}/context", http.MethodGet, "/api/v0/workloads/wl_1/context", ""},
 	{"GET /api/v0/workloads/{workload_id}/story", http.MethodGet, "/api/v0/workloads/wl_1/story", ""},
 	{"GET /api/v0/services/{service_name}/context", http.MethodGet, "/api/v0/services/payments/context", ""},
@@ -119,19 +118,12 @@ func TestEntityByteParity(t *testing.T) {
 // the parity corpus: a scoped bearer outside the grant never
 // terminates — it relays explicitly on the relay lane and the core
 // refusal packet (scoped 404) crosses byte-identical, in both
-// negotiated shapes. The hold leg asserts the same relay posture.
+// negotiated shapes, for every wave leg.
 func TestEntityScopedEmptyGrantRelay(t *testing.T) {
 	t.Parallel()
 
 	refusal := `{"error":"not_found","error_detail":"service outside the caller grant","truth":null}`
 	for _, leg := range entityParityLegs {
-		if serveOf(leg.key) != entityServeGated {
-			// The relay hold keeps the pre-lane posture (D4 story-leg
-			// precedent): a foreign credential class meets the key
-			// gate — dest 401, zero core contact — instead of an
-			// explicit relay. TestEntityScopedHoldKeepsKeyGate pins it.
-			continue
-		}
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
 			name := leg.method + " " + leg.target + " " + accept
 			t.Run(name, func(t *testing.T) {
@@ -191,47 +183,59 @@ func waveEntryFor(t *testing.T, key string) entityRoute {
 	return entityRoute{}
 }
 
-// TestEntityScopedHoldKeepsKeyGate pins the hold's pre-lane posture
+// TestEntityContextForeignBearerRelaysExplicitly pins the gated posture
 // for foreign credential classes (D4 story-leg precedent): a scoped
-// bearer on the relay hold meets the key gate — dest 401, zero core
-// contact — instead of an explicit relay.
-func TestEntityScopedHoldKeepsKeyGate(t *testing.T) {
+// Foreign bearer on the entity context leg meets the gate, not the
+// key-gate 401: the leg is gated, so an unresolvable credential class
+// relays explicitly on the relay lane with core bytes untouched.
+func TestEntityContextForeignBearerRelaysExplicitly(t *testing.T) {
 	t.Parallel()
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
 		t.Run(accept, func(t *testing.T) {
 			t.Parallel()
 
-			core := &stubCore{status: http.StatusOK, body: `{"entity_id":"ent_1"}`}
+			coreBody := `{"entity_id":"ent_1","context":null,"truth":null}`
+			core := &stubCore{status: http.StatusOK, body: coreBody}
 			mux := http.NewServeMux()
 			mux.Handle("/", core.handler())
 			upstream := httptest.NewServer(mux)
 			defer upstream.Close()
 
-			srv := NewServer(upstream.URL, skeletonTestKey)
+			tel := NewTelemetry(nil)
+			srv := NewServer(upstream.URL, skeletonTestKey).WithTelemetry(tel)
 			handler := srv.Handler(DefaultV0Sunset)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/v0/entities/ent_1/context", nil)
-			req.Header.Set("Authorization", "Bearer v2.scoped.token")
+			req.Header.Set("Authorization", "Bearer [REDACTED]")
 			req.Header.Set("Accept", accept)
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
 
-			if rec.Code != http.StatusUnauthorized {
-				t.Errorf("status = %d, want the standing dest 401 (pre-lane key-gate posture)", rec.Code)
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want core's 200 on the explicit relay lane", rec.Code)
 			}
-			if core.hits != 0 {
-				t.Errorf("upstream hits = %d, want 0 (foreign classes never reach core on the hold)", core.hits)
+			got, _ := io.ReadAll(rec.Result().Body)
+			if string(got) != coreBody {
+				t.Errorf("body = %q, want the untouched core bytes %q", got, coreBody)
+			}
+			if core.hits != 1 {
+				t.Errorf("upstream hits = %d, want 1 (explicit relay reaches core)", core.hits)
+			}
+			snap := tel.snapshot()
+			if got := snap.dispatches["entities"][viaRelay][outcomeCoreOK]; got != 1 {
+				t.Errorf("entities relay core_ok = %d, want 1", got)
 			}
 		})
 	}
 }
 
-// TestEntityContextHoldStaysRelayed pins the relay hold: the entity
-// context fallback leg (a relay_hold row) never terminates —
-// even a shared-key call relays explicitly on the relay lane with core
-// bytes untouched, until the TODO-eshu-9669-w5 satisfier lands.
-func TestEntityContextHoldStaysRelayed(t *testing.T) {
+// TestEntityContextTerminatedNatively pins the Wave-2 termination:
+// the entity context fallback leg (a gated row) terminates natively
+// for a shared-key call on the native lane with core bytes untouched,
+// now that the C2 leaf satisfier is merged core-side (#10745 +
+// #10779).
+func TestEntityContextTerminatedNatively(t *testing.T) {
 	t.Parallel()
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
@@ -255,30 +259,29 @@ func TestEntityContextHoldStaysRelayed(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want 200 from the relayed core", rec.Code)
+				t.Fatalf("status = %d, want 200 from the native core", rec.Code)
 			}
 			got, _ := io.ReadAll(rec.Result().Body)
 			if string(got) != coreBody {
 				t.Errorf("body = %q, want the untouched core bytes %q", got, coreBody)
 			}
 			snap := tel.snapshot()
-			if snap.dispatches["entities"][viaNative] != nil {
-				t.Errorf("entities dispatches = %v, want no native lane row (leg holds on relay)", snap.dispatches["entities"])
+			if snap.dispatches["entities"][viaRelay] != nil {
+				t.Errorf("entities dispatches = %v, want no relay lane row (leg terminates natively)", snap.dispatches["entities"])
 			}
-			if got := snap.dispatches["entities"][viaRelay][outcomeCoreOK]; got != 1 {
-				t.Errorf("entities relay core_ok = %d, want 1", got)
+			if got := snap.dispatches["entities"][viaNative][outcomeCoreOK]; got != 1 {
+				t.Errorf("entities native core_ok = %d, want 1", got)
 			}
 		})
 	}
 }
 
-// TestEntityInvestigationsHoldStaysRelayed pins the relay hold: the
-// investigations service leg (a relay_hold row) never terminates —
-// even a shared-key call relays explicitly on the relay lane with core
-// bytes untouched, until the owed EntityReadAdmission extension lands
-// (TODO-eshu-9669-w5: ListRepoEntitiesByTypes,
-// RepositoryReadModelSummary, SearchFileReferenceAnyRepo).
-func TestEntityInvestigationsHoldStaysRelayed(t *testing.T) {
+// TestEntityInvestigationsTerminatedNatively pins the Wave-2
+// termination: the investigations service leg (a gated row)
+// terminates natively for a shared-key call on the native lane with
+// core bytes untouched, now that the W5 entity pin covers the three
+// investigations reads (27->30 via #10747).
+func TestEntityInvestigationsTerminatedNatively(t *testing.T) {
 	t.Parallel()
 
 	for _, accept := range []string{EnvelopeMIME, "application/json"} {
@@ -302,18 +305,18 @@ func TestEntityInvestigationsHoldStaysRelayed(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want 200 from the relayed core", rec.Code)
+				t.Fatalf("status = %d, want 200 from the native core", rec.Code)
 			}
 			got, _ := io.ReadAll(rec.Result().Body)
 			if string(got) != coreBody {
 				t.Errorf("body = %q, want the untouched core bytes %q", got, coreBody)
 			}
 			snap := tel.snapshot()
-			if snap.dispatches["service_intel"][viaNative] != nil {
-				t.Errorf("service_intel dispatches = %v, want no native lane row (leg holds on relay)", snap.dispatches["service_intel"])
+			if snap.dispatches["service_intel"][viaRelay] != nil {
+				t.Errorf("service_intel dispatches = %v, want no relay lane row (leg terminates natively)", snap.dispatches["service_intel"])
 			}
-			if got := snap.dispatches["service_intel"][viaRelay][outcomeCoreOK]; got != 1 {
-				t.Errorf("service_intel relay core_ok = %d, want 1", got)
+			if got := snap.dispatches["service_intel"][viaNative][outcomeCoreOK]; got != 1 {
+				t.Errorf("service_intel native core_ok = %d, want 1", got)
 			}
 		})
 	}
