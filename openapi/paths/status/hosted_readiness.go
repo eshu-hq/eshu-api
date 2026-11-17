@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package status
+
+// HostedReadiness is the OpenAPI path fragment documenting the
+// `/api/v0/status/hosted-readiness` route. openapi.Spec concatenates it into
+// the published document; keep it in lockstep with the handlers and
+// docs/public/reference/http-api.md.
+const HostedReadiness = `
+    "/api/v0/status/hosted-readiness": {
+      "get": {
+        "tags": ["status"],
+        "summary": "Get hosted operator readiness",
+        "description": "Returns a fail-closed hosted readiness report across status snapshot loading, queue drain, collector completion, shared projection backlog, API/MCP query readback, and leftover name-only Workload nodes: the check workload_identity_leftovers fails with failure class legacy_workload_nodes while pre-repository-scoped Workload nodes (id workload:<name>) with a scoped twin remain, fails with failure class legacy_workload_detection_unavailable when its detection read errors, and is unknown (no failure class) on a graph backend other than Neo4j, where the detection is not validated and does not run, or when its examined cap was reached with none found. A 503 with Retry-After means a transient condition that is safe to retry: the status snapshot read hit a stale or timed-out PostgreSQL reader, including a snapshot read that outran its bounded budget; a 503 without Retry-After means a configuration state: the status reader is not configured on this API instance. No 5xx body carries backend error text. A reader-verdict 503 error envelope names capability operations.hosted_readiness_status. A 500 answers the shared failure envelope with code internal_error under the same capability and writes one ERROR log line with the wrapped error and the request id.",
+        "operationId": "getHostedReadiness",
+        "x-scoped-token-support": true,
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "string", "enum": ["json", "text"], "default": "json"},
+            "description": "Return a plain-text human summary when set to text."
+          }
+        ],
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "200": {
+            "description": "Hosted readiness report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {"type": "string"},
+                    "state": {"type": "string", "enum": ["ready", "not_ready"]},
+                    "ready": {"type": "boolean"},
+                    "summary": {"type": "string"},
+                    "generated_at": {"type": "string", "format": "date-time"},
+                    "failure_classes": {"type": "array", "items": {"type": "string"}},
+                    "repository_count": {"type": "integer"},
+                    "queue": {"type": "object"},
+                    "active_work_source": {"$ref": "#/components/schemas/ActiveWorkSource"},
+                    "coordinator_source": {"$ref": "#/components/schemas/CoordinatorSource"},
+                    "coordinator": {"type": "object"},
+                    "checks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {"type": "string"},
+                          "state": {"type": "string", "enum": ["pass", "fail", "unknown"]},
+                          "failure_class": {"type": "string"},
+                          "detail": {"type": "string"},
+                          "next_diagnostic": {"type": "string"}
+                        }
+                      }
+                    },
+                    "diagnostic_paths": {"type": "array", "items": {"type": "object"}}
+                  }
+                }
+              },
+              "text/plain": {
+                "schema": {"type": "string"}
+              }
+            }
+          },
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"}
+        }
+      }
+    },
+`

@@ -7,41 +7,35 @@ import (
 	"testing"
 )
 
-// Code-search relay-leg termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#113). The two code
-// search POSTs mount natively in the W4 wave lane, but their Decision
-// 5(c) fragments (go/internal/query/openapi/paths/code/routes.go and
-// go/internal/query/openapi/paths/code/symbols.go) stay core-side for
-// this lane: each fragment carries the lane entry first-in-file inside
-// a multi-key block, and the entries reference schemas
-// (CodeSearchResponse, SymbolSearchResponse, RankCursorConflict) the
-// served document does not carry yet — porting one entry without its
-// referenced blocks, or re-shaping a satellite subset across two
-// fragments, would break the verbatim-port rule
-// scripts/check-parity.sh gates. The routes are therefore disclosed
-// spec absences (see contracts/code-search-termination.md), the same
-// posture the gap-04 Compare and W6a Code-flow lanes record for their
-// core-side fragments. A follow-up spec-port lane claims the keys when
-// it ports both entries entry-shaped with their referenced schemas;
-// until then no served key duplicates a relayed route, and no mounted
-// route promises what the document does not carry.
+// Code-search full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#113, W4). The two code search POSTs mount natively in the W4 wave lane and their Decision 5(c) fragments (code routes.go and symbols.go entries) now ride the served document with their referenced schemas; the D13 row-7 full-surface lane claims the keys the relay-leg lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesCodeSearchWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/code/search":         {"post": "searchCode"},
+		"/api/v0/code/symbols/search": {"post": "findSymbolDefinitions"},
+	})
 
-// TestSpec_CodeSearchStaysDisclosedAbsent pins the code search spec
-// posture: the served document carries neither search key while the
-// fragments stay core-side. Lifting either absence (porting the
-// entries) belongs to the follow-up spec-port lane, not to the
-// relay-leg termination.
-func TestSpec_CodeSearchStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/code/search",
 		"/api/v0/code/symbols/search",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

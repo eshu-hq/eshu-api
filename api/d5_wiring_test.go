@@ -254,11 +254,8 @@ func TestD5Wiring_ServedGETShapes(t *testing.T) {
 	}
 }
 
-// TestD5Wiring_ExpectedAbsentStaysAbsent pins the disclosed drift:
-// the mux-level GETs never gain a spec path key. (The story route
-// carries no key either, but it is no longer a D4 wave GET — it
-// terminates in the W5 story lane, and the story parity corpus plus
-// openapi/spec_w5_test.go carry that leg.)
+// TestD5Wiring_ExpectedAbsentStaysAbsent pins the by-design drift:
+// the mux-level GETs never gain a spec path key.
 func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 	t.Parallel()
 
@@ -294,8 +291,11 @@ func TestD5Wiring_ExpectedAbsentStaysAbsent(t *testing.T) {
 // the pinned core entries carry no operationId, so the operationId
 // probe above cannot watch them), and the Wave-1 Freshness lane claims
 // its 3 served GET keys in its owning table (freshnessWaveSpecKeys,
-// watched by the Wave-1 conformance/openapi/spec suites), so the
-// reverse check unions all seven lanes' claim tables plus the trio
+// watched by the Wave-1 conformance/openapi/spec suites), and the
+// full-surface lane claims its keys in the per-lane owning tables
+// (g2WaveSpecKeys, w8aWaveSpecKeys, w8bNarrowSpecKeys, compextSpecKeys,
+// iacSpecKeys, setupSpecKeys, driftSpecKeys, w5SpecKeys, and the code
+// lane key lists), so the reverse check unions every lane's claim
 // table; the D2-D4 frozen counts in TestD5ProbeFrozen stay untouched.
 func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 	t.Parallel()
@@ -324,6 +324,47 @@ func TestD5Wiring_NoUndocumentedGETs(t *testing.T) {
 	}
 	for _, path := range freshnessWaveSpecKeys {
 		probed[path] = true
+	}
+	for _, path := range g2WaveSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range w8aWaveSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range w8bnarrowSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range compextSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range iacSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range setupSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range driftSpecKeys {
+		probed[path] = true
+	}
+	for _, path := range w5SpecKeys {
+		probed[path] = true
+	}
+	for _, keys := range [][]string{
+		codeFlowSpecKeys,
+		codeSearchSpecKeys,
+		codeGraphSpecKeys,
+		codeDeadSpecKeys,
+		codeDivergenceSpecKeys,
+		codeRelationshipsSpecKeys,
+		codeScanSpecKeys,
+		codeInvestigationSpecKeys,
+		codeSecretsSpecKeys,
+		codeCypherSpecKeys,
+		codeLanguageSpecKeys,
+	} {
+		for _, path := range keys {
+			probed[path] = true
+		}
 	}
 	for _, origin := range []string{"http://core.invalid", ""} {
 		paths := d5ServedPaths(t, origin)

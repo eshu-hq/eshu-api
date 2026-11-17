@@ -7,46 +7,39 @@ import (
 	"testing"
 )
 
-// Code-graph relay-leg termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#121). The four G-a
-// graph POSTs mount natively in the code-graph wave lane, but their
-// Decision 5(c) fragments stay core-side for this lane: the
-// call-chain and compare entries live in
-// go/internal/query/openapi/paths/code/routes.go, the metrics entry
-// lives in go/internal/query/openapi/paths/code/symbols.go, and the
-// routes/callers entry lives in
-// go/internal/query/openapi/paths/code/route_to_caller.go — and the
-// call-chain, compare, and metrics entries reference the EntityRef
-// schema the served document does not carry yet. Porting an entry
-// without its referenced blocks, or re-shaping a satellite subset
-// across three fragments, would break the verbatim-port rule
-// scripts/check-parity.sh gates — so, like the gap-04 Compare, W6a
-// Code-flow, W4 search, W8a, and Wave-4 Drift relay-leg lanes, the
-// routes are disclosed spec absences (see
-// contracts/code-graph-termination.md), not a port. A follow-up
-// spec-port lane claims the four keys when it ports the entries
-// entry-shaped with their referenced schemas; until then no served
-// key duplicates a relayed route, and no mounted route promises what
-// the document does not carry.
+// Code-graph full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#121, G-a). The four G-a graph POSTs mount natively in the code-graph wave lane and their Decision 5(c) fragments (routes.go, symbols.go, and route_to_caller.go entries, with the dangling core 501 carried inline) now ride the served document with their referenced schemas; the D13 row-7 full-surface lane claims the keys the relay-leg lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesCodeGraphWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/code/call-chain":         {"post": "getCodeCallChain"},
+		"/api/v0/code/call-chain/compare": {"post": "compareCodeCallPaths"},
+		"/api/v0/code/call-graph/metrics": {"post": "inspectCallGraphMetrics"},
+		"/api/v0/code/routes/callers":     {"post": "traceRouteCallers"},
+	})
 
-// TestSpec_CodeGraphStaysDisclosedAbsent pins the graph spec posture:
-// the served document carries none of the four G-a keys while the
-// fragments stay core-side. Lifting any absence (porting the entries)
-// belongs to the follow-up spec-port lane, not to the relay-leg
-// termination.
-func TestSpec_CodeGraphStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/code/call-chain",
 		"/api/v0/code/call-chain/compare",
 		"/api/v0/code/call-graph/metrics",
 		"/api/v0/code/routes/callers",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

@@ -286,62 +286,10 @@ func TestSpec_ServesAdminRecoveryFamily(t *testing.T) {
 	}
 }
 
-// TestSpec_FamilySectionMatchesFragment pins lossless assembly: the served
-// family path objects equal the ported fragments' parsed path objects, so
-// the only reviewed delta to the pinned core fragments is the fragment files
-// themselves (gated byte-identical by scripts/check-parity.sh).
-func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
-	t.Parallel()
-
-	served := decodePaths(t, Spec())
-	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
-
-	for _, path := range []string{
-		"/api/v0/auth/sign-in-policy",
-		"/api/v0/auth/admin/sign-in-policy",
-		"/api/v0/admin/repository-retirements",
-		"/api/v0/admin/collector-failures/acknowledge",
-		"/api/v0/admin/collector-failures/acknowledgements/query",
-		"/api/v0/admin/collector-failures/query",
-		"/api/v0/auth/local/invitations/{invite_id}/revoke",
-		"/api/v0/auth/admin/role-assignments/revoke",
-		"/api/v0/auth/admin/idp-group-mappings/{mapping_ref}",
-		"/api/v0/auth/admin/role-assignments",
-		"/api/v0/auth/admin/roles",
-		"/api/v0/auth/admin/idp-providers",
-		"/api/v0/auth/admin/idp-group-mappings",
-		"/api/v0/auth/admin/api-tokens",
-		"/api/v0/auth/admin/audit/events",
-		"/api/v0/auth/admin/audit/summary",
-		"/api/v0/auth/admin/provider-configs/{provider_config_id}/revert",
-		"/api/v0/auth/admin/provider-configs/{provider_config_id}/enable",
-		"/api/v0/auth/admin/provider-configs/{provider_config_id}/disable",
-		"/api/v0/auth/admin/provider-configs/{provider_config_id}/test-connection",
-		"/api/v0/admin/replay",
-		"/api/v0/admin/reopen",
-		"/api/v0/admin/refinalize",
-		"/api/v0/admin/recover-generations",
-		"/api/v0/admin/workflow-retire-unclaimed",
-		"/api/v0/supply-chain/impact/suppressions",
-	} {
-		want, ok := fragment[path]
-		if !ok {
-			t.Fatalf("fragment lacks %s", path)
-		}
-		got, ok := served[path]
-		if !ok {
-			t.Fatalf("served spec lacks %s", path)
-		}
-		if !jsonEqual(got, want) {
-			t.Errorf("served %s differs from the ported fragment", path)
-		}
-	}
-}
-
 // TestSpec_LocalRefsResolve pins that every local $ref the family
 // fragments emit resolves inside the served document: the minimal
-// components block must carry every schema and response the fragments
-// name (ErrorResponse plus BadRequest, Forbidden, Conflict,
+// components block must carry every schema, parameter, and response the
+// fragments name (ErrorResponse plus BadRequest, Forbidden, Conflict,
 // InternalError, and ServiceUnavailable for the terminal-failure
 // fragment; NotFound for the admin-identity mutations fragment;
 // AdminAuditCountList for the admin-identity reads fragment; NotFound
@@ -350,7 +298,17 @@ func TestSpec_FamilySectionMatchesFragment(t *testing.T) {
 // ReindexRequestsWrittenReport for the admin-recovery fragment;
 // AdminSignInPolicy schemas for the sign-in-policy family; the shared
 // ServiceUnavailable response for the suppression fragment; ErrorResponse
-// plus BadRequest/NotFound/Conflict/InternalError/ServiceUnavailable (retire-unclaimed).
+// plus BadRequest/NotFound/Conflict/InternalError/ServiceUnavailable
+// (retire-unclaimed); parameters EntityId and WorkloadId plus schemas
+// EntityRef, SemanticEvidenceRow, SemanticObservationList,
+// SemanticCodeHintList, CodeFlowRequest, CodeFlowResponse,
+// CodeSearchResult, CodeSearchResponse, SymbolSearchResult,
+// SymbolSearchResponse, LanguageQueryResponse, ReplatformingReadinessCounts,
+// ReplatformingRollupBucket, ReplatformingOwnerCandidate,
+// ReplatformingOwnershipPacket, and WorkloadContext (full-surface lane;
+// WorkloadContext interpolates the shared schema helper at port time,
+// and the two dangling core 501 UnsupportedCapability refs stay inline
+// per their fragment comments).
 func TestSpec_LocalRefsResolve(t *testing.T) {
 	t.Parallel()
 

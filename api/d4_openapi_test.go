@@ -21,14 +21,12 @@ import (
 
 // d4WaveSpecKeys are the path keys the D4 wave adds to the served
 // document: one entry per served wave route. The evidence-packet key
-// carries the deployable-unit GET only — the supply-chain, drift, and
-// services packets sharing that file stay relay until their lanes.
-// The repositories story key is absent as a relay leg: the story GET
-// stays on the generic relay (its entry interpolates the shared
-// schema.EvidenceBoundaries helper, which has no line-verbatim port
-// without a core import (forbidden)), so its fragment never lands and
-// the served document omits that key until the helper ports as a
-// component and the lane terminates the route.
+// carries the deployable-unit GET — the packets sharing that file are
+// served by the full-surface lane (supply-chain impact and services
+// by openapi/spec_w5_test.go, drift by openapi/spec_drift_test.go). The
+// repositories story key is served by the full-surface lane too: the
+// schema helper now ports in-package, so the story entry rides
+// repository_story.go (see openapi/spec_w5_test.go).
 var d4WaveSpecKeys = []string{
 	"/api/v0/catalog",
 	"/api/v0/ci-cd/run-correlations",
@@ -117,8 +115,10 @@ func TestD4Native_ServesWaveSpecKeys(t *testing.T) {
 				t.Errorf("origin %q: served spec lacks wave key %s", origin, path)
 			}
 		}
-		if _, ok := paths["/api/v0/repositories/{repo_id}/story"]; ok {
-			t.Errorf("origin %q: served spec carries the story key, want it omitted while the route relays", origin)
+		if item, ok := paths["/api/v0/repositories/{repo_id}/story"].(map[string]any); ok {
+			if op, _ := item["get"].(map[string]any); op["operationId"] != "getRepositoryStory" {
+				t.Errorf("origin %q: story operationId = %v, want getRepositoryStory", origin, op["operationId"])
+			}
 		}
 		if item, ok := paths["/api/v0/repositories"].(map[string]any); ok {
 			if op, _ := item["get"].(map[string]any); op["operationId"] != "listRepositories" {
