@@ -7,28 +7,34 @@ decision, owner acceptance still owed).
 ## What the satellite serves
 
 The satellite serves its own mounted scope only — never the full core
-surface. Current pin (re-verified at origin/main `64ce419`):
+surface. Current pin (D13 row-7 full-surface lane, satellite
+`eshu-hq/eshu-api#153`, pinned by `TestSpecScope_Frozen`):
 
-- Mounted: 219 explicitly registered operations (218 native + 1
-  explicit D4 story relay leg), rebuilt from the router tables by
+- Mounted: 284 explicitly registered operations (284 native + 0
+  explicit relay holds — the retired D4 story relay leg now serves
+  natively), rebuilt from the router tables by
   `TestSpecScope_Frozen`.
-- Disclosed absences: 45 mounted spellings with no served spec entry,
-  each backed by its owning contract (`specScopeAbsent`).
-- Served: 174 operations at `GET /api/v0/openapi.json`, pinned
+- Disclosed absences: 5 by-design non-API exclusions with no served
+  spec entry (the three mux-level non-API mounts and the two compiled
+  doc-UI shells, each backed by its rationale in `specScopeAbsent`);
+  the disclosed API-absence set is zero — the row-7 lane closed every
+  disclosed posture as served.
+- Served: 279 operations at `GET /api/v0/openapi.json`, pinned
   operation-for-operation in the committed snapshot
   `openapi/spec_snapshot.json` (spec v0, document sha256 pinned
   alongside the sorted operation list).
 
 ## What the satellite does not serve
 
-The in-tree core inventory recomputed at eshu-core `820f9b6` counts
-278 operations over 269 `/api` path keys (method+path entries in
-`go/internal/query/openapi/paths`), against 174 served here. The
-delta — roughly 104 operations — rides the keyed generic `/api/`
-byte-relay (or the explicitly mounted relay legs) with no spec entry
-and no removal credit. A byte-identical satellite-for-core spec pin
-(Path A) stays impossible until family lanes port those fragments;
-this statement scopes the satellite to the snapshot instead.
+The row-7 lane closed the disclosed-absence set to zero: the served
+document covers the full CUTOVER route surface (279 served = 284
+mounted minus the 5 by-design non-API exclusions). What stays out of
+the document is the unbounded generic `/api/` byte-relay catch-all —
+catch-all riders are not bounded registrations and never gain spec
+entries — plus the 5 non-API mounts, which are not API operations. A
+byte-identical satellite-for-core spec pin (Path A) stays out of scope
+for core surface outside the mounted scope, which still relays; this
+statement scopes the satellite to the snapshot instead.
 
 ## Drift gate
 
