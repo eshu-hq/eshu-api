@@ -2362,7 +2362,7 @@ check_row7_route_to_caller_501_at() {
     echo "FAIL: go/internal/query/openapi/paths/code/route_to_caller.go at ${sha} hash ${got_hash} != recorded 998162ac57db246449aad684e141d34caab728354e4a492eb87e3178d363d628" >&2
     exit 1
   fi
-  local dangling='          "501": {"$ref": "#/components/responses/UnsupportedCapability"},'
+  local dangling="          \"501\": {\"\$ref\": \"#/components/responses/UnsupportedCapability\"},"
   if ! grep -qFx -- "$dangling" "$fetched"; then
     echo "FAIL: pinned core source at ${sha} carries no dangling 501 line: the inline replacement has no basis" >&2
     exit 1
