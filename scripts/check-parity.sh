@@ -50,6 +50,7 @@ SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W5ENTITY30="9bf29e5380e51e1c774122bfec22ab58898babd7"
 SRC_SHA_W6="dd4a32718aa47fbfb6fd435e4b3e5904580d0f6a"
 SRC_SHA_COMP_EXT="9bf29e5380e51e1c774122bfec22ab58898babd7"
+SRC_SHA_ROW7="901e44977c4ecdd8ce7203d8ac0e2ff299a91a80"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -2039,6 +2040,562 @@ check_file_at "$SRC_SHA_W6" "go/internal/query/language/code_query_read_admissio
 
 check_excerpt_at "$SRC_SHA_W6" "contracts/upstream/code-query-read-wire-shapes.txt" \
   "go/internal/query/language/code_query_read_admission.go"
+
+# Row-7 full-surface lane (satellite eshu-hq/eshu-api#153, D13 row
+# 7): the remaining CUTOVER route surface. The 53 fragments below
+# are whole-file byte-identical ports of the pinned core files at
+# SRC_SHA_ROW7 (origin/main at the row-7 verification); the shaped
+# entries that follow are the documented line-verbatim subsets and
+# the two tail/501-shaped entries with their own gates. The four
+# package doc.go files the lane adds carry dest-owned package docs
+# and ride no pin, like every earlier doc.go.
+# Row-7: the first-run setup wizard entry.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/auth/setup.go" \
+  "openapi/paths/auth/setup.go" \
+  "b604d3d622ca2530ad1ddb5f3b087bf1c3b999ec2223ab157d53f755cde84a32"
+
+# Row-7: the component-extension and surface-inventory entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/catalog/component_extensions.go" \
+  "openapi/paths/catalog/component_extensions.go" \
+  "9077503fe9a79a75de7077167acca93d13734191559d1832b1180d9ed54ba959"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/catalog/surface_inventory.go" \
+  "openapi/paths/catalog/surface_inventory.go" \
+  "f000b3202b9676fb16b64b1447aab0673d213b9686dbd535947b448cf0c6df45"
+
+# Row-7: the cloud drift and inventory entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/cloud/aws_runtime_drift.go" \
+  "openapi/paths/cloud/aws_runtime_drift.go" \
+  "5bf4571e450a38b5db5fab321ae835e7beb0bb09024984daf11a3530975be6e0"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/cloud/runtime_drift.go" \
+  "openapi/paths/cloud/runtime_drift.go" \
+  "28c09ca4a1202b82676a6b268605878a8d44e475386a926bbd78c44b096628a6"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/cloud/inventory.go" \
+  "openapi/paths/cloud/inventory.go" \
+  "a81552935adc7010ea4b33e8e01dffce52ef237ef102b3ea02dcebb568ec95ee"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/cloud/ssm_host_inventory.go" \
+  "openapi/paths/cloud/ssm_host_inventory.go" \
+  "59bbb3946f1659ddc5bb50d0242788d5bec25a12f368afa4d1f169e4ff5b9652"
+
+# Row-7: the dead-code entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/dead/cross_repo.go" \
+  "openapi/paths/code/dead/cross_repo.go" \
+  "c19c2e6573fca47d20401fa8423ba31fa1491ef5df4f2c20256ebf67324e0040"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/dead/investigation.go" \
+  "openapi/paths/code/dead/investigation.go" \
+  "34a2bed863e69543128089bab2b2a3f9b62f14e54faca41949ce6c6f1990a06a"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/dead/scan.go" \
+  "openapi/paths/code/dead/scan.go" \
+  "fcaad666284bbe79a6aecc134c354ba17d37f4bd6f4978041b36fbf0c3ebb4da"
+
+# Row-7: the remaining code entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/divergence.go" \
+  "openapi/paths/code/divergence.go" \
+  "7e876c9e1cb2b6830b7e48d03d49b007d5f6c639465ba8c136a0bf2cde9df0a7"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/flow.go" \
+  "openapi/paths/code/flow.go" \
+  "3d65fa00b254c9862afc5f59eea99638afb48ef6ce2bdbfa2cf7e0be7dedea8a"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/graph.go" \
+  "openapi/paths/code/graph.go" \
+  "3c213294f020ad3d3fab40a6d5b4d0bc53eff727395efbf00007740c7daa2876"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/owners.go" \
+  "openapi/paths/code/owners.go" \
+  "5b15ac5443b60e066f7076be38fc3f9e909ce464396011dcb0412609cf2f42df"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/quality.go" \
+  "openapi/paths/code/quality.go" \
+  "1035bbae4f1aa4f3e74f144218719c4d059243b8ca10527dfb84e1cb1a6944dd"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/routes.go" \
+  "openapi/paths/code/routes.go" \
+  "c19b59d1f1bc29b6f8ded8582a0e0717de13b43d0dab4ea48e899d970b1ef70d"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/security.go" \
+  "openapi/paths/code/security.go" \
+  "55009e28ad360497b33f9b525ba0148ac781bf923a1de27b8aa72f2f12bb004d"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/code/symbols.go" \
+  "openapi/paths/code/symbols.go" \
+  "84785bd1136e62026e96b5d3aa3fcd9405550a2303bdcca795c70bdb801f9e5c"
+
+# Row-7: the evidence entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/evidence/incident_context.go" \
+  "openapi/paths/evidence/incident_context.go" \
+  "5bcded87f3086f2bf4a920bc844fac160d223ae0266a7c616f66d2d9c38e7b65"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/evidence/visualization_packets.go" \
+  "openapi/paths/evidence/visualization_packets.go" \
+  "f35f9787acb963779002780aa155d9da1c04c46d7f563440214d04ffefb974ff"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/evidence/work_item.go" \
+  "openapi/paths/evidence/work_item.go" \
+  "bafc8719d3e14758b92d92d416593cf739d82a2065446e8daeb8a6e7034ccf7c"
+
+# Row-7: the IaC entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/replatforming.go" \
+  "openapi/paths/iac/replatforming.go" \
+  "2c82476da5bdd27bbb3e7daef2b12a7348bf0d11ac3fc6aed809d429da83d70c"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/replatforming_ownership.go" \
+  "openapi/paths/iac/replatforming_ownership.go" \
+  "9da36fb66e0747fe20f0acf710118c2a23e2b8c0f26dc5203722f0f0f70f5992"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/replatforming_rollups.go" \
+  "openapi/paths/iac/replatforming_rollups.go" \
+  "df8bd5f74c2ce174686c7d037dad4116cfb4c3d9fd5e5e212f5d1b19424f0f0b"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/replatforming_selectors.go" \
+  "openapi/paths/iac/replatforming_selectors.go" \
+  "27536f6bd55ef2bd1ae4ec3432a52d4e805b8beed9706bc75055e883c899ed72"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/resources.go" \
+  "openapi/paths/iac/resources.go" \
+  "dde6a49e593351f6b0a80ff1768d6bbefcc976ce78f76a7e9f408bc32fccb22e"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/routes.go" \
+  "openapi/paths/iac/routes.go" \
+  "5f21417fda5ffed2342e97307517050a9528775539928eaa1f03ccffd6e08a24"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/iac/terraform_config_state_drift.go" \
+  "openapi/paths/iac/terraform_config_state_drift.go" \
+  "5e8fecf1c389e06b5aea712a04fc17fca8a77d4921618649ec4cfb04ba0a3c41"
+
+# Row-7: the impact entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/contract.go" \
+  "openapi/paths/impact/contract.go" \
+  "4db5a5beb812ef5f182dcddb2118b6d233fdad22cb12e0ed9596a251ccc762c5"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/deployment_config_influence.go" \
+  "openapi/paths/impact/deployment_config_influence.go" \
+  "6cdae6874d78302008ae6891fbcc954b530f390e6f9ebc336b36c6c8cc930a0e"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/exposure.go" \
+  "openapi/paths/impact/exposure.go" \
+  "9b9cf1422ddf6031dc551f37fadb0e9147031c60d205d1ebc12bd2765f16f0bf"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/image_registry_truth_limits.go" \
+  "openapi/paths/impact/image_registry_truth_limits.go" \
+  "3d60a16098d9a4c3c43cc0fe359ace84640d9665d44d53462c5831dedf5ce133"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/k8s_resource_limits.go" \
+  "openapi/paths/impact/k8s_resource_limits.go" \
+  "9d1bc3baa3638655104d9ccc17c8f229fbd5d1f5a65907c0cbc0ed5369403f74"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/rest.go" \
+  "openapi/paths/impact/rest.go" \
+  "7bed0322eaee79f9814551180c9ec8a430cc33e6c9ef14999b266f08a43b2259"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/selection.go" \
+  "openapi/paths/impact/selection.go" \
+  "dceb7f7315fa3eec3f5b3c065f2100c2bcc085af7e8fd4683a889b19c89c7983"
+
+# Row-7: the infrastructure entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/infrastructure/kubernetes.go" \
+  "openapi/paths/infrastructure/kubernetes.go" \
+  "cb5cad50cc8ebaf9d5a794e066ecd9fdfb0846cbc7fc80f5760d429096c99bd4"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/infrastructure/observability_coverage.go" \
+  "openapi/paths/infrastructure/observability_coverage.go" \
+  "43e3c59faf821e150c1a3f7527a277c96efb160c3ba79c707bde48be0952d591"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/infrastructure/secrets_iam.go" \
+  "openapi/paths/infrastructure/secrets_iam.go" \
+  "208a6bbb4483e04cad71dcc367e00da676c80518036aad22729ae4b5b37c7836"
+
+# Row-7: the repository entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/repository/dependencies.go" \
+  "openapi/paths/repository/dependencies.go" \
+  "87557c69f0002944a4b3dc5f3f29b15a300df2742ad1ce7d0015f051ecc94980"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/repository/manifest_dependencies.go" \
+  "openapi/paths/repository/manifest_dependencies.go" \
+  "3ae691d89511b8d7a59c4e3a8310e96719c814f4b20c7139e6f66e5b2729adb5"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/repository/runtime_declarations.go" \
+  "openapi/paths/repository/runtime_declarations.go" \
+  "1b8e46328867eb2445fe5743c747c5295f26e92fcc9584829883e516276a7294"
+
+# Row-7: the search entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/search/graph_entities.go" \
+  "openapi/paths/search/graph_entities.go" \
+  "7f827ae0d0476f17cfca0d3f00fce8931cd7113ddf8c1d0b2d0371a9b0ac21be"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/search/semantic.go" \
+  "openapi/paths/search/semantic.go" \
+  "107dfea85833db41ed6c54ac2006c5688ad5a655da6ed2686a96941b9fb3ccd7"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/search/semantic_evidence.go" \
+  "openapi/paths/search/semantic_evidence.go" \
+  "9fbd24f091b96f5339fd07fdf4d6f5ed1bbc63d2eec95b6c36c3990c609bf2f8"
+
+# Row-7: the service-catalog entry.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/service/catalog.go" \
+  "openapi/paths/service/catalog.go" \
+  "d941da745fc2ef5aa6c1aa443b74598990b31777e670488475018355d5ecaf20"
+
+# Row-7: the status entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/answer_narration.go" \
+  "openapi/paths/status/answer_narration.go" \
+  "1538a364af5393dfa0cb725ad7da0595e38cb7bbfaf1aa9e9ba9d72cf65a1518"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/collector_extraction_readiness.go" \
+  "openapi/paths/status/collector_extraction_readiness.go" \
+  "30fd7472772a962b9c81a75abfa0a6b4246c794d49200b8fc3cc44beca19500d"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/fact_schema_version.go" \
+  "openapi/paths/status/fact_schema_version.go" \
+  "b79579c19efb4cd76d650da528cb0a51a4ad6d269e49421f2c6d0f75cb3673a1"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/governance.go" \
+  "openapi/paths/status/governance.go" \
+  "31e23438757a48fc812964c15541762d4ddf30eb7c3e09187b00ae521422e8a7"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/hosted_readiness.go" \
+  "openapi/paths/status/hosted_readiness.go" \
+  "ef5ea0568c414264c4784b6e84bfa9e93e933955eccfa247012e56fe3c285254"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/status/metrics.go" \
+  "openapi/paths/status/metrics.go" \
+  "e443973ea2e2c0f900246a1c0dde0d1bd29b9333426667f0a6154e41ac9dde9f"
+
+# Row-7: the supply-chain entries.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/supply/chain/images.go" \
+  "openapi/paths/supply/chain/images.go" \
+  "dd386136b9b87640d40cc4302c21dd124a98378b9499dad639d10183f4dddf8d"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/supply/chain/tag_history.go" \
+  "openapi/paths/supply/chain/tag_history.go" \
+  "b82c6acf0da902a7b746265cf84e49f4a0288de27d96db29c05824b616d97670"
+
+# Row-7 subsets (Decision 5(c)): the investigation-packets entry, the
+# repository-story entry (which interpolates the shared schema
+# helpers), the impact Routes assembly entry, and the entities entry
+# are line-verbatim subsets of the pinned core files at SRC_SHA_ROW7:
+# every payload line of each dest fragment (the const string body,
+# which is the only JSON the assembly consumes) appears verbatim in
+# its pinned core file.
+check_fragment_subset_named_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/evidence/investigations.go" \
+  "openapi/paths/evidence/investigation_packets.go" \
+  "df0e51563c025a4c6571f31a04704c9abce4b9e33e613baadac5d4e316924cb0" \
+  "InvestigationPackets"
+
+check_fragment_subset_named_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/repository/routes.go" \
+  "openapi/paths/repository/repository_story.go" \
+  "d6e7dbe441a931ef208418311f7bb57eb8ac99cc62d8581e91a7c2d914d573db" \
+  "RepositoryStory"
+
+check_fragment_subset_named_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/impact/routes.go" \
+  "openapi/paths/impact/routes.go" \
+  "94f72ae25931a54e1d963107e69ce6d67e17413f59e64102f271a5b25e48003e" \
+  "Routes"
+
+check_fragment_subset_named_at "$SRC_SHA_ROW7" "go/internal/query/openapi/paths/search/entities.go" \
+  "openapi/paths/search/entities.go" \
+  "85c1008ef8a13dd7c3b0d8c70c05d336d1b1a4ab6b0abb9047d8043a7f13e780" \
+  "Entities"
+
+# Row-7 compare entry: the dest fragment folds the paths-closing tail
+# (`    }` + `  },` in core, where the entry closes the assembled
+# document) into the mid-list `    },` the satellite concatenation
+# needs — the fragment's own doc comment records the reshape, and the
+# served-spec self entry keeps the trim. The gate pins the core file's
+# sha256, proves every payload line above the tail byte-identical, and
+# asserts both tails exactly.
+check_row7_compare_tail_at() {
+  local sha="$SRC_SHA_ROW7"
+  local fetched
+  fetched="$(fetch_at "$sha" "go/internal/query/openapi/paths/status/compare.go")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "b9626a6213959384fdc552d6a68853337bc5ef38f63c4baa785d0d4634d10b81" ]]; then
+    echo "FAIL: go/internal/query/openapi/paths/status/compare.go at ${sha} hash ${got_hash} != recorded b9626a6213959384fdc552d6a68853337bc5ef38f63c4baa785d0d4634d10b81" >&2
+    exit 1
+  fi
+  local dest_payload core_payload
+  dest_payload="$(awk '/^const Compare = `$/{flag=1;next} flag && /^`$/{exit} flag' "${REPO_ROOT}/openapi/paths/status/compare.go")"
+  core_payload="$(awk '/^const Compare = `$/{flag=1;next} flag && /^`$/{exit} flag' "$fetched")"
+  if [[ -z "$dest_payload" || -z "$core_payload" ]]; then
+    echo "FAIL: empty Compare payload in dest or pinned core source at ${sha}" >&2
+    exit 1
+  fi
+  if [[ "$(tail -n 1 <<<"$dest_payload")" != '    },' ]]; then
+    echo "FAIL: dest Compare payload tail is not the documented mid-list '    },'" >&2
+    exit 1
+  fi
+  if [[ "$(tail -n 2 <<<"$core_payload" | head -n 1)" != '    }' || "$(tail -n 1 <<<"$core_payload")" != '  },' ]]; then
+    echo "FAIL: core Compare payload tail at ${sha} is not the paths-closing '    }' + '  },'" >&2
+    exit 1
+  fi
+  if ! diff <(head -n -1 <<<"$dest_payload") <(head -n -2 <<<"$core_payload") > /dev/null; then
+    echo "FAIL: dest Compare payload differs from pinned core source above the documented tail" >&2
+    diff <(head -n -1 <<<"$dest_payload") <(head -n -2 <<<"$core_payload") >&2 || true
+    exit 1
+  fi
+  echo "OK: openapi/paths/status/compare.go matches pinned core source modulo the documented tail"
+}
+
+check_row7_compare_tail_at
+
+# Row-7 route-to-caller entry: the dest fragment serves without its
+# core 501 UnsupportedCapability $ref (that response has no definition
+# in the pinned core tree, so porting the line would dangle the served
+# document — see TestSpec_LocalRefsResolve) and inlines the refusal
+# shape instead, as its own doc comment records. The gate pins the
+# core file's sha256, proves the pinned core carries the dangled line,
+# proves the dest inline block byte-exact, and proves every other
+# payload line verbatim in the pinned core file.
+check_row7_route_to_caller_501_at() {
+  local sha="$SRC_SHA_ROW7"
+  local fetched
+  fetched="$(fetch_at "$sha" "go/internal/query/openapi/paths/code/route_to_caller.go")"
+  local got_hash
+  got_hash="$(sha256sum "$fetched" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "998162ac57db246449aad684e141d34caab728354e4a492eb87e3178d363d628" ]]; then
+    echo "FAIL: go/internal/query/openapi/paths/code/route_to_caller.go at ${sha} hash ${got_hash} != recorded 998162ac57db246449aad684e141d34caab728354e4a492eb87e3178d363d628" >&2
+    exit 1
+  fi
+  local dangling='          "501": {"$ref": "#/components/responses/UnsupportedCapability"},'
+  if ! grep -qFx -- "$dangling" "$fetched"; then
+    echo "FAIL: pinned core source at ${sha} carries no dangling 501 line: the inline replacement has no basis" >&2
+    exit 1
+  fi
+  local dest_payload
+  dest_payload="$(awk '/^const RouteToCaller = `$/{flag=1;next} flag && /^`$/{exit} flag' "${REPO_ROOT}/openapi/paths/code/route_to_caller.go")"
+  if [[ -z "$dest_payload" ]]; then
+    echo "FAIL: empty RouteToCaller payload in dest" >&2
+    exit 1
+  fi
+  local start end
+  start="$(awk '/^          "501": \{$/{print NR; exit}' <<<"$dest_payload")"
+  end="$(awk '/^          "501": \{$/{flag=1} flag && /^          \},$/ && ++closes==1{print NR; exit}' <<<"$dest_payload")"
+  if [[ -z "$start" || -z "$end" ]]; then
+    echo "FAIL: no inline 501 block in dest RouteToCaller payload" >&2
+    exit 1
+  fi
+  local want_inline
+  want_inline="$(cat <<'EOF'
+          "501": {
+            "description": "Route resolution is not supported for this route shape",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+              }
+            }
+          },
+EOF
+)"
+  if [[ "$(sed -n "${start},${end}p" <<<"$dest_payload")" != "$want_inline" ]]; then
+    echo "FAIL: dest RouteToCaller inline 501 block differs from the documented replacement" >&2
+    exit 1
+  fi
+  local rest_ok=1
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if ! grep -qFx -- "$line" "$fetched"; then
+      echo "FAIL: route-to-caller line missing from pinned core source at ${sha}: ${line}" >&2
+      rest_ok=0
+    fi
+  done < <(awk -v s="$start" -v e="$end" 'NR<s || NR>e' <<<"$dest_payload")
+  if [[ "$rest_ok" != "1" ]]; then
+    exit 1
+  fi
+  echo "OK: openapi/paths/code/route_to_caller.go matches pinned core source modulo the documented inline 501"
+}
+
+check_row7_route_to_caller_501_at
+
+# Row-7 shared schema helpers: the satellite vendors core's openapi
+# schema package verbatim (same package name, so the fragment splice
+# lines referencing the helpers stay byte-identical); the doc.go rides
+# with them.
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/schema/doc.go" \
+  "openapi/schema/doc.go" \
+  "0ca0c241db95e762e9d2bb1251d35f1135833dcff2db1e979b5d2f888675bf9e"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/schema/evidence_boundaries.go" \
+  "openapi/schema/evidence_boundaries.go" \
+  "6d35be71c3b20f5596f8656a04bf6941cd3ab945cdad72b4a00037153351da59"
+
+check_file_at "$SRC_SHA_ROW7" "go/internal/query/openapi/schema/runtime_topology_limits.go" \
+  "openapi/schema/runtime_topology_limits.go" \
+  "69b36c54591f597ed46157406dc87ce783ad2f0613c6056be153c0669e5ebde5"
+
+# Row-7 components (Decision 5(c)): every ported line of the row-7
+# block in openapi/components.json — the EntityId/WorkloadId
+# parameters and the sixteen lane schemas — must appear verbatim in
+# its pinned core component source (same block rule as the D2 gate:
+# the first line matches as a substring, every following line
+# whole-line). The served-spec LocalRefsResolve test independently
+# requires the entries. The WorkloadContext entry rides the shared
+# helper expansion and is gated separately below.
+check_row7_components_at() {
+  local fail=0
+  check_block() { # dest entry marker, src sha, src path
+    local marker="$1" sha="$2" path="$3"
+    local fetched
+    fetched="$(fetch_at "$sha" "$path")"
+    local block
+    block="$(awk -v m="$marker" '$0 ~ m{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
+    if [[ -z "$block" ]]; then
+      echo "FAIL: no $marker block in openapi/components.json" >&2
+      return 1
+    fi
+    local first=1
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      if [[ "$first" == "1" ]]; then
+        first=0
+        if ! grep -qF -- "$line" "$fetched"; then
+          echo "FAIL: components opener missing from ${path} at ${sha}: ${line}" >&2
+          return 1
+        fi
+        continue
+      fi
+      if ! grep -qFx -- "$line" "$fetched"; then
+        echo "FAIL: components line missing from ${path} at ${sha}: ${line}" >&2
+        return 1
+      fi
+    done <<< "$block"
+  }
+  check_block '"EntityId": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"WorkloadId": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CodeFlowRequest": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CodeFlowResponse": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CodeSearchResponse": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"CodeSearchResult": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"EntityRef": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"LanguageQueryResponse": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"SemanticCodeHintList": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"SemanticEvidenceRow": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"SemanticObservationList": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"SymbolSearchResponse": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"SymbolSearchResult": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components.go" \
+    || fail=1
+  check_block '"ReplatformingOwnerCandidate": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components_replatforming.go" \
+    || fail=1
+  check_block '"ReplatformingOwnershipPacket": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components_replatforming.go" \
+    || fail=1
+  check_block '"ReplatformingReadinessCounts": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components_replatforming.go" \
+    || fail=1
+  check_block '"ReplatformingRollupBucket": {' "$SRC_SHA_ROW7" "go/internal/query/openapi/components_replatforming.go" \
+    || fail=1
+  if [[ "$fail" != "0" ]]; then
+    exit 1
+  fi
+  echo "OK: row-7 components lines all verbatim in pinned component sources"
+}
+
+check_row7_components_at
+
+# Row-7 WorkloadContext entry: the dest block is the core
+# WorkloadContext region with the shared-helper splice line
+# (`"runtime_topology_limits": ` + schema.ImpactRuntimeTopologyLimits)
+# expanded in place — JSON keeps the helper's raw indentation, so the
+# expansion is a pure line substitution the gate replays from the
+# pinned sources. The gate pins both core files' sha256, replays the
+# expansion (each bounded-collection splice becomes `{` plus the
+# bounded body minus its braces plus its closer — `},` mid-list, `}`
+# on the last property), and proves the dest block byte-identical to
+# the replay, tolerating only the lane-block last-entry no-comma rule
+# the recovery gate already tolerates.
+check_row7_workload_context_at() {
+  local sha="$SRC_SHA_ROW7"
+  local comp="${tmpdir}/row7_workload_session.go"
+  local helper="${tmpdir}/row7_runtime_topology_limits.go"
+  curl -fsSL --retry 3 "https://raw.githubusercontent.com/${SRC_REPO}/${sha}/go/internal/query/openapi/components_workload_session.go" -o "$comp" || {
+    echo "FAIL: fetch go/internal/query/openapi/components_workload_session.go at ${sha}" >&2
+    exit 1
+  }
+  curl -fsSL --retry 3 "https://raw.githubusercontent.com/${SRC_REPO}/${sha}/go/internal/query/openapi/schema/runtime_topology_limits.go" -o "$helper" || {
+    echo "FAIL: fetch go/internal/query/openapi/schema/runtime_topology_limits.go at ${sha}" >&2
+    exit 1
+  }
+  local got_hash
+  got_hash="$(sha256sum "$comp" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "450b2047f974b5b8ffc02ee866e864f3b120f5519d055d96c7c37b01bb740980" ]]; then
+    echo "FAIL: go/internal/query/openapi/components_workload_session.go at ${sha} hash ${got_hash} != recorded 450b2047f974b5b8ffc02ee866e864f3b120f5519d055d96c7c37b01bb740980" >&2
+    exit 1
+  fi
+  got_hash="$(sha256sum "$helper" | cut -d' ' -f1)"
+  if [[ "$got_hash" != "69b36c54591f597ed46157406dc87ce783ad2f0613c6056be153c0669e5ebde5" ]]; then
+    echo "FAIL: go/internal/query/openapi/schema/runtime_topology_limits.go at ${sha} hash ${got_hash} != recorded 69b36c54591f597ed46157406dc87ce783ad2f0613c6056be153c0669e5ebde5" >&2
+    exit 1
+  fi
+  local block
+  block="$(awk '/^      "WorkloadContext": \{$/{flag=1} flag{print} flag && /^      \},?$/ && ++closes==1{exit}' "${REPO_ROOT}/openapi/components.json")"
+  if [[ -z "$block" ]]; then
+    echo "FAIL: no WorkloadContext block in openapi/components.json" >&2
+    exit 1
+  fi
+  local prop="${tmpdir}/row7_wc_property.txt"
+  {
+    printf '          "runtime_topology_limits": {\n'
+    awk '
+      /^const boundedCollectionLimits = `\{/{in_b=1; sub(/^[^`]*`/, ""); b[n++]=$0; next}
+      in_b && /^}`$/{in_b=0; b[n++]="}"; next}
+      in_b{b[n++]= $0; next}
+      /^const ImpactRuntimeTopologyLimits = `\{/{in_h=1; sub(/^[^`]*`/, ""); next}
+      in_h && /^}`$/{print "}"; in_h=0; next}
+      in_h{
+        if (index($0, "` + boundedCollectionLimits + `") > 0) {
+          name=$0; sub(/^    "/, "", name); sub(/".*$/, "", name)
+          printf "    \"%s\": {\n", name
+          for (i=1;i<n-1;i++) print b[i]
+          if ($0 ~ /`,$/) print "},"; else print "}"
+        } else print
+      }
+    ' "$helper"
+  } > "$prop"
+  local expected
+  expected="$(awk -v prop="$prop" '
+    !started && /"WorkloadContext": \{/{started=1; print "      \"WorkloadContext\": {"; next}
+    started && !spliced {
+      if (index($0, "schema.ImpactRuntimeTopologyLimits") > 0) {
+        while ((getline line < prop) > 0) print line
+        spliced=1
+        next
+      }
+      print
+      next
+    }
+    spliced {
+      if ($0 == "      },") { print "      }"; done=1; exit }
+      print
+    }
+  ' "$comp")"
+  if [[ -z "$expected" ]]; then
+    echo "FAIL: no WorkloadContext region in pinned component source at ${sha}" >&2
+    exit 1
+  fi
+  if ! diff <(printf '%s\n' "$block") <(printf '%s\n' "$expected") > /dev/null; then
+    echo "FAIL: WorkloadContext block differs from the pinned-source replay at ${sha}" >&2
+    diff <(printf '%s\n' "$block") <(printf '%s\n' "$expected") >&2 || true
+    exit 1
+  fi
+  echo "OK: WorkloadContext block matches pinned component sources modulo the documented helper expansion"
+}
+
+check_row7_workload_context_at
 
 # Version pins referenced by the contract records.
 grep -qF 'const CoreReadContractsVersion = "v0"' "${REPO_ROOT}/contracts/upstream/api_boundary.go"
