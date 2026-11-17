@@ -7,34 +7,33 @@ import (
 	"testing"
 )
 
-// Compare relay-leg termination spec posture (Refs eshu-hq/eshu#9669,
-// satellite eshu-hq/eshu-api#72, gap 04). The Compare POST mounts
-// natively in its gap-04 wave lane, but its Decision 5(c) fragment
-// stays core-side for this lane: core shapes
-// go/internal/query/openapi/paths/status/compare.go as the
-// paths-closing entry of its own assembled document (last in core
-// assembly, trailing `},`), so a byte-identical satellite port
-// cannot concatenate mid-list — and a re-shaped satellite subset
-// would break the verbatim-port rule scripts/check-parity.sh gates.
-// The route is therefore a disclosed spec absence (see
-// contracts/compare-termination.md), the same posture the setup
-// lane records for its core-side fragments. A follow-up spec-port
-// lane claims the key when core re-shapes the fragment or the lane
-// ports it entry-shaped; until then no served key duplicates a
-// relayed route, and no mounted route promises what the document
-// does not carry.
+// Compare full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#72, gap 04). The Compare POST mounts natively in its gap-04 wave lane and its Decision 5(c) fragment (compare.go, re-indented from the core paths-closing shape to the satellite mid-list shape) now rides the served document; the D13 row-7 full-surface lane claims the key the relay-leg lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesCompareWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/compare/environments": {"post": "compareEnvironments"},
+	})
 
-// TestSpec_CompareStaysDisclosedAbsent pins the Compare spec
-// posture: the served document carries no compare key while the
-// fragment stays core-side. Lifting this absence (porting the
-// fragment) belongs to the follow-up spec-port lane, not to the
-// relay-leg termination.
-func TestSpec_CompareStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
-	if _, ok := served["/api/v0/compare/environments"]; ok {
-		t.Errorf("served spec carries /api/v0/compare/environments, want it disclosed-absent until the follow-up spec-port lane")
+	for _, path := range []string{
+		"/api/v0/compare/environments",
+	} {
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
+		}
 	}
 }

@@ -23,13 +23,9 @@ import (
 // served key duplicates a relayed route, and no mounted route
 // promises what the document does not carry.
 
-// w8aDisclosedSpecKeys are the path keys the W8a lane mounts
-// natively while their fragments stay core-side: the served
-// document omits them by disclosure, pinned by
-// openapi/spec_w8a_test.go. The three Status keys (governance,
-// answer-narration, hosted-readiness) moved here from d6RelayedSpecKeys
-// when the W8a lane terminated them natively.
-var w8aDisclosedSpecKeys = []string{
+// w8aWaveSpecKeys are the path keys the W8a lane adds to the served
+// document: one entry per natively mounted wave route.
+var w8aWaveSpecKeys = []string{
 	"/api/v0/secrets-iam/identity-trust-chains",
 	"/api/v0/secrets-iam/privilege-posture-observations",
 	"/api/v0/secrets-iam/secret-access-paths",
@@ -52,22 +48,43 @@ var w8aDisclosedSpecKeys = []string{
 // per natively mounted wave route. A wave change moves this list
 // with the ownership note, the fragments, and the wave mirror
 // together.
-func TestW8aDisclosedSpecKeyCount(t *testing.T) {
+func TestW8aWaveSpecKeyCount(t *testing.T) {
 	t.Parallel()
 
-	if len(w8aDisclosedSpecKeys) != 16 {
-		t.Fatalf("w8aDisclosedSpecKeys holds %d keys, want the 16 disclosed W8a keys (one per wave route): move the key with the owning lane", len(w8aDisclosedSpecKeys))
+	if len(w8aWaveSpecKeys) != 16 {
+		t.Fatalf("w8aWaveSpecKeys holds %d keys, want the 16 served W8a keys (one per wave route): move the key with the owning lane", len(w8aWaveSpecKeys))
 	}
-	if len(w8aDisclosedSpecKeys) != len(w8aWave) {
-		t.Fatalf("w8aDisclosedSpecKeys holds %d keys for %d wave routes, want one disclosed key per wave route", len(w8aDisclosedSpecKeys), len(w8aWave))
+	if len(w8aWaveSpecKeys) != len(w8aWave) {
+		t.Fatalf("w8aWaveSpecKeys holds %d keys for %d wave routes, want one served key per wave route", len(w8aWaveSpecKeys), len(w8aWave))
 	}
 }
 
-// TestW8aNative_OmitsDisclosedSpecKeys pins that the native spec
-// route omits the disclosed keys: authed callers get the
-// dest-assembled document without the W8a path keys, with or without
-// a core origin configured.
-func TestW8aNative_OmitsDisclosedSpecKeys(t *testing.T) {
+// w8aWaveSpecOperations pins the served method plus operationId per
+// W8a path key, mirroring the pinned core fragments.
+var w8aWaveSpecOperations = map[string]map[string]string{
+	"/api/v0/secrets-iam/identity-trust-chains":          {"get": "listSecretsIAMIdentityTrustChains"},
+	"/api/v0/secrets-iam/privilege-posture-observations": {"get": "listSecretsIAMPrivilegePostureObservations"},
+	"/api/v0/secrets-iam/secret-access-paths":            {"get": "listSecretsIAMSecretAccessPaths"},
+	"/api/v0/secrets-iam/posture-gaps":                   {"get": "listSecretsIAMPostureGaps"},
+	"/api/v0/secrets-iam/posture-summary":                {"get": "countSecretsIAMPosture"},
+	"/api/v0/status/governance":                          {"get": "getHostedGovernanceStatus"},
+	"/api/v0/status/answer-narration":                    {"get": "getAnswerNarrationStatus"},
+	"/api/v0/status/hosted-readiness":                    {"get": "getHostedReadiness"},
+	"/api/v0/aws/runtime-drift/findings":                 {"post": "listAWSRuntimeDriftFindings"},
+	"/api/v0/replatforming/selectors":                    {"get": "listReplatformingSelectors"},
+	"/api/v0/replatforming/rollups":                      {"post": "rollupReplatformingReadiness"},
+	"/api/v0/replatforming/plans":                        {"post": "composeReplatformingPlan"},
+	"/api/v0/replatforming/ownership-packets":            {"post": "composeReplatformingOwnershipPackets"},
+	"/api/v0/metrics/timeseries":                         {"get": "getMetricsTimeSeries"},
+	"/api/v0/search/semantic":                            {"post": "searchSemanticContext"},
+	"/api/v0/terraform/config-state-drift/findings":      {"post": "listTerraformConfigStateDriftFindings"},
+}
+
+// TestW8aNative_ServesWaveSpecKeys pins that the native spec route
+// serves the W8a keys: authed callers get the dest-assembled
+// document with every W8a path key and its pinned operationId, with
+// or without a core origin configured.
+func TestW8aNative_ServesWaveSpecKeys(t *testing.T) {
 	t.Parallel()
 
 	for _, origin := range []string{"http://core.invalid", ""} {
@@ -87,9 +104,21 @@ func TestW8aNative_OmitsDisclosedSpecKeys(t *testing.T) {
 			t.Fatalf("origin %q: served spec is not valid JSON: %v", origin, err)
 		}
 		paths, _ := doc["paths"].(map[string]any)
-		for _, path := range w8aDisclosedSpecKeys {
-			if _, ok := paths[path]; ok {
-				t.Errorf("origin %q: served spec carries disclosed key %s, want it out until the spec-port lane", origin, path)
+		for _, path := range w8aWaveSpecKeys {
+			if _, ok := paths[path]; !ok {
+				t.Errorf("origin %q: served spec lacks W8a wave key %s", origin, path)
+			}
+		}
+		for path, wantOps := range w8aWaveSpecOperations {
+			item, ok := paths[path].(map[string]any)
+			if !ok {
+				continue
+			}
+			for method, wantID := range wantOps {
+				op, _ := item[method].(map[string]any)
+				if got := op["operationId"]; got != wantID {
+					t.Errorf("origin %q: %s %s operationId = %v, want %q", origin, path, method, got, wantID)
+				}
 			}
 		}
 	}

@@ -1,0 +1,493 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025-2026 eshu-hq
+
+package code
+
+// Routes is the OpenAPI path fragment documenting the `/api/v0/code/*`
+// routes. openapi.Spec concatenates it into the published document; keep it in
+// lockstep with the handlers and docs/public/reference/http-api.md.
+const Routes = `
+    "/api/v0/code/search": {
+      "post": {
+        "tags": ["code"], "summary": "Search code entities",
+        "description": "Searches code entities by case-sensitive name. Repository-selected requests use the indexed graph path; when that search returns no rows, fuzzy content fallback ignores case. Global requests use the case-sensitive content entity name index; global substring requests require at least 3 Unicode characters.",
+        "operationId": "searchCode",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string", "description": "Entity name or substring. Exact matching, graph substring matching, and global content substring matching are case-sensitive; repository content fallback fuzzy matching ignores case. Global substring searches require at least 3 Unicode characters."},
+                  "repo_id": {"type": "string", "description": "Optional repository selector (canonical ID, name, slug, or path)"},
+                  "language": {"type": "string", "description": "Optional language filter"},
+                  "limit": {"type": "integer", "description": "Maximum returned page size (default 50, maximum 200)", "default": 50, "minimum": 1, "maximum": 200},
+                  "offset": {"type": "integer", "description": "Zero-based start of the page inside the first 200 ranked matches; the effective limit shrinks so offset plus limit stays within 200.", "default": 0, "minimum": 0, "maximum": 199},
+                  "exact": {"type": "boolean", "description": "When true, require a complete case-sensitive entity-name match. Exact global searches may be shorter than 3 characters.", "default": false},
+                  "rank_cursor": {"type": "string", "description": "Opt-in walk (#7746, schema RankWalk). \"start\" reads the first 200 rows of the lane a plain request would read (graph first; content when the graph has no rows) and returns the first page; pass rank_walk.next_cursor for the next page. The graph lane keeps its own order; the content lane is ranked by hybrid BM25+vector relevance unless exact=true or no ranker is configured. Needs repo_id and refuses a positive offset (400 rank_cursor_unsupported). A changed lane, window, or ranked order answers 409 rank_cursor_basis_mismatch (schema RankCursorError); restart with \"start\". A malformed cursor answers 400 rank_cursor_invalid."}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CodeSearchResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "409": {"$ref": "#/components/responses/RankCursorConflict"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/code/language-query": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Query entities by language and type",
+        "description": "Queries graph-backed or content-backed entities for one language/entity-type pair. Scoped tokens receive only granted repositories; an ungranted repository selector is rejected with 400.",
+        "operationId": "queryLanguageEntities",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["language", "entity_type"],
+                "properties": {
+                  "language": {"type": "string", "description": "Language family to query"},
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Entity type to query",
+                    "enum": [
+                      "repository",
+                      "directory",
+                      "file",
+                      "module",
+                      "function",
+                      "class",
+                      "struct",
+                      "enum",
+                      "union",
+                      "macro",
+                      "variable",
+                      "annotation",
+                      "protocol",
+                      "impl_block",
+                      "type_alias",
+                      "type_annotation",
+                      "typedef",
+                      "component",
+                      "terraform_module",
+                      "terragrunt_config",
+                      "terragrunt_dependency",
+                      "terragrunt_local",
+                      "terragrunt_input",
+                      "sql_table",
+                      "sql_view",
+                      "sql_function",
+                      "sql_trigger",
+                      "sql_index",
+                      "sql_migration",
+                      "sql_column"
+                    ]
+                  },
+                  "query": {"type": "string", "description": "Optional name filter"},
+                  "repo_id": {"type": "string", "description": "Optional repository selector (canonical ID, name, slug, or path)"},
+                  "limit": {"type": "integer", "description": "Max results (default 50, maximum 200)", "default": 50, "minimum": 1, "maximum": 200}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "200": {
+            "description": "Language query results",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/LanguageQueryResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalError"},
+          "501": {"$ref": "#/components/responses/NotImplemented"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"}
+        }
+      }
+    },
+    "/api/v0/code/relationships": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Get code relationships",
+        "description": "Returns incoming and outgoing relationships for an entity. This is where the analyze_code_relationships MCP tool sends its who_modifies, module_deps, variable_scope, find_complexity, find_functions_by_argument, and find_functions_by_decorator query types; it sends the caller's repo_id, target as name, and an optional exact entity_id, and applies no limit; its relationship-story and call-chain query types go to their own routes. A scoped token reads only its granted repositories. An anchor entity outside the grant answers the same 404 as an entity that does not exist, whether it is named by entity_id or by name; a name without repo_id resolves among the granted repositories only. Neighbours whose repository is outside the grant are omitted from outgoing and incoming, as are neighbours the graph cannot attribute to any repository (no repo_id), and the grant is applied before the per-direction row ceiling, so a clipped set holds granted rows only. A transitive CALLS walk never passes through a node outside the grant, so a granted node reachable only through an ungranted one is not returned. A scoped caller with no grant receives the unknown-entity 404 without either backend being read. An ungranted repo_id selector is rejected with 400 before any read.",
+        "x-scoped-token-support": true,
+        "operationId": "getCodeRelationships",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "anyOf": [
+                  {"required": ["entity_id"]},
+                  {"required": ["name"]}
+                ],
+                "properties": {
+                  "entity_id": {"type": "string"},
+                  "name": {
+                    "type": "string",
+                    "description": "Optional entity name fragment when entity_id is not available."
+                  },
+                  "repo_id": {
+                    "type": "string",
+                    "description": "Optional repository selector that scopes name resolution and the read. A scoped token naming a repository outside its grant is rejected with 400."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": ["incoming", "outgoing"],
+                    "description": "Optional relationship direction filter."
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "description": "Optional relationship type filter such as CALLS, IMPORTS, or REFERENCES."
+                  },
+                  "transitive": {
+                    "type": "boolean",
+                    "description": "When true, traverse transitive CALLS relationships instead of only one hop."
+                  },
+                  "max_depth": {
+                    "type": "integer",
+                    "description": "Maximum traversal depth for transitive CALLS lookups (default 5, max 10).",
+                    "default": 5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Entity relationships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entity_id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "labels": {"type": "array", "items": {"type": "string"}},
+                    "file_path": {"type": "string"},
+                    "repo_id": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "language": {"type": "string"},
+                    "start_line": {"type": "integer"},
+                    "end_line": {"type": "integer"},
+                    "metadata": {"type": "object", "additionalProperties": true},
+                    "outgoing": {"type": "array", "items": {"$ref": "#/components/schemas/Relationship"}},
+                    "incoming": {"type": "array", "items": {"$ref": "#/components/schemas/Relationship"}},
+                    "outgoing_truncated": {"type": "boolean", "description": "Always present. On the graph paths, true when more outgoing neighbours exist than were returned (the one-hop read hit the per-direction row ceiling, 500 on NornicDB). On the content fallback, true when a lookup reached its ceiling (the k8s SELECTS candidate scan, or a 20-row lookup for REFERENCES, PATCHES or CONTAINS edges), so the list may be incomplete; the cap is applied before any in-process filter, so it does not prove more neighbours exist. False when no ceiling was reached, when the direction filter excluded outgoing, when relationship_type excludes the clipped edge type, on the Neo4j and transitive paths, which have no row ceiling, and on the ambiguous-target answer, which returns no neighbours."},
+                    "incoming_truncated": {"type": "boolean", "description": "Always present. On the graph paths, true when more incoming neighbours exist than were returned (the one-hop read hit the per-direction row ceiling, 500 on NornicDB). On the content fallback, true when a lookup reached its ceiling (the k8s SELECTS candidate scan, or a 20-row lookup for REFERENCES, PATCHES or CONTAINS edges), so the list may be incomplete; the cap is applied before any in-process filter, so it does not prove more neighbours exist. False when no ceiling was reached, when the direction filter excluded incoming, when relationship_type excludes the clipped edge type, on the Neo4j and transitive paths, which have no row ceiling, and on the ambiguous-target answer, which returns no neighbours."}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/code/relationships/story": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Get a bounded code relationship story",
+        "description": "Resolves one target symbol or entity id, returns ambiguity candidates instead of guessing, and reads direct or bounded transitive relationships with deterministic pagination. Scoped tokens receive only granted repositories, in the relationships, the class-hierarchy enrichment and the ambiguity candidate list alike; an ungranted repository selector is rejected with 400.",
+        "operationId": "getCodeRelationshipStory",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "anyOf": [{"required": ["target"]}, {"required": ["entity_id"]}, {"required": ["query_type", "repo_id"], "properties": {"query_type": {"enum": ["overrides"]}}}],
+                "properties": {
+                  "query_type": {"type": "string", "enum": ["class_hierarchy", "overrides"], "description": "Optional story enrichment mode for class hierarchy or override prompts."},
+                  "target": {"type": "string", "description": "Symbol name to resolve when entity_id is omitted."},
+                  "name": {"type": "string", "description": "Alias for target."},
+                  "entity_id": {"type": "string", "description": "Canonical entity id to anchor the relationship query."},
+                  "repo_id": {"type": "string", "description": "Optional repository selector (canonical ID, name, slug, or path) for name resolution."},
+                  "cross_repo": {"type": "boolean", "description": "Explicit opt-in for bounded cross-repository traversal. Cross-repo relationship-story requests require repo_id as the anchor repository selector, including exact entity_id requests.", "default": false},
+                  "language": {"type": "string", "description": "Optional language filter for name resolution."},
+                  "direction": {"type": "string", "enum": ["incoming", "outgoing", "both"], "default": "both"},
+                  "relationship_type": {"type": "string", "enum": ["CALLS", "IMPORTS", "REFERENCES", "INHERITS", "OVERRIDES", "TAINT_FLOWS_TO"], "default": "CALLS"},
+                  "relationship_types": {"type": "array", "items": {"type": "string", "enum": ["CALLS", "IMPORTS", "REFERENCES", "INHERITS", "OVERRIDES", "TAINT_FLOWS_TO"]}, "description": "Optional additive multi-type filter; supersedes relationship_type and merges each type's bounded results. Not supported with include_transitive, class_hierarchy, or overrides."},
+                  "include_transitive": {"type": "boolean", "description": "When true, follows CALLS edges with bounded breadth-first traversal.", "default": false},
+                  "max_depth": {"type": "integer", "description": "Maximum transitive CALLS or class hierarchy depth (default 5, max 10).", "default": 5, "maximum": 10},
+                  "limit": {"type": "integer", "description": "Maximum relationship rows or ambiguity candidates (default 25, max 200).", "default": 25, "maximum": 200},
+                  "offset": {"type": "integer", "description": "Zero-based direct relationship offset.", "default": 0, "maximum": 10000},
+                  "min_confidence": {"type": "number", "description": "Optional confidence floor from 0 through 1. Omitted preserves low-confidence and missing-confidence rows; positive values keep only returned rows with numeric confidence at or above the floor.", "minimum": 0, "maximum": 1},
+                  "token_budget": {"type": "integer", "description": "Optional cap on the estimated response token cost. Applied after limit; trims rows to fit and reports what was cut with guidance to narrow.", "minimum": 0}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Relationship story",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "target_resolution": {"type": "object", "additionalProperties": true},
+                    "scope": {"type": "object", "additionalProperties": true},
+                    "relationships": {"type": "array", "items": {"$ref": "#/components/schemas/Relationship"}},
+                    "class_hierarchy": {"type": "object", "additionalProperties": true},
+                    "override_story": {"type": "object", "additionalProperties": true},
+                    "summary": {"type": "object", "additionalProperties": true},
+                    "coverage": {"type": "object", "additionalProperties": true, "properties": {
+                      "missing_edge_reason": {"type": "string", "enum": ["complete", "target_unresolved", "no_relationships_found", "all_below_confidence_floor", "truncated_by_limit", "truncated_by_token_budget"], "description": "Why the result is empty or short, so an agent need not guess. Descriptive only; never changes the answer's truth label."},
+                      "truncation_state": {"type": "string", "enum": ["none", "count", "token_budget", "count_and_token_budget"], "description": "Whether and how the result was capped."},
+                      "evidence_explanation": {"type": "string", "description": "Bounded human-readable explanation of the missing-edge reason."}
+                    }},
+                    "source_backend": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/code/call-chain": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Find transitive call chains",
+        "description": "Finds shortest call chains between two functions by following canonical CALLS edges. Scoped tokens receive only chains whose every hop is in a granted repository; an ungranted repository selector is rejected with 400.",
+        "operationId": "getCodeCallChain",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "start": {"type": "string", "description": "Exact caller function name when start_entity_id is omitted"},
+                  "end": {"type": "string", "description": "Exact callee function name when end_entity_id is omitted"},
+                  "start_entity_id": {"type": "string", "description": "Canonical caller entity id. Takes precedence over start when provided."},
+                  "end_entity_id": {"type": "string", "description": "Canonical callee entity id. Takes precedence over end when provided."},
+                  "repo_id": {"type": "string", "description": "Optional repository selector (canonical ID, name, slug, or path) to scope both endpoints to one repository."},
+                  "cross_repo": {"type": "boolean", "description": "Explicit opt-in for bounded cross-repository call-chain traversal.", "default": false},
+                  "start_repo_id": {"type": "string", "description": "Optional starting repository selector for cross-repo name resolution or endpoint verification."},
+                  "end_repo_id": {"type": "string", "description": "Optional ending repository selector for cross-repo name resolution or endpoint verification."},
+                  "max_depth": {"type": "integer", "description": "Maximum traversal depth (default 5, max 10)", "default": 5}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Call chain results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "start": {"type": "string"},
+                    "end": {"type": "string"},
+                    "start_entity_id": {"type": "string"},
+                    "end_entity_id": {"type": "string"},
+                    "repo_id": {"type": "string"},
+                    "cross_repo": {"type": "boolean"},
+                    "start_repo_id": {"type": "string"},
+                    "end_repo_id": {"type": "string"},
+                    "chains": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "depth": {"type": "integer"},
+                          "chain": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/EntityRef"}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/code/call-chain/compare": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Compare distinct call paths",
+        "description": "Compares up to K distinct simple call paths between two functions in one repository, shortest first with weakest-edge confidence per path. Bounded breadth-first traversal over anchored one-hop graph reads (depth at most 6, default 4; paths at most 20, default 5). Single-repo v1: repo_id is required and cross_repo is refused. Scoped tokens receive only paths whose every hop is in a granted repository; an ungranted repository selector is rejected with 400.",
+        "operationId": "compareCodeCallPaths",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "start": {"type": "string", "description": "Exact caller function name when start_entity_id is omitted"},
+                  "end": {"type": "string", "description": "Exact callee function name when end_entity_id is omitted"},
+                  "start_entity_id": {"type": "string", "description": "Canonical caller entity id. Takes precedence over start when provided."},
+                  "end_entity_id": {"type": "string", "description": "Canonical callee entity id. Takes precedence over end when provided."},
+                  "repo_id": {"type": "string", "description": "Required repository selector scoping both entities to one repository."},
+                  "max_depth": {"type": "integer", "description": "Maximum path depth (default 4, max 6)", "default": 4},
+                  "max_paths": {"type": "integer", "description": "Maximum distinct simple paths (default 5, max 20)", "default": 5}
+                },
+                "required": ["repo_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Compared call paths",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "start": {"type": "string"},
+                    "end": {"type": "string"},
+                    "start_entity_id": {"type": "string"},
+                    "end_entity_id": {"type": "string"},
+                    "repo_id": {"type": "string"},
+                    "paths": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "nodes": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/EntityRef"}
+                          },
+                          "depth": {"type": "integer"},
+                          "confidence": {"type": "number"}
+                        }
+                      }
+                    },
+                    "truncated": {"type": "boolean"},
+                    "max_depth": {"type": "integer"},
+                    "max_paths": {"type": "integer"},
+                    "visited": {"type": "integer"},
+                    "source_backend": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/api/v0/code/complexity": {
+      "post": {
+        "tags": ["code"],
+        "summary": "Get complexity metrics",
+        "description": "Returns relationship-based complexity metrics for an entity or a bounded list of the most complex functions. A repo_id sent with entity_id anchors that lookup to the named repository, so an entity id held by another repository returns 404; omit repo_id to look the entity up wherever it lives. A function_name sent alongside entity_id is not a fallback for that 404: the name answers a stale entity id only when the id lookup was bound to no repository, meaning no repo_id and an unscoped token. A repo_id sent without entity_id or function_name restricts the ranked list to that repository; omit it for a corpus-wide ranking, which also includes functions the graph attributes to no repository. Scoped tokens receive only granted repositories; an ungranted repository selector is rejected with HTTP 400. In list mode each returned row's docstring is clipped at read time; a single-entity lookup (entity_id or function_name) returns one row whose docstring is not clipped.",
+        "operationId": "getComplexity",
+        "x-scoped-token-support": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entity_id": {"type": "string"},
+                  "function_name": {"type": "string"},
+                  "repo_id": {"type": "string"},
+                  "limit": {"type": "integer", "default": 10, "minimum": 1, "maximum": 100}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/ServiceUnavailable"},
+          "504": {"$ref": "#/components/responses/GatewayTimeout"},
+          "200": {
+            "description": "Complexity metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entity_id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "labels": {"type": "array", "items": {"type": "string"}},
+                    "file_path": {"type": "string"},
+                    "repo_id": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "language": {"type": "string"},
+                    "start_line": {"type": "integer"},
+                    "end_line": {"type": "integer"},
+                    "metadata": {"type": "object", "additionalProperties": true},
+                    "outgoing_count": {"type": "integer"},
+                    "incoming_count": {"type": "integer"},
+                    "total_relationships": {"type": "integer"},
+                    "results": {"type": "array", "description": "Most-complex-function rows (list mode). Each row's docstring is clipped at read time to docstring_clip_bytes; a clipped row carries docstring_clipped, docstring_clip_bytes, and docstring_total_bytes.", "items": {"type": "object", "additionalProperties": true}},
+                    "limit": {"type": "integer"},
+                    "truncated": {"type": "boolean"},
+                    "docstring_clip_bytes": {"type": "integer", "description": "List mode only, always present there: the read-time docstring ceiling in bytes (512) applied to every row of results."},
+                    "docstring_clipped_rows": {"type": "integer", "description": "List mode only: number of returned rows whose docstring was clipped; 0 when none."}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "409": {"description": "Ambiguous function name; retry with entity_id from error.details.candidates"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+`

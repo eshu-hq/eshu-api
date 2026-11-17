@@ -7,31 +7,34 @@ import (
 	"testing"
 )
 
-// W8b-narrow relay-leg termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101). The 15
-// narrow-family routes mount natively in the W8b-narrow wave lane,
-// but their Decision 5(c) fragments stay core-side for this lane:
-// each entry lives in its owning core paths file (see
-// api/w8bnarrow_wave.go Fragment column), and porting any entry
-// without its referenced blocks would break the verbatim-port rule
-// scripts/check-parity.sh gates — so, like the W8a, drift, and G
-// lanes, the routes are disclosed spec absences (see
-// contracts/w8b-narrow-termination.md), not a port. A follow-up
-// spec-port lane claims the keys when it ports the entries
-// entry-shaped with their referenced schemas; until then no served
-// key duplicates a relayed route, and no mounted route promises what
-// the document does not carry.
+// W8b-narrow full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101). The 15 narrow-family routes mount natively in the W8b-narrow wave lane and their Decision 5(c) fragments now ride the served document; the D13 row-7 full-surface lane claims the keys the satellite termination lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesW8bNarrowWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/kubernetes/correlations":             {"get": "listKubernetesCorrelations"},
+		"/api/v0/observability/coverage/correlations": {"get": "listObservabilityCoverageCorrelations"},
+		"/api/v0/work-items/evidence":                 {"get": "listWorkItemEvidence"},
+		"/api/v0/semantic/code-hints":                 {"get": "listSemanticCodeHints"},
+		"/api/v0/semantic/documentation-observations": {"get": "listSemanticDocumentationObservations"},
+		"/api/v0/dependencies":                        {"get": "listDependencies"},
+		"/api/v0/graph/entities":                      {"get": "browseGraphEntityInventory"},
+		"/api/v0/images":                              {"get": "listContainerImages"},
+		"/api/v0/images/tag-history":                  {"get": "listContainerImageTagHistory"},
+		"/api/v0/incidents/{incident_id}/context":     {"get": "getIncidentContext"},
+		"/api/v0/runtime-declarations/query":          {"post": "listRuntimeVersionDeclarations"},
+		"/api/v0/cloud/inventory":                     {"get": "listCloudResourceInventory"},
+		"/api/v0/cloud/ssm-host-inventory":            {"get": "listSSMHostInventory"},
+		"/api/v0/service-catalog/correlations":        {"get": "listServiceCatalogCorrelations"},
+		"/api/v0/codeowners/ownership":                {"get": "listCodeownersOwnership"},
+	})
 
-// TestSpec_W8bNarrowStaysDisclosedAbsent pins the W8b-narrow spec
-// posture: the served document carries none of the 15 narrow keys
-// while the fragments stay core-side. Lifting any absence (porting
-// the entries) belongs to the follow-up spec-port lane, not to the
-// relay-leg termination.
-func TestSpec_W8bNarrowStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/kubernetes/correlations",
 		"/api/v0/observability/coverage/correlations",
@@ -49,8 +52,16 @@ func TestSpec_W8bNarrowStaysDisclosedAbsent(t *testing.T) {
 		"/api/v0/service-catalog/correlations",
 		"/api/v0/codeowners/ownership",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

@@ -472,15 +472,13 @@ func (s *Server) routes() *http.ServeMux {
 		mux.Handle(pattern, public)
 		mux.Handle(pattern+"/", public)
 	}
-	// Native spec (Decision 5(c)): the sign-in-policy, retirement,
-	// terminal-failure, admin-identity, and provider-config fragments
-	// landed in openapi/, so the assembled document is served from
-	// compiled constants ahead of the generic proxy — no core fetch,
-	// served even with no core origin configured.
+	// Native spec (Decision 5(c)): the family path fragments ported
+	// into openapi/ cover the full CUTOVER route surface, so the
+	// assembled document is served from compiled constants ahead of
+	// the generic proxy — no core fetch, served even with no core
+	// origin configured.
 	// It stays inside RequireAuth like every dest /api/* route (core
-	// serves it public; dest adds no new public surface here). The
-	// document serves exactly the landed families; the rest still relay
-	// from core only via their own routes, not via this endpoint.
+	// serves it public; dest adds no new public surface here).
 	mux.Handle("GET /api/v0/openapi.json", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(openapi.ServeSpec))))
 	mux.Handle("/api/", s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch))))
 	return mux

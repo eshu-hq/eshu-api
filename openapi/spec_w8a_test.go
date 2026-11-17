@@ -7,31 +7,35 @@ import (
 	"testing"
 )
 
-// W8a satellite termination spec posture (Refs eshu-hq/eshu#9669,
-// satellite eshu-hq/eshu-api#100). The 16 W8a routes mount natively
-// in their wave gate, but their Decision 5(c) fragments stay
-// core-side for this lane: each fragment is shaped as a mid-list
-// entry of its own assembled document, so a byte-identical satellite
-// port cannot concatenate mid-list — and a re-shaped satellite
-// subset would break the verbatim-port rule
-// scripts/check-parity.sh gates. The routes are therefore disclosed
-// spec absences (the same posture the Compare gap-04 lane records),
-// pinned below. A follow-up spec-port lane claims the keys when core
-// re-shapes a fragment or the lane ports it entry-shaped; until then
-// the served document is unchanged by this lane and no mounted route
-// promises what the document does not carry (see
-// contracts/w8a-termination.md).
+// W8a full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#100). The 16 W8a routes mount natively in their wave gate and their Decision 5(c) fragments now ride the served document; the D13 row-7 full-surface lane claims the keys the satellite termination lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesW8aWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/secrets-iam/identity-trust-chains":          {"get": "listSecretsIAMIdentityTrustChains"},
+		"/api/v0/secrets-iam/privilege-posture-observations": {"get": "listSecretsIAMPrivilegePostureObservations"},
+		"/api/v0/secrets-iam/secret-access-paths":            {"get": "listSecretsIAMSecretAccessPaths"},
+		"/api/v0/secrets-iam/posture-gaps":                   {"get": "listSecretsIAMPostureGaps"},
+		"/api/v0/secrets-iam/posture-summary":                {"get": "countSecretsIAMPosture"},
+		"/api/v0/status/governance":                          {"get": "getHostedGovernanceStatus"},
+		"/api/v0/status/answer-narration":                    {"get": "getAnswerNarrationStatus"},
+		"/api/v0/status/hosted-readiness":                    {"get": "getHostedReadiness"},
+		"/api/v0/aws/runtime-drift/findings":                 {"post": "listAWSRuntimeDriftFindings"},
+		"/api/v0/replatforming/selectors":                    {"get": "listReplatformingSelectors"},
+		"/api/v0/replatforming/rollups":                      {"post": "rollupReplatformingReadiness"},
+		"/api/v0/replatforming/plans":                        {"post": "composeReplatformingPlan"},
+		"/api/v0/replatforming/ownership-packets":            {"post": "composeReplatformingOwnershipPackets"},
+		"/api/v0/metrics/timeseries":                         {"get": "getMetricsTimeSeries"},
+		"/api/v0/search/semantic":                            {"post": "searchSemanticContext"},
+		"/api/v0/terraform/config-state-drift/findings":      {"post": "listTerraformConfigStateDriftFindings"},
+	})
 
-// TestSpec_W8aStaysDisclosedAbsent pins the W8a spec posture: the
-// served document carries none of the 16 W8a keys while the
-// fragments stay core-side. Lifting an absence (porting the
-// fragment) belongs to the follow-up spec-port lane, not to the
-// relay-leg termination.
-func TestSpec_W8aStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/secrets-iam/identity-trust-chains",
 		"/api/v0/secrets-iam/privilege-posture-observations",
@@ -50,8 +54,16 @@ func TestSpec_W8aStaysDisclosedAbsent(t *testing.T) {
 		"/api/v0/search/semantic",
 		"/api/v0/terraform/config-state-drift/findings",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

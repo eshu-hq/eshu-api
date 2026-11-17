@@ -12,8 +12,12 @@ import (
 	"github.com/eshu-hq/eshu-api/openapi/paths/cicd"
 	"github.com/eshu-hq/eshu-api/openapi/paths/cli"
 	"github.com/eshu-hq/eshu-api/openapi/paths/cloud"
+	"github.com/eshu-hq/eshu-api/openapi/paths/code"
+	dead "github.com/eshu-hq/eshu-api/openapi/paths/code/dead"
 	"github.com/eshu-hq/eshu-api/openapi/paths/evidence"
 	"github.com/eshu-hq/eshu-api/openapi/paths/freshness"
+	"github.com/eshu-hq/eshu-api/openapi/paths/iac"
+	"github.com/eshu-hq/eshu-api/openapi/paths/impact"
 	"github.com/eshu-hq/eshu-api/openapi/paths/infrastructure"
 	"github.com/eshu-hq/eshu-api/openapi/paths/repository"
 	"github.com/eshu-hq/eshu-api/openapi/paths/search"
@@ -54,7 +58,8 @@ import (
 // GETs (dispatch only, not termination), then the retire-unclaimed
 // writer lane: the never-claimed workflow retirement POST.
 // It advances as family lanes port their fragments; the served family
-// set is pinned by the Spec tests.
+// set is pinned by the Spec tests. The full-surface lane closes the
+// set: every CUTOVER route resolves in the served document.
 const SpecVersion = "v0"
 
 // specPrefix opens the served document: the protocol version, the
@@ -65,7 +70,7 @@ const specPrefix = `{
   "openapi": "3.0.3",
   "info": {
     "title": "Eshu API",
-    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D3 Gap 02 trio: the delta-union completeness, reindex progress, and shared-projection tuning-report GETs, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks, plus the D6 Status + SupplyChain reads wave: the snapshot-pure Status GETs and the 17 SupplyChain read GETs plus the phase-2 extra-port Status legs, plus the D7 admin-four tier-C clone lane: the backfill, dead-letter, reindex, and skip POSTs (dispatch only, not termination), plus the D8 session-resolver tier-C clone lane: the browser-session lifecycle, session-list, profile, local-identity, API-token, and TOTP routes (dispatch only, not termination), plus the D9 OIDC-login tier-C clone lane: the OIDC login start and callback GETs (dispatch only, not termination), plus the D9 GitHub-login tier-C clone lane: the GitHub login start and callback GETs (dispatch only, not termination), plus the retire-unclaimed writer lane: the never-claimed workflow retirement POST); every other family is still relayed from core until its lane ports its fragment.",
+    "description": "Native-dispatch satellite surface. This document serves exactly the families whose OpenAPI fragments have landed in this repository (sign-in-policy, retirement, terminal-failure, admin-identity mutations, admin-identity reads, provider-config mutations, admin-recovery, suppression, plus the D2 Leaf B Native-now wave: capabilities, CLI support, ask, service intelligence, auth providers, provider-config reads, and the served-spec self entry, plus the D3 admin/identity/recovery reads wave: the admin query POSTs and the invitations list GET, plus the D3 Gap 02 trio: the delta-union completeness, reindex progress, and shared-projection tuning-report GETs, plus the D4 Native-next wave: CICD, Documentation, Infra, PackageRegistry, Repositories, Evidence, InvestigationWorkflows, and Playbooks, plus the D6 Status + SupplyChain reads wave: the snapshot-pure Status GETs and the 17 SupplyChain read GETs plus the phase-2 extra-port Status legs, plus the D7 admin-four tier-C clone lane: the backfill, dead-letter, reindex, and skip POSTs (dispatch only, not termination), plus the D8 session-resolver tier-C clone lane: the browser-session lifecycle, session-list, profile, local-identity, API-token, and TOTP routes (dispatch only, not termination), plus the D9 OIDC-login tier-C clone lane: the OIDC login start and callback GETs (dispatch only, not termination), plus the D9 GitHub-login tier-C clone lane: the GitHub login start and callback GETs (dispatch only, not termination), plus the retire-unclaimed writer lane: the never-claimed workflow retirement POST); the document now covers the full CUTOVER route surface.",
     "version": "` + SpecVersion + `",
     "contact": {
       "name": "Eshu"
@@ -114,8 +119,14 @@ const specPrefix = `{
 // clone lane appends after the OIDC entry (GitHubLogin); the D9
 // SAML-login tier-C clone lane appends after the GitHub entry
 // (SAMLLogin); the retire-unclaimed writer lane appends after the
-// SAML entry (WorkflowRetireUnclaimed), and the served-spec self
-// entry keeps the trim last.
+// SAML entry (WorkflowRetireUnclaimed); the full-surface lane appends
+// after the retire-unclaimed entry (Setup, ComponentExtensions,
+// SurfaceInventory, the CloudInventory reads, Code, DeadCode, the
+// Investigation packets, WorkItem, IaC, Impact, the remaining Infra
+// reads, Dependencies, RepositoryStory, Entities, Semantic,
+// ServiceCatalog, the remaining Status reads, and the remaining
+// SupplyChain reads), and the served-spec self entry keeps the trim
+// last.
 func familyPaths() string {
 	return strings.TrimSpace(auth.SignInPolicy) + "\n" +
 		strings.TrimSpace(status.RepositoryRetirement) + "\n" +
@@ -193,6 +204,61 @@ func familyPaths() string {
 		strings.TrimSpace(auth.GitHubLogin) + "\n" +
 		strings.TrimSpace(auth.SAMLLogin) + "\n" +
 		strings.TrimSpace(status.WorkflowRetireUnclaimed) + "\n" +
+		strings.TrimSpace(auth.Setup) + "\n" +
+		strings.TrimSpace(catalog.ComponentExtensions) + "\n" +
+		strings.TrimSpace(catalog.SurfaceInventory) + "\n" +
+		strings.TrimSpace(cloud.Inventory) + "\n" +
+		strings.TrimSpace(cloud.SSMHostInventory) + "\n" +
+		strings.TrimSpace(cloud.RuntimeDrift) + "\n" +
+		strings.TrimSpace(cloud.AWSRuntimeDrift) + "\n" +
+		strings.TrimSpace(code.Routes) + "\n" +
+		strings.TrimSpace(code.Graph) + "\n" +
+		strings.TrimSpace(code.Quality) + "\n" +
+		strings.TrimSpace(code.Divergence) + "\n" +
+		strings.TrimSpace(code.Security) + "\n" +
+		strings.TrimSpace(dead.Scan) + "\n" +
+		strings.TrimSpace(dead.Investigation) + "\n" +
+		strings.TrimSpace(dead.CrossRepo) + "\n" +
+		strings.TrimSpace(code.Symbols) + "\n" +
+		strings.TrimSpace(code.Flow) + "\n" +
+		strings.TrimSpace(code.Owners) + "\n" +
+		strings.TrimSpace(code.RouteToCaller) + "\n" +
+		strings.TrimSpace(evidence.IncidentContext) + "\n" +
+		strings.TrimSpace(evidence.InvestigationPackets) + "\n" +
+		strings.TrimSpace(evidence.WorkItem) + "\n" +
+		strings.TrimSpace(evidence.VisualizationPackets) + "\n" +
+		strings.TrimSpace(iac.Routes) + "\n" +
+		strings.TrimSpace(iac.Resources) + "\n" +
+		strings.TrimSpace(iac.TerraformConfigStateDrift) + "\n" +
+		strings.TrimSpace(iac.ReplatformingSelectors) + "\n" +
+		strings.TrimSpace(iac.ReplatformingRollups) + "\n" +
+		strings.TrimSpace(iac.Replatforming) + "\n" +
+		strings.TrimSpace(iac.ReplatformingOwnership) + "\n" +
+		strings.TrimSpace(impact.Routes) + "\n" +
+		strings.TrimSpace(impact.Contract) + "\n" +
+		strings.TrimSpace(impact.Rest) + "\n" +
+		strings.TrimSpace(impact.Exposure) + "\n" +
+		strings.TrimSpace(infrastructure.Kubernetes) + "\n" +
+		strings.TrimSpace(infrastructure.ObservabilityCoverage) + "\n" +
+		strings.TrimSpace(infrastructure.SecretsIAM) + "\n" +
+		strings.TrimSpace(repository.Dependencies) + "\n" +
+		strings.TrimSpace(repository.ManifestDependencies) + "\n" +
+		strings.TrimSpace(repository.RepositoryStory) + "\n" +
+		strings.TrimSpace(repository.RuntimeDeclarations) + "\n" +
+		strings.TrimSpace(search.Entities) + "\n" +
+		strings.TrimSpace(search.GraphEntities) + "\n" +
+		strings.TrimSpace(search.SemanticEvidence) + "\n" +
+		strings.TrimSpace(search.Semantic) + "\n" +
+		strings.TrimSpace(service.Catalog) + "\n" +
+		strings.TrimSpace(status.AnswerNarration) + "\n" +
+		strings.TrimSpace(status.CollectorExtractionReadiness) + "\n" +
+		strings.TrimSpace(status.Compare) + "\n" +
+		strings.TrimSpace(status.FactSchemaVersion) + "\n" +
+		strings.TrimSpace(status.Governance) + "\n" +
+		strings.TrimSpace(status.HostedReadiness) + "\n" +
+		strings.TrimSpace(status.Metrics) + "\n" +
+		strings.TrimSpace(supplychain.Images) + "\n" +
+		strings.TrimSpace(supplychain.TagHistory) + "\n" +
 		strings.TrimSuffix(strings.TrimSpace(status.OpenAPISpec), ",") + "\n"
 }
 

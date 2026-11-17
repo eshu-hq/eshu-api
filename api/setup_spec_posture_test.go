@@ -13,10 +13,11 @@ import (
 )
 
 // TestSetupSpecPosture_StaysCoreSide pins the eshu-api#44 outcome: the
-// setup OpenAPI fragment stays core-side. The dest-served
+// setup OpenAPI fragment now rides the served document with its core
+// public-route markers intact. The dest-served
 // GET /api/v0/openapi.json stays inside RequireAuth (like every other
-// dest /api/* route), so it serves no setup path keys; the four C-c1
-// carve-out routes stay public alongside it. A future lane that ports
+// dest /api/* route); the four C-c1 carve-out routes stay public
+// alongside it. A future lane that ports
 // the core setup fragment (whose operations all carry "security": [])
 // must revisit this posture instead of landing silently: embedding
 // public-route docs in the authed spec would misrepresent posture, and
@@ -84,39 +85,41 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 		"/api/v0/auth/setup/admin",
 		"/api/v0/auth/setup/mfa",
 	} {
-		if _, ok := paths[path]; ok {
-			t.Errorf("served spec contains %s, want core-side only (eshu-api#44)", path)
+		if _, ok := paths[path]; !ok {
+			t.Errorf("served spec lacks %s, want the full-surface setup keys served", path)
 		}
 	}
-	// D2 Leaf B revisit (recorded, not silent): the auth-providers
-	// entry truthfully carries core's `"security": []` public-route
-	// marker — the login-picker GET is permanently public pre-auth and
-	// this lane terminates it publicly, so stripping the marker would
-	// make the served spec lie about the route's posture. That differs
-	// from the setup fragment (#44): the wizard is a temporary
-	// first-run flow whose docs stay core-side entirely. The posture
-	// rule is therefore per-entry now: no setup path keys, and a
-	// security marker only on the permanently-public login-picker
-	// entry. The next lane that ports another public-marked fragment
-	// revisits this test again.
-	// D4 Native-next revisit (recorded, not silent): match the marker
-	// key with an empty-array value (`"security":[]` in the re-marshaled
-	// form), not the bare word — the infra fragment ports a
-	// resource_kind enum value named "security" that is not a
-	// public-route posture marker.
-	providersMarked := false
+	// Marker rule (per-entry, truthful): the setup wizard routes and
+	// the login-picker GET are public pre-auth in dest (the C-c1
+	// carve-out plus the permanent picker), so their entries carry
+	// core's `"security": []` public-route markers intact — stripping a
+	// marker would make the served spec lie about the route's posture.
+	// No authed route may carry a marker. Match the marker key with an
+	// empty-array value (`"security":[]` in the re-marshaled form), not
+	// the bare word — the infra fragment ports a resource_kind enum
+	// value named "security" that is not a public-route posture marker.
+	marked := map[string]bool{}
 	for path, item := range paths {
 		rawItem, _ := json.Marshal(item)
 		if !strings.Contains(string(rawItem), `"security":[]`) {
 			continue
 		}
-		if path != "/api/v0/auth/providers" {
-			t.Errorf("served spec entry %s carries a security marker, want markers only on the public login-picker entry", path)
+		marked[path] = true
+	}
+	for _, path := range []string{
+		"/api/v0/auth/providers",
+		"/api/v0/auth/setup-state",
+		"/api/v0/auth/setup/claim",
+		"/api/v0/auth/setup/admin",
+		"/api/v0/auth/setup/mfa",
+	} {
+		if !marked[path] {
+			t.Errorf("served spec entry %s carries no security marker, want core's truthful public-route marker intact (stripping it would lie about the route's posture)", path)
 			continue
 		}
-		providersMarked = true
+		delete(marked, path)
 	}
-	if !providersMarked {
-		t.Errorf("served spec entry /api/v0/auth/providers carries no security marker, want core's truthful public-route marker intact (stripping it would lie about the route's posture)")
+	for path := range marked {
+		t.Errorf("served spec entry %s carries a security marker, want markers only on the public setup and login-picker entries", path)
 	}
 }

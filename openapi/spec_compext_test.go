@@ -7,37 +7,35 @@ import (
 	"testing"
 )
 
-// Wave-1b relay-leg termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101). The 2
-// component-extension routes mount natively in the Wave-1b lane, but
-// their Decision 5(c) fragment stays core-side for this lane: the
-// entry lives in its owning core paths file (see
-// api/compext_wave.go Fragment column), and porting the entry
-// without its referenced blocks would break the verbatim-port rule
-// scripts/check-parity.sh gates — so, like the W8b-narrow, W8a,
-// drift, and G lanes, the routes are disclosed spec absences (see
-// contracts/component-extension-termination.md), not a port. A
-// follow-up spec-port lane claims the keys when it ports the entries
-// entry-shaped with their referenced schemas; until then no served
-// key duplicates a relayed route, and no mounted route promises what
-// the document does not carry.
+// Wave-1b full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#101). The two component-extension routes mount natively in the Wave-1b lane and their Decision 5(c) fragment (component_extensions.go) now rides the served document; the D13 row-7 full-surface lane claims the keys the lane disclosed absent.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesCompextWave(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/component-extensions":                            {"get": "listComponentExtensions"},
+		"/api/v0/component-extensions/{component_id}/diagnostics": {"get": "getComponentExtensionDiagnostics"},
+	})
 
-// TestSpec_CompextStaysDisclosedAbsent pins the Wave-1b spec
-// posture: the served document carries neither component-extension
-// key while the fragment stays core-side. Lifting an absence
-// (porting the entry) belongs to the follow-up spec-port lane, not
-// to the relay-leg termination.
-func TestSpec_CompextStaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/component-extensions",
 		"/api/v0/component-extensions/{component_id}/diagnostics",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

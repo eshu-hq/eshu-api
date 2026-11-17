@@ -7,46 +7,43 @@ import (
 	"testing"
 )
 
-// W5 entity/impact/story/packet termination spec posture (Refs
-// eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97). 20 of the 24 W5
-// routes terminate natively; the entity context fallback leg, the two
-// code-surface adapter legs, and the investigations service leg hold
-// on explicit relay, but their Decision 5(c) fragments stay core-side
-// for this lane: the entity entries live in
-// go/internal/query/openapi/paths/search/entities.go, the
-// impact entries live in
-// go/internal/query/openapi/paths/impact/routes.go, contract.go,
-// deployment_config_influence.go, exposure.go, and rest.go, the story
-// entry interpolates the shared schema.EvidenceBoundaries helper, and
-// the packet entry lives in
-// go/internal/query/openapi/paths/evidence/investigations.go.
-// Porting any entry without its referenced blocks would break the
-// verbatim-port rule scripts/check-parity.sh gates — so, like the
-// gap-04 Compare, W6a Code-flow, W4 search, G-a graph, dead-code,
-// divergence, G-b relationship, W8a, and drift lanes, the routes are
-// disclosed spec absences (see contracts/entity-termination.md,
-// contracts/impact-termination.md,
-// contracts/repository-story-termination.md, and
-// contracts/supply-chain-impact-packet-termination.md), not a port. A
-// follow-up spec-port lane claims the keys when it ports the entries
-// entry-shaped with their referenced schemas; until then no served
-// key duplicates a relayed or terminated route, and no mounted route
-// promises what the document does not carry. The story absence moves
-// here from TestSpec_D4DisclosedOmissions with this lane: it is no
-// longer relay-only, it is disclosed-absent-as-terminated. The packet
-// absence moves here the same way: it is no longer relay-only
-// (D4 disclosed omission), it is disclosed-absent-as-terminated with
-// the Decision 2 corpus closed in-lane.
+// W5 entity/impact/story/packet full-surface spec proof (Refs eshu-hq/eshu#9669, satellite eshu-hq/eshu-api#97). The 24 W5 routes terminate natively and their Decision 5(c) fragments (entities.go, the impact package, repository_story.go, investigation_packets.go) now ride the served document with their referenced schemas and the vendored schema helpers; the D13 row-7 full-surface lane claims the keys the lane disclosed absent-as-terminated.
+//
+// The lossless-assembly property holds for the lane keys: the
+// served path objects equal the ported fragments parsed path
+// objects, so the only reviewed delta to the pinned core
+// fragments is the fragment files themselves (gated
+// byte-identical or line-verbatim by scripts/check-parity.sh).
+func TestSpec_ServesW5Waves(t *testing.T) {
+	assertServedPaths(t, map[string]map[string]string{
+		"/api/v0/entities/resolve":                              {"post": "resolveEntity"},
+		"/api/v0/entities/{entity_id}/context":                  {"get": "getEntityContext"},
+		"/api/v0/workloads/{workload_id}/context":               {"get": "getWorkloadContext"},
+		"/api/v0/workloads/{workload_id}/story":                 {"get": "getWorkloadStory"},
+		"/api/v0/services/{service_name}/context":               {"get": "getServiceContext"},
+		"/api/v0/services/{service_name}/story":                 {"get": "getServiceStory"},
+		"/api/v0/services/{service_name}/api-surface/endpoints": {"get": "listServiceAPIEndpoints"},
+		"/api/v0/services/{service_name}/downstream-consumers":  {"get": "listServiceDownstreamConsumers"},
+		"/api/v0/investigations/services/{service_name}":        {"get": "investigateService"},
+		"/api/v0/impact/trace-deployment-chain":                 {"post": "traceDeploymentChain"},
+		"/api/v0/impact/blast-radius":                           {"post": "findBlastRadius"},
+		"/api/v0/impact/change-surface":                         {"post": "findChangeSurface"},
+		"/api/v0/impact/change-surface/investigate":             {"post": "investigateChangeSurface"},
+		"/api/v0/impact/contracts":                              {"post": "investigateContractImpact"},
+		"/api/v0/impact/deployment-config-influence":            {"post": "investigateDeploymentConfigInfluence"},
+		"/api/v0/impact/trace-exposure-path":                    {"post": "traceExposurePath"},
+		"/api/v0/impact/pre-change":                             {"post": "analyzePreChangeImpact"},
+		"/api/v0/impact/developer-change-plan":                  {"post": "planDeveloperChange"},
+		"/api/v0/impact/entity-map":                             {"post": "entityMap"},
+		"/api/v0/impact/resource-investigation":                 {"post": "investigateResource"},
+		"/api/v0/impact/trace-resource-to-code":                 {"post": "traceResourceToCode"},
+		"/api/v0/impact/explain-dependency-path":                {"post": "explainDependencyPath"},
+		"/api/v0/repositories/{repo_id}/story":                  {"get": "getRepositoryStory"},
+		"/api/v0/investigations/supply-chain/impact/packet":     {"get": "getSupplyChainImpactPacket"},
+	})
 
-// TestSpec_W5StaysDisclosedAbsent pins the W5 spec posture: the served
-// document carries none of the 24 W5 keys while the fragments stay
-// core-side. Lifting any absence (porting the entries) belongs to the
-// follow-up spec-port lane, not to the relay-leg termination.
-func TestSpec_W5StaysDisclosedAbsent(t *testing.T) {
-	t.Parallel()
-
+	fragment := decodePaths(t, `{"paths": {`+familyPaths()+`  }}`)
 	served := decodePaths(t, Spec())
-
 	for _, path := range []string{
 		"/api/v0/entities/resolve",
 		"/api/v0/entities/{entity_id}/context",
@@ -73,8 +70,16 @@ func TestSpec_W5StaysDisclosedAbsent(t *testing.T) {
 		"/api/v0/repositories/{repo_id}/story",
 		"/api/v0/investigations/supply-chain/impact/packet",
 	} {
-		if _, ok := served[path]; ok {
-			t.Errorf("served spec carries %s, want it disclosed-absent until the follow-up spec-port lane", path)
+		want, ok := fragment[path]
+		if !ok {
+			t.Fatalf("fragment lacks %s", path)
+		}
+		got, ok := served[path].(map[string]any)
+		if !ok {
+			t.Fatalf("served spec lacks %s", path)
+		}
+		if !jsonEqual(got, want) {
+			t.Errorf("served %s differs from the ported fragment", path)
 		}
 	}
 }

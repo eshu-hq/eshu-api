@@ -15,9 +15,9 @@ import (
 // stats/coverage, freshness, evidence bundle, investigation workflows,
 // playbooks) and three line-verbatim subsets (evidence routes without
 // the dangling 501, the deployable-unit packet entry, the repository
-// routes without the mux-health entry and the terminated story entry
-// (the story GET terminates in the W5 story lane; its absence is
-// disclosed there).
+// routes without the mux-health entry (the story entry rides
+// repository_story.go now that the schema helper ports in-package;
+// see TestSpec_ServesW5Waves).
 // Byte identity of every ported line rides scripts/check-parity.sh;
 // these tests pin the served assembly around those bytes.
 //
@@ -31,7 +31,7 @@ import (
 // TestSpec_ServesD4Families pins the native-spec contract for the D4
 // families: the assembled document is valid JSON and carries every
 // served D4 path key with its pinned operationId (where the fragment
-// names one), while the disclosed omissions stay out.
+// names one).
 func TestSpec_ServesD4Families(t *testing.T) {
 	t.Parallel()
 
@@ -135,14 +135,10 @@ func TestSpec_ServesD4Families(t *testing.T) {
 
 // TestSpec_D4DisclosedOmissions pins the documented spec gaps so they
 // cannot silently widen: the admission-decisions 501 (dangling core
-// $ref) and the relay-only packets sharing the investigations file.
-// (The drift packet left this list in the Wave-4 Drift lane: it is
-// disclosed-absent there, pinned by
-// TestSpec_DriftStaysDisclosedAbsent. The story key left this list in
-// the W5 story lane: the route terminates there and its absence is
-// disclosed-absent-as-terminated, pinned by
-// TestSpec_W5StaysDisclosedAbsent. The supply-chain impact packet key
-// left this list in the W5 packet lane the same way.)
+// $ref). The drift, supply-chain impact, and services packets that
+// shared the investigations file left this list in the full-surface
+// lane: every investigations key is served now (see
+// TestSpec_ServesDriftWave, TestSpec_ServesW5Waves).
 func TestSpec_D4DisclosedOmissions(t *testing.T) {
 	t.Parallel()
 
@@ -150,9 +146,6 @@ func TestSpec_D4DisclosedOmissions(t *testing.T) {
 
 	if _, ok := served["/health"]; ok {
 		t.Errorf("served spec carries the mux-health entry, want it core-side only (dest serves its own probe shape)")
-	}
-	if _, ok := served["/api/v0/investigations/services/{service_name}"]; ok {
-		t.Errorf("served spec carries the services packet, want it relay-only until its lane")
 	}
 
 	// The admission-decisions entry serves without the dangling 501:
