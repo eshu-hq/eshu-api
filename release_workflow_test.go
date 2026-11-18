@@ -128,7 +128,7 @@ func TestReleaseTagGuardsRunBeforeAnyBuildOrPush(t *testing.T) {
 }
 
 // TestReleaseKeepsPublishSteps guards against a guard edit dropping the
-// attestation, SBOM, scan, or Release steps.
+// attestation, SBOM, scan, binary, or Release steps.
 func TestReleaseKeepsPublishSteps(t *testing.T) {
 	text := stripComments(readFile(t, releaseWorkflow))
 	for _, want := range []string{
@@ -137,8 +137,13 @@ func TestReleaseKeepsPublishSteps(t *testing.T) {
 		"actions/attest@",
 		"gh attestation verify",
 		"aquasecurity/trivy-action@",
+		"actions/setup-go@",
+		"name: eshu-api-binaries",
+		"dist/eshu-api-linux-amd64",
+		"dist/eshu-api-linux-arm64",
 		"softprops/action-gh-release@",
-		"files: dist/eshu-api-image-spdx.json",
+		"files:",
+		"dist/eshu-api-image-spdx.json",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("release.yml lost %q", want)
