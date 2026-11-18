@@ -2,7 +2,7 @@
 #
 # Pushes to main and tags `v*` publish `ghcr.io/eshu-hq/eshu-api` images
 # with SLSA provenance, an SPDX SBOM, SBOM attestation, and a Trivy
-# vulnerability gate, and cross-compile the `eshu-api` binary for
+# vulnerability gate, and cross-compiles the `eshu-api` binary for
 # linux/amd64+arm64 (matching IMAGE_PLATFORMS). Version-tag pushes
 # additionally cut a GitHub Release carrying the SBOM and both binaries.
 # PRs never push: the `image` lane in ci.yml proves the
