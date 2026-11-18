@@ -2,8 +2,10 @@
 #
 # Pushes to main and tags `v*` publish `ghcr.io/eshu-hq/eshu-api` images
 # with SLSA provenance, an SPDX SBOM, SBOM attestation, and a Trivy
-# vulnerability gate. Version-tag pushes additionally cut a GitHub Release
-# carrying the SBOM. PRs never push: the `image` lane in ci.yml proves the
+# vulnerability gate, and cross-compile the `eshu-api` binary for
+# linux/amd64+arm64 (matching IMAGE_PLATFORMS). Version-tag pushes
+# additionally cut a GitHub Release carrying the SBOM and both binaries.
+# PRs never push: the `image` lane in ci.yml proves the
 # Dockerfile still builds, and this workflow pushes only on push events
 # (main branch or version tag). Publish steps gate on the push event (not
 # the ref type), so a manual dispatch on any ref, tag or branch, builds
@@ -30,6 +32,7 @@
 #   softprops/action-gh-release v2       3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
 #   actions/download-artifact v4         d3f86a106a0bac45b974a628896c90dbdf5c8093
 #   actions/upload-artifact v7.0.2       cf430e030ddbb5b0abf93d22962f4752f3646cd9
+#   actions/setup-go v6.5.0              924ae3a1cded613372ab5595356fb5720e22ba16
 
 name: release
 
@@ -182,6 +185,35 @@ jobs:
           gh attestation verify "${OCI_IMAGE_REF}" -R "${GITHUB_REPOSITORY}" \
             --predicate-type https://spdx.dev/Document/v2.3
 
+  build-binary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+      - name: Build release binaries (linux/amd64+arm64)
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH="${arch}" go build -trimpath -o "dist/eshu-api-linux-${arch}" ./cmd/eshu-api
+          done
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: eshu-api-binaries
+          path: dist/eshu-api-linux-*
+          retention-days: 14
+          if-no-files-found: error
+
   trivy:
     needs: [build-and-push]
     if: github.event_name == 'push'
@@ -215,7 +247,7 @@ jobs:
           if-no-files-found: error
 
   github-release:
-    needs: [build-and-push, trivy]
+    needs: [build-and-push, trivy, build-binary]
     if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -228,12 +260,21 @@ jobs:
         with:
           name: eshu-api-image-spdx.json
           path: dist
-      - name: Cut GitHub Release with SBOM
+      - name: Download binary artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: eshu-api-binaries
+          path: dist
+      - name: Cut GitHub Release with SBOM and binaries
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
-          files: dist/eshu-api-image-spdx.json
+          files: |
+            dist/eshu-api-image-spdx.json
+            dist/eshu-api-linux-amd64
+            dist/eshu-api-linux-arm64
           generate_release_notes: true
           body: |
             Image: `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.digest }}`
+            Binaries: `eshu-api-linux-amd64` and `eshu-api-linux-arm64` (CGO_ENABLED=0, `-trimpath`).
             Provenance and SBOM attestations are attached to the image in GHCR.
             Scan: Trivy HIGH/CRITICAL gate passed on this digest.
