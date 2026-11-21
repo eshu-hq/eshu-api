@@ -82,17 +82,15 @@ families' standing, unchanged.
 
 ## Explicitly OUT (not widened by this pin)
 
-- The findings-only comment embedded in the pin file at the mint:
-  the file says "divergence findings ONLY (per the arbiter
-  supplemental ruling on eshu-hq/eshu-api#125)". The ruling quoted on
-  the issue covers all 3 routes (per-route census verified for
-  findings/investigate/report, both graph tracks, one pin), and the
-  mint PR records that "one pin covers findings, investigate, and
-  report" — the same 6 methods the frozen list pins. This lane
-  consumes the pin for exactly those 3 routes and cites the ruling
-  and the mint record, not the file comment, as the scope basis. A
-  core follow-up clarifying the comment is owed to the core side, not
-  to this lane.
+- The findings-only comment formerly embedded in the pin file at the mint
+  said "divergence findings ONLY (per the arbiter supplemental ruling on
+  eshu-hq/eshu-api#125)". The ruling quoted on the issue covers all
+  3 routes (per-route census verified for findings/investigate/report,
+  both graph tracks, one pin), and the mint PR records that "one pin
+  covers findings, investigate, and report" — the same 6 methods the
+  frozen list pins. The core follow-up (eshu-hq/eshu#10664) clarified
+  the pin comments to the three-route scope; this lane's upstream
+  copies carry the clarified wording byte-identical to core.
 - Every other `GraphQuery` method (`RunSingle` and the rest): this
   pin adopts `Run` only; a new graph method is adopted only by
   deliberate re-declaration plus a frozen-list update.
