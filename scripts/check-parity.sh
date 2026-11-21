@@ -43,7 +43,7 @@ SRC_SHA_W3SUPP="d9deb65433e8c3c2ed29a242aeaccec83a9c33e3"
 SRC_SHA_DEAD="8b28c0dba5f12c3b1b11c90fac6b24cfe5d82875"
 SRC_SHA_GRAPH="0fd6db6deb38beaa9327ba015af5bd279729f8ae"
 SRC_SHA_DEADCODE="589d55ec024e0bdd7699176c04711b056b8af871"
-SRC_SHA_DIVERGENCE="d584e3897ed029611a0c2224edae282a591e0b34"
+SRC_SHA_DIVERGENCE="aa4937529ff43c524c946aa229602117253ecfbc"
 SRC_SHA_RELATIONSHIPS="8ee32698669a6b83012dc63c1ccb7c4038230c13"
 SRC_SHA_W8BNARROW="76240fda9fb363667faa140597066b0500086464"
 SRC_SHA_W5ENTITYIMPACT="76240fda9fb363667faa140597066b0500086464"
@@ -1686,11 +1686,11 @@ check_excerpt_at "$SRC_SHA_DEADCODE" "contracts/upstream/code-dead-code-read-wir
 # the pin file.
 check_file_at "$SRC_SHA_DIVERGENCE" "go/internal/query/codequery/code_divergence_read_admission.go" \
   "contracts/upstream/code_divergence_read_admission.go" \
-  "38ea53daa80291b1adc5a63c01e98a87310c7ebfb6a22679cb3323593086fd50"
+  "e908040b95cce2b5ecebb493c92f5b9e80fd9d0a808d1ef05a7776db09af47fe"
 
 check_file_at "$SRC_SHA_DIVERGENCE" "go/internal/query/codequery/code_divergence_read_admission_contract_test.go" \
   "contracts/upstream/code_divergence_read_admission_contract_test.go" \
-  "869d84a35deb8f02b508dab7f5370294ca263a11cf4b44201862e3f991c4c759"
+  "8dd39b6d041e797dbc68f8e45732eae1c6d3fed3f90d2b7d614a139ffaad675a"
 
 check_excerpt_at "$SRC_SHA_DIVERGENCE" "contracts/upstream/code-divergence-read-wire-shapes.txt" \
   "go/internal/query/codequery/code_divergence_read_admission.go"
