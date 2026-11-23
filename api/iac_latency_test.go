@@ -134,14 +134,24 @@ func BenchmarkIaCResourcesRead(b *testing.B) {
 // either way. The 10k leg answers the same worst-case derived page
 // as the dead derived leg, so the large-page comparison is
 // same-shape.
+// iacRelayPost builds the re-pointed relay leg shared by the benchmarks
+// and the StaysRelayed guard: foreign-bearer POST change-surface on its
+// wave-mounted route. All users must use this constructor so deleting the
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func iacRelayPost(bearer string) *http.Request {
+	req := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	req.Header.Set("Authorization", "Bearer "+bearer)
+	return req
+}
+
 func BenchmarkIaCRelayRead(b *testing.B) {
 	b.Run("post-relay", func(b *testing.B) {
 		_, srv := iacBenchServer(b, `{"data":{"total":0},"error":null}`)
 		handler := srv.Handler(DefaultV0Sunset)
 
 		b.ReportAllocs()
-		req := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-		req.Header.Set("Authorization", "Bearer foreign")
+		req := iacRelayPost("foreign")
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req.Clone(req.Context()))
@@ -152,8 +162,7 @@ func BenchmarkIaCRelayRead(b *testing.B) {
 		handler := srv.Handler(DefaultV0Sunset)
 
 		b.ReportAllocs()
-		req := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-		req.Header.Set("Authorization", "Bearer foreign")
+		req := iacRelayPost("foreign")
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req.Clone(req.Context()))

@@ -72,15 +72,30 @@ func BenchmarkD3TerminatedRead(b *testing.B) {
 // terminated natively for the shared key — dependencies in
 // W8b-narrow, change-surface in the impact lane's Wave-3 — so the
 // shared-key shape would run terminated-vs-terminated).
+// d3RelayGet and d3RelayPost build the re-pointed relay legs shared by
+// the benchmark and the StaysRelayed guard: foreign-bearer legs on their
+// wave-mounted routes. Both must use these constructors so deleting a
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func d3RelayGet(bearer string) *http.Request {
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer "+bearer)
+	return get
+}
+
+func d3RelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
+	return post
+}
+
 func BenchmarkD3RelayRead(b *testing.B) {
 	_, srv := d3BenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
-	get.Header.Set("Authorization", "Bearer foreign")
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-	post.Header.Set("Authorization", "Bearer foreign")
-	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
+	get := d3RelayGet("foreign")
+	post := d3RelayPost("foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

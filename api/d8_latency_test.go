@@ -112,12 +112,27 @@ func BenchmarkD8NativeRead(b *testing.B) {
 // terminated-vs-terminated). The legs compare different routes by
 // necessity (the D8 paths now clone); both do exactly one
 // server-side fetch, so the 1.50 bound stays a real pathology check.
+// d8RelayPost and d8RelayGet build the re-pointed relay legs shared by
+// the benchmarks and the StaysRelayed guard: foreign-bearer legs on their
+// wave-mounted routes. Both must use these constructors so deleting a bearer
+// breaks the guard instead of silently restoring terminated-vs-terminated.
+func d8RelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
+func d8RelayGet(bearer string) *http.Request {
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer "+bearer)
+	return get
+}
+
 func BenchmarkD8RelayWrite(b *testing.B) {
 	_, srv := d8BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-	post.Header.Set("Authorization", "Bearer foreign")
+	post := d8RelayPost("foreign")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
@@ -138,8 +153,7 @@ func BenchmarkD8RelayRead(b *testing.B) {
 	_, srv := d8BenchServer(b, `{"dependencies":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
-	get.Header.Set("Authorization", "Bearer foreign")
+	get := d8RelayGet("foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

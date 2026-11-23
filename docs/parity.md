@@ -38,9 +38,8 @@ after the move.
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
   SupplyChain read GETs plus the 3 phase-2 extra-port Status legs, with
-  the remaining extra-port Status aspects, the impact packet,
-  with the three extra-port Status aspects terminated natively in the W8a
-  lane, the impact packet and the suppressions mutation row staying relay
+  the three extra-port Status aspects terminated natively in the W8a lane
+  and the impact packet and the suppressions mutation row staying relay
   by disclosure) terminates natively per
   `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
   v0`, `SupplyChainReadAdmission v0`, and (phase 2)

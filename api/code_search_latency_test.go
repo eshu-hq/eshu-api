@@ -79,6 +79,19 @@ func BenchmarkCodeSearchTerminatedPOST(b *testing.B) {
 // natively in the impact lane's Wave-3, so the shared-key shape
 // would run terminated-vs-terminated); both do exactly one
 // server-side fetch, so the 1.50 bound stays a real pathology check.
+// codeSearchRelayPost builds the re-pointed relay leg shared by the
+// benchmark and the StaysRelayed guard: foreign-bearer POST change-surface
+// on its wave-mounted route. Both must use this constructor so deleting the
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func codeSearchRelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Body = io.NopCloser(strings.NewReader(`{"query":"render"}`))
+	post.ContentLength = int64(len(`{"query":"render"}`))
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
 func BenchmarkCodeSearchRelayPOST(b *testing.B) {
 	_, srv := codeSearchBenchServer(b, `{"results":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -86,10 +99,7 @@ func BenchmarkCodeSearchRelayPOST(b *testing.B) {
 	b.Run("change-surface-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-			post.Body = io.NopCloser(strings.NewReader(`{"query":"render"}`))
-			post.ContentLength = int64(len(`{"query":"render"}`))
-			post.Header.Set("Authorization", "Bearer foreign")
+			post := codeSearchRelayPost("foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

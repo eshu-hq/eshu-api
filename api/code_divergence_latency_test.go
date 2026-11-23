@@ -83,6 +83,19 @@ func BenchmarkCodeDivergenceTerminatedRead(b *testing.B) {
 // natively in the impact lane's Wave-3, so the shared-key shape
 // would run terminated-vs-terminated). It does exactly one
 // server-side fetch, so the 1.50 bound stays a real pathology check.
+// codeDivergenceRelayPost builds the re-pointed relay leg shared by the
+// benchmark and the StaysRelayed guard: foreign-bearer POST change-surface
+// on its wave-mounted route. Both must use this constructor so deleting the
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func codeDivergenceRelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Body = io.NopCloser(strings.NewReader(`{"query":"q"}`))
+	post.ContentLength = int64(len(`{"query":"q"}`))
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
 func BenchmarkCodeDivergenceRelayRead(b *testing.B) {
 	_, srv := codeDivergenceBenchServer(b, `{"findings":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -90,10 +103,7 @@ func BenchmarkCodeDivergenceRelayRead(b *testing.B) {
 	b.Run("post-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-			post.Body = io.NopCloser(strings.NewReader(`{"query":"q"}`))
-			post.ContentLength = int64(len(`{"query":"q"}`))
-			post.Header.Set("Authorization", "Bearer foreign")
+			post := codeDivergenceRelayPost("foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

@@ -68,12 +68,21 @@ func BenchmarkD7NativeWrite(b *testing.B) {
 // lane's Wave-3, so the shared-key shape would run
 // terminated-vs-terminated); both do exactly one server-side fetch,
 // so the 1.50 bound stays a real pathology check.
+// d7RelayPost builds the re-pointed relay leg shared by the benchmark and
+// the StaysRelayed guard: foreign-bearer POST change-surface on its
+// wave-mounted route. Both must use this constructor so deleting the bearer
+// breaks the guard instead of silently restoring terminated-vs-terminated.
+func d7RelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
 func BenchmarkD7RelayWrite(b *testing.B) {
 	_, srv := d7BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-	post.Header.Set("Authorization", "Bearer foreign")
+	post := d7RelayPost("foreign")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
