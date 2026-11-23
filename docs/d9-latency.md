@@ -108,6 +108,8 @@ GitHub lanes: the SAML clones add the explicit route match around the
 same single fetch, with no gate and no authorizer on the public
 carve-out. The ACS leg compares against same-bytes relay leg
 `BenchmarkD9SAMLRelayLargePost` (a keyed change-surface POST carrying the
-identical ~288KiB form through the generic relay): the 1.00 ratio
+identical ~288KiB form through the foreign-bearer explicit relay on the
+wave-mounted route; change-surface has since terminated natively in the
+impact lane's Wave-3): the 1.00 ratio
 proves the streaming forward adds no per-byte dest cost beyond the
 relay itself. The D9 wave is complete with this lane.

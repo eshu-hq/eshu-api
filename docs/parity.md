@@ -32,15 +32,16 @@ after the move.
   pins; the D4 scope (45 Native-next routes
   across CICD, Documentation, Infra, PackageRegistry, Repositories,
   Evidence, InvestigationWorkflows, and Playbooks — Compare since
-  terminated in its gap-04 lane, the story GET on the generic relay
-  as a relay leg) terminates
+  terminated in its gap-04 lane, the story GET terminated natively in the
+  W5 story lane (its spec entry still waits on the schema helper port)) terminates
   natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
   SupplyChain read GETs plus the 3 phase-2 extra-port Status legs, with
   the remaining extra-port Status aspects, the impact packet,
-  and the suppressions mutation row staying relay by disclosure)
-  terminates natively per
+  with the three extra-port Status aspects terminated natively in the W8a
+  lane, the impact packet and the suppressions mutation row staying relay
+  by disclosure) terminates natively per
   `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
   v0`, `SupplyChainReadAdmission v0`, and (phase 2)
   `StatusExtraReadAdmission v0` port transports; the gap-04 Compare
