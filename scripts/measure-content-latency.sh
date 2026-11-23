@@ -22,10 +22,12 @@
 # the W4 search lane terminated the search legs too): terminated POST
 # /api/v0/content/files/read, terminated POST
 # /api/v0/content/files/lines, and terminated POST
-# /api/v0/content/entities/read vs relay POST /api/v0/impact/change-surface
-# (the still-relayed impact POST no wave table covers, on the generic
-# proxy). Same-method legs, so every lane gates terminated-vs-relay
-# again instead of terminated-vs-terminated.
+# /api/v0/content/entities/read vs foreign-bearer relay POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (change-surface terminated natively in the impact lane's
+# Wave-3, so the shared-key shape would run
+# terminated-vs-terminated). Same-method legs, so every lane gates
+# terminated-vs-relay again instead of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-content-latency.sh
 # Needs: go (version in go.mod).

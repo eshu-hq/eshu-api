@@ -104,18 +104,20 @@ func BenchmarkD8NativeRead(b *testing.B) {
 	})
 }
 
-// BenchmarkD8RelayWrite measures the generic relay path for the same
-// caller shape: POST /api/v0/impact/change-surface, which stays on the generic
-// relay (the D3/D4/Leaf B lanes pin it as their relay POST leg; the
-// Compare POST terminated in its gap-04 lane). The legs compare
-// different routes by necessity (the D8 paths now clone);
-// both do exactly one server-side fetch, so the 1.50 bound stays a
-// real pathology check.
+// BenchmarkD8RelayWrite measures the explicit relay path for the
+// same stub shape: POST /api/v0/impact/change-surface rides
+// foreign-bearer explicit relay on its wave-mounted route
+// (change-surface has since terminated natively in the impact
+// lane's Wave-3, so the shared-key shape would run
+// terminated-vs-terminated). The legs compare different routes by
+// necessity (the D8 paths now clone); both do exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkD8RelayWrite(b *testing.B) {
 	_, srv := d8BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer foreign")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
@@ -126,15 +128,18 @@ func BenchmarkD8RelayWrite(b *testing.B) {
 	})
 }
 
-// BenchmarkD8RelayRead measures the generic relay path for the read
-// shape: GET /api/v0/dependencies, which stays on the generic relay.
-// Both legs do exactly one server-side fetch, so the 1.50 bound stays
-// a real pathology check.
+// BenchmarkD8RelayRead measures the explicit relay path for the read
+// shape: GET /api/v0/dependencies rides foreign-bearer explicit relay
+// on its wave-mounted route (dependencies has since terminated
+// natively in W8b-narrow, so the shared-key shape would run
+// terminated-vs-terminated). Both legs do exactly one server-side
+// fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkD8RelayRead(b *testing.B) {
 	_, srv := d8BenchServer(b, `{"dependencies":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

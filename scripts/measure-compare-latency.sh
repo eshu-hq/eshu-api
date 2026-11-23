@@ -20,9 +20,11 @@
 #
 # Relay-route disclosure: the terminated leg is the Compare POST
 # (/api/v0/compare/environments), which terminates natively in its
-# gap-04 wave gate; the relay leg is POST /api/v0/impact/change-surface, which
-# stays on the generic relay (the D3/D4/Leaf B lanes pin it as their
-# relay POST leg).
+# gap-04 wave gate; the relay leg is foreign-bearer POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (change-surface terminated natively in the impact lane's
+# Wave-3, so the shared-key shape would run
+# terminated-vs-terminated).
 #
 # Usage: bash scripts/measure-compare-latency.sh
 # Needs: go (version in go.mod).

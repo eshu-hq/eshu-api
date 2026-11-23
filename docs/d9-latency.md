@@ -10,14 +10,16 @@ tier-C clones are not slower than the relay they replace.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before legs: the generic byte-relay (`BenchmarkD8RelayWrite` for
+- Before legs: the explicit relay (`BenchmarkD8RelayWrite` for
   writes, `BenchmarkD8RelayRead` for reads) through the full
-  production chain. The write-relay leg is POST
-  `/api/v0/impact/change-surface`, which stays on the generic relay (the
-  D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
-  it replaces terminated in its gap-04 lane);
-  the read-relay leg is GET `/api/v0/dependencies`, which stays on
-  the generic relay.
+  production chain. The write-relay leg is foreign-bearer POST
+  `/api/v0/impact/change-surface` on its wave-mounted route
+  (change-surface has since terminated natively in the impact lane's
+  Wave-3, so the shared-key shape would run
+  terminated-vs-terminated);
+  the read-relay leg is foreign-bearer GET `/api/v0/dependencies`
+  on its wave-mounted route (dependencies has since terminated
+  natively in W8b-narrow for the shared key).
 - After legs: the D9 clones — the keyless login-start GET bare and
   with the full provider-IDs-plus-return_to query
   (`BenchmarkD9PublicLogin`), and the keyless callback GET carrying
@@ -34,11 +36,14 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is POST `/api/v0/impact/change-surface` (the still-relaying
-write the W6 scan lane re-pointed when it terminated the last code POST); the
-read-relay leg is GET `/api/v0/dependencies`
-(the still-relaying read the D6 lane disclosed). Both legs do exactly
-one server-side fetch, so the 1.50 bound stays a real pathology check.
+The write-relay leg is POST `/api/v0/impact/change-surface` via
+foreign-bearer explicit relay (the route the W6 scan lane re-pointed
+when it terminated the last code POST; change-surface has since
+terminated natively in the impact lane's Wave-3); the read-relay leg
+is GET `/api/v0/dependencies` via foreign-bearer explicit relay
+(dependencies has since terminated natively in W8b-narrow). Both legs
+do exactly one server-side fetch, so the 1.50 bound stays a real
+pathology check.
 
 ## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
@@ -53,8 +58,10 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 | Callback GET vs relay POST | 71210 | 84704 | 0.84 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST.
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay).
 
 Within budget on all five legs: the lane adds the explicit route
 match around the same single fetch, with no gate and no authorizer on

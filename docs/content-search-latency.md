@@ -10,11 +10,13 @@ not slower than the relay they replace.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before leg: the generic byte-relay (`BenchmarkContentSearchRelayPOST`),
-  shared-key POST (`/api/v0/impact/change-surface`) through the full production
-  chain. The legs compare different routes by necessity (the 4 search
-  paths now terminate; the still-relayed impact change-surface POST no
-  wave table covers still relays); every leg does exactly one
+- Before leg: the explicit relay (`BenchmarkContentSearchRelayPOST`),
+  foreign-bearer POST (`/api/v0/impact/change-surface`) on its
+  wave-mounted route through the full production chain. The legs
+  compare different routes by necessity (the 4 search paths now
+  terminate, and change-surface has since terminated natively in the
+  impact lane's Wave-3, so the shared-key shape would run
+  terminated-vs-terminated); every leg does exactly one
   server-side fetch, so the 1.50 bound stays a real pathology check.
 - After legs: the terminated W4 search reads
   (`BenchmarkContentSearchTerminatedPOST`), shared-key POSTs
@@ -35,11 +37,13 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The W4 lane terminates the search legs, so the lane relays against a
-still-relayed impact route that no wave table covers:
-`POST /api/v0/impact/change-surface` (Impact family, still relayed).
-Same-method legs, so every lane gates terminated-vs-relay again
-instead of terminated-vs-terminated.
+The W4 lane terminates the search legs, so the relay leg rides
+`POST /api/v0/impact/change-surface` (Impact family) via
+foreign-bearer explicit relay on its wave-mounted route —
+change-surface has since terminated natively in the impact lane's
+Wave-3, so the shared-key shape would run
+terminated-vs-terminated. Same-method legs, so every lane gates
+terminated-vs-relay again instead of terminated-vs-terminated.
 
 ## Numbers (local, 2026-11-12 W4 lane; relay leg re-pointed 2026-11-15)
 
@@ -53,8 +57,10 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 | PHP-config-search POST | 92210 | 91572 | 1.01 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST.
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay).
 
 Within budget on all four legs: the lane adds the gate branch and one
 authorizer call around the same single fetch. Absolute deployment

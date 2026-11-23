@@ -82,11 +82,13 @@ func BenchmarkCodeGraphTerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkCodeGraphRelayRead measures the generic relay path for the
-// same caller shape: a still-relayed POST on the generic proxy, which
-// does exactly one server-side fetch, so the 1.50 bound stays a real
-// pathology check. The relay leg rides a route no wave table covers
-// (POST /api/v0/impact/change-surface).
+// BenchmarkCodeGraphRelayRead measures the explicit relay path for
+// the same stub shape: the relay leg rides POST
+// /api/v0/impact/change-surface via foreign-bearer explicit relay on
+// its wave-mounted route (change-surface has since terminated
+// natively in the impact lane's Wave-3, so the shared-key shape
+// would run terminated-vs-terminated). It does exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkCodeGraphRelayRead(b *testing.B) {
 	_, srv := codeGraphBenchServer(b, `{"chains":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -97,6 +99,7 @@ func BenchmarkCodeGraphRelayRead(b *testing.B) {
 			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"query":"q"}`))
 			post.ContentLength = int64(len(`{"query":"q"}`))
+			post.Header.Set("Authorization", "Bearer foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

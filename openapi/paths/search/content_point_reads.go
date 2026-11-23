@@ -16,7 +16,10 @@ package search
 // mid-list with separator commas — not a paths-closing entry shaped
 // like the Compare fragment — so the subset concatenates without
 // re-shaping and no disclosed absence is recorded. The core file's
-// search entries stay core-side with the still-relaying search legs.
+// search entries now terminate natively in the W4 search wave
+// (contentSearchWave), so the mid-list subset keeps the
+// line-verbatim property while both fragments port disjoint lane
+// entries.
 const ContentPointReads = `
     "/api/v0/content/files/read": {
       "post": {

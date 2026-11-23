@@ -18,9 +18,12 @@
 # loudly while scheduling noise does not).
 #
 # Relay-route disclosure (D4 moved the legs): the relay GET is
-# /api/v0/dependencies and the relay POST is /api/v0/impact/change-surface —
-# both still cross the generic proxy (the pre-D4 repositories legs
-# terminate natively since the D4 wave).
+# foreign-bearer /api/v0/dependencies and the relay POST is
+# foreign-bearer /api/v0/impact/change-surface — both via explicit
+# relay on their wave-mounted routes (the pre-D4 repositories legs
+# terminated natively since the D4 wave; dependencies has since
+# terminated natively in W8b-narrow and change-surface in the impact
+# lane's Wave-3).
 #
 # Usage: bash scripts/measure-d3-latency.sh
 # Needs: go (version in go.mod).

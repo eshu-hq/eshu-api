@@ -17,9 +17,11 @@
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
 #
-# Relay-route disclosure: the relay leg is POST /api/v0/impact/change-surface,
-# which stays on the generic relay (the D3/D4/Leaf B lanes pin it as
-# their relay POST leg; the Compare POST terminated in its gap-04
+# Relay-route disclosure: the relay leg is foreign-bearer POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (change-surface terminated natively in the impact lane's
+# Wave-3, so the shared-key shape would run
+# terminated-vs-terminated; the Compare POST terminated in its gap-04
 # lane). The D6
 # lane used GET /api/v0/dependencies for the same reason; both legs do
 # exactly one server-side fetch, so the 1.50 bound stays a real

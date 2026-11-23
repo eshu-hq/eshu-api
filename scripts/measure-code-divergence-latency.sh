@@ -13,8 +13,9 @@
 #
 # Method: go test benchmarks BenchmarkCodeDivergenceTerminatedRead (one
 # leg per wave route: findings-post, investigate-post, report-post) vs
-# BenchmarkCodeDivergenceRelayRead (post-relay — a still-relayed POST
-# no wave table covers, on the generic proxy), -count=5, take the median
+# BenchmarkCodeDivergenceRelayRead (post-relay — foreign-bearer
+# explicit relay on the wave-mounted change-surface route), -count=5,
+# take the median
 # ns/op. FAIL when a terminated leg exceeds the relay leg by more than
 # 50% (generous: every leg does one server-side fetch, so any real
 # pathology — a double fetch, a retry, a body re-read — exceeds it

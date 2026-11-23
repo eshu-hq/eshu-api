@@ -311,8 +311,10 @@ func (s *Server) routes() *http.ServeMux {
 	}
 	// D4 Native-next reads termination (Refs eshu-hq/eshu#9669): the
 	// 45 Native-next read routes register explicitly inside the D4 wave
-	// gate, ahead of the generic proxy. The repositories story GET stays
-	// on the generic relay (its fragment waits on the schema helper port). A valid shared key terminates
+	// gate, ahead of the generic proxy. (The repositories story GET
+	// terminated natively in the W5 story lane below; its spec entry
+	// still waits on the schema helper port — see eshu-hq/eshu-api#74.)
+	// A valid shared key terminates
 	// on the native lane; a foreign credential class (scoped token,
 	// OIDC bearer, session cookie) relays explicitly on the relay lane
 	// so core judges it; credential-less callers — and junk-cookie

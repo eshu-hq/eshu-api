@@ -64,17 +64,22 @@ func BenchmarkD3TerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkD3RelayRead measures the generic relay path for the same
-// caller and stub shape: the before leg the lane must not regress.
-// The relay legs use the dependencies and code-bundle reads, which
-// still cross the generic proxy (the D4 wave terminated the
-// repositories legs they replaced).
+// BenchmarkD3RelayRead measures the explicit relay path for the
+// same stub shape: the before leg the lane must not regress. The
+// GET relay leg rides /api/v0/dependencies and the POST relay leg
+// rides /api/v0/impact/change-surface, both via foreign-bearer
+// explicit relay on their wave-mounted routes (both legs have since
+// terminated natively for the shared key — dependencies in
+// W8b-narrow, change-surface in the impact lane's Wave-3 — so the
+// shared-key shape would run terminated-vs-terminated).
 func BenchmarkD3RelayRead(b *testing.B) {
 	_, srv := d3BenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer foreign")
 	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer foreign")
 	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
 
 	b.Run("get", func(b *testing.B) {

@@ -10,10 +10,12 @@ slower than the relay they replace.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before leg: the generic byte-relay (`BenchmarkD7RelayWrite`), POST
-  `/api/v0/impact/change-surface` through the full production chain. The
-  change-surface route stays on the generic relay (the D3/D4/Leaf B
-  lanes pin it as their relay POST leg); the Compare POST it replaces
+- Before leg: the explicit relay (`BenchmarkD7RelayWrite`),
+  foreign-bearer POST `/api/v0/impact/change-surface` on its
+  wave-mounted route through the full production chain. The
+  change-surface route has since terminated natively in the impact
+  lane's Wave-3 (so the shared-key shape would run
+  terminated-vs-terminated); the Compare POST it replaces
   terminated in its gap-04 lane.
 - After legs: the D7 clones (`BenchmarkD7NativeWrite`), shared-key
   dead-letter and reindex POSTs through the full production chain with
@@ -29,11 +31,12 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The relay leg is POST `/api/v0/impact/change-surface`: the W6 scan lane
-re-pointed it there when it terminated the last code POST; it is the still-relaying
-write both legs compare against. Both legs do
-exactly one server-side fetch, so the 1.50 bound stays a real
-pathology check.
+The relay leg is POST `/api/v0/impact/change-surface` via
+foreign-bearer explicit relay: the W6 scan lane re-pointed it there
+when it terminated the last code POST, and this lane re-pointed the
+caller to the foreign bearer when change-surface terminated natively
+in the impact lane's Wave-3. Both legs do exactly one server-side
+fetch, so the 1.50 bound stays a real pathology check.
 
 ## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
@@ -45,8 +48,10 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 | Reindex POST | 82477 | 83737 | 0.98 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST.
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay).
 
 Within budget on both legs: the lane adds the explicit route match and
 one authorizer call around the same single fetch. Absolute deployment

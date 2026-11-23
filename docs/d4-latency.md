@@ -10,10 +10,14 @@ slower than the relay they replace.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before leg: the generic byte-relay (`BenchmarkD4RelayRead`),
-  shared-key GET (`/api/v0/dependencies`) + POST
-  (`/api/v0/impact/change-surface`) through the full production chain. The legs
-  compare different routes by necessity (the D4 paths now terminate);
+- Before leg: the explicit relay (`BenchmarkD4RelayRead`),
+  foreign-bearer GET (`/api/v0/dependencies`) + POST
+  (`/api/v0/impact/change-surface`) on their wave-mounted routes
+  through the full production chain. The legs compare different routes
+  by necessity (the D4 paths now terminate, and both relay routes
+  have since terminated natively for the shared key — dependencies in
+  W8b-narrow, change-surface in the impact lane's Wave-3, so the
+  shared-key shape would run terminated-vs-terminated);
   both do exactly one server-side fetch, so the 1.50 bound stays a real
   pathology check.
 - After leg: the terminated D4 reads (`BenchmarkD4TerminatedRead`),
@@ -33,12 +37,15 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 The D4 wave terminated the relay legs the D2/D3 lanes used
 (`GET /api/v0/repositories`, `POST /api/v0/repositories/search`), so
-all three lanes now relay against routes that still cross the generic
-proxy: `GET /api/v0/dependencies` (Dependencies family, D5) and
-`POST /api/v0/impact/change-surface` (Impact family, still relayed). The D2/D3 benchmark
-relay legs and their measure scripts moved to the same routes in this
-lane with the move disclosed in each script header, so every lane
-gates terminated-vs-relay again instead of
+all three lanes relay via foreign-bearer explicit relay on the
+wave-mounted routes `GET /api/v0/dependencies` (Dependencies family)
+and `POST /api/v0/impact/change-surface` (Impact family) — both have
+since terminated natively for the shared key (dependencies in
+W8b-narrow, change-surface in the impact lane's Wave-3), so the
+shared-key shape would run terminated-vs-terminated. The D2/D3
+benchmark relay legs and their measure scripts moved to the same
+routes in this lane with the move disclosed in each script header,
+so every lane gates terminated-vs-relay again instead of
 terminated-vs-terminated. The D2/D3 doc files keep their historical
 numbers as recorded; CI enforces the live ratio.
 
@@ -52,8 +59,10 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 | POST | 86116 | 87401 | 0.99 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST.
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay).
 
 No measurable overhead: the lane adds the gate branch and one
 authorizer call around the same single fetch. A repeat run measured

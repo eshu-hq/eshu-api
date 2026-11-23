@@ -21,9 +21,12 @@
 # exceeds it loudly while scheduling noise does not).
 #
 # Relay-route disclosure: the terminated legs compare against the
-# still-relaying GET /api/v0/dependencies; the admin path now
-# terminates on the family lane, so every lane gates
-# terminated-vs-relay again instead of terminated-vs-terminated.
+# foreign-bearer relay GET /api/v0/dependencies via explicit relay on
+# its wave-mounted route (dependencies terminated natively in
+# W8b-narrow, so the shared-key shape would run
+# terminated-vs-terminated); the admin path now terminates on the
+# family lane, so every lane gates terminated-vs-relay again instead
+# of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-signinpolicy-admin-read-latency.sh
 # Needs: go (version in go.mod).

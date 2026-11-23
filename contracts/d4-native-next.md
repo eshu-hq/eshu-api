@@ -112,10 +112,10 @@ core contact.
 Known divergences (disclosed, not hidden):
 
 - The served `openapi.json` omits the repositories story key: the
-  story GET stays on the generic relay (its entry interpolates the
-  shared `schema.EvidenceBoundaries` helper and has no line-verbatim
-  port without a core import), so its fragment never lands; the served
-  story bytes come from core through the relay leg instead.
+  story GET terminated natively in the W5 story lane, but its entry
+  interpolates the shared `schema.EvidenceBoundaries` helper and has
+  no line-verbatim port without a core import, so its fragment never
+  lands (see `eshu-hq/eshu-api#74`).
 - The served admission-decisions entry omits the core 501
   `UnsupportedCapability` response: that `$ref` target has no
   definition in the pinned core tree, so porting the line would dangle

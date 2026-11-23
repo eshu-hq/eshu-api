@@ -16,12 +16,16 @@
 # a body re-read, a lock convoy under duplicate callbacks) exceeds it
 # loudly while scheduling noise does not.
 #
-# Relay-route disclosure: the write-relay leg is the Compare POST
-# (/api/v0/compare/environments), the read-relay leg is GET
-# /api/v0/dependencies — both stay on the generic relay (Compare by D6
-# disclosure, dependencies by census). The GitHub paths now terminate;
-# both legs do exactly one server-side fetch, so the 1.50 bound stays a
-# real pathology check either way.
+# Relay-route disclosure: the write-relay leg is foreign-bearer POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (BenchmarkD8RelayWrite; change-surface terminated natively in
+# the impact lane's Wave-3, so the shared-key shape would run
+# terminated-vs-terminated), the read-relay leg is foreign-bearer GET
+# /api/v0/dependencies via explicit relay on its wave-mounted route
+# (BenchmarkD8RelayRead; dependencies terminated natively in
+# W8b-narrow). The GitHub paths now terminate; both legs do exactly
+# one server-side fetch, so the 1.50 bound stays a real pathology
+# check either way.
 #
 # Usage: bash scripts/measure-github-termination-latency.sh
 # Needs: go (version in go.mod).

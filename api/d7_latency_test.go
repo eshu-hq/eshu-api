@@ -59,19 +59,21 @@ func BenchmarkD7NativeWrite(b *testing.B) {
 	})
 }
 
-// BenchmarkD7RelayWrite measures the generic relay path for the same
-// caller and stub shape: the before leg the lane must not regress.
-// The legs compare different routes by necessity (the D7 paths now
-// clone); both do exactly one server-side fetch, so the 1.50 bound
-// stays a real pathology check. The relay leg is POST
-// /api/v0/impact/change-surface, which stays on the generic relay (the
-// D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare
-// POST terminated in its gap-04 lane).
+// BenchmarkD7RelayWrite measures the explicit relay path for the
+// same stub shape: the before leg the lane must not regress. The
+// legs compare different routes by necessity (the D7 paths now
+// clone); the relay leg rides POST /api/v0/impact/change-surface
+// via foreign-bearer explicit relay on its wave-mounted route
+// (change-surface has since terminated natively in the impact
+// lane's Wave-3, so the shared-key shape would run
+// terminated-vs-terminated); both do exactly one server-side fetch,
+// so the 1.50 bound stays a real pathology check.
 func BenchmarkD7RelayWrite(b *testing.B) {
 	_, srv := d7BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer foreign")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()

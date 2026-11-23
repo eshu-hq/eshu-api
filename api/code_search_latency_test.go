@@ -72,11 +72,13 @@ func BenchmarkCodeSearchTerminatedPOST(b *testing.B) {
 	}
 }
 
-// BenchmarkCodeSearchRelayPOST measures the generic relay path for the
-// same caller shape: a still-relayed code POST, which crosses the
-// generic proxy. The relay leg rides a route no wave table covers
-// (POST /api/v0/impact/change-surface); both do exactly one server-side fetch,
-// so the 1.50 bound stays a real pathology check.
+// BenchmarkCodeSearchRelayPOST measures the explicit relay path for
+// the same stub shape: the relay leg rides POST
+// /api/v0/impact/change-surface via foreign-bearer explicit relay on
+// its wave-mounted route (change-surface has since terminated
+// natively in the impact lane's Wave-3, so the shared-key shape
+// would run terminated-vs-terminated); both do exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkCodeSearchRelayPOST(b *testing.B) {
 	_, srv := codeSearchBenchServer(b, `{"results":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -87,6 +89,7 @@ func BenchmarkCodeSearchRelayPOST(b *testing.B) {
 			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"query":"render"}`))
 			post.ContentLength = int64(len(`{"query":"render"}`))
+			post.Header.Set("Authorization", "Bearer foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

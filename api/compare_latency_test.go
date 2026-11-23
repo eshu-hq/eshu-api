@@ -62,11 +62,13 @@ func BenchmarkCompareTerminatedPOST(b *testing.B) {
 	})
 }
 
-// BenchmarkCompareRelayPOST measures the generic relay path for the
-// same caller shape: POST /api/v0/impact/change-surface, which still crosses
-// the generic proxy (the D3/D4/Leaf B lanes pin it as their relay
-// POST leg). Both legs do exactly one server-side fetch, so the 1.50
-// bound stays a real pathology check.
+// BenchmarkCompareRelayPOST measures the explicit relay path for the
+// same stub shape: POST /api/v0/impact/change-surface rides
+// foreign-bearer explicit relay on its wave-mounted route
+// (change-surface has since terminated natively in the impact
+// lane's Wave-3, so the shared-key shape would run
+// terminated-vs-terminated). Both legs do exactly one server-side
+// fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkCompareRelayPOST(b *testing.B) {
 	_, srv := compareBenchServer(b, `{"workload":"w1","story":"same"}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -77,6 +79,7 @@ func BenchmarkCompareRelayPOST(b *testing.B) {
 			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(compareParityBody))
 			post.ContentLength = int64(len(compareParityBody))
+			post.Header.Set("Authorization", "Bearer foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

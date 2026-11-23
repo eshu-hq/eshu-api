@@ -10,10 +10,13 @@ terminated Compare POST is not slower than the relay it replaces.
 
 Hermetic stub-core comparison, same binary, same caller shape:
 
-- Before leg: the generic byte-relay (`BenchmarkCompareRelayPOST`),
-  shared-key POST (`/api/v0/impact/change-surface`) through the full
-  production chain. The legs compare different routes by necessity
-  (the Compare POST now terminates); every leg does exactly one
+- Before leg: the explicit relay (`BenchmarkCompareRelayPOST`),
+  foreign-bearer POST (`/api/v0/impact/change-surface`) on its
+  wave-mounted route through the full production chain. The legs
+  compare different routes by necessity (the Compare POST now
+  terminates, and change-surface has since terminated natively in
+  the impact lane's Wave-3, so the shared-key shape would run
+  terminated-vs-terminated); every leg does exactly one
   server-side fetch, so the 1.50 bound stays a real pathology check.
 - After leg: the terminated Compare POST
   (`BenchmarkCompareTerminatedPOST`), shared-key POST
@@ -31,10 +34,14 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The relay leg is POST `/api/v0/impact/change-surface`: the W6 scan
-lane re-pointed it there when it terminated the last code POST. The Compare benchmark relay leg and its measure script use the
-same route with the use disclosed in the script header, so the lane
-gates terminated-vs-relay, not terminated-vs-terminated.
+The relay leg is POST `/api/v0/impact/change-surface` via
+foreign-bearer explicit relay: the W6 scan lane re-pointed it there
+when it terminated the last code POST, and this lane re-pointed the
+caller to the foreign bearer when change-surface terminated natively
+in the impact lane's Wave-3. The Compare benchmark relay leg and its
+measure script use the same route with the use disclosed in the
+script header, so the lane gates terminated-vs-relay, not
+terminated-vs-terminated.
 
 ## Numbers (local, 2026-11-09; relay leg re-pointed 2026-11-15)
 
@@ -45,8 +52,10 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 | Compare POST | 91103 | 92322 | 0.99 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST.
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay).
 
 Within budget: the terminated forward costs the same single fetch as
 the relay, plus the shared wave gate and family authorizer the other

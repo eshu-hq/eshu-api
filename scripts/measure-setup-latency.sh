@@ -21,12 +21,14 @@
 # pathology (a double fetch, a retry, a body re-read) exceeds it
 # loudly while scheduling noise does not.
 #
-# Relay-route disclosure: the write-relay leg is POST
-# /api/v0/impact/change-surface, which stays on the generic relay (the
-# D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
-# terminated in its gap-04 lane); the
-# read-relay leg is GET /api/v0/dependencies, which stays on the
-# generic relay. The setup paths left the relay on the D10 wave (the
+# Relay-route disclosure: the write-relay leg is foreign-bearer POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (change-surface terminated natively in the impact lane's
+# Wave-3, so the shared-key shape would run
+# terminated-vs-terminated); the read-relay leg is foreign-bearer GET
+# /api/v0/dependencies via explicit relay on its wave-mounted route
+# (dependencies terminated natively in W8b-narrow). The setup paths
+# left the relay on the D10 wave (the
 # state GET terminates; the claim POST rides the terminated-writer
 # transport); the
 # legs compare different routes by necessity, and every leg does

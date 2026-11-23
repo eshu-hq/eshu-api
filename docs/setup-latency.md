@@ -21,12 +21,12 @@ Hermetic stub-core comparison, same binary, same caller shape:
   full production chain (`BenchmarkSetupState` and
   `BenchmarkSetupWrite` against the D10 tree, 2000x5 via
   `bash scripts/measure-setup-latency.sh`).
-- Relay legs: POST `/api/v0/impact/change-surface` for
-  writes and GET `/api/v0/dependencies` for reads, which stay on the
-  generic relay (the W6 scan lane re-pointed the write leg when it
-  terminated the last code POST;
-  the Compare POST previously used for writes terminated in its
-  gap-04 lane). Both legs hit the same
+- Relay legs: foreign-bearer POST `/api/v0/impact/change-surface`
+  for writes and foreign-bearer GET `/api/v0/dependencies` for reads,
+  both via explicit relay on their wave-mounted routes (change-surface
+  has since terminated natively in the impact lane's Wave-3 and
+  dependencies in W8b-narrow, so the shared-key shape would run
+  terminated-vs-terminated). Both legs hit the same
   in-process stub core, so the numbers isolate dest-side cost, not
   core or network time.
 - The gate takes the median ns/op and fails when a setup leg exceeds
@@ -37,12 +37,13 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 ## Relay-route disclosure
 
-The write-relay leg is POST `/api/v0/impact/change-surface` (the still-relaying
-write the D3/D4/Leaf B lanes pin as their relay POST leg); the
-read-relay leg is GET
-`/api/v0/dependencies` (the still-relaying read the D6 lane
-disclosed). Both legs do exactly one server-side fetch, so the 1.50
-bound stays a real pathology check.
+The write-relay leg is POST `/api/v0/impact/change-surface` via
+foreign-bearer explicit relay (change-surface has since terminated
+natively in the impact lane's Wave-3); the read-relay leg is GET
+`/api/v0/dependencies` via foreign-bearer explicit relay
+(dependencies has since terminated natively in W8b-narrow). Both
+legs do exactly one server-side fetch, so the 1.50 bound stays a real
+pathology check.
 
 ## Numbers (local, 2026-11-07; relay leg re-pointed 2026-11-15)
 
@@ -54,8 +55,10 @@ Shared host, in-process stub core (`go test` benchmarks):
 | Claim POST | 85844 | 83072 | 84172 | 0.99 | ≤ 1.50 |
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
-leg from the terminated code bundles POST to the still-relayed
-impact change-surface POST (before column unchanged).
+leg from the terminated code bundles POST to the impact
+change-surface POST (then the relay leg; change-surface has since
+terminated natively in the impact lane's Wave-3, and the leg now
+rides foreign-bearer explicit relay) (before column unchanged).
 
 No regression on either route: the terminated GET is faster than
 the write-through it replaces (no body relay — dest synthesizes the
