@@ -60,16 +60,21 @@ func BenchmarkAdminSignInPolicyTerminatedRead(b *testing.B) {
 	}
 }
 
-// BenchmarkAdminSignInPolicyRelayRead measures the generic relay
-// path for the same caller and stub shape: the before leg the lane
-// must not regress. The legs compare different routes by necessity
-// (the admin path now terminates); both do exactly one server-side
-// fetch, so the 1.50 bound stays a real pathology check.
+// BenchmarkAdminSignInPolicyRelayRead measures the explicit relay
+// path for the same stub shape: the before leg the lane must not
+// regress. The legs compare different routes by necessity (the admin
+// path now terminates); the relay leg rides GET
+// /api/v0/dependencies via foreign-bearer explicit relay on its
+// wave-mounted route (dependencies has since terminated natively in
+// W8b-narrow, so the shared-key shape would run
+// terminated-vs-terminated); both do exactly one server-side fetch,
+// so the 1.50 bound stays a real pathology check.
 func BenchmarkAdminSignInPolicyRelayRead(b *testing.B) {
 	_, srv := adminSignInPolicyBenchServer(b, `{"tenant_id":"tenant_a","require_sso":false}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer [REDACTED]")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

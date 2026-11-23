@@ -47,8 +47,11 @@ vs the relayed reference (both spellings, both negotiated shapes,
 core-owned outcomes relayed verbatim), the no-core-import proof, the
 no-store/no-parse lane-file hygiene proof, extended
 `viaNative`/`viaRelay` telemetry, the satellite latency evidence
-(terminated-vs-still-relaying ratio, both spellings), and this
-contract section with rollback.
+(terminated-vs-relay ratio, both spellings: the relay leg rides GET
+/api/v0/dependencies via foreign-bearer explicit relay on its
+wave-mounted route — dependencies has since terminated natively in
+W8b-narrow, so the shared-key shape would run
+terminated-vs-terminated), and this contract section with rollback.
 
 ## Production binding
 
