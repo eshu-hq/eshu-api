@@ -21,9 +21,11 @@
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
 #
-# Relay-route disclosure: no IaC read rides the generic relay now that
-# the dead leg terminates natively, so the before-shape is POST
-# /api/v0/impact/change-surface — a route no wave table covers (drift-style) —
+# Relay-route disclosure: no IaC read rides the shared-key relay now
+# that the dead leg terminates natively, so the before-shape is
+# foreign-bearer POST /api/v0/impact/change-surface via explicit relay
+# on its wave-mounted route (change-surface terminated natively in
+# the impact lane's Wave-3, drift-style single-fetch comparison) —
 # with the small page for the cleared legs and the same worst-case
 # derived page for the dead 10k leg.
 #

@@ -18,10 +18,14 @@
 # loudly while scheduling noise does not).
 #
 # Relay-route disclosure (the D4 wave terminated the earlier relay
-# legs): terminated GET /api/v0/repositories vs relay GET
-# /api/v0/dependencies; terminated POST /api/v0/infra/resources/search
-# vs relay POST /api/v0/impact/change-surface. The D2/D3 relay legs moved to the
-# same still-relaying routes in this lane, so every lane gates
+# legs): terminated GET /api/v0/repositories vs foreign-bearer relay
+# GET /api/v0/dependencies; terminated POST
+# /api/v0/infra/resources/search vs foreign-bearer relay POST
+# /api/v0/impact/change-surface — both via explicit relay on their
+# wave-mounted routes (dependencies terminated natively in W8b-narrow
+# and change-surface in the impact lane's Wave-3, so the shared-key
+# shape would run terminated-vs-terminated). The D2/D3 relay legs moved
+# to the same routes in this lane, so every lane gates
 # terminated-vs-relay again instead of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-d4-latency.sh

@@ -23,9 +23,9 @@ import (
 // document: one entry per served wave route. The impact packet and
 // the mux-level openapi.json self entry keep their own posture:
 // their keys stay out of this fragment set, so no served key
-// duplicates a relayed route. The former still-relayed Status
-// aspects (governance, answer-narration, hosted-readiness) moved to
-// the W8a lane with their fragments disclosed core-side (see
+// duplicates a relayed route. The former Status aspects
+// (governance, answer-narration, hosted-readiness) terminate natively
+// in the W8a lane with their fragments disclosed core-side (see
 // api/w8a_openapi_test.go). Compare carries no served key: its
 // gap-04 lane mounts natively with the fragment disclosed core-side
 // (see openapi/spec_compare_test.go).

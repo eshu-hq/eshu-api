@@ -22,10 +22,12 @@
 # leg): terminated GET /api/v0/status/pipeline, terminated GET
 # /api/v0/supply-chain/impact/findings, and the phase-2 terminated
 # GET /api/v0/status/operations, GET /api/v0/index-status, and GET
-# /api/v0/status/index vs relay GET /api/v0/dependencies. The D2-D4
-# relay legs moved to the same still-relaying route in this lane, so
-# every lane gates terminated-vs-relay again instead of
-# terminated-vs-terminated.
+# /api/v0/status/index vs foreign-bearer relay GET
+# /api/v0/dependencies via explicit relay on its wave-mounted route
+# (dependencies terminated natively in W8b-narrow, so the shared-key
+# shape would run terminated-vs-terminated). The D2-D4 relay legs
+# moved to the same route in this lane, so every lane gates
+# terminated-vs-relay again instead of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-d6-latency.sh
 # Needs: go (version in go.mod).

@@ -438,9 +438,9 @@ check_file_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/content_read_admission
 # this lane only; the gate pins the core file's sha256 and proves
 # every payload line of the dest fragment (the const string body,
 # which is the only JSON the assembly consumes) appears verbatim in
-# the pinned core file. The search entries stay core-side with the
-# still-relaying search legs, so no served key duplicates a relayed
-# route.
+# the pinned core file. The search entries now terminate natively in
+# the W4 search wave with their own fragment, so no served key names
+# a relay-only route.
 check_fragment_subset_named_at "$SRC_SHA_WAVE2_CONTENT" "go/internal/query/openapi/paths/search/content.go" \
   "openapi/paths/search/content_point_reads.go" \
   "d8254d1b9313db556f69b3d9b40925fc4a64094aa6629aa47dad16aa728edcca" \

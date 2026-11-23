@@ -63,19 +63,41 @@ func BenchmarkD4TerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkD4RelayRead measures the generic relay path for the
-// same caller and stub shape: the before leg the lane must not
-// regress. The legs compare different routes by necessity (the D4
-// paths now terminate, and the D3 relay legs moved into this wave);
-// both do exactly one server-side fetch, so the 1.50 bound stays a
-// real pathology check.
+// BenchmarkD4RelayRead measures the explicit relay path for the
+// same stub shape: the before leg the lane must not regress. The
+// legs compare different routes by necessity (the D4 paths now
+// terminate); the GET relay leg rides /api/v0/dependencies and the
+// POST relay leg rides /api/v0/impact/change-surface, both via
+// foreign-bearer explicit relay on their wave-mounted routes (both
+// legs have since terminated natively for the shared key —
+// dependencies in W8b-narrow, change-surface in the impact lane's
+// Wave-3 — so the shared-key shape would run
+// terminated-vs-terminated); both do exactly one server-side fetch,
+// so the 1.50 bound stays a real pathology check.
+// d4RelayGet and d4RelayPost build the re-pointed relay legs shared by
+// the benchmark and the StaysRelayed guard: foreign-bearer legs on their
+// wave-mounted routes. Both must use these constructors so deleting a
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func d4RelayGet(bearer string) *http.Request {
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer "+bearer)
+	return get
+}
+
+func d4RelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	post.Body = io.NopCloser(strings.NewReader(`{"surface":"x"}`))
+	return post
+}
+
 func BenchmarkD4RelayRead(b *testing.B) {
 	_, srv := d4BenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-	post.Body = io.NopCloser(strings.NewReader(`{"surface":"x"}`))
+	get := d4RelayGet("foreign")
+	post := d4RelayPost("foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

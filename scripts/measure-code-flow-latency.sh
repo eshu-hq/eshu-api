@@ -13,7 +13,8 @@
 #
 # Method: go test benchmarks BenchmarkCodeFlowTerminatedPOST (one leg
 # per wave route) vs BenchmarkCodeFlowRelayPOST (change-surface-relay,
-# still-relayed code POST on the generic proxy), -count=5, take the
+# foreign-bearer explicit relay on the wave-mounted change-surface
+# route), -count=5, take the
 # median ns/op. FAIL when terminated exceeds relay by more than 50%
 # on any leg (generous: every leg does one server-side fetch, so any
 # real pathology — a double fetch, a retry, a body re-read — exceeds it

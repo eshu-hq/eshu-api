@@ -35,8 +35,10 @@ Hermetic stub-core comparison, same binary, same caller shape:
 
 The D6 wave terminates no earlier relay leg, so the lane relays
 against the route the D2-D4 lanes moved to:
-`GET /api/v0/dependencies` (Dependencies family, still on the generic
-proxy). The D6 benchmark relay leg and its measure script use the same
+`GET /api/v0/dependencies` (Dependencies family, foreign-bearer explicit
+relay on its wave-mounted route; dependencies has since terminated
+natively in W8b-narrow, so the shared-key shape would run
+terminated-vs-terminated). The D6 benchmark relay leg and its measure script use the same
 route with the use disclosed in the script header, so every lane gates
 terminated-vs-relay again instead of terminated-vs-terminated.
 
