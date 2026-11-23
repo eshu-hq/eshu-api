@@ -83,18 +83,23 @@ func BenchmarkW8aTerminatedRead(b *testing.B) {
 	}
 }
 
-// BenchmarkW8aRelayRead measures the generic relay path for the same
-// caller and stub shape: the before legs the lane must not regress.
+// BenchmarkW8aRelayRead measures the explicit relay path for the
+// same stub shape: the before legs the lane must not regress.
 // The legs compare different routes by necessity (the W8a paths now
-// terminate — the relay GET is the D4-pinned relay story leg and the
-// relay POST is the D3/D4-pinned relay bundle leg); every leg does
-// exactly one server-side fetch, so the 1.50 bound stays a real
-// pathology check.
+// terminate); the relay GET rides GET /api/v0/dependencies and the
+// relay POST rides POST /api/v0/impact/change-surface, both via
+// foreign-bearer explicit relay on their wave-mounted routes (both
+// legs have since terminated natively for the shared key —
+// dependencies in W8b-narrow, change-surface in the impact lane's
+// Wave-3 — so the shared-key shape would run
+// terminated-vs-terminated). Every leg does exactly one server-side
+// fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkW8aRelayRead(b *testing.B) {
 	_, srv := w8aBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer [REDACTED]")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()
@@ -110,6 +115,7 @@ func BenchmarkW8aRelayRead(b *testing.B) {
 			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"scope_id":"scope_1"}`))
 			post.ContentLength = int64(len(`{"scope_id":"scope_1"}`))
+			post.Header.Set("Authorization", "Bearer [REDACTED]")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

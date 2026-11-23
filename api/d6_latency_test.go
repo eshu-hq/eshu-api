@@ -84,17 +84,21 @@ func BenchmarkD6ExtraTerminatedRead(b *testing.B) {
 	}
 }
 
-// BenchmarkD6RelayRead measures the generic relay path for the
-// same caller and stub shape: the before leg the lane must not
-// regress. The legs compare different routes by necessity (the D6
-// paths now terminate, and the D2-D4 relay legs moved to the same
-// still-relaying routes); both do exactly one server-side fetch, so
-// the 1.50 bound stays a real pathology check.
+// BenchmarkD6RelayRead measures the explicit relay path for the
+// same stub shape: the before leg the lane must not regress. The
+// legs compare different routes by necessity (the D6 paths now
+// terminate); the relay leg rides GET /api/v0/dependencies via
+// foreign-bearer explicit relay on its wave-mounted route
+// (dependencies has since terminated natively in W8b-narrow, so the
+// shared-key shape would run terminated-vs-terminated); both do
+// exactly one server-side fetch, so the 1.50 bound stays a real
+// pathology check.
 func BenchmarkD6RelayRead(b *testing.B) {
 	_, srv := d6BenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer [REDACTED]")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

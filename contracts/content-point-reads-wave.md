@@ -46,9 +46,13 @@ scope-honesty label, byte-parity dispatch/conformance tests vs the
 relayed reference (including the line-range slicing-edge bodies the
 pin shape requires), the no-core-import check, extended
 `viaNative`/`viaRelay` telemetry, the satellite latency evidence
-(terminated-vs-proxy-relay ratios, no same-shape before/after: the
+(terminated-vs-relay ratios, no same-shape before/after: the
 baseline was the file-search proxy route until the W4 lane terminated
-it, then the still-relayed code bundles POST —
+it, then the wave-mounted impact change-surface POST via
+foreign-bearer explicit relay (`BenchmarkContentRelayRead`, pinned by
+`TestContentRelayLegStaysRelayed` — change-surface has since
+terminated natively in the impact lane's Wave-3, so the shared-key
+shape would run terminated-vs-terminated —
 `docs/content-latency.md`), and this
 contract section with rollback.
 
