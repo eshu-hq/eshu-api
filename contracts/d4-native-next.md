@@ -6,9 +6,10 @@ the 45 Native-next read routes natively against the D0-proven
 terminated transport: dest owns the route (caller gate, family
 authorizer, response mapping) and calls the versioned core read API as
 its port transport. Dest holds no table or queue handle; authz stays
-atomic core-side. The repositories story GET stays on the generic
-relay (its fragment waits on the schema helper port) and is carried
-as a relay leg below, not a terminated route.
+atomic core-side. The repositories story GET terminated natively in
+the W5 story lane (`storyWave`, superseding the D4 relay leg) and is
+a terminated route, not a relay leg (see the relay-leg disclosure
+below).
 
 Scope source: `go/cmd/api/CUTOVER_OWNERSHIP.md` at the D2 lane base
 (17feac86e0): the CICD, Documentation, Infra, PackageRegistry,
@@ -27,7 +28,8 @@ and staying relay (disclosed, not silent):
 relay-leg update: its spec entry interpolates the shared
 `schema.EvidenceBoundaries` helper, which has no line-verbatim port
 without a core import (forbidden), so the route reverted to the
-generic relay and its fragment gap is carried as a relay leg below.)
+generic relay at the time; it has since terminated natively in the W5
+story lane — see the relay-leg disclosure below.)
 
 Transport pin: `CoreReadContractsVersion v0`
 (`contracts/upstream/api_boundary.go` at the provenance pin) covers
@@ -129,23 +131,25 @@ Known divergences (disclosed, not hidden):
   the standing fail-closed rule, uniform across native lanes.
 - Relay-leg disclosure: the D4 terminated GET is
   `/api/v0/repositories` and the terminated POST is
-  `/api/v0/infra/resources/search`; the relay legs are
-  `/api/v0/dependencies` (GET) and `/api/v0/code/bundles` (POST),
-  both still on the generic proxy — plus the reverted story GET
-  `/api/v0/repositories/{repo_id}/story`, whose fragment waits on
-  the schema helper port (carried by
-  `TestD4StoryRelayLegOnGenericProxy`). Unlike the catch-all riders,
-  the story leg is registered explicitly on the generic-relay stack
-  (`d4RelayLegs` in `api/d4_wave.go`): the list route's slash twin is
-  a subtree that would otherwise swallow the story path back under
-  the D4 gate, so only the explicit wildcard restores true relay
-  behavior. The D2/D3 relay legs moved to the
-  same still-relaying routes in this lane, so every lane gates
-  terminated-vs-relay again instead of terminated-vs-terminated.
+  `/api/v0/infra/resources/search`; the relay legs the suite rides
+  are `/api/v0/dependencies` (GET) and
+  `/api/v0/impact/change-surface` (POST) — the POST is the route the
+  suite moved to when the W6 scan lane terminated bundles natively.
+  Both legs have since terminated natively themselves (dependencies
+  in W8b-narrow, change-surface in the impact lane's Wave-3), so the
+  comparison now runs terminated-vs-terminated. The story GET
+  `/api/v0/repositories/{repo_id}/story` likewise terminated natively
+  in the W5 story lane (`storyWave`, pinned by
+  `TestStoryWaveAheadOfRelay`); `d4RelayLegs` in `api/d4_wave.go` is
+  retired empty and `TestD4StoryRelayLegOnGenericProxy` is retired
+  with it. The D3 relay legs ride the same now-native routes
+  (`BenchmarkD3RelayRead`), so every lane gates
+  terminated-vs-terminated until a suite re-points at a genuinely
+  relayed leg.
   Foreign credential classes (scoped/OIDC bearer, session/junk cookie)
-  on the story path meet the generic-relay key gate (dest 401, zero
-  core contact), restoring the pre-lane posture — pinned by
-  `TestD4StoryRelayLegOnGenericProxy`.
+  on wave-mounted paths relay explicitly through the wave gate (dest
+  401 or explicit relay, zero native contact for unresolvable
+  identities) — the standing wave-gate posture, not a D4 relay leg.
 
 ## Spec posture
 
