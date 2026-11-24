@@ -71,10 +71,13 @@ full list lives in [Configuration](docs/reference/configuration.md).
 
 ## Related repos
 
-`eshu` holds the core. `eshu-cli` is the command line, `eshu-mcp` serves
-tools to AI assistants, and
-[eshu-deploy](https://github.com/eshu-hq/eshu-deploy) runs the full
-stack.
+[eshu](https://github.com/eshu-hq/eshu) holds the core.
+[eshu-cli](https://github.com/eshu-hq/eshu-cli) is the command line,
+[eshu-mcp](https://github.com/eshu-hq/eshu-mcp) serves tools to AI
+assistants, and [eshu-deploy](https://github.com/eshu-hq/eshu-deploy)
+runs the full stack. New to Eshu? Start at
+[Start Here](https://github.com/eshu-hq/eshu/blob/main/docs/public/start-here.md) or browse the 31-repo
+[Repository Map](https://github.com/eshu-hq/eshu/blob/main/REPOSITORIES.md).
 
 ## Development
 
