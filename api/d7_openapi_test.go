@@ -78,17 +78,17 @@ func TestD7Native_ServesWaveSpecKeys(t *testing.T) {
 	}
 }
 
-// TestD7OpenAPIStillKeyGated pins that the assembled spec route stays
-// behind the key gate: a credential-less caller gets the standing 401
-// even though the document is fully dest-served.
-func TestD7OpenAPIStillKeyGated(t *testing.T) {
+// TestD7OpenAPIServesPublicly pins the eshu-hq/eshu-api#164 outcome:
+// the assembled spec route serves pre-auth, so a credential-less
+// caller gets 200 with the document instead of the standing 401.
+func TestD7OpenAPIServesPublicly(t *testing.T) {
 	t.Parallel()
 
 	srv := NewServer("http://core.invalid", skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil))
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("status = %d, want the standing 401", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200 for the keyless spec caller", rec.Code)
 	}
 }

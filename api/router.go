@@ -447,15 +447,15 @@ func (s *Server) routes() *http.ServeMux {
 	// api/signin.go).
 	mux.Handle("GET /api/v0/auth/sign-in-policy", s.instrumented(viaNative, http.HandlerFunc(s.servePublicSignInPolicy)))
 	mux.Handle("GET /api/v0/auth/providers", s.instrumented(viaNative, http.HandlerFunc(s.serveProviders)))
-	// D2 wave-public carve-out (core-public parity): the routes core
-	// serves pre-auth register explicitly OUTSIDE any gate, ahead of
-	// the generic proxy. Docs and redoc serve compiled shells with no
-	// core fetch (each trailing-slash spelling stays on the carve-out:
-	// the static shells answer the slash spelling dest-side while
-	// core 404s it — disclosed in contracts/leafb-native-now.md). The
-	// two login-picker data reads are served by the native synthesis
-	// above (exact paths only, twins stay on the generic relay), so
-	// the loop below serves only the doc shells now. No other /api/*
+	// D2 wave-public carve-out (core-public parity, Refs
+	// eshu-hq/eshu-api#164): the routes core serves pre-auth register
+	// explicitly OUTSIDE any gate, ahead of the generic proxy. Docs and
+	// redoc serve compiled shells with no core fetch (each
+	// trailing-slash spelling stays on the carve-out while core 404s
+	// it — disclosed in contracts/leafb-native-now.md). The assembled
+	// spec serves the compiled constants the same way (exact path only:
+	// the slash twin stays relayed, like the login-picker twins). The
+	// two login-picker reads are synthesized above. No other /api/*
 	// route leaves the gate in this lane.
 	for _, entry := range leafbWave {
 		if entry.Serve != leafbServePublic {
@@ -467,21 +467,20 @@ func (s *Server) routes() *http.ServeMux {
 			public = s.instrumented(viaNative, serveLeafBDocUI(leafbSwaggerUIShell))
 		case "/api/v0/redoc":
 			public = s.instrumented(viaNative, serveLeafBDocUI(leafbReDocShell))
+		case "/api/v0/openapi.json":
+			// Native spec (Decision 5(c)): the ported fragments cover
+			// the CUTOVER surface, so the document serves from
+			// compiled constants — no core fetch, no origin needed.
+			public = s.instrumented(viaNative, http.HandlerFunc(openapi.ServeSpec))
 		default:
 			continue
 		}
 		pattern := entry.Method + " " + entry.Path
 		mux.Handle(pattern, public)
-		mux.Handle(pattern+"/", public)
+		if entry.Path != "/api/v0/openapi.json" {
+			mux.Handle(pattern+"/", public)
+		}
 	}
-	// Native spec (Decision 5(c)): the family path fragments ported
-	// into openapi/ cover the full CUTOVER route surface, so the
-	// assembled document is served from compiled constants ahead of
-	// the generic proxy — no core fetch, served even with no core
-	// origin configured.
-	// It stays inside RequireAuth like every dest /api/* route (core
-	// serves it public; dest adds no new public surface here).
-	mux.Handle("GET /api/v0/openapi.json", s.instrumented(viaNative, RequireAuth(s.apiKey, http.HandlerFunc(openapi.ServeSpec))))
 	mux.Handle("/api/", s.instrumented(viaRelay, RequireAuth(s.apiKey, http.HandlerFunc(s.dispatch))))
 	return mux
 }

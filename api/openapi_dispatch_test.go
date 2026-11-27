@@ -12,28 +12,43 @@ import (
 	"testing"
 )
 
-// TestOpenAPINative_UnauthenticatedIs401 pins that the native spec route
-// keeps the dest 401 shape: the key gate still fronts /api/*, envelope
-// callers get the envelope error, everyone else the plain error_code body.
-func TestOpenAPINative_UnauthenticatedIs401(t *testing.T) {
+// TestOpenAPINative_ServesKeylessAndJunkKey pins the eshu-hq/eshu-api#164
+// fix: the native spec route serves pre-auth like core. Credential-less
+// callers and junk-key carriers both get 200 with the assembled JSON
+// document — the key gate no longer fronts the spec route.
+func TestOpenAPINative_ServesKeylessAndJunkKey(t *testing.T) {
 	t.Parallel()
 
-	srv := NewServer("http://core.invalid", skeletonTestKey)
-	handler := srv.Handler(DefaultV0Sunset)
+	for _, origin := range []string{"http://core.invalid", ""} {
+		srv := NewServer(origin, skeletonTestKey)
+		handler := srv.Handler(DefaultV0Sunset)
 
-	for _, accept := range []string{EnvelopeMIME, "application/json"} {
-		req := httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil)
-		if accept != "" {
-			req.Header.Set("Accept", accept)
+		callers := map[string]string{
+			"keyless":  "",
+			"junk-key": "Bearer junk",
 		}
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+		for _, accept := range []string{EnvelopeMIME, "application/json"} {
+			for name, auth := range callers {
+				req := httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil)
+				if accept != "" {
+					req.Header.Set("Accept", accept)
+				}
+				if auth != "" {
+					req.Header.Set("Authorization", auth)
+				}
+				rec := httptest.NewRecorder()
+				handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusUnauthorized {
-			t.Errorf("Accept %q: status = %d, want 401", accept, rec.Code)
-		}
-		if got := rec.Header().Get("WWW-Authenticate"); got != "Bearer" {
-			t.Errorf("Accept %q: WWW-Authenticate = %q, want bare Bearer", got, accept)
+				if rec.Code != http.StatusOK {
+					t.Errorf("origin %q %s Accept %q: status = %d, want 200", origin, name, accept, rec.Code)
+					continue
+				}
+				body, _ := io.ReadAll(rec.Result().Body)
+				var doc map[string]any
+				if err := json.Unmarshal(body, &doc); err != nil {
+					t.Errorf("origin %q %s Accept %q: served spec is not valid JSON: %v", origin, name, accept, err)
+				}
+			}
 		}
 	}
 }
