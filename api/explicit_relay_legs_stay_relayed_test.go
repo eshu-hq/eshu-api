@@ -23,7 +23,7 @@ type relayLegCase struct {
 // benchmark's own constructor dispatches on viaRelay only with exactly
 // one upstream fetch, while the shared-key request dispatches on
 // viaNative only (also one fetch — the native lane still reads the
-// core directly). All 18 legs verified green below.
+// core directly). All 22 legs verified green below.
 func TestExplicitRelayLegsStayRelayed(t *testing.T) {
 	legs := []relayLegCase{
 		{name: "code-divergence/post", build: codeDivergenceRelayPost},
@@ -44,6 +44,10 @@ func TestExplicitRelayLegsStayRelayed(t *testing.T) {
 		{name: "leafb/post", build: leafbRelayPost},
 		{name: "setup/post", build: setupRelayPost},
 		{name: "setup/get", build: setupRelayGet},
+		{name: "recovery/post", build: recoveryRelayPost},
+		{name: "terminalfailure/post", build: terminalFailureRelayPost},
+		{name: "retirement/post", build: retirementRelayPost},
+		{name: "retireunclaimed/post", build: retireUnclaimedRelayPost},
 	}
 
 	for _, leg := range legs {

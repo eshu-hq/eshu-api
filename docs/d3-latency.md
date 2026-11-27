@@ -56,22 +56,24 @@ by the `hits == 1` assertions in the parity suite), so the spread is
 scheduling noise, not lane pathology. CI's clean runner is the
 enforcement point for the 1.50 gate.
 
-## Gap 02 trio per-route numbers (local, 2026-11-08)
+## Gap 02 trio per-route numbers (local, 2026-11-27)
 
-Per-route hermetic medians (`BenchmarkD3TrioTerminatedRead`,
-2000x5, same stub-core shape as the D3 legs):
+Per-route hermetic medians (`BenchmarkD3TrioTerminatedRead` vs
+`BenchmarkD3RelayRead/get`, 2000x5, same stub-core shape as the D3
+legs), gated by `bash scripts/measure-d3trio-latency.sh` on every PR
+and in CI:
 
-| Route | Terminated (median ns/op) | Same-host relay GET (median ns/op) | Ratio | Budget |
+| Route | Terminated (median ns/op) | Relay GET (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| GET `/api/v0/admin/delta-union/completeness?scope=s1` | 86603 | 86083 | 1.01 | ≤ 1.50 |
-| GET `/api/v0/admin/reindex/progress?scope_id=s1` | 86488 | 86083 | 1.00 | ≤ 1.50 |
-| GET `/api/v0/admin/shared-projection/tuning-report` | 86073 | 86083 | 1.00 | ≤ 1.50 |
+| GET `/api/v0/admin/delta-union/completeness?scope=s1` | 44617 | 43852 | 1.02 | ≤ 1.50 |
+| GET `/api/v0/admin/reindex/progress?scope_id=s1` | 44389 | 43852 | 1.01 | ≤ 1.50 |
+| GET `/api/v0/admin/shared-projection/tuning-report` | 46165 | 43852 | 1.05 | ≤ 1.50 |
 
-The same-host D3 terminated GET median measured alongside is 84564
-ns/op and the relay GET median is 86083 ns/op, so the trio legs cost
-the same single server-side fetch plus the shared wave gate and
-family authorizer — no measurable overhead, same as the D3 lane.
-The trio benchmarks are report-only (per-route evidence for the
-`api/d3trio_latency_test.go` suite); the CI gate stays the
-`measure-d3-latency.sh` get/post comparison above, which the trio
-does not move.
+The trio legs cost the same single server-side fetch plus the shared
+wave gate and family authorizer — no measurable overhead, same as the
+D3 lane. The trio gate complements (not replaces) the
+`measure-d3-latency.sh` get/post comparison above. An earlier
+report-only run on the same host measured 86603/86083 (1.01),
+86488/86083 (1.00), and 86073/86083 (1.00); the absolutes moved with
+scheduling noise while every leg stays at parity with the relay.
+Script wall time on this host: ~3s.
