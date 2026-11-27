@@ -79,11 +79,13 @@ type Store struct {
 // Option tunes a Store.
 type Option func(*Store)
 
-// WithReplica opts metadata-only lists (ListSessionsBySubject,
-// ListAPITokensBySubject, GetLocalIdentityMFAStatus) into the read
-// replica. The risk rides in the name: replica lag means a caller
-// may miss a row created milliseconds ago, so read-your-writes flows
-// keep the default. Passing nil or false keeps primary for all.
+// WithReplica opts metadata-only reads (ListSessionsBySubject,
+// ListAPITokensBySubject, GetLocalIdentityMFAStatus,
+// ResolveLocalIdentityUserID) into the read replica. The risk rides
+// in the name: replica lag means a caller may miss a row created
+// milliseconds ago — a just-created subject can spuriously deny
+// until lag clears — so read-your-writes flows keep the default.
+// Passing nil or false keeps primary for all.
 func WithReplica(ro DB, enabled bool) Option {
 	return func(s *Store) {
 		s.replica = ro
