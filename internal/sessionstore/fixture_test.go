@@ -7,9 +7,29 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
+
+// applyMigrations runs the shipped 001 tables + 002 roles migrations
+// against the fixture database, twice: the second pass proves the
+// idempotency the migration headers promise.
+func applyMigrations(t *testing.T, db *sql.DB) {
+	t.Helper()
+	ctx := context.Background()
+	for pass := 0; pass < 2; pass++ {
+		for _, f := range []string{"001_session_tables.sql", "002_session_least_privilege_roles.sql"} {
+			raw, err := os.ReadFile(filepath.Join("migrations", f))
+			if err != nil {
+				t.Fatalf("read %s: %v", f, err)
+			}
+			if _, err := db.ExecContext(ctx, string(raw)); err != nil {
+				t.Fatalf("apply %s (pass %d): %v", f, pass, err)
+			}
+		}
+	}
+}
 
 // TestFixture_Postgres runs the load-bearing SQL against a real
 // PostgreSQL fixture: resolve-refresh UPDATE, CSRF branch, revoke
@@ -42,6 +62,7 @@ func TestFixture_Postgres(t *testing.T) {
 	if err := db.PingContext(ctx); err != nil {
 		t.Fatalf("ping fixture db: %v", err)
 	}
+	applyMigrations(t, db)
 	s := NewStore(&SQLDB{DB: db})
 	now := time.Now().UTC()
 	create := BrowserSessionCreate{

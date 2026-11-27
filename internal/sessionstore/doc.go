@@ -37,12 +37,16 @@
 // Rotating swaps credentials under audit (actor, role, timestamp,
 // version — never the value) without dropping in-flight readers.
 // Statement timeouts are pinned server-side by the migration in
-// migrations/001_session_least_privilege_roles.sql, which runs
-// out-of-band: runtime roles hold no DDL.
+// migrations/002_session_least_privilege_roles.sql, which runs
+// out-of-band: runtime roles hold no DDL. Tables come from
+// migrations/001_session_tables.sql, ordered first so the 002
+// GRANTs resolve on a fresh database.
 //
 // Observability is stdlib-only until the OTEL dependency lands:
-// every operation logs a structured slog line with the operation and
-// tenant hash, and Stats counts deny reasons (unresolved,
-// store-error, CSRF mismatch, stale) so an operator can tell "PG
-// down" from "credential invalid" from dashboards alone.
+// mutations, errors, and resolve/deny outcomes log a structured
+// slog line (successful resolves carry the tenant hash);
+// success-path lists and reads stay silent. Stats counts deny
+// reasons (unresolved, store-error, CSRF mismatch, stale) so an
+// operator can tell "PG down" from "credential invalid" from
+// dashboards alone.
 package sessionstore

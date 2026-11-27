@@ -25,7 +25,7 @@ func TestTokenLifecycle_SuccessPaths(t *testing.T) {
 	if err := s.CreateLocalIdentityAPIToken(ctx, APITokenCreate{TokenID: "tok-1", TokenHash: "h", SubjectIDHash: "s", Name: "ci-token"}); err != nil {
 		t.Fatalf("token create: %v", err)
 	}
-	items, err := s.ListAPITokensBySubject(ctx, "s", now)
+	items, err := s.ListAPITokensBySubject(ctx, "s", now, 10, 0)
 	if err != nil {
 		t.Fatalf("token list: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestMutations_StoreErrorPropagates(t *testing.T) {
 			return err
 		},
 		"list-tokens": func(s *Store) error {
-			_, err := s.ListAPITokensBySubject(context.Background(), "s", time.Now())
+			_, err := s.ListAPITokensBySubject(context.Background(), "s", time.Now(), 10, 0)
 			return err
 		},
 		"mfa-status": func(s *Store) error {
@@ -170,7 +170,7 @@ func TestRemainingErrorBranches(t *testing.T) {
 		t.Error("short session row must fail scanning")
 	}
 	primary.rows = &fakeRows{rows: [][]any{{"only-one-column"}}}
-	if _, err := s.ListAPITokensBySubject(ctx, "s", time.Now()); err == nil {
+	if _, err := s.ListAPITokensBySubject(ctx, "s", time.Now(), 10, 0); err == nil {
 		t.Error("short token row must fail scanning")
 	}
 }

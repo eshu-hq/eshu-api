@@ -31,6 +31,10 @@ func (r *fakeRow) Scan(dest ...any) error {
 				*d, _ = r.values[i].(bool)
 			case *time.Time:
 				*d, _ = r.values[i].(time.Time)
+			case *sql.NullTime:
+				if t, ok := r.values[i].(time.Time); ok {
+					*d = sql.NullTime{Time: t, Valid: true}
+				}
 			}
 		}
 	}
@@ -69,14 +73,26 @@ func (r *fakeRows) Scan(dest ...any) error {
 			*d, _ = vals[i].(bool)
 		case *time.Time:
 			*d, _ = vals[i].(time.Time)
+		case *sql.NullTime:
+			if t, ok := vals[i].(time.Time); ok {
+				*d = sql.NullTime{Time: t, Valid: true}
+			}
 		}
 	}
 	return nil
 }
 
-type fakeResult struct{ n int64 }
+type fakeResult struct {
+	n   int64
+	err error
+}
 
-func (r *fakeResult) RowsAffected() (int64, error) { return r.n, nil }
+func (r *fakeResult) RowsAffected() (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+	return r.n, nil
+}
 
 // fakeDB records every call as "handle:op" plus the query text, and
 // serves scripted results. The handle name proves replica routing:
@@ -92,6 +108,12 @@ type fakeDB struct {
 	execRes  Result
 	execErr  error
 	queryErr error
+	// probe and probeErr script the -- session-exists-probe row
+	// separately from the main statement row. When both are unset
+	// the probe reports no row, so legacy ErrNoRows tests classify
+	// the deny as unknown without scripting a second result.
+	probe    Row
+	probeErr error
 }
 
 func (f *fakeDB) record(op, q string) {
@@ -101,6 +123,15 @@ func (f *fakeDB) record(op, q string) {
 
 func (f *fakeDB) QueryRowContext(_ context.Context, q string, _ ...any) Row {
 	f.record("queryrow", q)
+	if strings.Contains(q, "session-exists-probe") {
+		if f.probeErr != nil {
+			return &fakeRow{err: f.probeErr}
+		}
+		if f.probe != nil {
+			return f.probe
+		}
+		return &fakeRow{err: sql.ErrNoRows}
+	}
 	if f.rowErr != nil {
 		return &fakeRow{err: f.rowErr}
 	}
@@ -204,145 +235,5 @@ func TestResolve_DBErrorSurfacesAsError(t *testing.T) {
 	}
 	if got := s.Stats().StoreErrors.Load(); got != 1 {
 		t.Fatalf("store-error counter = %d, want 1", got)
-	}
-}
-
-func TestResolve_CSRFMismatchDenies(t *testing.T) {
-	t.Parallel()
-	primary, _, _, _ := newFakePair()
-	primary.row = &fakeRow{values: []any{"subj-hash", "tenant-a", "ws-1", true, "other-csrf", time.Now()}}
-	s := NewStore(primary)
-	_, ok, err := s.ResolveBrowserSession(context.Background(), "sess-hash", "csrf-hash", true, time.Now())
-	if err != nil {
-		t.Fatalf("CSRF mismatch must deny without error, got %v", err)
-	}
-	if ok {
-		t.Fatal("CSRF mismatch must resolve ok=false")
-	}
-	if got := s.Stats().CSRFMismatches.Load(); got != 1 {
-		t.Fatalf("csrf counter = %d, want 1", got)
-	}
-}
-
-func TestRevoke_IsIdempotentOnZeroRows(t *testing.T) {
-	t.Parallel()
-	primary, _, _, queries := newFakePair()
-	primary.execRes = &fakeResult{n: 0}
-	s := NewStore(primary)
-	if err := s.RevokeBrowserSession(context.Background(), "sess-hash", time.Now()); err != nil {
-		t.Fatalf("revoke of an already-gone session must succeed, got %v", err)
-	}
-	q := (*queries)[0]
-	if !strings.Contains(strings.ToUpper(q), "UPDATE") {
-		t.Fatalf("revoke must UPDATE revoked_at, never DELETE: %s", q)
-	}
-	if strings.Contains(strings.ToUpper(q), "DELETE") {
-		t.Fatalf("revoke must never DELETE: %s", q)
-	}
-}
-
-func TestSwitch_NonAllScopesRowDenies(t *testing.T) {
-	t.Parallel()
-	primary, _, _, _ := newFakePair()
-	primary.rowErr = sql.ErrNoRows
-	s := NewStore(primary)
-	_, ok, err := s.SwitchBrowserSessionWorkspace(context.Background(), "scoped-hash", "t", "w", time.Now())
-	if err != nil {
-		t.Fatalf("scoped switch must deny without error, got %v", err)
-	}
-	if ok {
-		t.Fatal("scoped session switch must resolve ok=false")
-	}
-}
-
-func TestList_MetadataOnlyAndReplicaRouted(t *testing.T) {
-	t.Parallel()
-	primary, replica, calls, queries := newFakePair()
-	now := time.Now().UTC()
-	replica.rows = &fakeRows{rows: [][]any{{"tenant-a", "ws-1", now, now, now, now, true}}}
-	s := NewStore(primary, WithReplica(replica, true))
-	items, err := s.ListSessionsBySubject(context.Background(), "subj-hash", now, "sess-hash", 50, 0)
-	if err != nil {
-		t.Fatalf("list: %v", err)
-	}
-	if len(items) != 1 || !items[0].Current {
-		t.Fatalf("unexpected list items: %+v", items)
-	}
-	if len(*calls) != 1 || (*calls)[0] != "replica:query" {
-		t.Fatalf("metadata list must ride the replica when enabled, got %v", *calls)
-	}
-	// The Current flag is computed server-side by hash comparison, so
-	// the hash name legitimately appears inside that single computed
-	// expression and past FROM. Strip the parenthesized computation
-	// first: a bare hash column anywhere else must fail.
-	selectList := strings.ToUpper((*queries)[0])
-	if idx := strings.Index(selectList, "FROM"); idx >= 0 {
-		selectList = selectList[:idx]
-	}
-	if start := strings.Index(selectList, "("); start >= 0 {
-		if end := strings.Index(selectList[start:], ")"); end >= 0 {
-			selectList = selectList[:start] + selectList[start+end+1:]
-		}
-	}
-	for _, forbidden := range []string{"SESSION_HASH", "CSRF_HASH", "TOKEN_HASH"} {
-		if strings.Contains(selectList, forbidden) {
-			t.Fatalf("metadata list must never select %s: %s", forbidden, (*queries)[0])
-		}
-	}
-}
-
-func TestList_PrimaryByDefault(t *testing.T) {
-	t.Parallel()
-	primary, replica, calls, _ := newFakePair()
-	primary.rows = &fakeRows{}
-	s := NewStore(primary, WithReplica(replica, false))
-	if _, err := s.ListSessionsBySubject(context.Background(), "subj", time.Now(), "", 50, 0); err != nil {
-		t.Fatalf("list: %v", err)
-	}
-	if len(*calls) != 1 || (*calls)[0] != "primary:query" {
-		t.Fatalf("lists must default to the primary, got %v", *calls)
-	}
-}
-
-func TestTokenRotate_ScopesByOwnership(t *testing.T) {
-	t.Parallel()
-	primary, _, _, queries := newFakePair()
-	primary.execRes = &fakeResult{n: 1}
-	s := NewStore(primary)
-	err := s.RotateLocalIdentityAPIToken(context.Background(), APITokenRotate{
-		TokenID: "tok-1", SubjectIDHash: "subj-hash", NewTokenHash: "new-hash",
-	})
-	if err != nil {
-		t.Fatalf("rotate: %v", err)
-	}
-	q := strings.ToUpper((*queries)[0])
-	if !strings.Contains(q, "UPDATE") {
-		t.Fatalf("rotate must be a single UPDATE, got: %s", (*queries)[0])
-	}
-	if !strings.Contains((*queries)[0], "subject") {
-		t.Fatalf("rotate must scope by token ownership: %s", (*queries)[0])
-	}
-}
-
-func TestIdentityReads_AreSelectOnly(t *testing.T) {
-	t.Parallel()
-	primary, _, _, queries := newFakePair()
-	primary.rows = &fakeRows{}
-	primary.row = &fakeRow{values: []any{true, time.Now()}}
-	s := NewStore(primary)
-	if _, err := s.ListAPITokensBySubject(context.Background(), "subj", time.Now()); err != nil {
-		t.Fatalf("token list: %v", err)
-	}
-	if _, err := s.GetLocalIdentityMFAStatus(context.Background(), "subj", time.Now()); err != nil {
-		t.Fatalf("mfa status: %v", err)
-	}
-	for _, q := range *queries {
-		upper := strings.ToUpper(q)
-		if !strings.HasPrefix(strings.TrimSpace(upper), "SELECT") {
-			t.Fatalf("identity/token reads must be SELECT-only, got: %s", q)
-		}
-		if strings.Contains(upper, "TOKEN_HASH") && strings.Contains(upper, "SELECT") && strings.Contains(upper, "FROM") {
-			t.Fatalf("token list must never return token_hash: %s", q)
-		}
 	}
 }

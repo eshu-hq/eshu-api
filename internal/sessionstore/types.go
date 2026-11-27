@@ -122,7 +122,7 @@ type IdentityProfiles interface {
 // pin: create, metadata-only list, revoke, rotate.
 type APITokens interface {
 	CreateLocalIdentityAPIToken(ctx context.Context, record APITokenCreate) error
-	ListAPITokensBySubject(ctx context.Context, subjectIDHash string, asOf time.Time) ([]APITokenListItem, error)
+	ListAPITokensBySubject(ctx context.Context, subjectIDHash string, asOf time.Time, limit, offset int) ([]APITokenListItem, error)
 	RevokeLocalIdentityAPIToken(ctx context.Context, revocation APITokenRevoke) error
 	RotateLocalIdentityAPIToken(ctx context.Context, rotation APITokenRotate) error
 }

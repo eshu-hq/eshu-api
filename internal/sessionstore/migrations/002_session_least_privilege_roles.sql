@@ -1,12 +1,13 @@
 -- SPDX-License-Identifier: MIT
 -- Copyright (c) 2025-2026 eshu-hq
 --
--- 001: least-privilege session/identity/token roles for eshu-api.
+-- 002: least-privilege session/identity/token roles for eshu-api.
 --
 -- Refs eshu-hq/eshu-api#447 (ADR-0002 P5 wiring). Run out-of-band
 -- (advisory-locked one-shot job or migration harness), NEVER from the
 -- serving pods: runtime roles hold no DDL, and the pods never carry
--- owner credentials. Idempotent: safe to re-apply.
+-- owner credentials. Idempotent: safe to re-apply. Ordered AFTER
+-- 001: every GRANT below names a table 001 creates.
 --
 -- Pool arithmetic (ADR-0002, global not per-pod):
 --   PerReplicaMaxConns x (MaxReplicas + SurgeReplicas)
@@ -38,10 +39,16 @@ BEGIN
 END
 $$;
 
--- Belt and braces: the session surface starts from no access, so a
--- wider default_privileges change elsewhere cannot leak in.
+-- Belt and braces: the session surface starts from no access.
+-- REVOKE ALL covers existing objects only, so the bare ALTER
+-- DEFAULT PRIVILEGES lines below (which bind the role running this
+-- migration — the one-shot owner job) close the future-table gap:
+-- tables or sequences created later grant nothing to these roles
+-- even if a wider default_privileges change lands elsewhere.
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM eshu_api_session_rw, eshu_api_session_ro;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM eshu_api_session_rw, eshu_api_session_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM eshu_api_session_rw, eshu_api_session_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM eshu_api_session_rw, eshu_api_session_ro;
 REVOKE ALL ON SCHEMA public FROM eshu_api_session_rw, eshu_api_session_ro;
 GRANT USAGE ON SCHEMA public TO eshu_api_session_rw, eshu_api_session_ro;
 

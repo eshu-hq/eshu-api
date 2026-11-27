@@ -15,7 +15,7 @@ import (
 // relative path holds both locally and in CI.
 func migrationSQL(t *testing.T) string {
 	t.Helper()
-	raw, err := os.ReadFile(filepath.Join("migrations", "001_session_least_privilege_roles.sql"))
+	raw, err := os.ReadFile(filepath.Join("migrations", "002_session_least_privilege_roles.sql"))
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
 	}
@@ -102,5 +102,27 @@ func TestMigration_PinsPoolCeilingsAsComment(t *testing.T) {
 	got := migrationSQL(t)
 	if !strings.Contains(got, "MaxReplicas") {
 		t.Fatal("migration must record the global pool-arithmetic formula so operators size max_connections from it")
+	}
+}
+
+func TestMigration_ClosesFutureTableGrants(t *testing.T) {
+	t.Parallel()
+	got := strings.ToUpper(migrationSQL(t))
+	if !strings.Contains(got, "ALTER DEFAULT PRIVILEGES") {
+		t.Fatal("migration must revoke default privileges so future tables grant nothing to the session roles")
+	}
+}
+
+func TestTables_CreateSessionIdentityTokenSurfaces(t *testing.T) {
+	t.Parallel()
+	raw, err := os.ReadFile(filepath.Join("migrations", "001_session_tables.sql"))
+	if err != nil {
+		t.Fatalf("read tables migration: %v", err)
+	}
+	got := strings.ToUpper(string(raw))
+	for _, table := range []string{"BROWSER_SESSIONS", "IDENTITY_API_TOKENS", "IDENTITY_SUBJECTS"} {
+		if !strings.Contains(got, "CREATE TABLE IF NOT EXISTS "+table) {
+			t.Fatalf("001 must create %s idempotently before 002 grants on it", table)
+		}
 	}
 }

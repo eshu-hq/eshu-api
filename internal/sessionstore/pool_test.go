@@ -97,6 +97,14 @@ func TestPoolBudget_NegativeSharedBudgetRejected(t *testing.T) {
 	}
 }
 
+func TestPoolBudget_NonPositivePerReplicaRejected(t *testing.T) {
+	t.Parallel()
+	b := PoolBudget{ServerMaxConnections: 100, MaxReplicas: 1, PerReplicaMaxConns: 0}
+	if err := b.Validate(); err == nil {
+		t.Fatal("non-positive per-replica ceiling must fail validation")
+	}
+}
+
 func TestReplicaBudget_ValidatedIndependently(t *testing.T) {
 	t.Parallel()
 	// The replica gets its own budget line: read-list traffic plus

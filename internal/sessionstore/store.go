@@ -126,8 +126,14 @@ func (s *Store) listDB() DB {
 
 // ResolveBrowserSession refreshes last_seen/idle expiry and returns
 // the auth context for a live session. Empty hashes deny without
-// touching the database; unknown or stale hashes deny without error;
-// store failures propagate so the caller answers 503, never allow.
+// touching the database; unknown, stale, or CSRF-mismatched hashes
+// deny without error; store failures propagate so the caller answers
+// 503, never allow. The refresh UPDATE carries every deny predicate
+// (revocation, absolute and idle expiry, CSRF match), so a denial
+// never mutates session state: last_seen_at/idle_expires_at move
+// only on an allowed resolve. A missed UPDATE runs one existence
+// probe to classify the deny for Stats (stale vs CSRF vs unknown)
+// without changing the uniform deny shape.
 func (s *Store) ResolveBrowserSession(ctx context.Context, sessionHash, csrfTokenHash string, requireCSRF bool, now time.Time) (AuthContext, bool, error) {
 	var zero AuthContext
 	if sessionHash == "" {
@@ -136,16 +142,17 @@ func (s *Store) ResolveBrowserSession(ctx context.Context, sessionHash, csrfToke
 	}
 	const query = `UPDATE browser_sessions
 		SET last_seen_at = $2, idle_expires_at = $3
-		WHERE session_hash = $1 AND revoked_at IS NULL AND absolute_expires_at > $2
+		WHERE session_hash = $1 AND revoked_at IS NULL
+			AND absolute_expires_at > $2 AND idle_expires_at > $2
+			AND (NOT $4 OR csrf_token_hash = $5)
 		RETURNING subject_id_hash, tenant_id, workspace_id, all_scopes, csrf_token_hash, absolute_expires_at`
 	var out AuthContext
 	var csrfHash string
-	err := s.db.QueryRowContext(ctx, query, sessionHash, now.UTC(), now.UTC().Add(idleWindow)).Scan(
+	err := s.db.QueryRowContext(ctx, query, sessionHash, now.UTC(), now.UTC().Add(idleWindow), requireCSRF, csrfTokenHash).Scan(
 		&out.SubjectIDHash, &out.TenantID, &out.WorkspaceID, &out.AllScopes, &csrfHash, &out.ExpiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.stats.Unresolved.Add(1)
-		s.log.Info("session unresolved", "op", "resolve")
+		s.classifyDeny(ctx, sessionHash, csrfTokenHash, requireCSRF, now.UTC(), "resolve")
 		return zero, false, nil
 	}
 	if err != nil {
@@ -153,17 +160,50 @@ func (s *Store) ResolveBrowserSession(ctx context.Context, sessionHash, csrfToke
 		s.log.Error("session store error", "op", "resolve", "error", err)
 		return zero, false, err
 	}
-	if requireCSRF && csrfHash != csrfTokenHash {
-		s.stats.CSRFMismatches.Add(1)
-		return zero, false, nil
-	}
 	s.stats.Resolves.Add(1)
+	s.log.Info("session resolved", "op", "resolve", "tenant_hash", hashLogLabel(out.TenantID))
 	return out, true, nil
+}
+
+// classifyDeny attributes a missed-row deny without changing its
+// uniform shape. The probe reads only hashes and expiry flags; it
+// never allows. A revoked or expired row counts StaleDenials, a live
+// row with a wrong CSRF counts CSRFMismatches, and anything else
+// (unknown hash, or a probe failure that must not allow) counts
+// Unresolved.
+func (s *Store) classifyDeny(ctx context.Context, sessionHash, csrfTokenHash string, requireCSRF bool, now time.Time, op string) {
+	const probe = `-- session-exists-probe
+		SELECT csrf_token_hash, revoked_at IS NOT NULL AS revoked, idle_expires_at, absolute_expires_at
+		FROM browser_sessions WHERE session_hash = $1`
+	var csrfHash string
+	var revoked bool
+	var idleExpiresAt, absoluteExpiresAt time.Time
+	if err := s.db.QueryRowContext(ctx, probe, sessionHash).Scan(&csrfHash, &revoked, &idleExpiresAt, &absoluteExpiresAt); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			s.stats.StoreErrors.Add(1)
+		}
+		s.stats.Unresolved.Add(1)
+		s.log.Info("session unresolved", "op", op)
+		return
+	}
+	switch {
+	case revoked || !idleExpiresAt.After(now) || !absoluteExpiresAt.After(now):
+		s.stats.StaleDenials.Add(1)
+		s.log.Info("session stale", "op", op)
+	case requireCSRF && csrfHash != csrfTokenHash:
+		s.stats.CSRFMismatches.Add(1)
+		s.log.Info("session CSRF mismatch", "op", op)
+	default:
+		s.stats.Unresolved.Add(1)
+		s.log.Info("session unresolved", "op", op)
+	}
 }
 
 // CreateBrowserSession inserts the hash-only session record, refreshing
 // an existing row on hash collision (upsert keeps concurrent
 // retry-safe creates from failing against the hash primary key).
+// The upsert never clears revoked_at: an explicitly revoked session
+// stays revoked even if its create is retried or replayed.
 func (s *Store) CreateBrowserSession(ctx context.Context, record BrowserSessionCreate) error {
 	const query = `INSERT INTO browser_sessions
 		(session_hash, csrf_token_hash, subject_id_hash, tenant_id, workspace_id, idle_expires_at, absolute_expires_at)
@@ -171,8 +211,7 @@ func (s *Store) CreateBrowserSession(ctx context.Context, record BrowserSessionC
 		ON CONFLICT (session_hash) DO UPDATE SET
 			csrf_token_hash = EXCLUDED.csrf_token_hash,
 			idle_expires_at = EXCLUDED.idle_expires_at,
-			absolute_expires_at = EXCLUDED.absolute_expires_at,
-			revoked_at = NULL`
+			absolute_expires_at = EXCLUDED.absolute_expires_at`
 	_, err := s.db.ExecContext(ctx, query,
 		record.SessionHash, record.CSRFHash, record.SubjectIDHash,
 		record.TenantID, record.WorkspaceID,
@@ -211,14 +250,15 @@ func (s *Store) SwitchBrowserSessionWorkspace(ctx context.Context, sessionHash, 
 	}
 	const query = `UPDATE browser_sessions
 		SET tenant_id = $2, workspace_id = $3, last_seen_at = $4
-		WHERE session_hash = $1 AND revoked_at IS NULL AND all_scopes AND absolute_expires_at > $4
+		WHERE session_hash = $1 AND revoked_at IS NULL AND all_scopes
+			AND absolute_expires_at > $4 AND idle_expires_at > $4
 		RETURNING subject_id_hash, tenant_id, workspace_id, all_scopes, absolute_expires_at`
 	var out AuthContext
 	err := s.db.QueryRowContext(ctx, query, sessionHash, tenantID, workspaceID, now.UTC()).Scan(
 		&out.SubjectIDHash, &out.TenantID, &out.WorkspaceID, &out.AllScopes, &out.ExpiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.stats.Unresolved.Add(1)
+		s.classifyDeny(ctx, sessionHash, "", false, now.UTC(), "switch")
 		return zero, false, nil
 	}
 	if err != nil {
@@ -229,16 +269,24 @@ func (s *Store) SwitchBrowserSessionWorkspace(ctx context.Context, sessionHash, 
 	return out, true, nil
 }
 
-// ListSessionsBySubject returns metadata-only rows: the session hash
-// computes Current server-side and is never selected. It rides the
-// replica only when WithReplica opted in.
+// ListSessionsBySubject returns at most limit metadata-only rows:
+// the session hash computes Current server-side and is never
+// selected. Negative limit/offset clamp to zero (PostgreSQL rejects
+// negative LIMIT/OFFSET). It rides the replica only when WithReplica
+// opted in.
 func (s *Store) ListSessionsBySubject(ctx context.Context, subjectIDHash string, asOf time.Time, sessionHash string, limit, offset int) ([]BrowserSessionListItem, error) {
+	if limit < 0 {
+		limit = 0
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	const query = `SELECT tenant_id, workspace_id, issued_at, last_seen_at, idle_expires_at, absolute_expires_at,
 		($4 <> '' AND session_hash = $4) AS current
 		FROM browser_sessions
 		WHERE subject_id_hash = $1 AND revoked_at IS NULL AND issued_at <= $5
 		ORDER BY issued_at DESC LIMIT $2 OFFSET $3`
-	rows, err := s.listDB().QueryContext(ctx, query, subjectIDHash, limit+1, offset, sessionHash, asOf.UTC())
+	rows, err := s.listDB().QueryContext(ctx, query, subjectIDHash, limit, offset, sessionHash, asOf.UTC())
 	if err != nil {
 		s.stats.StoreErrors.Add(1)
 		return nil, err
@@ -254,30 +302,57 @@ func (s *Store) ListSessionsBySubject(ctx context.Context, subjectIDHash string,
 		}
 		items = append(items, item)
 	}
+	// Defensive trim: the contract is at most limit rows even if a
+	// driver ignores the LIMIT parameter.
+	if len(items) > limit {
+		items = items[:limit]
+	}
 	return items, rows.Err()
 }
 
-// CreateLocalIdentityAPIToken persists the hash-only token record.
+// CreateLocalIdentityAPIToken persists the hash-only token record. A
+// token_id collision with the same hash is a retry-safe no-op
+// success; a collision with a different hash fails loudly instead of
+// silently keeping the old hash live.
 func (s *Store) CreateLocalIdentityAPIToken(ctx context.Context, record APITokenCreate) error {
 	const query = `INSERT INTO identity_api_tokens (token_id, token_hash, subject_id_hash, name, expires_at)
 		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (token_id) DO NOTHING`
-	_, err := s.db.ExecContext(ctx, query,
+		ON CONFLICT (token_id) DO UPDATE SET token_hash = EXCLUDED.token_hash
+		WHERE identity_api_tokens.token_hash = EXCLUDED.token_hash`
+	res, err := s.db.ExecContext(ctx, query,
 		record.TokenID, record.TokenHash, record.SubjectIDHash, record.Name, record.ExpiresAt.UTC())
 	if err != nil {
 		s.stats.StoreErrors.Add(1)
 		s.log.Error("session store error", "op", "token-create", "error", err)
+		return err
 	}
-	return err
+	affected, err := res.RowsAffected()
+	if err != nil {
+		s.stats.StoreErrors.Add(1)
+		s.log.Error("session store error", "op", "token-create", "error", err)
+		return err
+	}
+	if affected == 0 {
+		s.log.Error("session store error", "op", "token-create", "error", errTokenIDCollision)
+		return errTokenIDCollision
+	}
+	return nil
 }
 
-// ListAPITokensBySubject returns metadata-only token rows: token_hash
-// is never selected.
-func (s *Store) ListAPITokensBySubject(ctx context.Context, subjectIDHash string, asOf time.Time) ([]APITokenListItem, error) {
+// ListAPITokensBySubject returns at most limit metadata-only token
+// rows: token_hash is never selected. Negative limit/offset clamp to
+// zero. It rides the replica only when WithReplica opted in.
+func (s *Store) ListAPITokensBySubject(ctx context.Context, subjectIDHash string, asOf time.Time, limit, offset int) ([]APITokenListItem, error) {
+	if limit < 0 {
+		limit = 0
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	const query = `SELECT token_id, name, created_at, expires_at, revoked_at IS NOT NULL AS revoked
 		FROM identity_api_tokens WHERE subject_id_hash = $1 AND created_at <= $2
-		ORDER BY created_at DESC`
-	rows, err := s.listDB().QueryContext(ctx, query, subjectIDHash, asOf.UTC())
+		ORDER BY created_at DESC LIMIT $3 OFFSET $4`
+	rows, err := s.listDB().QueryContext(ctx, query, subjectIDHash, asOf.UTC(), limit, offset)
 	if err != nil {
 		s.stats.StoreErrors.Add(1)
 		return nil, err
@@ -291,6 +366,11 @@ func (s *Store) ListAPITokensBySubject(ctx context.Context, subjectIDHash string
 			return nil, err
 		}
 		items = append(items, item)
+	}
+	// Defensive trim: the contract is at most limit rows even if a
+	// driver ignores the LIMIT parameter.
+	if len(items) > limit {
+		items = items[:limit]
 	}
 	return items, rows.Err()
 }
@@ -324,12 +404,14 @@ func (s *Store) RotateLocalIdentityAPIToken(ctx context.Context, rotation APITok
 
 // GetLocalIdentityMFAStatus reads enrollment facts only: no
 // credential material crosses, so the read-only role may serve it
-// from the replica when opted in.
+// from the replica when opted in. A NULL mfa_verified_at (never
+// verified) maps to the zero time.
 func (s *Store) GetLocalIdentityMFAStatus(ctx context.Context, subjectIDHash string, now time.Time) (MFAStatus, error) {
 	var out MFAStatus
 	const query = `SELECT mfa_enrolled, mfa_verified_at FROM identity_subjects
 		WHERE subject_id_hash = $1 AND disabled_at IS NULL AND $2 >= created_at`
-	err := s.listDB().QueryRowContext(ctx, query, subjectIDHash, now.UTC()).Scan(&out.Enrolled, &out.VerifiedAt)
+	var verifiedAt sql.NullTime
+	err := s.listDB().QueryRowContext(ctx, query, subjectIDHash, now.UTC()).Scan(&out.Enrolled, &verifiedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return MFAStatus{}, nil
 	}
@@ -337,6 +419,7 @@ func (s *Store) GetLocalIdentityMFAStatus(ctx context.Context, subjectIDHash str
 		s.stats.StoreErrors.Add(1)
 		return MFAStatus{}, err
 	}
+	out.VerifiedAt = verifiedAt.Time
 	return out, nil
 }
 
@@ -363,6 +446,12 @@ func (s *Store) ResolveLocalIdentityUserID(ctx context.Context, subjectIDHash st
 // idleWindow bounds how far one resolve extends idle expiry: thirty
 // minutes, matching the session-cookie idle contract.
 const idleWindow = 30 * time.Minute
+
+// errTokenIDCollision reports a token_id already persisted under a
+// different hash: success must mean the record exists with the given
+// hash, so the collision fails loudly instead of silently keeping
+// the old hash live.
+var errTokenIDCollision = errors.New("sessionstore: token_id already exists with a different hash")
 
 // hashLogLabel truncates a hash for log lines so even a misrouted
 // label leaks at most a prefix. Callers must never log raw secrets;
