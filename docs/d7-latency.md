@@ -18,8 +18,10 @@ Hermetic stub-core comparison, same binary, same caller shape:
   terminated-vs-terminated); the Compare POST it replaces
   terminated in its gap-04 lane.
 - After legs: the D7 clones (`BenchmarkD7NativeWrite`), shared-key
-  dead-letter and reindex POSTs through the full production chain with
-  the explicit route match and family authorizer.
+  dead-letter, reindex, backfill, and skip POSTs through the full
+  production chain with the explicit route match and the family
+  authorizer. All four callers carry zero bodies: the benchmark
+  isolates route-match plus authorizer cost, not body parsing.
 - Both legs hit the same in-process stub core, so the numbers isolate
   dest-side cost, not core or network time.
 - `bash scripts/measure-d7-latency.sh` runs each leg `-count=5`,
@@ -44,8 +46,16 @@ Shared host, in-process stub core (`go test` benchmarks, 2000x5):
 
 | Leg | Clone (median ns/op) | Relay (median ns/op) | Ratio | Budget |
 | --- | --- | --- | --- | --- |
-| Dead-letter POST | 83493 | 83737 | 1.00 | ≤ 1.50 |
-| Reindex POST | 82477 | 83737 | 0.98 | ≤ 1.50 |
+| Dead-letter POST | 45298 | 44347 | 1.02 | ≤ 1.50 |
+| Reindex POST | 44151 | 44347 | 1.00 | ≤ 1.50 |
+| Backfill POST | 44208 | 44347 | 1.00 | ≤ 1.50 |
+| Skip POST | 43897 | 44347 | 0.99 | ≤ 1.50 |
+
+Re-measured 2026-11-27 with all four admin-four legs (backfill and
+skip added as zero-body callers, same as the existing legs): earlier
+runs on the same host measured 83493/83737 (1.00) and 82477/83737
+(0.98) for dead-letter and reindex. The absolutes moved with
+scheduling noise while every leg stays at parity with the relay.
 
 Re-measured 2026-11-15 after the W6 scan lane re-pointed the relay
 leg from the terminated code bundles POST to the impact
@@ -53,10 +63,12 @@ change-surface POST (then the relay leg; change-surface has since
 terminated natively in the impact lane's Wave-3, and the leg now
 rides foreign-bearer explicit relay).
 
-Within budget on both legs: the lane adds the explicit route match and
-one authorizer call around the same single fetch. Absolute deployment
-numbers against a pinned core image ride flip prep (D11); this gate
-runs hermetically on every PR and in CI. An earlier run on the same
-host and code measured 168043/168119 (1.00) and 163105/168119 (0.97):
-shared-host scheduling noise moves the absolutes while both legs move
-together, so the ratio stays comfortably inside the budget either way.
+Within budget on all four legs: the lane adds the explicit route
+match and one authorizer call around the same single fetch. Absolute
+deployment numbers against a pinned core image ride flip prep (D11);
+this gate runs hermetically on every PR and in CI. An earlier run on
+the same host and code measured 168043/168119 (1.00) and
+163105/168119 (0.97): shared-host scheduling noise moves the
+absolutes while every leg moves together, so the ratio stays
+comfortably inside the budget either way. Script wall time on this
+host: ~4s.
