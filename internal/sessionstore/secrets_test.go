@@ -14,7 +14,6 @@ import (
 )
 
 func TestLoadCredential_EmptyEnvFailsClosed(t *testing.T) {
-
 	t.Setenv("ESHU_TEST_447_RW_DSN", "")
 	if _, err := LoadCredentialFromEnv(RoleSessionRW, "ESHU_TEST_447_RW_DSN", ""); err == nil {
 		t.Fatal("empty credential env must fail closed")
