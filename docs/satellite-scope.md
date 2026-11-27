@@ -53,12 +53,13 @@ deployment, not the committed tree.
 
 ## Spec-endpoint auth posture (decided and pinned)
 
-The spec endpoint stays inside `RequireAuth` like every other dest
-`/api/*` route: unauthenticated callers get 401, authenticated
-callers get the document. Core serves its spec publicly; dest adds no
-new public surface here. Pinned by
+The served `openapi.json` serves pre-auth like core (Refs
+eshu-hq/eshu-api#164): unauthenticated callers get 200 with the
+assembled document on the exact path only — the trailing-slash twin
+stays on the gated relay. The spec self-entry stays unmarked exactly
+like core's own self-entry. Pinned by
 `TestSetupSpecPosture_StaysCoreSide` and documented at the route
-registration in `api/router.go`. This is the all-authed branch of the
+registration in `api/router.go`. This is the pre-auth branch of the
 acceptance criterion, honestly documented — no 401-vs-public
 mismatch is claimed.
 

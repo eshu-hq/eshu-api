@@ -153,9 +153,10 @@ served key duplicates a relayed route, and no mounted route
 promises what the document does not carry. No fragment carries a
 `"security": []` public-route marker question: all 7 are authed
 reader-port reads, and the posture test
-(`TestG2OpenAPIStillKeyGated`) pins the spec route stays key-gated —
-the only served marker stays the permanently-public login-picker
-entry (`GET /api/v0/auth/providers`).
+(`TestG2OpenAPIServesPublicly`) pins the spec route serves pre-auth
+like core (Refs eshu-hq/eshu-api#164) — the only other served marker
+stays the permanently-public login-picker entry
+(`GET /api/v0/auth/providers`).
 
 ## Rollback
 
