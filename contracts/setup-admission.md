@@ -245,12 +245,10 @@ OpenAPI: no fragment ported in this lane (satellite-design Decision
 5(c) recorded N/A). The core setup fragment
 (`go/internal/query/openapi/paths/auth/setup.go`) marks every
 operation `"security": []` — public pre-auth documentation — while
-the dest-served `GET /api/v0/openapi.json` stays inside
-`RequireAuth` like every other dest `/api/*` route. Porting the
-fragment now would either gate public-route docs behind the shared
-key (misrepresenting the documented security posture) or open the
-spec endpoint (widening the public surface beyond the four approved
-routes). The served dest spec therefore still covers exactly the
+the dest-served `GET /api/v0/openapi.json` serves pre-auth like
+core (Refs eshu-hq/eshu-api#164), so porting the fragment would
+publish setup internals on the public document. The served dest
+spec therefore still covers exactly the
 previously landed families; setup routes stay relayed-from-core for
 spec purposes permanently: the eshu-hq/eshu-api#44 follow-up resolves
 the posture question in favor of core-side (no later lane moves the

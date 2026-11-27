@@ -16,8 +16,9 @@ import (
 // package tests pin the assembled document; these tests pin that the
 // native openapi.json route serves it to keyed callers with the wave
 // path keys present — for both a configured and an unconfigured core
-// origin — while the key gate still fronts the route (the standing
-// no-new-public-surface decision for the assembled spec).
+// origin — while the spec route itself serves pre-auth like core
+// (Refs eshu-hq/eshu-api#164), so these keyed-caller assertions
+// exercise the public route with credentials present.
 
 // contentSearchWaveSpecKeys are the path keys the W4 lane adds to the
 // served document: one entry per served wave route.

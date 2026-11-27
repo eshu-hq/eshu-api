@@ -16,8 +16,9 @@ import (
 // assembled document; these tests pin that the native openapi.json
 // route serves it to keyed callers with the wave path keys present —
 // for both a configured and an unconfigured core origin — while the
-// key gate still fronts the route (the standing no-new-public-surface
-// decision for the assembled spec).
+// spec route itself serves pre-auth like core (Refs
+// eshu-hq/eshu-api#164), so these keyed-caller assertions exercise
+// the public route with credentials present.
 
 // d4WaveSpecKeys are the path keys the D4 wave adds to the served
 // document: one entry per served wave route. The evidence-packet key
