@@ -42,7 +42,7 @@ the home of the public-route carve-outs — other pages summarise and
 link here.
 
 Most `/api/*` routes need a valid Bearer token, and a missing or wrong
-token gets a `401`. But not all of them do. Nineteen `/api/*` routes
+token gets a `401`. But not all of them do. Twenty `/api/*` routes
 register outside the auth gate in `api/router.go`, because they run
 before a caller can have a credential: first-run setup, signing in,
 and the pages that help you sign in. They are:
@@ -64,6 +64,9 @@ and the pages that help you sign in. They are:
   `POST /api/v0/auth/saml/providers/{provider_id}/acs`
 - Docs and login picker (4): `GET /api/v0/docs`, `GET /api/v0/redoc`,
   `GET /api/v0/auth/providers`, `GET /api/v0/auth/sign-in-policy`
+- Spec (1): `GET /api/v0/openapi.json` (exact path only — the
+  trailing-slash twin stays on the gated relay, like the login-picker
+  twins)
 
 Public here means "no shared-key check at this layer", not "no checks
 at all". Credential bodies and query values cross to the core as
@@ -75,9 +78,9 @@ mostly stay on the gated relay. If you're auditing the surface, read
 the registration comments in `api/router.go` alongside this list.
 They're the source of truth.
 
-Everything else under `/api/*` sits behind the gate, including
-`GET /api/v0/openapi.json`. The core serves that document publicly; we
-don't add a new public surface for it here.
+Everything else under `/api/*` sits behind the gate. Like the core,
+we serve `GET /api/v0/openapi.json` publicly (exact path only), so it
+is listed above instead of here.
 
 Outside `/api/*`, `GET /health`, `GET /readyz`, and `GET /metrics` are
 public and answered locally. They never disclose the key. `/health`

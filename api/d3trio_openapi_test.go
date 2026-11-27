@@ -16,8 +16,9 @@ import (
 // package tests pin the assembled document; these tests pin that the
 // native openapi.json route serves it to keyed callers with the trio
 // path keys present — for both a configured and an unconfigured core
-// origin — while the key gate still fronts the route (the standing
-// no-new-public-surface decision for the assembled spec). The trio
+// origin — while the spec route itself serves pre-auth like core
+// (Refs eshu-hq/eshu-api#164), so these keyed-caller assertions
+// exercise the public route with credentials present. The trio
 // fragments carry no operationIds (the pinned core entries have
 // none), so the D5 operationId probe does not watch them: this table
 // is the claim TestD5Wiring_NoUndocumentedGETs unions instead.

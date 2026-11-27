@@ -23,7 +23,7 @@ Callers send the same value back as `Authorization: Bearer <key>`:
 
 ```bash
 curl -s -H 'Authorization: Bearer change-me' \
-  http://localhost:8080/api/v0/openapi.json | head -c 200
+  http://localhost:8080/api/v0/capabilities | head -c 200
 ```
 
 Your token crosses to the core only in the `Authorization` header. It
@@ -46,14 +46,13 @@ pages and the data behind the login picker.
 
 Public here means "no shared-key check at this layer", not "no checks
 at all". The core still makes every trust call on those routes. The
-authoritative list — all nineteen routes, with method and
+authoritative list — all twenty routes, with method and
 trailing-slash behaviour — lives in
 [Reference: configuration](../reference/configuration.md). If you're
 auditing the surface, read the registration comments in `api/router.go`
 alongside it. They're the source of truth.
 
-Everything else under `/api/*` sits behind the gate, including
-`GET /api/v0/openapi.json`.
+Everything else under `/api/*` sits behind the gate.
 
 ## Probes
 

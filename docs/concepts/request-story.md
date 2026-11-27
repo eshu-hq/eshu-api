@@ -27,8 +27,8 @@ Details worth knowing:
 - Your token crosses to the core only in the `Authorization` header.
   It never shows up in logs or health output.
 - `GET /api/v0/openapi.json` is served from compiled constants in this
-  repo, so it works even with no core origin configured. It still
-  needs a token (see
+  repo, so it works even with no core origin configured. It needs no
+  token — it is pre-auth, like the core serves it (see
   [Reference: configuration](../reference/configuration.md)).
 
 ## What comes in

@@ -12,11 +12,12 @@ import (
 )
 
 // D2 Leaf B wave-public carve-out proof (Refs eshu-hq/eshu#9669, part
-// of #6707). The four routes core serves pre-auth register outside any
-// gate so dest matches core's public posture byte-for-byte. Byte
-// identity of the doc-UI shells with the pinned core spec.go consts
-// rides scripts/check-parity.sh (line-verbatim subset gate); these
-// tests pin the serving contract around those bytes.
+// of #6707; spec route added by eshu-hq/eshu-api#164). The five routes
+// core serves pre-auth register outside any gate so dest matches
+// core's public posture byte-for-byte. Byte identity of the doc-UI
+// shells with the pinned core spec.go consts rides
+// scripts/check-parity.sh (line-verbatim subset gate); these tests pin
+// the serving contract around those bytes.
 
 // TestLeafBPublicDocUI pins the doc-UI carve-out: the shells serve
 // publicly with core's headers and bytes — no credential, no core

@@ -16,9 +16,10 @@ import (
 // eshu-hq/eshu-api#72). The openapi package tests pin the assembled
 // document; these tests pin that the native openapi.json route serves
 // it to keyed callers with the wave path keys present — for both a
-// configured and an unconfigured core origin — while the key gate
-// still fronts the route (the standing no-new-public-surface decision
-// for the assembled spec).
+// configured and an unconfigured core origin — while the spec route
+// itself serves pre-auth like core (Refs eshu-hq/eshu-api#164), so
+// these keyed-caller assertions exercise the public route with
+// credentials present.
 
 // freshnessWaveSpecKeys are the path keys the Wave-1 lane adds to the
 // served document: one entry per served wave route. No Wave-1 route
@@ -92,17 +93,18 @@ func TestFreshnessNative_ServesWaveSpecKeys(t *testing.T) {
 	}
 }
 
-// TestFreshnessOpenAPIStillKeyGated pins that the assembled spec route
-// stays behind the key gate: a credential-less caller gets the
-// standing 401 even though the document is fully dest-served.
-func TestFreshnessOpenAPIStillKeyGated(t *testing.T) {
+// TestFreshnessOpenAPIServesPublicly pins the eshu-hq/eshu-api#164
+// outcome: the assembled spec route serves pre-auth, so a
+// credential-less caller gets 200 with the document instead of the
+// standing 401.
+func TestFreshnessOpenAPIServesPublicly(t *testing.T) {
 	t.Parallel()
 
 	srv := NewServer("http://core.invalid", skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil))
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("status = %d, want the standing 401", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200 for the keyless spec caller", rec.Code)
 	}
 }
