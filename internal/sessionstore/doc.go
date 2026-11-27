@@ -43,9 +43,10 @@
 // GRANTs resolve on a fresh database.
 //
 // Observability is stdlib-only until the OTEL dependency lands:
-// mutations, errors, and resolve/deny outcomes log a structured
-// slog line (successful resolves carry the tenant hash);
-// success-path lists and reads stay silent. Stats counts deny
+// errors and resolve/deny outcomes log a structured slog line
+// (successful resolves carry the tenant_id metadata value);
+// successful mutations and success-path lists/reads stay silent.
+// Stats counts deny
 // reasons (unresolved, store-error, CSRF mismatch, stale) so an
 // operator can tell "PG down" from "credential invalid" from
 // dashboards alone.

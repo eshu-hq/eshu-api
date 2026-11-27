@@ -86,6 +86,44 @@ func TestResolve_RevokedSessionDeniesStale(t *testing.T) {
 	}
 }
 
+func TestResolve_UpdateCarriesDenyPredicates(t *testing.T) {
+	t.Parallel()
+	primary, _, _, queries := newFakePair()
+	now := time.Now().UTC()
+	primary.row = &fakeRow{values: []any{"subj-hash", "tenant-a", "ws-1", true, "csrf-hash", now}}
+	s := NewStore(primary)
+	if _, ok, err := s.ResolveBrowserSession(context.Background(), "sess-hash", "csrf-hash", true, now); err != nil || !ok {
+		t.Fatalf("resolve: ok=%v err=%v", ok, err)
+	}
+	upper := strings.ToUpper((*queries)[0])
+	// Mutant guard: dropping any deny predicate from the refresh
+	// UPDATE must fail this test, so fakes cannot false-green a
+	// predicate regression the SQL alone enforces. Substrings pin
+	// the comparison form (not the SET/RETURNING column mentions).
+	for _, want := range []string{"REVOKED_AT IS NULL", "IDLE_EXPIRES_AT >", "ABSOLUTE_EXPIRES_AT >", "CSRF_TOKEN_HASH ="} {
+		if !strings.Contains(upper, want) {
+			t.Fatalf("resolve UPDATE must carry the %s deny predicate, got: %s", want, (*queries)[0])
+		}
+	}
+}
+
+func TestSwitch_UpdateCarriesDenyPredicates(t *testing.T) {
+	t.Parallel()
+	primary, _, _, queries := newFakePair()
+	now := time.Now().UTC()
+	primary.row = &fakeRow{values: []any{"subj", "tenant-b", "ws-9", true, now}}
+	s := NewStore(primary)
+	if _, ok, err := s.SwitchBrowserSessionWorkspace(context.Background(), "sess-hash", "tenant-b", "ws-9", now); err != nil || !ok {
+		t.Fatalf("switch: ok=%v err=%v", ok, err)
+	}
+	upper := strings.ToUpper((*queries)[0])
+	for _, want := range []string{"REVOKED_AT IS NULL", "IDLE_EXPIRES_AT >", "ABSOLUTE_EXPIRES_AT >", "AND ALL_SCOPES"} {
+		if !strings.Contains(upper, want) {
+			t.Fatalf("switch UPDATE must carry the %s deny predicate, got: %s", want, (*queries)[0])
+		}
+	}
+}
+
 func TestClassifyDeny_ProbeErrorFailsClosed(t *testing.T) {
 	t.Parallel()
 	primary, _, _, _ := newFakePair()

@@ -163,7 +163,7 @@ func (s *Store) ResolveBrowserSession(ctx context.Context, sessionHash, csrfToke
 		return zero, false, err
 	}
 	s.stats.Resolves.Add(1)
-	s.log.Info("session resolved", "op", "resolve", "tenant_hash", hashLogLabel(out.TenantID))
+	s.log.Info("session resolved", "op", "resolve", "tenant_id", out.TenantID)
 	return out, true, nil
 }
 
