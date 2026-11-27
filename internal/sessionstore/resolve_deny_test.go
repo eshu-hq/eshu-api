@@ -85,6 +85,7 @@ func TestResolve_RevokedSessionDeniesStale(t *testing.T) {
 		t.Fatalf("stale counter = %d, want 1", got)
 	}
 }
+
 func TestClassifyDeny_ProbeErrorFailsClosed(t *testing.T) {
 	t.Parallel()
 	primary, _, _, _ := newFakePair()

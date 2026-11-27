@@ -41,6 +41,7 @@ func TestSwitch_NonAllScopesRowDenies(t *testing.T) {
 		t.Fatal("scoped session switch must resolve ok=false")
 	}
 }
+
 func TestCreate_NeverClearsRevocation(t *testing.T) {
 	t.Parallel()
 	primary, _, _, queries := newFakePair()
@@ -54,6 +55,7 @@ func TestCreate_NeverClearsRevocation(t *testing.T) {
 		t.Fatalf("create upsert must never touch revoked_at so revocations stick: %s", (*queries)[0])
 	}
 }
+
 func TestSwitch_EmptyHashUnresolvedWithoutDBCall(t *testing.T) {
 	t.Parallel()
 	primary, _, calls, _ := newFakePair()

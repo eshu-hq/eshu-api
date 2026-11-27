@@ -102,6 +102,7 @@ func TestIdentityReads_AreSelectOnly(t *testing.T) {
 		}
 	}
 }
+
 func TestList_TrimsToLimit(t *testing.T) {
 	t.Parallel()
 	primary, _, _, _ := newFakePair()
@@ -138,6 +139,7 @@ func TestTokenCreate_SameHashRetrySucceeds(t *testing.T) {
 		t.Fatalf("same-hash retry must succeed, got %v", err)
 	}
 }
+
 func TestList_NegativeLimitOffsetClampToZero(t *testing.T) {
 	t.Parallel()
 	primary, _, _, _ := newFakePair()
