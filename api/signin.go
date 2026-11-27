@@ -6,6 +6,8 @@ package api
 import (
 	"crypto/subtle"
 	"net/http"
+
+	"github.com/eshu-hq/eshu-api/internal/credresolver"
 )
 
 // signInPolicyRoute is the single native-dispatch route of the
@@ -106,6 +108,27 @@ func authorizeSignInPolicyAdmin(allScopes bool) bool {
 // credential matrix for the family's authed legs.
 func (s *Server) signInPolicyWriterGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if owned, ctx, outcome := s.credentialFront(r); owned {
+			// N3 unified front (dark unless enabled): the resolver
+			// owned this request, so the legacy split below stays
+			// untouched. Shared-key allow terminates natively;
+			// session allow binds the identity and drives the
+			// family authorizer through its AllScopes bit (a
+			// non-AllScopes identity reaches the plain 403 deny);
+			// foreign classes relay explicitly; denials collapse
+			// to the single 401 with zero core contact.
+			switch outcome {
+			case credresolver.OutcomeAllowSharedKey:
+				next.ServeHTTP(w, r)
+			case credresolver.OutcomeAllowSession:
+				s.signInPolicyWriteThroughAs(w, withAuthContext(r, ctx), ctx.AllScopes)
+			case credresolver.OutcomeRelay:
+				s.signInPolicyRelayExplicit(w, r)
+			default:
+				WriteUnauthorized(w, r)
+			}
+			return
+		}
 		if s.apiKey == "" {
 			WriteUnauthorized(w, r)
 			return

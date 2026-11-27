@@ -9,9 +9,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/eshu-hq/eshu-api/api"
+	"github.com/eshu-hq/eshu-api/internal/credresolver"
 )
 
 // apiKeyEnvVar is the only credential input: the shared-key bearer value
@@ -19,6 +21,26 @@ import (
 // never appears in process flags; an unset variable fails closed and
 // every /api/* request 401s until the operator sets it.
 const apiKeyEnvVar = "ESHU_API_KEY"
+
+// localAuthEnvVar switches the N3 unified credential resolver on.
+// Unset or any other value keeps the legacy relay gates byte-for-byte;
+// "1" or "true" (case-insensitive) enables local resolution of the
+// shared key and safe-method session cookies, with scoped tokens,
+// OIDC bearers, and unsafe-method cookies still relaying. No session
+// store is wired in this lane yet, so cookie traffic falls back to
+// the legacy split until the N2 store lands.
+const localAuthEnvVar = "ESHU_LOCAL_AUTH"
+
+// localAuthEnabled reports whether the unified credential front is
+// switched on for this process. Default off: today's behavior.
+func localAuthEnabled(getenv func(string) string) bool {
+	switch strings.ToLower(strings.TrimSpace(getenv(localAuthEnvVar))) {
+	case "1", "true":
+		return true
+	default:
+		return false
+	}
+}
 
 // server holds the dependencies of the dispatch surface. It answers
 // health and readiness itself, gates /api/* behind the shared key, and
@@ -38,9 +60,16 @@ func newServer(coreBaseURL, apiKey string, log *slog.Logger) *server {
 // handler returns the production middleware chain over the dispatch
 // routes, with the sunset date read from the environment. The request
 // log flows through log, so binary output carries the per-request
-// structured lines.
+// structured lines. The N3 credential front rides dark unless
+// ESHU_LOCAL_AUTH switches it on.
 func (s *server) handler() http.Handler {
-	return api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log)).Handler(api.V0SunsetFromEnv(os.Getenv))
+	srv := api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log))
+	if localAuthEnabled(os.Getenv) {
+		res := credresolver.New(s.apiKey, nil)
+		res.Enabled = true
+		srv.WithCredentialResolver(res)
+	}
+	return srv.Handler(api.V0SunsetFromEnv(os.Getenv))
 }
 
 func run(args []string, logOut *slog.Logger) error {

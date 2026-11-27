@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/eshu-hq/eshu-api/internal/credresolver"
 	"github.com/eshu-hq/eshu-api/openapi"
 )
 
@@ -23,6 +24,10 @@ type Server struct {
 	core        *url.URL
 	httpClient  *http.Client
 	telemetry   *Telemetry
+	// credentials is the N3 unified credential front (see
+	// api/credential.go). Nil or disabled reproduces the legacy
+	// relay-gate behavior; attach via WithCredentialResolver.
+	credentials *credresolver.Resolver
 }
 
 // NewServer builds a Server that dispatches to coreBaseURL and gates

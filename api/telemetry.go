@@ -52,6 +52,7 @@ type telemetrySnapshot struct {
 	coreLatencies      map[string]map[string]histSnapshot
 	authorizer         map[string]map[string]uint64
 	readiness          map[string]map[string]uint64
+	resolver           map[string]uint64
 	auditDrops         uint64
 	auditDroppedEvents uint64
 }
@@ -81,13 +82,18 @@ type telemetrySnapshot struct {
 type Telemetry struct {
 	logger *slog.Logger
 
-	mu                 sync.Mutex
-	requests           map[string]map[string]uint64
-	durations          map[string]*histogram
-	dispatches         map[string]map[string]map[string]uint64
-	coreLatencies      map[string]map[string]*histogram
-	authorizer         map[string]map[string]uint64
-	readiness          map[string]map[string]uint64
+	mu            sync.Mutex
+	requests      map[string]map[string]uint64
+	durations     map[string]*histogram
+	dispatches    map[string]map[string]map[string]uint64
+	coreLatencies map[string]map[string]*histogram
+	authorizer    map[string]map[string]uint64
+	readiness     map[string]map[string]uint64
+	// resolver files one count per unified-credential outcome in the
+	// closed allow/relay/deny vocabulary. Deny carries no
+	// credential-class label by construction, so the counter cannot
+	// reintroduce disclosure through metric cardinality.
+	resolver           map[string]uint64
 	auditDrops         uint64
 	auditDroppedEvents uint64
 }
@@ -166,6 +172,25 @@ func (t *Telemetry) observeDispatch(family, via, outcome string, coreLatency tim
 		lanesHist[via] = hist
 	}
 	hist.observe(coreLatency.Seconds())
+}
+
+// observeResolver files one unified-credential resolution outcome in
+// the closed allow/relay/deny vocabulary (see
+// credresolver.Outcome.String). Outcome classes only: no caller,
+// credential-class, or reason label rides along, so denial metrics
+// stay non-disclosing. Unknown strings file under deny (fail closed).
+func (t *Telemetry) observeResolver(outcome string) {
+	switch outcome {
+	case "allow", "relay", "deny":
+	default:
+		outcome = "deny"
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.resolver == nil {
+		t.resolver = make(map[string]uint64)
+	}
+	t.resolver[outcome]++
 }
 
 // observeAuthorizer files one family authorizer judgment.
@@ -249,6 +274,12 @@ func (t *Telemetry) snapshot() telemetrySnapshot {
 			copied[reason] = count
 		}
 		snap.readiness[result] = copied
+	}
+	for outcome, count := range t.resolver {
+		if snap.resolver == nil {
+			snap.resolver = make(map[string]uint64, len(t.resolver))
+		}
+		snap.resolver[outcome] = count
 	}
 	snap.auditDrops = t.auditDrops
 	snap.auditDroppedEvents = t.auditDroppedEvents
