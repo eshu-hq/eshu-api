@@ -36,7 +36,12 @@
 # scripts/measure-iac-latency.sh,
 # scripts/measure-dead-code-latency.sh,
 # scripts/measure-w5-latency.sh,
-# scripts/measure-g2-latency.sh).
+# scripts/measure-g2-latency.sh,
+# scripts/measure-d3trio-latency.sh,
+# scripts/measure-recovery-latency.sh,
+# scripts/measure-terminalfailure-latency.sh,
+# scripts/measure-retirement-latency.sh,
+# scripts/measure-retireunclaimed-latency.sh).
 # The pinned-core-image leg against a real deployment rides flip prep
 # (D11); this gate runs hermetically on every lane-affecting PR, on
 # main pushes, and weekly.
@@ -82,6 +87,11 @@ on:
       - 'scripts/measure-dead-code-latency.sh'
       - 'scripts/measure-w5-latency.sh'
       - 'scripts/measure-g2-latency.sh'
+      - 'scripts/measure-d3trio-latency.sh'
+      - 'scripts/measure-recovery-latency.sh'
+      - 'scripts/measure-terminalfailure-latency.sh'
+      - 'scripts/measure-retirement-latency.sh'
+      - 'scripts/measure-retireunclaimed-latency.sh'
       - '.github/workflows/read-latency.yml'
   push:
     branches: [main]
@@ -325,5 +335,50 @@ jobs:
             echo "## G2 latency (stub-core, median ns/op)"
             echo '```'
             cat g2-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: D3 Gap 02 trio termination latency
+        run: |
+          bash scripts/measure-d3trio-latency.sh 2>&1 | tee d3trio-latency.log
+          {
+            echo "## D3 trio latency (stub-core, median ns/op)"
+            echo '```'
+            cat d3trio-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Recovery tier-C clone latency
+        run: |
+          bash scripts/measure-recovery-latency.sh 2>&1 | tee recovery-latency.log
+          {
+            echo "## Recovery latency (stub-core, median ns/op)"
+            echo '```'
+            cat recovery-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Terminal-failure tier-C clone latency
+        run: |
+          bash scripts/measure-terminalfailure-latency.sh 2>&1 | tee terminalfailure-latency.log
+          {
+            echo "## Terminal-failure latency (stub-core, median ns/op)"
+            echo '```'
+            cat terminalfailure-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retirement clone latency
+        run: |
+          bash scripts/measure-retirement-latency.sh 2>&1 | tee retirement-latency.log
+          {
+            echo "## Retirement latency (stub-core, median ns/op)"
+            echo '```'
+            cat retirement-latency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retire-unclaimed clone latency
+        run: |
+          bash scripts/measure-retireunclaimed-latency.sh 2>&1 | tee retireunclaimed-latency.log
+          {
+            echo "## Retire-unclaimed latency (stub-core, median ns/op)"
+            echo '```'
+            cat retireunclaimed-latency.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -34,14 +34,18 @@ func d7BenchServer(b *testing.B, body string) (*httptest.Server, *Server) {
 }
 
 // BenchmarkD7NativeWrite measures the clone path for a shared-key POST
-// through the full production chain: one dead-letter leg and one
-// reindex leg (the 202 branch, the most expensive entry in the lane).
+// through the full production chain: one leg per admin-four route. The
+// callers carry zero bodies (the D7 clones forward whatever the caller
+// sends; the benchmark isolates route-match plus authorizer cost, not
+// body parsing).
 func BenchmarkD7NativeWrite(b *testing.B) {
 	_, srv := d7BenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	deadLetterPost := authedRequest(http.MethodPost, "/api/v0/admin/dead-letter")
 	reindexPost := authedRequest(http.MethodPost, "/api/v0/admin/reindex")
+	backfillPost := authedRequest(http.MethodPost, "/api/v0/admin/backfill")
+	skipPost := authedRequest(http.MethodPost, "/api/v0/admin/skip")
 
 	b.Run("dead-letter", func(b *testing.B) {
 		b.ReportAllocs()
@@ -55,6 +59,20 @@ func BenchmarkD7NativeWrite(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, reindexPost.Clone(reindexPost.Context()))
+		}
+	})
+	b.Run("backfill", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, backfillPost.Clone(backfillPost.Context()))
+		}
+	})
+	b.Run("skip", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, skipPost.Clone(skipPost.Context()))
 		}
 	})
 }
