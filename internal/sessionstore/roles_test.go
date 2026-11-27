@@ -22,6 +22,20 @@ func migrationSQL(t *testing.T) string {
 	return string(raw)
 }
 
+func TestMigration_RolesCanLogIn(t *testing.T) {
+	// Refs eshu-hq/eshu-api#447 review: the pool authenticates AS
+	// these roles, so the migration must grant LOGIN (passwords are
+	// set out-of-band via the secret store, never in this file).
+	// NOLOGIN roles would refuse password authentication.
+	sql := migrationSQL(t)
+	if strings.Contains(sql, "WITH NOLOGIN") {
+		t.Fatal("session roles must carry LOGIN so the pool can authenticate as them")
+	}
+	if !strings.Contains(sql, "WITH LOGIN") {
+		t.Fatal("migration must grant LOGIN to both session roles")
+	}
+}
+
 func TestMigration_DeclaresBothLeastPrivilegeRoles(t *testing.T) {
 	t.Parallel()
 	got := migrationSQL(t)

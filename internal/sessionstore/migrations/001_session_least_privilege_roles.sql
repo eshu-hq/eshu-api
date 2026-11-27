@@ -23,15 +23,17 @@
 
 BEGIN;
 
--- Least-privilege roles. NOLOGIN: the connection pooler authenticates
--- with per-role passwords granted out-of-band via the secret store.
+-- Least-privilege roles. LOGIN: the serving pools authenticate AS
+-- these roles with per-role passwords granted out-of-band via the
+-- secret store (never baked into this file). NOLOGIN would refuse
+-- password authentication and fail the serving pods at startup.
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'eshu_api_session_rw') THEN
-        CREATE ROLE eshu_api_session_rw WITH NOLOGIN;
+        CREATE ROLE eshu_api_session_rw WITH LOGIN;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'eshu_api_session_ro') THEN
-        CREATE ROLE eshu_api_session_ro WITH NOLOGIN;
+        CREATE ROLE eshu_api_session_ro WITH LOGIN;
     END IF;
 END
 $$;

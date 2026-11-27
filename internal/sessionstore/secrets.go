@@ -56,6 +56,10 @@ func (c Credential) String() string {
 	return fmt.Sprintf("Credential{role:%s version:%s}", c.role, c.version)
 }
 
+// GoString redacts the secret like String: without it, %#v would
+// dump the live DSN into any debug-format log line.
+func (c Credential) GoString() string { return c.String() }
+
 // LoadCredentialFromEnv reads one credential from the environment:
 // dsnEnv names the secret-mapped DSN variable (mounted from a
 // secretKeyRef, never a flag or a default), and versionEnv

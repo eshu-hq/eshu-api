@@ -60,6 +60,10 @@ func (b PoolBudget) Validate() error {
 	if b.PerReplicaMaxConns <= 0 {
 		return fmt.Errorf("sessionstore: per-replica ceiling must be positive")
 	}
+	if b.CoreAPIBudget < 0 || b.Headroom < 0 {
+		return fmt.Errorf("sessionstore: negative shared budget entry (core=%d headroom=%d) would shrink demand and void the formula",
+			b.CoreAPIBudget, b.Headroom)
+	}
 	if total := b.Total(); total > b.ServerMaxConnections {
 		return fmt.Errorf("sessionstore: pool demand %d exceeds server max_connections %d (%s)",
 			total, b.ServerMaxConnections, b.Formula())

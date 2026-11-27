@@ -81,6 +81,22 @@ func TestPoolBudget_NegativeReplicaCountRejected(t *testing.T) {
 	}
 }
 
+func TestPoolBudget_NegativeSharedBudgetRejected(t *testing.T) {
+	t.Parallel()
+	// Refs eshu-hq/eshu-api#447 review: a negative shared-budget
+	// entry (typo or misconfig) shrinks Total and could let an
+	// overflowing fleet pass validation, voiding the Formula
+	// guarantee.
+	for _, b := range []PoolBudget{
+		{ServerMaxConnections: 100, CoreAPIBudget: -5, Headroom: 10, MaxReplicas: 1, PerReplicaMaxConns: 5},
+		{ServerMaxConnections: 100, CoreAPIBudget: 40, Headroom: -10, MaxReplicas: 1, PerReplicaMaxConns: 5},
+	} {
+		if err := b.Validate(); err == nil {
+			t.Fatalf("negative shared budget must fail validation: %+v", b)
+		}
+	}
+}
+
 func TestReplicaBudget_ValidatedIndependently(t *testing.T) {
 	t.Parallel()
 	// The replica gets its own budget line: read-list traffic plus

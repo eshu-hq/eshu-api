@@ -4,6 +4,7 @@
 package sessionstore
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"strings"
@@ -55,6 +56,21 @@ func TestCredential_NeverLogsItsValue(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Fatalf("audit record must carry %q, got: %s", want, out)
 		}
+	}
+}
+
+func TestCredential_GoStringRedactsDSN(t *testing.T) {
+	// Refs eshu-hq/eshu-api#447 review: %#v must redact like %v, so a
+	// stray debug verb in logs cannot leak the credential value.
+	// Deliberately fake: never authenticates anywhere.
+	const dsn = "postgres://eshu-rw:FAKE-SECRET-FOR-TEST-ONLY@db:5432/eshu"
+	t.Setenv("ESHU_TEST_447_RW_DSN", dsn)
+	cred, err := LoadCredentialFromEnv(RoleSessionRW, "ESHU_TEST_447_RW_DSN", "")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if got := fmt.Sprintf("%#v", cred); strings.Contains(got, dsn) || strings.Contains(got, "FAKE-SECRET-FOR-TEST-ONLY") {
+		t.Fatalf("GoString must never carry the credential value: %q", got)
 	}
 }
 
