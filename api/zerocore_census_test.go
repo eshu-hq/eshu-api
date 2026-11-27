@@ -57,23 +57,132 @@ func AssertNoCorePath(t *testing.T, claims []RouteClaim) {
 
 // zeroCoreSinkName reports whether a called function name is a core
 // sink: forwardToCore, the Server.dispatch relay entry, any func
-// matching the fetch*Core port-fetch shape, or a low-level outbound
-// call the AST records under its selector name (see the call walk).
+// matching the fetch*Core port-fetch shape, or a normalized
+// pseudo-name the call walk emits (httpGet, httpDo, netDial,
+// readclient).
 func zeroCoreSinkName(name string) bool {
 	switch name {
-	case "forwardToCore", "dispatch", "httpGet", "httpPost", "netDial", "readclient":
+	case "forwardToCore", "dispatch", "httpGet", "httpDo", "netDial", "readclient":
 		return true
 	}
 	return strings.HasPrefix(name, "fetch") && strings.HasSuffix(name, "Core")
 }
 
+// zeroCoreClientAliases collects the local names bound to an HTTP
+// client inside one function body: direct assignment from
+// *.httpClient or http.DefaultClient, address-of or composite
+// http.Client literals, transitive copies of a known alias, and
+// parameters typed *http.Client. A method value stored elsewhere and
+// called later is out of scope for this AST walk and must stay a
+// same-package edge, never a silent pass.
+func zeroCoreClientAliases(decl *ast.FuncDecl) map[string]bool {
+	aliases := map[string]bool{}
+	var clientExpr func(e ast.Expr) bool
+	clientExpr = func(e ast.Expr) bool {
+		switch v := e.(type) {
+		case *ast.SelectorExpr:
+			return v.Sel.Name == "httpClient" || v.Sel.Name == "DefaultClient"
+		case *ast.Ident:
+			return aliases[v.Name]
+		case *ast.UnaryExpr:
+			return clientExpr(v.X)
+		case *ast.CompositeLit:
+			if sel, ok := v.Type.(*ast.SelectorExpr); ok {
+				if id, ok := sel.X.(*ast.Ident); ok {
+					return id.Name == "http" && sel.Sel.Name == "Client"
+				}
+			}
+		}
+		return false
+	}
+	if decl.Type != nil && decl.Type.Params != nil {
+		for _, field := range decl.Type.Params.List {
+			star, ok := field.Type.(*ast.StarExpr)
+			if !ok {
+				continue
+			}
+			sel, ok := star.X.(*ast.SelectorExpr)
+			if !ok {
+				continue
+			}
+			id, ok := sel.X.(*ast.Ident)
+			if !ok || id.Name != "http" || sel.Sel.Name != "Client" {
+				continue
+			}
+			for _, name := range field.Names {
+				aliases[name.Name] = true
+			}
+		}
+	}
+	ast.Inspect(decl.Body, func(n ast.Node) bool {
+		switch stmt := n.(type) {
+		case *ast.AssignStmt:
+			if stmt.Tok.String() != ":=" && stmt.Tok.String() != "=" {
+				return true
+			}
+			for i, lhs := range stmt.Lhs {
+				id, ok := lhs.(*ast.Ident)
+				if !ok || id.Name == "_" || id.Name == "" {
+					continue
+				}
+				rhs := stmt.Rhs[0]
+				if len(stmt.Rhs) > i {
+					rhs = stmt.Rhs[i]
+				}
+				if clientExpr(rhs) {
+					aliases[id.Name] = true
+				}
+			}
+		case *ast.ValueSpec:
+			for i, name := range stmt.Names {
+				if len(stmt.Values) == 0 {
+					continue
+				}
+				rhs := stmt.Values[0]
+				if len(stmt.Values) > i {
+					rhs = stmt.Values[i]
+				}
+				if clientExpr(rhs) {
+					aliases[name.Name] = true
+				}
+			}
+		}
+		return true
+	})
+	return aliases
+}
+
+// zeroCoreClientish reports whether a call receiver is an HTTP client
+// surface: a *.httpClient or *.DefaultClient selector, the http
+// package's DefaultClient, or a tracked local alias. Plain header,
+// query-value, and other .Get receivers are NOT clientish, so
+// Header.Get and url.Values.Get stay silent by design.
+func zeroCoreClientish(x ast.Expr, aliases map[string]bool) bool {
+	switch v := x.(type) {
+	case *ast.SelectorExpr:
+		return v.Sel.Name == "httpClient" || v.Sel.Name == "DefaultClient"
+	case *ast.Ident:
+		return aliases[v.Name]
+	}
+	return false
+}
+
 // zeroCoreCalleeFacts scans one function body for same-package callee
-// edges and core-sink hits. Selector calls on the http, net, and
+// edges and core-sink hits. Selector calls on the http, net, tls, and
 // readclient packages are normalized to pseudo-names (httpGet,
-// httpPost, netDial, readclient) so the sink table stays flat.
+// httpDo, netDial, readclient) so the sink table stays flat.
+//
+// Sink normalization (fail closed): any .Do call is an
+// outbound-request shape regardless of receiver spelling; .Get/.Post/
+// .PostForm/.Head count only on a clientish receiver; .Dial/
+// .DialContext/.DialTLS and net/tls dial forms count always; any
+// mention of http.DefaultClient/DefaultTransport counts. Unknown
+// spellings that reach none of these stay same-package edges and
+// resolve through the index, which fails closed on unknown names.
 func zeroCoreCalleeFacts(decl *ast.FuncDecl) (callees []string, sinks []string) {
 	seenCall := map[string]bool{}
 	seenSink := map[string]bool{}
+	aliases := zeroCoreClientAliases(decl)
 	addCall := func(name string) {
 		if name == "" || seenCall[name] {
 			return
@@ -91,10 +200,18 @@ func zeroCoreCalleeFacts(decl *ast.FuncDecl) (callees []string, sinks []string) 
 	ast.Inspect(decl.Body, func(n ast.Node) bool {
 		// Method and function values (e.g. http.HandlerFunc(s.dispatch)
 		// in routes) reach a sink without a call site in this body, so
-		// every selector naming a sink counts, call or not.
+		// every selector naming a sink counts, call or not. A bare
+		// http.DefaultClient/DefaultTransport mention (passed along
+		// without a call here) counts too: the transport leaves with
+		// the value.
 		if sel, ok := n.(*ast.SelectorExpr); ok {
 			if zeroCoreSinkName(sel.Sel.Name) {
 				addSink(sel.Sel.Name)
+			}
+			if sel.Sel.Name == "DefaultClient" || sel.Sel.Name == "DefaultTransport" {
+				if id, ok := sel.X.(*ast.Ident); ok && id.Name == "http" {
+					addSink("httpGet")
+				}
 			}
 			return true
 		}
@@ -115,26 +232,31 @@ func zeroCoreCalleeFacts(decl *ast.FuncDecl) (callees []string, sinks []string) 
 				addSink(sel)
 				return true
 			}
+			// Any .Do is an outbound-request shape: fail closed on
+			// the spelling instead of matching one receiver form.
+			if sel == "Do" {
+				addSink("httpDo")
+				return true
+			}
+			if sel == "Dial" || sel == "DialContext" || sel == "DialTLS" {
+				addSink("netDial")
+				return true
+			}
+			if zeroCoreClientish(fun.X, aliases) &&
+				(sel == "Get" || sel == "Post" || sel == "PostForm" || sel == "Head") {
+				addSink("httpGet")
+				return true
+			}
 			switch qualifier, ok := fun.X.(*ast.Ident); {
 			case ok && qualifier.Name == "http" && (sel == "Get" || sel == "Post" || sel == "PostForm" || sel == "Head"):
 				addSink("httpGet")
-			case ok && qualifier.Name == "http" && sel == "DefaultClient":
+			case ok && qualifier.Name == "http" && (sel == "DefaultClient" || sel == "DefaultTransport"):
 				addSink("httpGet")
-			case ok && qualifier.Name == "net" && strings.HasPrefix(sel, "Dial"):
+			case ok && (qualifier.Name == "net" || qualifier.Name == "tls") && strings.HasPrefix(sel, "Dial"):
 				addSink("netDial")
 			case ok && qualifier.Name == "readclient":
 				addSink("readclient")
 			default:
-				// A *.httpClient.Do selector call is the single
-				// transport every api core fetch flows through
-				// (see dispatch.go); any other selector call may
-				// still be a same-package method hop.
-				if sel == "Do" {
-					if inner, ok := fun.X.(*ast.SelectorExpr); ok && inner.Sel.Name == "httpClient" {
-						addSink("httpClient.Do")
-						return true
-					}
-				}
 				addCall(sel)
 			}
 		case *ast.FuncLit:
@@ -214,8 +336,16 @@ func findZeroCorePath(claim RouteClaim, includeTests bool) ([]string, error) {
 	if !strings.Contains(claim.Handler, ".") && len(roots) > 1 {
 		return nil, fmt.Errorf("handler %q ambiguous: %d declarations share the name, qualify as Type.Method", claim.Handler, len(roots))
 	}
-	// Depth-first walk carrying the chain. visited is per-path (not
-	// global) so diamond call shapes still report through every leg.
+	return walkZeroCoreIndex(index, claim.Handler, roots), nil
+}
+
+// walkZeroCoreIndex depth-first walks the indexed call graph from the
+// named roots and returns the first root-to-sink chain found, or nil
+// when the closure is core-free. visited is per-path (not global) so
+// diamond call shapes still report through every leg. Shared with the
+// spelling RED tests, which walk synthetic packages outside the api
+// tree that findZeroCorePath cannot root at.
+func walkZeroCoreIndex(index map[string][]*ast.FuncDecl, rootName string, roots []*ast.FuncDecl) []string {
 	var visit func(fn *ast.FuncDecl, chain []string, onPath map[*ast.FuncDecl]bool) []string
 	visit = func(fn *ast.FuncDecl, chain []string, onPath map[*ast.FuncDecl]bool) []string {
 		if onPath[fn] {
@@ -240,11 +370,11 @@ func findZeroCorePath(claim RouteClaim, includeTests bool) ([]string, error) {
 		return nil
 	}
 	for _, root := range roots {
-		if hit := visit(root, []string{claim.Handler}, map[*ast.FuncDecl]bool{}); hit != nil {
-			return hit, nil
+		if hit := visit(root, []string{rootName}, map[*ast.FuncDecl]bool{}); hit != nil {
+			return hit
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 // TestZeroCore_CensusRelayPathFailsWithChain is the census positive
@@ -337,4 +467,97 @@ func TestZeroCore_AssertNoCorePathPassThrough(t *testing.T) {
 	AssertNoCorePath(t, []RouteClaim{
 		{Pattern: "GET /health", Handler: "Server.health", Credential: "none"},
 	})
+}
+
+// zeroCoreSpellingIndex builds a synthetic package exercising one
+// evasive transport spelling per handler, then indexes it. Parsing is
+// syntax-only (go/parser, no type checking), so the stub client and
+// server types never need to exist outside this source text.
+func zeroCoreSpellingIndex(t *testing.T) map[string][]*ast.FuncDecl {
+	t.Helper()
+	const src = `package api
+
+import "net/http"
+
+type zeroCoreSpellingServer struct{ httpClient *http.Client }
+
+func (s zeroCoreSpellingServer) zeroCoreAliasDo() {
+	client := s.httpClient
+	_, _ = client.Do(nil)
+}
+
+func (s zeroCoreSpellingServer) zeroCoreDirectGet() {
+	_, _ = s.httpClient.Get("http://core.invalid")
+}
+
+func zeroCoreForeignDo() {
+	_, _ = http.DefaultClient.Do(nil)
+}
+
+func zeroCoreBenignHeaderGet(h string) string {
+	return http.Header{"X-Test": []string{h}}.Get("X-Test")
+}
+`
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "spellings.go"), []byte(src), 0o600); err != nil {
+		t.Fatalf("write synthetic package: %v", err)
+	}
+	index, err := zeroCoreFuncIndex(dir, false)
+	if err != nil {
+		t.Fatalf("index synthetic package: %v", err)
+	}
+	return index
+}
+
+// TestZeroCore_CensusSpellingAliasedClientDo is the RED regression
+// test for the aliased-client evasion: client.Do via a local assigned
+// from s.httpClient must report a chain, never an empty pass.
+func TestZeroCore_CensusSpellingAliasedClientDo(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreSpellingServer.zeroCoreAliasDo", index["zeroCoreSpellingServer.zeroCoreAliasDo"])
+	if len(chain) == 0 {
+		t.Fatal("aliased client.Do must report a core chain, got empty (census evasion)")
+	}
+}
+
+// TestZeroCore_CensusSpellingDirectClientGet is the RED regression
+// test for the convenience-wrapper evasion: s.httpClient.Get must
+// report a chain, never an empty pass.
+func TestZeroCore_CensusSpellingDirectClientGet(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreSpellingServer.zeroCoreDirectGet", index["zeroCoreSpellingServer.zeroCoreDirectGet"])
+	if len(chain) == 0 {
+		t.Fatal("s.httpClient.Get must report a core chain, got empty (census evasion)")
+	}
+}
+
+// TestZeroCore_CensusSpellingForeignClientDo is the RED regression
+// test for the foreign-client evasion: http.DefaultClient.Do must
+// report a chain, never an empty pass. It also bypasses the counter
+// leg (no Server transport to wrap), so the census is its only gate.
+func TestZeroCore_CensusSpellingForeignClientDo(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreForeignDo", index["zeroCoreForeignDo"])
+	if len(chain) == 0 {
+		t.Fatal("http.DefaultClient.Do must report a core chain, got empty (census evasion)")
+	}
+}
+
+// TestZeroCore_CensusSpellingBenignHeaderGet pins the precision leg:
+// a header lookup must stay silent so the sink normalization does
+// not false-positive everyday handler code into a core path.
+func TestZeroCore_CensusSpellingBenignHeaderGet(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreBenignHeaderGet", index["zeroCoreBenignHeaderGet"])
+	if len(chain) != 0 {
+		t.Fatalf("header Get must stay silent, got chain %q", strings.Join(chain, " -> "))
+	}
 }
