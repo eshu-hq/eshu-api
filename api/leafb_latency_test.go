@@ -63,18 +63,37 @@ func BenchmarkLeafBTerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkLeafBRelayRead measures the generic relay path for the
-// same caller and stub shape: the before leg the lane must not
-// regress. The relay legs use the dependencies and code-bundle reads,
-// which still cross the generic proxy (the D4 wave terminated the
-// repositories legs they replaced).
+// BenchmarkLeafBRelayRead measures the explicit relay path for the
+// same stub shape: the before leg the lane must not regress. The
+// GET relay leg rides /api/v0/dependencies and the POST relay leg
+// rides /api/v0/impact/change-surface, both via foreign-bearer
+// explicit relay on their wave-mounted routes (both legs have since
+// terminated natively for the shared key — dependencies in
+// W8b-narrow, change-surface in the impact lane's Wave-3 — so the
+// shared-key shape would run terminated-vs-terminated).
+// leafbRelayGet and leafbRelayPost build the re-pointed relay legs shared
+// by the benchmark and the StaysRelayed guard: foreign-bearer legs on their
+// wave-mounted routes. Both must use these constructors so deleting a bearer
+// breaks the guard instead of silently restoring terminated-vs-terminated.
+func leafbRelayGet(bearer string) *http.Request {
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer "+bearer)
+	return get
+}
+
+func leafbRelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
+	return post
+}
+
 func BenchmarkLeafBRelayRead(b *testing.B) {
 	_, srv := leafbBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-	post.Body = io.NopCloser(strings.NewReader(`{"question":"q"}`))
+	get := leafbRelayGet("foreign")
+	post := leafbRelayPost("foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

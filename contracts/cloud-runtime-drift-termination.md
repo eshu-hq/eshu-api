@@ -90,11 +90,15 @@ only from the findings leg.
   cancellation without retry, and a 16-caller parallel probe across
   both legs (one forward per caller).
 - Latency: `BenchmarkDriftTerminatedRead` (one leg per wave route)
-  vs `BenchmarkDriftRelayRead` (still-relayed GET and POST, on the
-  generic proxy); both legs do one server-side fetch (see
-  `docs/drift-latency.md` for the measured run). The relay legs ride
-  routes no wave table covers (`GET /api/v0/dependencies` and `POST
-  /api/v0/code/bundles`), so no re-point is needed.
+  vs `BenchmarkDriftRelayRead` (GET + POST comparison legs); both
+  legs do one server-side fetch (see `docs/drift-latency.md` for the
+  measured run). The relay legs ride `GET /api/v0/dependencies` and
+  `POST /api/v0/impact/change-surface` — the POST is the route the
+  suite moved to when the W6 scan lane terminated bundles natively;
+  both legs have since terminated natively themselves (dependencies
+  in W8b-narrow, change-surface in the impact lane's Wave-3), so the
+  comparison now runs terminated-vs-terminated and no further re-point
+  is owed by this lane.
 - Spec scope: the routes mount natively, but their Decision 5(c)
   fragments stay core-side for this lane; mounted 207 -> 209,
   disclosed absences 33 -> 35.

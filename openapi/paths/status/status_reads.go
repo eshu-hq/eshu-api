@@ -7,10 +7,11 @@ package status
 // keys are unique to the D6 lane: the pipeline, ingesters, collectors,
 // and ingesters-by-name GETs in both their legacy (/api/v0/...) and
 // /api/v0/status/... spellings (satellite-design Decision 5(c) on
-// eshu-hq/eshu#9669). The still-relayed Status aspects share the core
-// source file but keep their own path keys on the generic relay with
-// no admission pin, so this fragment ports only the seven snapshot
-// lane entries — never a key the relay still serves (governance via
+// eshu-hq/eshu#9669). The W8a-terminated Status aspects
+// (governance, answer-narration, hosted-readiness) share the core
+// source file but keep their own path keys in the W8a lane, so this
+// fragment ports only the seven snapshot
+// lane entries — never a key the W8a lane serves (governance via
 // the GovernanceAudit Summary, answer-narration via the
 // NarrationPosture override, hosted-readiness via Neo4j counts, and
 // the mux-level openapi.json self entry). The phase-2 extra-port legs

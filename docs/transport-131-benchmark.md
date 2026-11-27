@@ -9,7 +9,9 @@ material cost.
 - Harness: `api/dispatch_transport_test.go` (beside `dispatch_test.go`).
 - Stub core: 50ms handler, 200 `{"ok":true}`.
 - Load: 64 concurrent requests per burst through the production
-  `Handler` (`GET /api/v0/repositories`, generic relay leg).
+  `Handler` (`GET /api/v0/repositories`; the generic-relay leg at measurement
+  time — it has since terminated natively in the D4 wave, so a rerun exercises
+  the native lane).
 - Connection counting: `ConnState`/`StateNew` on the stub core server.
 - Legs: default client (`dispatchClient()`, nil Transport → Go default,
   `MaxIdleConnsPerHost = 2`) vs tuned client (same timeout + redirect

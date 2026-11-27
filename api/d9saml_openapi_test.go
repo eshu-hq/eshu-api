@@ -16,8 +16,9 @@ import (
 // assembled document; these tests pin that the native openapi.json
 // route serves it to keyed callers with the lane path keys present —
 // for both a configured and an unconfigured core origin — while the
-// key gate still fronts the route (the standing no-new-public-surface
-// decision for the assembled spec).
+// spec route itself serves pre-auth like core (Refs
+// eshu-hq/eshu-api#164), so these keyed-caller assertions exercise
+// the public route with credentials present.
 
 // d9SAMLWaveSpecKeys maps every D9 SAML lane path key to the methods
 // the served document must carry for it. Metadata and login carry

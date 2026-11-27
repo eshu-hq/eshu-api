@@ -34,7 +34,7 @@ func TestLeafBWaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
-		"GET /api/v0/openapi.json api_router landed paths/status/routes.go",
+		"GET /api/v0/openapi.json api_router wave-public paths/status/routes.go",
 		"GET /health api_router landed <mux-health>",
 		"GET /api/v0/docs api_router wave-public <doc-ui>",
 		"GET /api/v0/redoc api_router wave-public <doc-ui>",
@@ -107,11 +107,16 @@ func TestLeafBWaveRoutesAheadOfRelay(t *testing.T) {
 		if entry.Serve == leafbServeLanded {
 			continue
 		}
-		if entry.Path == "/api/v0/docs" || entry.Path == "/api/v0/redoc" {
-			// Static shells file no dispatch row (no dispatch step
-			// runs): their ahead-of-relay proof is the no-origin 200
-			// with the shell bytes in TestLeafBPublicDocUI, which the
-			// generic relay answers 503.
+		if entry.Path == "/api/v0/docs" || entry.Path == "/api/v0/redoc" ||
+			entry.Path == "/api/v0/openapi.json" {
+			// Static shells and the compiled spec file no dispatch row
+			// (no dispatch step runs): their ahead-of-relay proof is
+			// the no-origin 200 with the shell bytes in
+			// TestLeafBPublicDocUI (doc shells) and the keyless 200
+			// with the assembled document in
+			// TestOpenAPINative_ServesKeylessAndJunkKey (spec), which
+			// the generic relay answers 503 (authed, dead origin) or
+			// 401 (keyless).
 			continue
 		}
 		t.Run(entry.Method+" "+entry.Path, func(t *testing.T) {

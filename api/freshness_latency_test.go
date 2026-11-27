@@ -57,16 +57,21 @@ func BenchmarkFreshnessTerminatedRead(b *testing.B) {
 	}
 }
 
-// BenchmarkFreshnessRelayRead measures the generic relay path for the
-// same caller and stub shape: the before leg the lane must not
-// regress. The legs compare different routes by necessity (the
-// Wave-1 paths now terminate); both do exactly one server-side fetch,
-// so the 1.50 bound stays a real pathology check.
+// BenchmarkFreshnessRelayRead measures the explicit relay path for
+// the same stub shape: the before leg the lane must not regress.
+// The legs compare different routes by necessity (the Wave-1 paths
+// now terminate); the relay leg rides GET /api/v0/dependencies via
+// foreign-bearer explicit relay on its wave-mounted route
+// (dependencies has since terminated natively in W8b-narrow, so the
+// shared-key shape would run terminated-vs-terminated); both do
+// exactly one server-side fetch, so the 1.50 bound stays a real
+// pathology check.
 func BenchmarkFreshnessRelayRead(b *testing.B) {
 	_, srv := freshnessBenchServer(b, `{"data":[],"error":null,"truth":null}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer [REDACTED]")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()

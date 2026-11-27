@@ -5,6 +5,9 @@
 Accepted. Recorded from [What this build serves](../skeleton.md),
 which states that no core implementation package is imported anywhere
 in this tree and no shared-table handle crosses the boundary.
+[ADR-0002](0002-eshu-api-owns-api-compute.md) supersedes this
+boundary in phases; this ADR remains operative until ADR-0002's
+phase gates pass.
 
 ## Context
 

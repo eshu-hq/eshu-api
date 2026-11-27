@@ -75,13 +75,15 @@ func BenchmarkDriftTerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkDriftRelayRead measures the generic relay path for the
-// same caller shape: a still-relayed GET and a still-relayed POST,
-// which cross the generic proxy. The relay legs ride routes no wave
-// table covers (the D4-pinned relay story leg is keyed, so the GET
-// rides /api/v0/dependencies and the POST rides
-// /api/v0/impact/change-surface); both do exactly one server-side fetch, so
-// the 1.50 bound stays a real pathology check.
+// BenchmarkDriftRelayRead measures the explicit relay path for the
+// same stub shape: the GET relay leg rides /api/v0/dependencies
+// and the POST relay leg rides /api/v0/impact/change-surface, both
+// via foreign-bearer explicit relay on their wave-mounted routes
+// (both legs have since terminated natively for the shared key —
+// dependencies in W8b-narrow, change-surface in the impact lane's
+// Wave-3 — so the shared-key shape would run
+// terminated-vs-terminated); both do exactly one server-side fetch,
+// so the 1.50 bound stays a real pathology check.
 func BenchmarkDriftRelayRead(b *testing.B) {
 	_, srv := driftBenchServer(b, `{"drift_findings":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -90,7 +92,9 @@ func BenchmarkDriftRelayRead(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, authedRequest(http.MethodGet, "/api/v0/dependencies"))
+			get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+			get.Header.Set("Authorization", "Bearer [REDACTED]")
+			handler.ServeHTTP(rec, get)
 		}
 	})
 	b.Run("post-relay", func(b *testing.B) {
@@ -99,6 +103,7 @@ func BenchmarkDriftRelayRead(b *testing.B) {
 			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
 			post.Body = io.NopCloser(strings.NewReader(`{"scope_id":"scope_1"}`))
 			post.ContentLength = int64(len(`{"scope_id":"scope_1"}`))
+			post.Header.Set("Authorization", "Bearer [REDACTED]")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

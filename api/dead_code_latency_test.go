@@ -75,11 +75,26 @@ func BenchmarkDeadCodeTerminatedRead(b *testing.B) {
 	})
 }
 
-// BenchmarkDeadCodeRelayRead measures the generic relay path for the
-// same caller shape: a still-relayed POST on the generic proxy, which
-// does exactly one server-side fetch, so the 1.50 bound stays a real
-// pathology check. The relay leg rides a route no wave table covers
-// (POST /api/v0/impact/change-surface).
+// BenchmarkDeadCodeRelayRead measures the explicit relay path for
+// the same stub shape: the relay leg rides POST
+// /api/v0/impact/change-surface via foreign-bearer explicit relay on
+// its wave-mounted route (change-surface has since terminated
+// natively in the impact lane's Wave-3, so the shared-key shape
+// would run terminated-vs-terminated). It does exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
+// deadCodeRelayPost builds the re-pointed relay leg shared by the
+// benchmark and the StaysRelayed guard: foreign-bearer POST change-surface
+// on its wave-mounted route. Both must use this constructor so deleting the
+// bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func deadCodeRelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Body = io.NopCloser(strings.NewReader(`{"query":"q"}`))
+	post.ContentLength = int64(len(`{"query":"q"}`))
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
 func BenchmarkDeadCodeRelayRead(b *testing.B) {
 	_, srv := deadCodeBenchServer(b, `{"candidates":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -87,9 +102,7 @@ func BenchmarkDeadCodeRelayRead(b *testing.B) {
 	b.Run("post-relay", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
-			post.Body = io.NopCloser(strings.NewReader(`{"query":"q"}`))
-			post.ContentLength = int64(len(`{"query":"q"}`))
+			post := deadCodeRelayPost("foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

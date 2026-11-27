@@ -9,7 +9,8 @@ this folder indexes decisions, it doesn't invent them.
 
 | ADR | Decision | Status |
 | --- | --- | --- |
-| [ADR-0001](0001-http-only-core-dispatch.md) | Cross to the core only over HTTP; hold no storage handles | Accepted |
+| [ADR-0001](0001-http-only-core-dispatch.md) | Cross to the core only over HTTP; hold no storage handles | Accepted; operative until ADR-0002 phase gates supersede it |
+| [ADR-0002](0002-eshu-api-owns-api-compute.md) | `eshu-api` owns API compute and scales horizontally | Accepted target; phased implementation |
 
 ## Format
 

@@ -74,18 +74,36 @@ func BenchmarkSetupWrite(b *testing.B) {
 	})
 }
 
-// BenchmarkSetupRelayWrite measures the generic relay path for the
-// same caller shape: POST /api/v0/impact/change-surface, which stays on the
-// generic relay (the D3/D4/Leaf B lanes pin it as their relay POST
-// leg; the Compare POST terminated in its gap-04 lane). The legs
-// compare different routes by necessity (the setup
-// paths left the relay); both do exactly one server-side fetch, so
-// the 1.50 bound stays a real pathology check.
+// setupRelayPost and setupRelayGet build the re-pointed relay legs shared
+// by the benchmarks, the ServeShapes pin, and the StaysRelayed guard:
+// foreign-bearer legs on their wave-mounted routes. All users must take
+// these constructors so deleting a bearer breaks the guard instead of
+// silently restoring terminated-vs-terminated.
+func setupRelayPost(bearer string) *http.Request {
+	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	return post
+}
+
+func setupRelayGet(bearer string) *http.Request {
+	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get.Header.Set("Authorization", "Bearer "+bearer)
+	return get
+}
+
+// BenchmarkSetupRelayWrite measures the explicit relay path for the
+// same stub shape: POST /api/v0/impact/change-surface rides
+// foreign-bearer explicit relay on its wave-mounted route
+// (change-surface has since terminated natively in the impact
+// lane's Wave-3, so the shared-key shape would run
+// terminated-vs-terminated). The legs compare different routes by
+// necessity (the setup paths left the relay); both do exactly one
+// server-side fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkSetupRelayWrite(b *testing.B) {
 	_, srv := setupBenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	post := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	post := setupRelayPost("foreign")
 
 	b.Run("post", func(b *testing.B) {
 		b.ReportAllocs()
@@ -96,15 +114,17 @@ func BenchmarkSetupRelayWrite(b *testing.B) {
 	})
 }
 
-// BenchmarkSetupRelayRead measures the generic relay path for the
-// read shape: GET /api/v0/dependencies, which stays on the generic
-// relay. Both legs do exactly one server-side fetch, so the 1.50
-// bound stays a real pathology check.
+// BenchmarkSetupRelayRead measures the explicit relay path for the
+// read shape: GET /api/v0/dependencies rides foreign-bearer explicit
+// relay on its wave-mounted route (dependencies has since terminated
+// natively in W8b-narrow, so the shared-key shape would run
+// terminated-vs-terminated). Both legs do exactly one server-side
+// fetch, so the 1.50 bound stays a real pathology check.
 func BenchmarkSetupRelayRead(b *testing.B) {
 	_, srv := setupBenchServer(b, `{"dependencies":[]}`)
 	handler := srv.Handler(DefaultV0Sunset)
 
-	get := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	get := setupRelayGet("foreign")
 
 	b.Run("get", func(b *testing.B) {
 		b.ReportAllocs()
@@ -118,7 +138,10 @@ func BenchmarkSetupRelayRead(b *testing.B) {
 // TestSetupBenchmarks_ServeShapes pins that the benchmark legs above
 // exercise the intended transports: the state and claim legs reach
 // the stub core exactly once (public, no dest 401), and the two
-// relay legs reach it exactly once each behind the key.
+// relay legs reach it exactly once each via foreign-bearer explicit
+// relay (change-surface and dependencies have since terminated
+// natively for the shared key, so the pin carries the foreign bearer
+// the benchmarks ride).
 func TestSetupBenchmarks_ServeShapes(t *testing.T) {
 	t.Parallel()
 
@@ -146,14 +169,14 @@ func TestSetupBenchmarks_ServeShapes(t *testing.T) {
 		t.Errorf("setup claim status = %d, want 200", claimRec.Code)
 	}
 
-	relayPost := authedRequest(http.MethodPost, "/api/v0/impact/change-surface")
+	relayPost := setupRelayPost("foreign")
 	relayPostRec := httptest.NewRecorder()
 	handler.ServeHTTP(relayPostRec, relayPost)
 	if relayPostRec.Code != http.StatusOK {
 		t.Errorf("relay write status = %d, want 200", relayPostRec.Code)
 	}
 
-	relayGet := authedRequest(http.MethodGet, "/api/v0/dependencies")
+	relayGet := setupRelayGet("foreign")
 	relayGetRec := httptest.NewRecorder()
 	handler.ServeHTTP(relayGetRec, relayGet)
 	if relayGetRec.Code != http.StatusOK {

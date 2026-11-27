@@ -245,30 +245,27 @@ OpenAPI: no fragment ported in this lane (satellite-design Decision
 5(c) recorded N/A). The core setup fragment
 (`go/internal/query/openapi/paths/auth/setup.go`) marks every
 operation `"security": []` — public pre-auth documentation — while
-the dest-served `GET /api/v0/openapi.json` stays inside
-`RequireAuth` like every other dest `/api/*` route. Porting the
-fragment now would either gate public-route docs behind the shared
-key (misrepresenting the documented security posture) or open the
-spec endpoint (widening the public surface beyond the four approved
-routes). The served dest spec therefore still covers exactly the
+the dest-served `GET /api/v0/openapi.json` serves pre-auth like
+core (Refs eshu-hq/eshu-api#164), so porting the fragment would
+publish setup internals on the public document. The served dest
+spec therefore still covers exactly the
 previously landed families; setup routes stay relayed-from-core for
 spec purposes permanently: the eshu-hq/eshu-api#44 follow-up resolves
 the posture question in favor of core-side (no later lane moves the
 fragment, no expiry review). The four core operations all carry
-`"security": []`, while `GET /api/v0/openapi.json` stays inside
-`RequireAuth` (`api/router.go`, pinned by
-`TestOpenAPINative_UnauthenticatedIs401`): porting the fragment would
-either gate public-route docs behind the shared key (a reader must
-present the key to fetch a document that claims no key is needed) or
-open a fifth public spec route beyond the four arbiter-approved
-routes (`api/setup.go` route consts plus the terminated GET in
+`"security": []`, while `GET /api/v0/openapi.json` serves pre-auth
+like core (`api/router.go`, pinned by
+`TestOpenAPINative_ServesKeylessAndJunkKey`; Refs
+eshu-hq/eshu-api#164): porting the fragment would publish setup
+internals on the public document beyond the four arbiter-approved
+setup routes (`api/setup.go` route consts plus the terminated GET in
 `api/setup_terminate.go`). Wizard clients never read the dest spec —
 the POSTs are pure HTTP write-through and the GET synthesizes the
 same core shape — so the fragment is discoverability-only. Pinned by
 `TestSetupSpecPosture_StaysCoreSide`: the four setup routes answer
-without a credential while the spec answers 401 to the same caller,
-and the authed document carries no setup path keys and no
-`"security"` markers.
+without a credential while the spec likewise answers 200 pre-auth
+(Refs eshu-hq/eshu-api#164), and the authed document carries no
+setup path keys and no `"security"` markers.
 
 Rollback: additive. Revert this lane's dest commit (or re-pin the
 prior digest) and the four setup routes fall back to the generic

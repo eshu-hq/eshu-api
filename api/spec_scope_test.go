@@ -40,8 +40,10 @@ import (
 // API operation has its served spec entry.
 //
 // Only explicitly
-// mounted routes are in scope: catch-all riders (the still-relayed
-// core surface) stay out with the unbounded proxy itself. A newly
+// mounted routes are in scope: catch-all riders (the unmounted core
+// remainder — e.g. unmounted methods such as PATCH
+// /api/v0/code/bundles — still cross the generic proxy) stay out
+// with the unbounded proxy itself. A newly
 // mounted route fails here until its lane ports the fragment or
 // discloses the absence; a newly served operation fails here until
 // its lane mounts the route.

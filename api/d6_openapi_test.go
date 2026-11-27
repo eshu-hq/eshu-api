@@ -16,16 +16,17 @@ import (
 // assembled document; these tests pin that the native openapi.json
 // route serves it to keyed callers with the wave path keys present —
 // for both a configured and an unconfigured core origin — while the
-// key gate still fronts the route (the standing no-new-public-surface
-// decision for the assembled spec).
+// spec route itself serves pre-auth like core (Refs
+// eshu-hq/eshu-api#164), so these keyed-caller assertions exercise
+// the public route with credentials present.
 
 // d6WaveSpecKeys are the path keys the D6 wave adds to the served
 // document: one entry per served wave route. The impact packet and
 // the mux-level openapi.json self entry keep their own posture:
 // their keys stay out of this fragment set, so no served key
-// duplicates a relayed route. The former still-relayed Status
-// aspects (governance, answer-narration, hosted-readiness) moved to
-// the W8a lane with their fragments disclosed core-side (see
+// duplicates a relayed route. The former Status aspects
+// (governance, answer-narration, hosted-readiness) terminate natively
+// in the W8a lane with their fragments disclosed core-side (see
 // api/w8a_openapi_test.go). Compare carries no served key: its
 // gap-04 lane mounts natively with the fragment disclosed core-side
 // (see openapi/spec_compare_test.go).
@@ -135,17 +136,17 @@ func TestD6Native_ServesWaveSpecKeys(t *testing.T) {
 	}
 }
 
-// TestD6OpenAPIStillKeyGated pins that the assembled spec route stays
-// behind the key gate: a credential-less caller gets the standing 401
-// even though the document is fully dest-served.
-func TestD6OpenAPIStillKeyGated(t *testing.T) {
+// TestD6OpenAPIServesPublicly pins the eshu-hq/eshu-api#164 outcome:
+// the assembled spec route serves pre-auth, so a credential-less
+// caller gets 200 with the document instead of the standing 401.
+func TestD6OpenAPIServesPublicly(t *testing.T) {
 	t.Parallel()
 
 	srv := NewServer("http://core.invalid", skeletonTestKey)
 	handler := srv.Handler(DefaultV0Sunset)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil))
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("status = %d, want the standing 401", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200 for the keyless spec caller", rec.Code)
 	}
 }

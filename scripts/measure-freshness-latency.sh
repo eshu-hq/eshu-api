@@ -13,7 +13,8 @@
 # lane-affecting PRs and weekly, and locally with this script.
 #
 # Method: go test benchmarks BenchmarkFreshnessTerminatedRead (one leg
-# per wave route) vs BenchmarkFreshnessRelayRead (api package),
+# per wave route) vs BenchmarkFreshnessRelayRead (foreign-bearer
+# explicit relay on the wave-mounted dependencies route, api package),
 # -count=5, take the median ns/op. FAIL when terminated exceeds relay
 # by more than 50% on any leg (generous: every leg does one
 # server-side fetch, so any real pathology — a double fetch, a retry,
@@ -22,9 +23,11 @@
 # Relay-route disclosure (the Wave-1 lane terminates no earlier relay
 # leg): terminated GET /api/v0/freshness/changed-since, terminated GET
 # /api/v0/freshness/generations, and terminated GET
-# /api/v0/freshness/services/changed-since vs relay GET
-# /api/v0/dependencies. The D2-D4 relay legs moved to the same
-# still-relaying route in this lane, so every lane gates
+# /api/v0/freshness/services/changed-since vs foreign-bearer relay GET
+# /api/v0/dependencies via explicit relay on its wave-mounted route
+# (dependencies terminated natively in W8b-narrow, so the shared-key
+# shape would run terminated-vs-terminated). The D2-D4 relay legs
+# moved to the same route in this lane, so every lane gates
 # terminated-vs-relay again instead of terminated-vs-terminated.
 #
 # Usage: bash scripts/measure-freshness-latency.sh

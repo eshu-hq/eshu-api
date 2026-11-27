@@ -106,11 +106,16 @@ construction.
   cancellation without retry, and a 16-caller parallel probe across
   the three legs (one forward per caller).
 - Latency: `BenchmarkDeadCodeTerminatedRead` (one leg per wave
-  route) vs `BenchmarkDeadCodeRelayRead` (still-relayed POST, on the
-  generic proxy); every leg does one server-side fetch (see
+  route) vs `BenchmarkDeadCodeRelayRead` (POST comparison leg);
+  every leg does one server-side fetch (see
   `docs/dead-code-latency.md` for the measured run). The relay leg
-  rides `POST /api/v0/code/bundles` — no existing latency leg covers
-  a terminated route, so no re-point is needed.
+  rides `POST /api/v0/impact/change-surface` — the route the suite
+  moved to when the W6 scan lane terminated bundles natively
+  (code-scan wave); change-surface has since terminated natively in
+  the impact lane (Wave-3), so the comparison now runs
+  terminated-vs-terminated — no existing latency leg covers a
+  terminated route of this lane, so no further re-point is owed by
+  this lane.
 - Spec scope: the routes mount natively, but their Decision 5(c)
   fragments stay core-side for this lane; mounted 213 -> 216,
   disclosed absences 39 -> 42.

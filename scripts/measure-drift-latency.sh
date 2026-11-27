@@ -13,8 +13,9 @@
 #
 # Method: go test benchmarks BenchmarkDriftTerminatedRead (one leg per
 # wave route: findings-post, packet-get) vs BenchmarkDriftRelayRead
-# (get-relay, post-relay — still-relayed routes no wave table covers,
-# on the generic proxy), -count=5, take the median ns/op. FAIL when a
+# (get-relay, post-relay — foreign-bearer explicit relay on the
+# wave-mounted dependencies and change-surface routes), -count=5, take
+# the median ns/op. FAIL when a
 # terminated leg exceeds its same-method relay leg by more than 50%
 # (generous: every leg does one server-side fetch, so any real
 # pathology — a double fetch, a retry, a body re-read — exceeds it

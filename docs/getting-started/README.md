@@ -36,7 +36,7 @@ Send the same key back as a Bearer token:
 
 ```bash
 curl -s -H 'Authorization: Bearer change-me' \
-  http://localhost:8080/api/v0/openapi.json | head -c 200
+  http://localhost:8080/api/v0/capabilities | head -c 200
 ```
 
 A JSON document means you're through the gate. Most `/api/*` calls need

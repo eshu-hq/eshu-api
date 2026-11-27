@@ -12,17 +12,16 @@ import (
 	"testing"
 )
 
-// TestSetupSpecPosture_StaysCoreSide pins the eshu-api#44 outcome: the
-// setup OpenAPI fragment now rides the served document with its core
-// public-route markers intact. The dest-served
-// GET /api/v0/openapi.json stays inside RequireAuth (like every other
-// dest /api/* route); the four C-c1 carve-out routes stay public
-// alongside it. A future lane that ports
-// the core setup fragment (whose operations all carry "security": [])
-// must revisit this posture instead of landing silently: embedding
-// public-route docs in the authed spec would misrepresent posture, and
-// opening a public spec route would widen the surface beyond the four
-// arbiter-approved routes.
+// TestSetupSpecPosture_StaysCoreSide pins the eshu-api#44 outcome as
+// revisited by eshu-hq/eshu-api#164: the setup OpenAPI fragment rides
+// the served document with its core public-route markers intact. The
+// dest-served GET /api/v0/openapi.json now serves pre-auth like core
+// (the anticipated posture revisit: core's spec route is public and
+// its self-entry carries no marker, so the served document stays
+// truthful with no new marker); the four C-c1 carve-out routes stay
+// public alongside it. The marker rule below still holds: markers only
+// on the public setup and login-picker entries, never on an authed
+// route — and the spec self-entry stays unmarked exactly like core's.
 func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 	t.Parallel()
 
@@ -53,14 +52,13 @@ func TestSetupSpecPosture_StaysCoreSide(t *testing.T) {
 		t.Errorf("upstream hits = %d, want %d (every setup spelling forwards)", core.hits, len(setupSpellings()))
 	}
 
-	// The served spec stays behind the key gate: the same
-	// unauthenticated caller that reaches the setup routes gets 401
-	// on the spec.
+	// The served spec is public like core's: the same unauthenticated
+	// caller that reaches the setup routes gets 200 on the spec.
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/openapi.json", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("unauthenticated spec status = %d, want 401 (spec stays authed)", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("unauthenticated spec status = %d, want 200 (spec serves pre-auth)", rec.Code)
 	}
 
 	// The authed served spec carries no setup path keys and no

@@ -61,7 +61,7 @@ for that day and unreachable on live routes.
 | Family | Routes | Serve | Authorizer note |
 | --- | --- | --- | --- |
 | APIRouter | `GET /health` | public probe (landed, unchanged) | none (no credential) |
-| APIRouter | `GET /api/v0/openapi.json` | RequireAuth-gated (landed gate kept; subset spec) | key gate only |
+| APIRouter | `GET /api/v0/openapi.json` | wave-public carve-out (Refs eshu-hq/eshu-api#164), compiled constants, no core fetch, exact path only | none (core-public parity) |
 | APIRouter | `GET /api/v0/docs`, `GET /api/v0/redoc` | wave-public carve-out, compiled shells, no core fetch | none (core-public parity) |
 | Capabilities | `GET /api/v0/capabilities` | wave-gated terminate / relay-explicit | shared-key allow |
 | CLISupport | 5 POSTs (`answer-quality/score`, `packet/render`, `bundle/capture`, `bundle/validate`, `service/report/compose`) | wave-gated terminate / relay-explicit | shared-key allow |
@@ -76,10 +76,10 @@ Known divergences (disclosed, not hidden):
 
 - `/health` answers the dest probe shape (versions + origin), not the
   core `{"status":"ok"}` — dest needs its own contract versions.
-- `openapi.json` serves the landed subset behind the key gate; core
-  serves the full spec publicly. Subset parity (every served entry
-  byte-identical) rides `check-parity.sh`; full-spec parity waits for
-  lane completion.
+- `openapi.json` serves the landed subset publicly (Refs
+  eshu-hq/eshu-api#164); core serves the full spec publicly. Subset
+  parity (every served entry byte-identical) rides `check-parity.sh`;
+  full-spec parity waits for lane completion.
 - Static shells answer their trailing-slash spellings dest-side while
   core 404s them (never-split registration, C-c1-blessed pattern).
 - Unconfigured origin answers the permanent local 503 on data routes
@@ -88,12 +88,14 @@ Known divergences (disclosed, not hidden):
 
 ## Spec posture
 
-The served `openapi.json` stays behind the key gate while carrying
-the permanently-public login-picker entry (`GET /api/v0/auth/providers`)
-with core's truthful `"security": []` marker intact (stripping it
-would make the served spec lie, and the subset gate keeps the
-line-verbatim property). The setup fragment stays core-side entirely
-per eshu-api#44 — no setup path keys, no other security markers in the
+The served `openapi.json` serves pre-auth like core (Refs
+eshu-hq/eshu-api#164) while carrying the permanently-public
+login-picker entry (`GET /api/v0/auth/providers`) with core's
+truthful `"security": []` marker intact (stripping it would make the
+served spec lie, and the subset gate keeps the line-verbatim
+property). The spec self-entry stays unmarked exactly like core's own
+self-entry. The setup fragment stays core-side entirely per
+eshu-api#44 — no setup path keys, no other security markers in the
 served document. The next lane that ports another public-marked
 fragment revisits the posture test again instead of landing silently.
 

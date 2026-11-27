@@ -49,9 +49,11 @@ vendored fragments — disclosed absent), authorizer + deny-shape tests
 with the scope-honesty label, byte-parity dispatch/conformance tests
 vs the relayed reference, the no-core-import check, extended
 `viaNative`/`viaRelay` telemetry, the satellite latency evidence
-(terminated-vs-proxy-relay ratios, no same-shape before/after: the
-baseline is the still-relaying proxy route), and this contract
-section with rollback.
+(terminated-vs-relay ratios, no same-shape before/after: the relay
+leg rides GET /api/v0/dependencies via foreign-bearer explicit relay
+on its wave-mounted route — dependencies has since terminated
+natively in W8b-narrow, so the shared-key shape would run
+terminated-vs-terminated), and this contract section with rollback.
 
 ## Production binding
 
@@ -151,9 +153,10 @@ served key duplicates a relayed route, and no mounted route
 promises what the document does not carry. No fragment carries a
 `"security": []` public-route marker question: all 7 are authed
 reader-port reads, and the posture test
-(`TestG2OpenAPIStillKeyGated`) pins the spec route stays key-gated —
-the only served marker stays the permanently-public login-picker
-entry (`GET /api/v0/auth/providers`).
+(`TestG2OpenAPIServesPublicly`) pins the spec route serves pre-auth
+like core (Refs eshu-hq/eshu-api#164) — the only other served marker
+stays the permanently-public login-picker entry
+(`GET /api/v0/auth/providers`).
 
 ## Rollback
 

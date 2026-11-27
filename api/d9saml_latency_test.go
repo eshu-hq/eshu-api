@@ -104,15 +104,28 @@ func BenchmarkD9SAMLPublicACS(b *testing.B) {
 	})
 }
 
-// BenchmarkD9SAMLRelayLargePost measures the generic relay path for a
-// keyed POST carrying the same representative large form body the ACS
-// leg moves, so the ACS clone leg compares against the same bytes —
-// not against an empty-body GET. POST /api/v0/impact/change-surface stays on
-// the generic relay (the D3/D4/Leaf B lanes pin it as their relay
-// POST leg; the Compare POST terminated in its gap-04 lane); both
-// legs do exactly one server-side fetch of the same body,
-// so the 1.50 bound stays a real pathology check on the clone route
-// match, not on body size.
+// BenchmarkD9SAMLRelayLargePost measures the explicit relay path for
+// a foreign-bearer POST carrying the same representative large form
+// body the ACS leg moves, so the ACS clone leg compares against the
+// same bytes — not against an empty-body GET. POST
+// /api/v0/impact/change-surface rides foreign-bearer explicit relay
+// on its wave-mounted route (change-surface has since terminated
+// natively in the impact lane's Wave-3, so the shared-key shape would
+// run terminated-vs-terminated); both legs do exactly one
+// server-side fetch of the same body, so the 1.50 bound stays a real
+// pathology check on the clone route match, not on body size.
+// d9SAMLRelayPost builds the re-pointed relay leg shared by the benchmark
+// and the StaysRelayed guard: foreign-bearer POST change-surface (large
+// form body) on its wave-mounted route. Both must use this constructor so
+// deleting the bearer breaks the guard instead of silently restoring
+// terminated-vs-terminated.
+func d9SAMLRelayPost(bearer string) *http.Request {
+	post := httptest.NewRequest(http.MethodPost, "/api/v0/impact/change-surface", strings.NewReader(d9SAMLACSLargeForm))
+	post.Header.Set("Authorization", "Bearer "+bearer)
+	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return post
+}
+
 func BenchmarkD9SAMLRelayLargePost(b *testing.B) {
 	_, srv := d9SAMLBenchServer(b, `{"status":"accepted"}`)
 	handler := srv.Handler(DefaultV0Sunset)
@@ -121,9 +134,7 @@ func BenchmarkD9SAMLRelayLargePost(b *testing.B) {
 		b.ReportAllocs()
 		b.SetBytes(int64(len(d9SAMLACSLargeForm)))
 		for i := 0; i < b.N; i++ {
-			post := httptest.NewRequest(http.MethodPost, "/api/v0/impact/change-surface", strings.NewReader(d9SAMLACSLargeForm))
-			post.Header.Set("Authorization", "Bearer "+skeletonTestKey)
-			post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			post := d9SAMLRelayPost("foreign")
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, post)
 		}

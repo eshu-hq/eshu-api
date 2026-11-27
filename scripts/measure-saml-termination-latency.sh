@@ -18,14 +18,16 @@
 # under duplicate ACS posts) exceeds it loudly while scheduling noise
 # does not.
 #
-# Relay-route disclosure: the write-relay leg is POST
-# /api/v0/impact/change-surface, which stays on the generic relay (the
-# D3/D4/Leaf B lanes pin it as their relay POST leg; the Compare POST
-# terminated in its gap-04 lane); the read-relay leg is GET
-# /api/v0/dependencies, which stays on the generic relay. The ACS leg
-# moves the representative 288KiB IdP form, so it compares against the
-# same bytes on the generic relay (BenchmarkD9SAMLRelayLargePost, the
-# D9 lane's pinned same-bytes relay leg) — not against an empty-body
+# Relay-route disclosure: the write-relay leg is foreign-bearer POST
+# /api/v0/impact/change-surface via explicit relay on its wave-mounted
+# route (change-surface terminated natively in the impact lane's
+# Wave-3, so the shared-key shape would run
+# terminated-vs-terminated); the read-relay leg is foreign-bearer GET
+# /api/v0/dependencies via explicit relay on its wave-mounted route
+# (dependencies terminated natively in W8b-narrow). The ACS leg moves
+# the representative 288KiB IdP form, so it compares against the same
+# bytes on the explicit relay (BenchmarkD9SAMLRelayLargePost, the D9
+# lane's pinned same-bytes relay leg) — not against an empty-body
 # POST. The SAML paths now terminate; every leg does exactly one
 # server-side fetch of the same bytes, so the 1.50 bound stays a real
 # pathology check either way.

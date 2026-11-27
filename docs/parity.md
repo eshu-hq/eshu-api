@@ -32,15 +32,15 @@ after the move.
   pins; the D4 scope (45 Native-next routes
   across CICD, Documentation, Infra, PackageRegistry, Repositories,
   Evidence, InvestigationWorkflows, and Playbooks — Compare since
-  terminated in its gap-04 lane, the story GET on the generic relay
-  as a relay leg) terminates
+  terminated in its gap-04 lane, the story GET terminated natively in the
+  W5 story lane (its spec entry still waits on the schema helper port)) terminates
   natively per `contracts/d4-native-next.md` on the
   `CoreReadContractsVersion v0` port transport with no per-family
   admission alias; the D6 scope (12 snapshot-pure Status GETs plus 17
   SupplyChain read GETs plus the 3 phase-2 extra-port Status legs, with
-  the remaining extra-port Status aspects, the impact packet,
-  and the suppressions mutation row staying relay by disclosure)
-  terminates natively per
+  the three extra-port Status aspects terminated natively in the W8a lane
+  and the impact packet and the suppressions mutation row staying relay
+  by disclosure) terminates natively per
   `contracts/d6-status-supplychain.md` on the `StatusReadAdmission
   v0`, `SupplyChainReadAdmission v0`, and (phase 2)
   `StatusExtraReadAdmission v0` port transports; the gap-04 Compare
@@ -184,14 +184,19 @@ dispatch/conformance proof vs the relayed reference, extended
 read-latency gate (`docs/d4-latency.md` with the relay-route
 disclosure). The transport pin is `CoreReadContractsVersion v0` with
 no per-family admission alias — the minting rule forbids inventing
-one, and all 45 rows are reader-port reads. The story GET stays on
-the generic relay as a carried leg (its spec entry waits on the
-schema helper port). Divergences stay disclosed in the contract: the
-admission-decisions 501 waits for core to define the response, four
-literals skip the duplicate slash registration (their slash spellings
-still terminate under the parent subtree), and the D2/D3 relay legs
-moved to the still-relaying dependencies and code-bundle routes. Termination claims stay provisional until the
-arbiter re-reviews the D0 evidence (blocker B1).
+one, and all 45 rows are reader-port reads. The story GET terminated
+natively in the W5 story lane (its spec entry still waits on the
+schema helper port — see `eshu-hq/eshu-api#74`). Divergences stay
+disclosed in the contract: the admission-decisions 501 waits for
+core to define the response, four literals skip the duplicate slash
+registration (their slash spellings still terminate under the parent
+subtree), and the D2/D3 relay legs ride dependencies and
+change-surface via foreign-bearer explicit relay (both have since
+terminated natively for the shared key — dependencies in W8b-narrow,
+change-surface in the impact lane's Wave-3 — so the shared-key shape
+would run terminated-vs-terminated). Termination claims stay
+provisional until the arbiter re-reviews the D0 evidence
+(blocker B1).
 
 ## Native termination (D6)
 
@@ -212,16 +217,18 @@ suppression-state filtering (`suppression_state`,
 `include_suppressed`, `provider_state`, `reconciliation_status`), and
 the suppressions mutation row stays the Never-satellite survivor via
 SuppressionAdmission. Divergences stay disclosed in the contract: the
-three remaining extra-port Status aspects (governance,
-answer-narration, hosted-readiness) stay relay with per-route reasons,
-the impact packet stays relay (writer responder plus shared ports),
-Compare terminates in its gap-04 lane on the now-recorded deliberate
-later pin (`CompareReadAdmission v0` in
+three extra-port Status aspects (governance, answer-narration,
+hosted-readiness) terminate natively in the W8a lane, the impact
+packet stays relay (writer responder plus shared ports), Compare
+terminates in its gap-04 lane on the now-recorded deliberate later
+pin (`CompareReadAdmission v0` in
 `contracts/compare-read-admission.md`; see
-`contracts/compare-termination.md`), the status reads
-fragment ports only the seven snapshot lane keys (the phase-2 index
-and operations keys ride their own fragments), and the D2-D4 relay
-legs moved to the still-relaying dependencies route. Termination
+`contracts/compare-termination.md`), the status reads fragment ports
+only the seven snapshot lane keys (the phase-2 index and operations
+keys ride their own fragments), and the D2-D4 relay legs ride
+dependencies via foreign-bearer explicit relay (dependencies has since
+terminated natively in W8b-narrow, so the shared-key shape would run
+terminated-vs-terminated). Termination
 claims stay provisional until the arbiter re-reviews the D0 evidence
 (blocker B1).
 

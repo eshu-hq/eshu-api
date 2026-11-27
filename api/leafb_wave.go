@@ -29,9 +29,8 @@ package api
 // classes dest cannot resolve (scoped tokens, OIDC bearers, browser
 // sessions — core judges, dest invents nothing). Wave-public routes
 // are core-public pre-auth and carry no gate. Landed routes keep their
-// existing serving and join the wave for frozenness only: openapi.json
-// stays RequireAuth-gated by the standing no-new-public-surface
-// decision, and /health stays the public probe. Wave-family rows
+// existing serving and join the wave for frozenness only: /health
+// stays the public probe. Wave-family rows
 // terminated in their own family lane (own gate, own record) and are
 // skipped by the gated loop below.
 const (
@@ -67,7 +66,7 @@ type leafbRoute struct {
 // entry; a wave change moves the spec, the skeleton table, and this
 // mirror together.
 var leafbWave = []leafbRoute{
-	{Method: "GET", Path: "/api/v0/openapi.json", Family: "api_router", Serve: leafbServeLanded, Fragment: "paths/status/routes.go"},
+	{Method: "GET", Path: "/api/v0/openapi.json", Family: "api_router", Serve: leafbServePublic, Fragment: "paths/status/routes.go"},
 	{Method: "GET", Path: "/health", Family: "api_router", Serve: leafbServeLanded, Fragment: "<mux-health>"},
 	{Method: "GET", Path: "/api/v0/docs", Family: "api_router", Serve: leafbServePublic, Fragment: "<doc-ui>"},
 	{Method: "GET", Path: "/api/v0/redoc", Family: "api_router", Serve: leafbServePublic, Fragment: "<doc-ui>"},
