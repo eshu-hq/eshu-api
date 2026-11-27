@@ -10,9 +10,10 @@
 # time. The pinned-core-image leg against a real deployment rides flip
 # prep (D11); this gate runs on every PR and in CI.
 #
-# Method: go test benchmarks BenchmarkD7NativeWrite vs
-# BenchmarkD7RelayWrite (api package), -count=5, take the median
-# ns/op. FAIL when a clone leg exceeds relay by more than 50%.
+# Method: go test benchmarks BenchmarkD7NativeWrite (one leg per
+# admin-four route: dead-letter, reindex, backfill, skip — all zero-body
+# callers) vs BenchmarkD7RelayWrite (api package), -count=5, take the
+# median ns/op. FAIL when a clone leg exceeds relay by more than 50%.
 # Generous: both legs do one server-side fetch, so any real pathology
 # (a double fetch, a retry, a body re-read) exceeds it loudly while
 # scheduling noise does not.
@@ -62,9 +63,13 @@ check_leg() {
 
 clone_deadletter="$(bench 'BenchmarkD7NativeWrite/dead-letter' | median)"
 clone_reindex="$(bench 'BenchmarkD7NativeWrite/reindex' | median)"
+clone_backfill="$(bench 'BenchmarkD7NativeWrite/backfill' | median)"
+clone_skip="$(bench 'BenchmarkD7NativeWrite/skip' | median)"
 relay_post="$(bench 'BenchmarkD7RelayWrite/post' | median)"
 
 check_leg dead-letter "$clone_deadletter" "$relay_post"
 check_leg reindex "$clone_reindex" "$relay_post"
+check_leg backfill "$clone_backfill" "$relay_post"
+check_leg skip "$clone_skip" "$relay_post"
 
 echo "d7-latency: all legs within budget"
