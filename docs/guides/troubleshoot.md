@@ -18,9 +18,9 @@ half-parsed config. Check your spelling against
 Usually `ESHU_API_KEY` is unset (empty fails closed) or your callers
 send a different key than the one you set.
 
-Remember the public setup, login, and docs routes won't `401`, so test
-with a gated route like `/api/v0/openapi.json` before you conclude
-auth is broken — see [Auth setup](auth-setup.md).
+Remember the public setup, login, docs, and spec routes won't `401`,
+so test with a gated route like `/api/v0/capabilities` before you
+conclude auth is broken — see [Auth setup](auth-setup.md).
 
 ## 3. `/api/*` returns `503 backend_unavailable`
 
