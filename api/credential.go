@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/eshu-hq/eshu-api/internal/credresolver"
+	"github.com/eshu-hq/eshu-api/internal/sessionstore"
 )
 
 // authContextKey is the unexported request-context key carrying the
@@ -20,16 +21,16 @@ type authContextKey struct{}
 // false when the request rode the shared key or the legacy path (the
 // shared-key holder maps to AllScopes in the core and needs no dest
 // identity struct).
-func AuthContextOf(r *http.Request) (credresolver.AuthContext, bool) {
+func AuthContextOf(r *http.Request) (sessionstore.AuthContext, bool) {
 	if r == nil {
-		return credresolver.AuthContext{}, false
+		return sessionstore.AuthContext{}, false
 	}
-	ctx, ok := r.Context().Value(authContextKey{}).(credresolver.AuthContext)
+	ctx, ok := r.Context().Value(authContextKey{}).(sessionstore.AuthContext)
 	return ctx, ok
 }
 
 // withAuthContext binds ctx to r for downstream authorizers.
-func withAuthContext(r *http.Request, ctx credresolver.AuthContext) *http.Request {
+func withAuthContext(r *http.Request, ctx sessionstore.AuthContext) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), authContextKey{}, ctx))
 }
 
@@ -61,10 +62,10 @@ func (s *Server) WithCredentialResolver(res *credresolver.Resolver) *Server {
 // caller answers collapses to the single authentication_required
 // 401: missing, wrong, expired, revoked, CSRF-mismatched, and
 // store-failed credentials are indistinguishable on the wire.
-func (s *Server) credentialFront(r *http.Request) (owned bool, ctx credresolver.AuthContext, outcome credresolver.Outcome) {
+func (s *Server) credentialFront(r *http.Request) (owned bool, ctx sessionstore.AuthContext, outcome credresolver.Outcome) {
 	res := s.credentials
 	if res == nil || !res.Enabled {
-		return false, credresolver.AuthContext{}, credresolver.OutcomeDeny
+		return false, sessionstore.AuthContext{}, credresolver.OutcomeDeny
 	}
 	ctx, outcome = res.Resolve(r)
 	if tel := s.telemetry; tel != nil {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/eshu-hq/eshu-api/api"
 	"github.com/eshu-hq/eshu-api/internal/credresolver"
+	"github.com/eshu-hq/eshu-api/internal/sessionstore"
 )
 
 // apiKeyEnvVar is the only credential input: the shared-key bearer value
@@ -26,9 +27,7 @@ const apiKeyEnvVar = "ESHU_API_KEY"
 // Unset or any other value keeps the legacy relay gates byte-for-byte;
 // "1" or "true" (case-insensitive) enables local resolution of the
 // shared key and safe-method session cookies, with scoped tokens,
-// OIDC bearers, and unsafe-method cookies still relaying. No session
-// store is wired in this lane yet, so cookie traffic falls back to
-// the legacy split until the N2 store lands.
+// OIDC bearers, and unsafe-method cookies still relaying.
 const localAuthEnvVar = "ESHU_LOCAL_AUTH"
 
 // localAuthEnabled reports whether the unified credential front is
@@ -65,7 +64,16 @@ func newServer(coreBaseURL, apiKey string, log *slog.Logger) *server {
 func (s *server) handler() http.Handler {
 	srv := api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log))
 	if localAuthEnabled(os.Getenv) {
-		res := credresolver.New(s.apiKey, nil)
+		// The store is genuinely absent in this lane: the module
+		// pins no postgres driver yet, so no pool can be dialed
+		// and no *sessionstore.Store can be constructed. Pass a
+		// nil interface, never a typed-nil store, so cookie
+		// traffic takes the nil-store relay split. The later
+		// store wiring loads the secret-mapped ESHU_SESSION_DSN
+		// via sessionstore.LoadCredentialFromEnv (RoleSessionRW)
+		// and passes the live store here.
+		var sessions sessionstore.Resolver
+		res := credresolver.New(s.apiKey, sessions)
 		res.Enabled = true
 		srv.WithCredentialResolver(res)
 	}

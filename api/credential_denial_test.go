@@ -4,6 +4,8 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,23 +14,40 @@ import (
 	"time"
 
 	"github.com/eshu-hq/eshu-api/internal/credresolver"
+	"github.com/eshu-hq/eshu-api/internal/sessionstore"
 )
 
-// matrixSessions is the scripted N3 session port for the denial
-// matrix: only "valid-session" resolves; every other hash — unknown,
-// revoked, expired — denies, and every call counts so the harness
-// pins the lookup discipline (shaped and junk cookies cost exactly
-// one lookup each; missing credentials cost none).
+// validSessionHash is the durable hash of the "valid-session" cookie
+// the matrix presents: "sha256:"+hex(sha256("valid-session")), the
+// core BrowserSessionSecretHash vector the resolver applies before
+// the store call. The literal pins the derivation cross-package (see
+// TestSessionSecretHashMatchesCore in internal/credresolver).
+const validSessionHash = "sha256:3547c20033d01a8aeb923117229f1d15f03080ace8de294f4ed2e2b7a09703ad"
+
+// storeErrorHash is the durable hash of the "store-error-session"
+// cookie: presenting it makes the scripted store fail, pinning the
+// err->deny mapping on the wire.
+const storeErrorHash = "sha256:8a1832c7f80fb0312c5e0825f7fa6c4e8c1d8365d4c15e08b4a492c37761fe6a"
+
+// matrixSessions is the scripted sessionstore.Resolver for the denial
+// matrix: only validSessionHash resolves; every other hash — unknown,
+// revoked, expired — denies; storeErrorHash fails with a store error
+// (which must deny identically, never 503); and every call counts so
+// the harness pins the lookup discipline (shaped and junk cookies
+// cost exactly one lookup each; missing credentials cost none).
 type matrixSessions struct {
 	calls int
 }
 
-func (m *matrixSessions) ResolveBrowserSession(sessionHash, _ string, _ bool, _ time.Time) (credresolver.AuthContext, bool) {
+func (m *matrixSessions) ResolveBrowserSession(_ context.Context, sessionHash, _ string, _ bool, _ time.Time) (sessionstore.AuthContext, bool, error) {
 	m.calls++
-	if sessionHash == "valid-session" {
-		return credresolver.AuthContext{SubjectIDHash: "sub-hash", TenantID: "t1"}, true
+	if sessionHash == storeErrorHash {
+		return sessionstore.AuthContext{}, false, errors.New("api test: store failure")
 	}
-	return credresolver.AuthContext{}, false
+	if sessionHash == validSessionHash {
+		return sessionstore.AuthContext{SubjectIDHash: "sub-hash", TenantID: "t1"}, true, nil
+	}
+	return sessionstore.AuthContext{}, false, nil
 }
 
 // matrixServer builds the full production handler fronted by an
@@ -275,6 +294,42 @@ func TestCredentialDenialMatrix(t *testing.T) {
 		}
 		if _, ok := AuthContextOf(matrixRequest(http.MethodGet, d8Route, "", nil)); ok {
 			t.Errorf("AuthContextOf without binding = true, want false")
+		}
+	})
+
+	t.Run("store errors deny with the identical fingerprint", func(t *testing.T) {
+		t.Parallel()
+		// A store failure must answer the same single 401 as a
+		// missing credential — same status, challenge, content
+		// type, and body — with zero core contact and exactly one
+		// store call (no retry). A 503 here would oracle store-down
+		// versus credential-invalid.
+		denied := func(store *matrixSessions, mutate func(*http.Request)) (string, int, int) {
+			srv, core := matrixServer(t, store)
+			handler := srv.Handler(DefaultV0Sunset)
+			before := core.hits
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, matrixRequest(http.MethodGet, d8Route, "", mutate))
+			return denialFingerprint(t, rec), rec.Code, core.hits - before
+		}
+		missingStore := &matrixSessions{}
+		missing, missingCode, missingHits := denied(missingStore, nil)
+		if missingCode != http.StatusUnauthorized || missingHits != 0 {
+			t.Fatalf("missing baseline: code = %d hits = %d, want 401 with zero core contact", missingCode, missingHits)
+		}
+		failingStore := &matrixSessions{}
+		failing, failingCode, failingHits := denied(failingStore, withCookie("eshu_session", "store-error-session"))
+		if failingCode != http.StatusUnauthorized {
+			t.Errorf("store error: code = %d, want 401 (never 503)", failingCode)
+		}
+		if failingHits != 0 {
+			t.Errorf("store error: upstream hits = %d, want 0 (deny never dispatches)", failingHits)
+		}
+		if failingStore.calls != 1 {
+			t.Errorf("store error: store calls = %d, want exactly 1 (no retry)", failingStore.calls)
+		}
+		if failing != missing {
+			t.Errorf("store-error denial bytes differ from the missing-credential baseline:\n%s\n--- baseline ---\n%s", failing, missing)
 		}
 	})
 

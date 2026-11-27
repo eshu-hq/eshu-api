@@ -4,40 +4,71 @@
 package credresolver
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/eshu-hq/eshu-api/internal/sessionstore"
 )
 
-// fakeSessions is a scripted SessionResolver: hashes in allow resolve
-// to a fixed identity, everything else denies, and every call counts
-// so tests pin the lookup discipline (shaped and junk cookies cost
-// exactly one lookup each; missing credentials cost none).
+// fakeSessions is a scripted sessionstore.Resolver: hashes in allow
+// resolve to a fixed identity, hashes in fail deny with a store
+// error, everything else denies, and every call counts so tests pin
+// the lookup discipline (shaped and junk cookies cost exactly one
+// lookup each; missing credentials cost none).
 type fakeSessions struct {
-	allow map[string]AuthContext
+	allow map[string]sessionstore.AuthContext
+	fail  map[string]bool
 	calls int
 }
 
-func (f *fakeSessions) ResolveBrowserSession(sessionHash, _ string, _ bool, _ time.Time) (AuthContext, bool) {
+func (f *fakeSessions) ResolveBrowserSession(_ context.Context, sessionHash, _ string, _ bool, _ time.Time) (sessionstore.AuthContext, bool, error) {
 	f.calls++
+	if f.fail[sessionHash] {
+		return sessionstore.AuthContext{}, false, errors.New("credresolver test: store failure")
+	}
 	ctx, ok := f.allow[sessionHash]
-	return ctx, ok
+	return ctx, ok, nil
 }
 
 const testKey = "test-shared-key"
 
+// TestSessionSecretHashMatchesCore pins the cookie-to-hash derivation
+// byte for byte against the core's BrowserSessionSecretHash
+// (go/internal/query/auth/session/cookies.go in the eshu repo):
+// trim, blank to "", else "sha256:"+hex(sha256(secret)). Any drift
+// silently denies every real session, so the vector is literal.
+func TestSessionSecretHashMatchesCore(t *testing.T) {
+	t.Parallel()
+
+	if got := sessionSecretHash("valid-session"); got != "sha256:3547c20033d01a8aeb923117229f1d15f03080ace8de294f4ed2e2b7a09703ad" {
+		t.Errorf("sessionSecretHash(valid-session) = %q, want the core sha256 vector", got)
+	}
+	if got := sessionSecretHash("  padded  "); got != sessionSecretHash("padded") {
+		t.Errorf("sessionSecretHash(padded) = %q, want whitespace trimmed", got)
+	}
+	for _, blank := range []string{"", "   "} {
+		if got := sessionSecretHash(blank); got != "" {
+			t.Errorf("sessionSecretHash(%q) = %q, want blank to hash (store denies it without a DB touch)", blank, got)
+		}
+	}
+}
+
 // TestResolver closes the classification matrix: shared key allows
 // locally, safe-method session cookies resolve through exactly one
 // store lookup (valid allows, unknown/empty/junk deny with the same
-// single lookup), non-key bearers and unsafe-method cookies relay,
-// and missing credentials deny with zero store contact.
+// single lookup, store errors deny and never 503), non-key bearers
+// and unsafe-method cookies relay, and missing credentials deny with
+// zero store contact.
 func TestResolver(t *testing.T) {
 	t.Parallel()
 
-	sessionCtx := AuthContext{SubjectIDHash: "sub-hash", TenantID: "t1", AllScopes: false}
+	sessionCtx := sessionstore.AuthContext{SubjectIDHash: "sub-hash", TenantID: "t1", AllScopes: false}
 	newResolver := func() (*Resolver, *fakeSessions) {
-		store := &fakeSessions{allow: map[string]AuthContext{"valid-session": sessionCtx}}
+		store := &fakeSessions{allow: map[string]sessionstore.AuthContext{sessionSecretHash("valid-session"): sessionCtx}}
 		res := New(testKey, store)
 		res.Enabled = true
 		return res, store
@@ -63,7 +94,7 @@ func TestResolver(t *testing.T) {
 	t.Run("wrong bearer relays", func(t *testing.T) {
 		t.Parallel()
 		res, store := newResolver()
-		for _, key := range []string{"wrong-key", "eshu_scoped_token_value", "eyJhbGciOiJSUzI1NiJ9.payload.sig"} {
+		for _, key := range []string{"wrong-key", "eshu_scoped_token_value", "[REDACTED]"} {
 			req := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
 			req.Header.Set("Authorization", "Bearer "+key)
 			if _, outcome := res.Resolve(req); outcome != OutcomeRelay {
@@ -118,6 +149,21 @@ func TestResolver(t *testing.T) {
 		}
 	})
 
+	t.Run("store error denies with one lookup and never 503s", func(t *testing.T) {
+		t.Parallel()
+		store := &fakeSessions{fail: map[string]bool{sessionSecretHash("flaky-session"): true}}
+		res := New(testKey, store)
+		res.Enabled = true
+		req := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
+		req.AddCookie(&http.Cookie{Name: "eshu_session", Value: "flaky-session"})
+		if _, outcome := res.Resolve(req); outcome != OutcomeDeny {
+			t.Fatalf("outcome = %v, want OutcomeDeny (store errors deny, never 503)", outcome)
+		}
+		if store.calls != 1 {
+			t.Errorf("store calls = %d, want exactly 1 (no retry on error)", store.calls)
+		}
+	})
+
 	t.Run("unsafe method cookies relay", func(t *testing.T) {
 		t.Parallel()
 		res, store := newResolver()
@@ -155,7 +201,7 @@ func TestResolver(t *testing.T) {
 
 	t.Run("empty key fails closed", func(t *testing.T) {
 		t.Parallel()
-		store := &fakeSessions{allow: map[string]AuthContext{"valid-session": sessionCtx}}
+		store := &fakeSessions{allow: map[string]sessionstore.AuthContext{sessionSecretHash("valid-session"): sessionCtx}}
 		res := New("", store)
 		res.Enabled = true
 		keyed := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
@@ -183,6 +229,16 @@ func TestResolver(t *testing.T) {
 			t.Errorf("outcome = %v, want OutcomeRelay (no store, core judges)", outcome)
 		}
 	})
+}
+
+// TestResolverSatisfiesSessionstorePort pins the rewire at compile
+// time from the consumer side too: the fake the resolver tests drive
+// is a sessionstore.Resolver, so only a real-port fake can back the
+// cookie path — no parallel port can slip back in.
+func TestResolverSatisfiesSessionstorePort(t *testing.T) {
+	t.Parallel()
+
+	var _ sessionstore.Resolver = (*fakeSessions)(nil)
 }
 
 // TestOutcomeStringKeepsClosedVocabulary pins the telemetry labels:
