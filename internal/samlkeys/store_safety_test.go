@@ -141,7 +141,9 @@ func TestStore_PaddedProviderIdHasNoGhost(t *testing.T) {
 		t.Fatalf("reload: %v", err)
 	}
 	got, _ = store.Get("acme")
-	if got.PreviousVersion() != "v1" {
-		t.Fatal("padded then plain reloads must rotate one entry, not fork ghosts")
+	// The live entry has rotated v1 -> v3 -> v2 through one
+	// canonical id: the previous must be v3, never a ghost.
+	if got.Version() != "v2" || got.PreviousVersion() != "v3" {
+		t.Fatalf("padded then plain reloads must rotate one entry, got %q/%q", got.Version(), got.PreviousVersion())
 	}
 }
