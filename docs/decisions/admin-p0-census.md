@@ -27,14 +27,14 @@ bound to snapshot order by this document.
 
 Out of scope (disclosed, not silent): the 8 non-`/api/v0/admin/`
 routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
-`auth/admin/audit` GETs, `api/d3_wave.go:72-79`), and all
+`auth/admin/audit` GETs, `api/d3_wave.go:79-86`), and all
 `auth/admin` mutations. They do not appear in the 22-row table.
 
 ## The two lanes (definitions)
 
 - **d3ReadGate-gated** — registered as
   `s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated))`
-  (`api/router.go:301` in the D3 loop, `api/router.go:310` in the
+  (`api/router.go:263` in the D3 loop, `api/router.go:272` in the
   trio loop). A valid shared key terminates natively; a non-key
   Bearer or session-cookie-shaped Cookie relays explicitly;
   credential-less and junk-cookie callers get the standing 401
@@ -48,18 +48,18 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
   tuning-report GET (#171) and the work-items query POST (#335) keep
   the d3ReadGate credential matrix above but terminate locally, each
   registered on its own anchor ahead of the D3 loops:
-  - #171: `s.registerAdminTuningReport`, `api/router.go:290-292`;
-    route const and handler `api/admin_tuning_terminate.go:52-109`.
+  - #171: `s.registerAdminTuningReport`, `api/router.go:243`;
+    route const and handler `api/admin_tuning_terminate.go:52-110`.
     Shared-key calls serve the pinned apilib static body
     (`apilibadmin.WriteTuningReport`,
     `api/admin_tuning_terminate.go:109`) filing `local_ok` on the
     native lane (`api/admin_tuning_terminate.go:108`) with zero core
     and zero store contact.
-  - #335: `s.registerAdminWorkItemsQuery`, `api/router.go:293-295`;
-    route const (`api/admin_workitems_terminate.go:52`), server
-    store field (`api/router.go:30-34`), `WithWorkItemStore` option
+  - #335: `s.registerAdminWorkItemsQuery`, `api/router.go:246`;
+    route const (`api/admin_workitems_terminate.go:57`), server
+    store field (`api/server.go:33`), `WithWorkItemStore` option
     (`api/admin_workitems_terminate.go:59-67`), and handler
-    (`api/admin_workitems_terminate.go:69-127`). Shared-key calls
+    (`api/admin_workitems_terminate.go:69-128`). Shared-key calls
     serve the pinned apilib bounded-list body
     (`apilibadmin.ServeWorkItemsQuery`,
     `api/admin_workitems_terminate.go:127`) filing `local_ok` on
@@ -74,7 +74,7 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
   (`api/d3_terminate.go:48-50`), judged in
   `serveAdminTuningTerminatedAs` (`api/admin_tuning_terminate.go:93`)
   and `serveAdminWorkItemsTerminatedAs`
-  (`api/admin_workitems_terminate.go:95-125`).
+  (`api/admin_workitems_terminate.go:95-128`).
 - **RequireAuth-native** — registered as
   `RequireAuth(s.apiKey, http.HandlerFunc(s.<family>WriteThrough))`
   (`RequireAuth` defined at `api/auth.go:189`; cited read-only, not
@@ -91,10 +91,10 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
 
 #169–170 are the remaining Gap 02 wave routes: wave entries
 `api/d3trio_wave.go:65-66` (`Serve: d3ServeGated`), registered by the
-loop at `api/router.go:319-324` via `s.d3ReadGate`
-(`api/router.go:321`). #171 promoted to its own native lane in
+loop at `api/router.go:270-275` via `s.d3ReadGate`
+(`api/router.go:272`). #171 promoted to its own native lane in
 eshu-hq/eshu-api#171 (no wave entry; anchor
-`api/router.go:290-292`). Contract record:
+`api/router.go:243`). Contract record:
 `contracts/d3-admin-reads.md:26-42`, `:98-99` (Gap 02 pins v0, no D1
 `ReadStore` claim); the #171 termination proof lives in
 `api/admin_tuning_terminate_test.go` (P-FLOW zero-core case, census
@@ -102,9 +102,9 @@ eshu-hq/eshu-api#171 (no wave entry; anchor
 
 | # | Operation | Lane | Wave entry | Registration | forwardToCore site |
 | --- | --- | --- | --- | --- | --- |
-| 169 | `GET /api/v0/admin/delta-union/completeness` | d3ReadGate-gated | `api/d3trio_wave.go:65` | `api/router.go:319-324` via `s.d3ReadGate` (`api/router.go:321`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 170 | `GET /api/v0/admin/reindex/progress` | d3ReadGate-gated | `api/d3trio_wave.go:66` | `api/router.go:319-324` via `s.d3ReadGate` (`api/router.go:321`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 171 | `GET /api/v0/admin/shared-projection/tuning-report` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_tuning_terminate.go:52`) | `api/router.go:290-292` via `s.d3ReadGate` + `serveAdminTuningTerminated` | none — local `apilibadmin.WriteTuningReport` (`local_ok`); foreign classes relay `api/d3_terminate.go:185` |
+| 169 | `GET /api/v0/admin/delta-union/completeness` | d3ReadGate-gated | `api/d3trio_wave.go:65` | `api/router.go:270-275` via `s.d3ReadGate` (`api/router.go:272`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 170 | `GET /api/v0/admin/reindex/progress` | d3ReadGate-gated | `api/d3trio_wave.go:66` | `api/router.go:270-275` via `s.d3ReadGate` (`api/router.go:272`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 171 | `GET /api/v0/admin/shared-projection/tuning-report` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_tuning_terminate.go:52`) | `api/router.go:243` via `s.d3ReadGate` + `serveAdminTuningTerminated` | none — local `apilibadmin.WriteTuningReport` (`local_ok`); foreign classes relay `api/d3_terminate.go:185` |
 
 ## Frozen baseline table — 19 POSTs (#318–336)
 
@@ -112,7 +112,7 @@ eshu-hq/eshu-api#171 (no wave entry; anchor
 
 Wave entries in `d3Wave` (`Serve: d3ServeGated`,
 `api/d3_wave.go:52`), registered by the loop at
-`api/router.go:310-315` through `s.d3ReadGate` (`api/router.go:312`).
+`api/router.go:261-266` through `s.d3ReadGate` (`api/router.go:263`).
 Same forward sites as the GETs. Contract rows:
 `contracts/d3-admin-reads.md:98` (Admin, 6 POSTs — the record still
 lists the pre-promotion six; 5 remain on the wave, work-items
@@ -121,30 +121,30 @@ promoted in #335) and `contracts/d3-admin-reads.md:102`
 
 | # | Operation | Lane | Wave entry | Registration | forwardToCore site |
 | --- | --- | --- | --- | --- | --- |
-| 319 | `POST /api/v0/admin/changed-since/poisoned-links/query` | d3ReadGate-gated | `api/d3_wave.go:77` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 321 | `POST /api/v0/admin/collector-failures/acknowledgements/query` | d3ReadGate-gated | `api/d3_wave.go:87` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 322 | `POST /api/v0/admin/collector-failures/query` | d3ReadGate-gated | `api/d3_wave.go:88` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated | `api/d3_wave.go:75` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 325 | `POST /api/v0/admin/decisions/query` | d3ReadGate-gated | `api/d3_wave.go:74` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 326 | `POST /api/v0/admin/input-invalid-facts/query` | d3ReadGate-gated | `api/d3_wave.go:76` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 332 | `POST /api/v0/admin/replay-events/query` | d3ReadGate-gated | `api/d3_wave.go:78` | `api/router.go:310-315` via `s.d3ReadGate` (`api/router.go:312`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 335 | `POST /api/v0/admin/work-items/query` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_workitems_terminate.go:52`) | `api/router.go:293-295` via `s.d3ReadGate` + `serveAdminWorkItemsTerminated` | none — local `apilibadmin.ServeWorkItemsQuery` on the reader-role store (`local_ok`); foreign classes relay `api/d3_terminate.go:185` |
+| 319 | `POST /api/v0/admin/changed-since/poisoned-links/query` | d3ReadGate-gated | `api/d3_wave.go:77` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 321 | `POST /api/v0/admin/collector-failures/acknowledgements/query` | d3ReadGate-gated | `api/d3_wave.go:87` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 322 | `POST /api/v0/admin/collector-failures/query` | d3ReadGate-gated | `api/d3_wave.go:88` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated | `api/d3_wave.go:75` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 325 | `POST /api/v0/admin/decisions/query` | d3ReadGate-gated | `api/d3_wave.go:74` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 326 | `POST /api/v0/admin/input-invalid-facts/query` | d3ReadGate-gated | `api/d3_wave.go:76` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 332 | `POST /api/v0/admin/replay-events/query` | d3ReadGate-gated | `api/d3_wave.go:78` | `api/router.go:261-266` via `s.d3ReadGate` (`api/router.go:263`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 335 | `POST /api/v0/admin/work-items/query` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_workitems_terminate.go:57`) | `api/router.go:246` via `s.d3ReadGate` + `serveAdminWorkItemsTerminated` | none — local `apilibadmin.ServeWorkItemsQuery` on the reader-role store (`local_ok`); foreign classes relay `api/d3_terminate.go:185` |
 
 ### RequireAuth-native mutation POSTs (11 of 19)
 
 | # | Operation | Lane | Route definition | Registration | forwardToCore site | Family authorizer |
 | --- | --- | --- | --- | --- | --- | --- |
-| 318 | `POST /api/v0/admin/backfill` | RequireAuth-native (D7 tier-C) | `api/d7.go:36`; listed `api/d7.go:44-49` | `api/router.go:165-168` loop over `d7Routes`, `RequireAuth(... s.d7WriteThrough)` | `api/d7.go:148` in `d7WriteThroughAs` (`api/d7.go:126-149`) | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
-| 320 | `POST /api/v0/admin/collector-failures/acknowledge` | RequireAuth-native (tier C-a) | `api/terminalfailure.go:17` | `api/native_singles.go:51-52` via `registerNativeSingles` (called `api/router.go:93`) | `api/terminalfailure.go:73` | `authorizeTerminalFailureAdmin` `api/terminalfailure.go:84-86`, checked `api/terminalfailure.go:68` |
-| 323 | `POST /api/v0/admin/dead-letter` | RequireAuth-native (D7 tier-C) | `api/d7.go:37`; listed `api/d7.go:44-49` | `api/router.go:165-168` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
-| 327 | `POST /api/v0/admin/recover-generations` | RequireAuth-native (tier C-c2) | `api/recovery.go:30`; listed `api/recovery.go:35-40` | `api/router.go:256-259` loop over `recoveryRoutes`, `RequireAuth(... s.recoveryWriteThrough)` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
-| 328 | `POST /api/v0/admin/refinalize` | RequireAuth-native (tier C-c2) | `api/recovery.go:29`; listed `api/recovery.go:35-40` | `api/router.go:256-259` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
-| 329 | `POST /api/v0/admin/reindex` | RequireAuth-native (D7 tier-C) | `api/d7.go:38`; listed `api/d7.go:44-49` | `api/router.go:165-168` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
-| 330 | `POST /api/v0/admin/reopen` | RequireAuth-native (tier C-c2) | `api/recovery.go:28`; listed `api/recovery.go:35-40` | `api/router.go:256-259` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
-| 331 | `POST /api/v0/admin/replay` | RequireAuth-native (tier C-c2) | `api/recovery.go:27`; listed `api/recovery.go:35-40` | `api/router.go:256-259` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
-| 333 | `POST /api/v0/admin/repository-retirements` | RequireAuth-native (tier C-a) | `api/retirement.go:15` | `api/native_singles.go:43-44` via `registerNativeSingles` (called `api/router.go:93`) | `api/retirement.go:60` | `authorizeRetirementAdmin` `api/retirement.go:70-72`, checked `api/retirement.go:55` |
-| 334 | `POST /api/v0/admin/skip` | RequireAuth-native (D7 tier-C) | `api/d7.go:39`; listed `api/d7.go:44-49` | `api/router.go:165-168` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
-| 336 | `POST /api/v0/admin/workflow-retire-unclaimed` | RequireAuth-native (writer) | `api/retireunclaimed.go:16` | `api/router.go:95-96` direct `mux.Handle`, `RequireAuth(... s.retireUnclaimedWriteThrough)` | `api/retireunclaimed.go:88` | `authorizeRetireUnclaimedAdmin` `api/retireunclaimed.go:99-101`, checked `api/retireunclaimed.go:76` |
+| 318 | `POST /api/v0/admin/backfill` | RequireAuth-native (D7 tier-C) | `api/d7.go:36`; listed `api/d7.go:44-49` | `api/router.go:125-128` loop over `d7Routes`, `RequireAuth(... s.d7WriteThrough)` | `api/d7.go:148` in `d7WriteThroughAs` (`api/d7.go:126-149`) | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
+| 320 | `POST /api/v0/admin/collector-failures/acknowledge` | RequireAuth-native (tier C-a) | `api/terminalfailure.go:17` | `api/native_singles.go:51-52` via `registerNativeSingles` (called `api/router.go:53`) | `api/terminalfailure.go:73` | `authorizeTerminalFailureAdmin` `api/terminalfailure.go:84-86`, checked `api/terminalfailure.go:68` |
+| 323 | `POST /api/v0/admin/dead-letter` | RequireAuth-native (D7 tier-C) | `api/d7.go:37`; listed `api/d7.go:44-49` | `api/router.go:125-128` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
+| 327 | `POST /api/v0/admin/recover-generations` | RequireAuth-native (tier C-c2) | `api/recovery.go:30`; listed `api/recovery.go:35-40` | `api/router.go:216-219` loop over `recoveryRoutes`, `RequireAuth(... s.recoveryWriteThrough)` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
+| 328 | `POST /api/v0/admin/refinalize` | RequireAuth-native (tier C-c2) | `api/recovery.go:29`; listed `api/recovery.go:35-40` | `api/router.go:216-219` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
+| 329 | `POST /api/v0/admin/reindex` | RequireAuth-native (D7 tier-C) | `api/d7.go:38`; listed `api/d7.go:44-49` | `api/router.go:125-128` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
+| 330 | `POST /api/v0/admin/reopen` | RequireAuth-native (tier C-c2) | `api/recovery.go:28`; listed `api/recovery.go:35-40` | `api/router.go:216-219` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
+| 331 | `POST /api/v0/admin/replay` | RequireAuth-native (tier C-c2) | `api/recovery.go:27`; listed `api/recovery.go:35-40` | `api/router.go:216-219` | `api/recovery.go:104` | `authorizeRecoveryAdmin` `api/recovery.go:115-117`, checked `api/recovery.go:99` |
+| 333 | `POST /api/v0/admin/repository-retirements` | RequireAuth-native (tier C-a) | `api/retirement.go:15` | `api/native_singles.go:43-44` via `registerNativeSingles` (called `api/router.go:53`) | `api/retirement.go:60` | `authorizeRetirementAdmin` `api/retirement.go:70-72`, checked `api/retirement.go:55` |
+| 334 | `POST /api/v0/admin/skip` | RequireAuth-native (D7 tier-C) | `api/d7.go:39`; listed `api/d7.go:44-49` | `api/router.go:125-128` | `api/d7.go:148` | `authorizeD7Admin` `api/d7.go:159-161`, checked `api/d7.go:136` |
+| 336 | `POST /api/v0/admin/workflow-retire-unclaimed` | RequireAuth-native (writer) | `api/retireunclaimed.go:16` | `api/router.go:55-56` direct `mux.Handle`, `RequireAuth(... s.retireUnclaimedWriteThrough)` | `api/retireunclaimed.go:88` | `authorizeRetireUnclaimedAdmin` `api/retireunclaimed.go:99-101`, checked `api/retireunclaimed.go:76` |
 
 Contract records for the native rows: D7 four —
 `contracts/d7-admin-four.md:151-165` (routes inside `RequireAuth`,
@@ -171,17 +171,18 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
   documented unreachable until a scoped/session resolver lands.
   Core re-judges every forwarded call as backstop on both lanes.
 - Registration-order note (observed, not a defect claim): the
-  recovery block comment sits at `api/router.go:161-166` directly
-  above the D7 loop (`api/router.go:174-177`), while the recovery
+  recovery block comment sits at `api/router.go:112-119`, followed by
+  the D7 comment directly above the D7 loop (`api/router.go:125-128`),
+  while the recovery
   loop itself registers later, uncommented, at
-  `api/router.go:265-268` — after the D8/D9 blocks. Registration
+  `api/router.go:216-219` — after the D8/D9 blocks. Registration
   order in `routes()` for census rows is therefore: native singles
-  (`api/router.go:102`) → retire-unclaimed
-  (`api/router.go:104-105`) → D7 (`api/router.go:174-177`) →
-  recovery (`api/router.go:265-268`) → tuning-report anchor
-  (`api/router.go:290-292`) → work-items query anchor
-  (`api/router.go:293-295`) → D3 wave (`api/router.go:310-315`) →
-  D3 trio (`api/router.go:319-324`), all ahead of the generic
+  (`api/router.go:53`) → retire-unclaimed
+  (`api/router.go:55-56`) → D7 (`api/router.go:125-128`) →
+  recovery (`api/router.go:216-219`) → tuning-report anchor
+  (`api/router.go:243`) → work-items query anchor
+  (`api/router.go:246`) → D3 wave (`api/router.go:261-266`) →
+  D3 trio (`api/router.go:270-275`), all ahead of the generic
   proxy. Each anchor precedes the loops so a promoted route never
   falls through to a wave registration; the mux would panic on the
   duplicate pattern if the wave entry had not been deleted with the
@@ -196,10 +197,10 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
   work-items lane pins its own freeze, parity, and zero-core proof
   in `api/admin_workitems_terminate_test.go`
   (`TestAdminWorkItemsRouteFrozen`,
-  `TestAdminWorkItemsTerminatesLocally`) and
-  `api/admin_workitems_parity_test.go`
-  (`TestAdminWorkItemsBoundedListParity`,
-  `TestAdminWorkItemsProofRead`, `TestAdminWorkItemsCensus`); this
+  `TestAdminWorkItemsTerminatesLocally`,
+  `TestAdminWorkItemsBoundedListParity`, `TestAdminWorkItemsProofRead`)
+  and `api/admin_workitems_parity_test.go`
+  (`TestAdminWorkItemsCensus`); this
   census step ran the touched suites green (`go test ./api/
   ./cmd/... ./internal/...`, plus the env-gated live reader proof
   `TestAdminReadLiveProof` against local PG). `make pre-pr` /
@@ -244,7 +245,7 @@ termination):
   reader-role PG store with zero core HTTP calls (store-backed
   class — the evidence is the P-READ case with >= 1
   postgresql/read span plus the counting-transport zero in
-  `api/admin_workitems_parity_test.go`, and the live PG proof of
+  `api/admin_workitems_terminate_test.go`, and the live PG proof of
   the bounded SELECT in `TestAdminReadLiveProof`).
 The other 20 rows still end at `forwardToCore`
 (`api/dispatch.go:252`; lane tables `## Frozen baseline table`).
