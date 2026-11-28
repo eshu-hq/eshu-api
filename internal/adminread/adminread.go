@@ -59,6 +59,7 @@ import (
 	apilibadmin "github.com/eshu-hq/eshu/go/apilib/admin"
 
 	"github.com/eshu-hq/eshu-api/internal/sessionstore"
+	"github.com/eshu-hq/eshu-api/internal/storespans"
 )
 
 // Environment inputs for the reader-role DSN config. The DSN travels
@@ -143,13 +144,19 @@ func ReaderBudget(maxConns int) sessionstore.PoolBudget {
 	}
 }
 
-// pool is the query surface Store reads through: *pgxpool.Pool in
+// Pool is the query surface Store reads through: *pgxpool.Pool in
 // production, fakes in unit tests. It mirrors the core reader seam
-// (db.Queryer): the store owns the SQL, the pool owns the wire.
-type pool interface {
+// (db.Queryer): the store owns the SQL, the pool owns the wire. It is
+// exported so the zero-core proof can drive the real store read path
+// over a fake pool without a live database.
+type Pool interface {
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	Close()
 }
+
+// pool is the pre-export name kept as an alias so existing call sites
+// read unchanged.
+type pool = Pool
 
 // Store is the reader-role PG WorkItemStore: one pool authenticated
 // as the SELECT-only role, serving the bounded work-items list. It
@@ -158,11 +165,20 @@ type Store struct {
 	pool pool
 }
 
-// newStore binds an open pool. NewStore is the only production
-// constructor; tests bind fakes here to prove the read path without
-// a live database.
+// newStore binds an open pool. Production opens its pool through
+// NewStore; the zero-core proof binds a fake pool through
+// NewStoreFromPool to prove the real read path without a live
+// database.
 func newStore(p pool) *Store {
 	return &Store{pool: p}
+}
+
+// NewStoreFromPool binds an already-open pool. Production opens its
+// pool through NewStore; the proof harness binds a fake pool here so
+// the P-READ span evidence can only come from the real store read
+// path, never from a fake WorkItemStore.
+func NewStoreFromPool(p Pool) *Store {
+	return newStore(p)
 }
 
 // NewStore opens the reader pool and fails closed on any sizing,
@@ -218,7 +234,21 @@ func (s *Store) ListWorkItems(ctx context.Context, f apilibadmin.WorkItemFilter)
 		return nil, fmt.Errorf("adminread: list work items: %w", err)
 	}
 	defer rows.Close()
-	return scanWorkItems(rows)
+	items, err := scanWorkItems(rows)
+	if err != nil {
+		return nil, err
+	}
+	// The P-READ span evidence (satellite eshu-hq/eshu-api#335): one
+	// finished postgresql/read span per successful reader query,
+	// recorded through the request context. Outside an instrumented
+	// chain the emit is a no-op, so the serving path stays safe with
+	// no recorder attached.
+	storespans.RecordStoreSpan(ctx, storespans.StoreSpan{
+		System:    storespans.StoreSystemPostgreSQL,
+		Operation: storespans.StoreOpRead,
+		Name:      "admin work-items list",
+	})
+	return items, nil
 }
 
 // workItemRows is the minimal row cursor ListWorkItems scans: real

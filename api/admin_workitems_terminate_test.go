@@ -12,8 +12,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	apilibadmin "github.com/eshu-hq/eshu/go/apilib/admin"
+
+	"github.com/eshu-hq/eshu-api/internal/adminread"
 )
 
 // Admin work-items query native termination (satellite
@@ -38,15 +41,17 @@ import (
 // fixed 500 (never the backend text).
 //
 // Proof vocabulary: P-READ carries the RunProof case — success emits
-// >= 1 postgresql/read span through the context recorder with zero
-// core-origin calls; the denial leg asserts absolute span silence.
+// >= 1 postgresql/read span from the production reader store
+// (internal/adminread over a fake pool) through the context recorder
+// with zero core-origin calls; the denial leg asserts absolute span
+// silence.
 
 // fakeWorkItemStore is the in-memory apilib WorkItemStore the lane
-// proofs run against: it records the filter and call count, answers
-// canned rows or a canned error, and emits one postgresql/read span
-// per ListWorkItems through the context recorder — the same seam the
-// production reader store reports through, so the P-READ span is the
-// store-path evidence, not harness theater.
+// matrix tests run against: it records the filter and call count and
+// answers canned rows or a canned error. It emits no spans by design:
+// span evidence must come from the production reader store path
+// (internal/adminread over a fake pool, see the P-READ proof below),
+// never from a fake WorkItemStore.
 type fakeWorkItemStore struct {
 	items []apilibadmin.WorkItem
 	err   error
@@ -54,10 +59,9 @@ type fakeWorkItemStore struct {
 	calls int
 }
 
-func (f *fakeWorkItemStore) ListWorkItems(ctx context.Context, filter apilibadmin.WorkItemFilter) ([]apilibadmin.WorkItem, error) {
+func (f *fakeWorkItemStore) ListWorkItems(_ context.Context, filter apilibadmin.WorkItemFilter) ([]apilibadmin.WorkItem, error) {
 	f.got = filter
 	f.calls++
-	RecordStoreSpan(ctx, StoreSpan{System: StoreSystemPostgreSQL, Operation: StoreOpRead, Name: "admin work-items list"})
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -291,14 +295,18 @@ func TestAdminWorkItemsBoundedListParity(t *testing.T) {
 
 // TestAdminWorkItemsProofRead is the zero-core proof for the promoted
 // reader: a P-READ case pairing the shared-key success (which must
-// emit >= 1 postgresql/read span from the store path) with the
-// credential-less denial (absolute span silence) through the full
-// production chain with the counting transport. Every leg asserts zero
-// core-origin calls.
+// emit >= 1 postgresql/read span from the production store path) with
+// the credential-less denial (absolute span silence) through the full
+// production chain with the counting transport. The store is the real
+// internal/adminread reader over a fake pool — the fake WorkItemStore
+// emits no spans, so the success span can only come from the
+// production ListWorkItems. Every leg asserts zero core-origin calls.
 func TestAdminWorkItemsProofRead(t *testing.T) {
 	t.Parallel()
 
-	srv := NewServer("http://core.invalid", skeletonTestKey).WithWorkItemStore(&fakeWorkItemStore{})
+	at := time.Date(2026, 3, 4, 6, 6, 7, 0, time.UTC)
+	store := adminread.NewStoreFromPool(&fakeWorkItemsPool{rows: &fakeWorkItemRows{staged: true, at: at}})
+	srv := NewServer("http://core.invalid", skeletonTestKey).WithWorkItemStore(store)
 	counter := InstallCoreCallCounter(srv)
 	rec := &RecordingStoreSpans{}
 	handler := withStoreSpanRecorder(rec, srv.Handler(DefaultV0Sunset))
