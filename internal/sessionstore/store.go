@@ -43,13 +43,18 @@ type DB interface {
 
 // Stats counts store outcomes by deny reason so an operator can tell
 // "PG down" (StoreErrors) from "credential invalid" (Unresolved) from
-// "CSRF mismatch" (CSRFMismatches) on dashboards alone.
+// "CSRF mismatch" (CSRFMismatches) on dashboards alone. Login-state
+// consumes count separately (LoginStateConsumed vs LoginStateDenied,
+// uniform across deny causes) so "PG down" stays distinguishable
+// from "replay/expired" without leaking which deny occurred.
 type Stats struct {
-	Unresolved     atomic.Int64
-	StoreErrors    atomic.Int64
-	CSRFMismatches atomic.Int64
-	StaleDenials   atomic.Int64
-	Resolves       atomic.Int64
+	Unresolved         atomic.Int64
+	StoreErrors        atomic.Int64
+	CSRFMismatches     atomic.Int64
+	StaleDenials       atomic.Int64
+	Resolves           atomic.Int64
+	LoginStateConsumed atomic.Int64
+	LoginStateDenied   atomic.Int64
 }
 
 // Store is the PostgreSQL session/identity/token wiring behind the
