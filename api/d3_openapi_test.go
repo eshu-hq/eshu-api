@@ -21,10 +21,11 @@ import (
 // credentials present.
 
 // d3SpecKeys are the path keys the D3 wave adds to the served
-// document: the three remaining admin query POSTs (work-items query
+// document: the two remaining admin query POSTs (work-items query
 // promoted to its own native lane in eshu-hq/eshu-api#335, the
-// dead-letters query in eshu-hq/eshu-api#324, and the decisions query
-// in eshu-hq/eshu-api#325, each keeping the same served key) plus the
+// dead-letters query in eshu-hq/eshu-api#324, the decisions query in
+// eshu-hq/eshu-api#325, and the input-invalid-facts query in
+// eshu-hq/eshu-api#326, each keeping the same served key) plus the
 // invitations list GET (whose create
 // POST shares the key and stays relay until D8, so the served entry
 // is get-only).

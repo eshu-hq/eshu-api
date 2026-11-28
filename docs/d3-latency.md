@@ -18,14 +18,16 @@ Hermetic stub-core comparison, same binary, same caller shape:
   stays a real pathology check.
 - After leg: the terminated D3 reads (`BenchmarkD3TerminatedRead`),
   shared-key identity GET (`/api/v0/auth/admin/roles`) + admin query
-  POST (`/api/v0/admin/input-invalid-facts/query`) through the full
-  production chain with the wave gate and family authorizer. (The
-  work-items query POST promoted to its own store-backed lane in
-  eshu-hq/eshu-api#335 with its own dest-side benchmark,
+  POST (`/api/v0/admin/changed-since/poisoned-links/query`) through
+  the full production chain with the wave gate and family authorizer.
+  (The work-items query POST promoted to its own store-backed lane
+  in eshu-hq/eshu-api#335 with its own dest-side benchmark,
   `BenchmarkAdminWorkItemsTerminated`, the dead-letters query POST in
   eshu-hq/eshu-api#324 with `BenchmarkAdminDeadLettersTerminated`,
-  and the decisions query POST in eshu-hq/eshu-api#325 with
-  `BenchmarkAdminDecisionsTerminated`.)
+  the decisions query POST in eshu-hq/eshu-api#325 with
+  `BenchmarkAdminDecisionsTerminated`, and the input-invalid-facts
+  query POST in eshu-hq/eshu-api#326 with
+  `BenchmarkAdminInputInvalidFactsTerminated`.)
 - Both legs hit the same in-process stub core, so the numbers isolate
   dest-side cost, not core or network time.
 - `bash scripts/measure-d3-latency.sh` runs each leg `-count=5`,

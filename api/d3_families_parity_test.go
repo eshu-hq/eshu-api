@@ -144,7 +144,7 @@ func TestD3Terminated_ForwardsCallerBytes(t *testing.T) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	payload := `{"limit":10,"timeout_ms":5000}`
-	req := authedRequest(http.MethodPost, "/api/v0/admin/input-invalid-facts/query?limit=10")
+	req := authedRequest(http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query?limit=10")
 	req.Header.Set("Accept", EnvelopeMIME)
 	req.Body = io.NopCloser(strings.NewReader(payload))
 	rec := httptest.NewRecorder()
@@ -156,7 +156,7 @@ func TestD3Terminated_ForwardsCallerBytes(t *testing.T) {
 	if core.lastMethod != http.MethodPost {
 		t.Errorf("upstream method = %q, want POST", core.lastMethod)
 	}
-	if core.lastPath != "/api/v0/admin/input-invalid-facts/query" {
+	if core.lastPath != "/api/v0/admin/changed-since/poisoned-links/query" {
 		t.Errorf("upstream path = %q, want the core route", core.lastPath)
 	}
 	if core.lastQuery != "limit=10" {

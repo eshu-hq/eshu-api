@@ -25,9 +25,9 @@ import (
 
 // TestD3AuthorizerSharedKeyAllowDeny pins the family gate: the
 // shared-key identity allows, anything else denies. One shared
-// authorizer covers all 13 D3 wave routes (plus the promoted
-// work-items, dead-letters, and decisions queries on their own
-// anchors) until D8
+// authorizer covers all 12 D3 wave routes (plus the promoted
+// work-items, dead-letters, decisions, and input-invalid-facts
+// queries on their own anchors) until D8
 // resolves per-class handling.
 func TestD3AuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()
@@ -52,7 +52,7 @@ func TestD3AuthorizerCountersPinned(t *testing.T) {
 		path   string
 		family string
 	}{
-		{http.MethodPost, "/api/v0/admin/input-invalid-facts/query", "admin"},
+		{http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query", "admin"},
 		{http.MethodGet, "/api/v0/auth/admin/roles", "admin_identity"},
 		{http.MethodGet, "/api/v0/auth/admin/audit/summary", "governance_audit"},
 		{http.MethodPost, "/api/v0/admin/collector-failures/query", "terminal_failure"},
@@ -101,7 +101,6 @@ func TestD3DenyBranchShapePinned(t *testing.T) {
 		method string
 		path   string
 	}{
-		{http.MethodPost, "/api/v0/admin/input-invalid-facts/query"},
 		{http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query"},
 		{http.MethodPost, "/api/v0/admin/replay-events/query"},
 		{http.MethodGet, "/api/v0/auth/admin/api-tokens"},
@@ -115,8 +114,8 @@ func TestD3DenyBranchShapePinned(t *testing.T) {
 		{http.MethodPost, "/api/v0/admin/collector-failures/acknowledgements/query"},
 		{http.MethodPost, "/api/v0/admin/collector-failures/query"},
 	}
-	if len(cases) != 13 {
-		t.Fatalf("deny-shape cases = %d, want the 13 D3 wave routes", len(cases))
+	if len(cases) != 12 {
+		t.Fatalf("deny-shape cases = %d, want the 12 D3 wave routes", len(cases))
 	}
 	for _, tc := range cases {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
@@ -185,7 +184,7 @@ func TestD3Gated_UnconfiguredOriginFailsClosed(t *testing.T) {
 		handler := srv.Handler(DefaultV0Sunset)
 
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
-			req := authedRequest(http.MethodPost, "/api/v0/admin/input-invalid-facts/query")
+			req := authedRequest(http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query")
 			req.Header.Set("Accept", accept)
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
@@ -221,7 +220,7 @@ func TestD3Gated_TrailingSlashStaysNative(t *testing.T) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	targets := []struct{ method, path string }{
-		{http.MethodPost, "/api/v0/admin/input-invalid-facts/query/"},
+		{http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query/"},
 		{http.MethodGet, "/api/v0/auth/admin/roles/"},
 		{http.MethodGet, "/api/v0/auth/admin/audit/summary/"},
 		{http.MethodPost, "/api/v0/admin/collector-failures/query/"},
@@ -262,7 +261,7 @@ func TestD3Gated_V1AliasTerminates(t *testing.T) {
 
 	for _, tc := range []struct{ method, v1, v0 string }{
 		{http.MethodGet, "/api/v1/auth/admin/roles", "/api/v0/auth/admin/roles"},
-		{http.MethodPost, "/api/v1/admin/input-invalid-facts/query", "/api/v0/admin/input-invalid-facts/query"},
+		{http.MethodPost, "/api/v1/admin/changed-since/poisoned-links/query", "/api/v0/admin/changed-since/poisoned-links/query"},
 	} {
 		req := authedRequest(tc.method, tc.v1)
 		rec := httptest.NewRecorder()

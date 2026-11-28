@@ -135,6 +135,9 @@ func specScopeMounted() []string {
 	// The promoted decisions query singleton registers on its own
 	// anchor ahead of the D3 loops (likewise normalized).
 	add(adminDecisionsRoute)
+	// The promoted input-invalid-facts query singleton registers on
+	// its own anchor ahead of the D3 loops (likewise normalized).
+	add(adminInputInvalidFactsRoute)
 	// The promoted reindex-progress singleton registers on its own
 	// anchor ahead of the D3 loops (likewise normalized).
 	add(adminReindexProgressRoute)

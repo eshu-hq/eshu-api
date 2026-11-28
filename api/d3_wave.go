@@ -4,7 +4,7 @@
 package api
 
 // D3 admin/identity/recovery reads termination (Refs eshu-hq/eshu#9669,
-// part of #6707). This file owns the frozen wave table: the 13 routes
+// part of #6707). This file owns the frozen wave table: the 12 routes
 // across the 4 D1-pinned read families the satellite terminates after
 // the D2 Leaf B wave. (The 16th wave route, the admin work-items
 // query POST, promoted to its own native lane in
@@ -13,8 +13,11 @@ package api
 // its own native lane in eshu-hq/eshu-api#324 — see
 // api/admin_deadletters_terminate.go — and the 14th wave route, the
 // admin decisions query POST, promoted to its own native lane in
-// eshu-hq/eshu-api#325 — see api/admin_decisions_terminate.go — so
-// the frozen table below holds the remaining 13.) It mirrors the D1
+// eshu-hq/eshu-api#325 — see api/admin_decisions_terminate.go — and
+// the 13th wave route, the admin input-invalid-facts query POST,
+// promoted to its own native lane in eshu-hq/eshu-api#326 — see
+// api/admin_inputinvalid_terminate.go — so the frozen table below
+// holds the remaining 12.) It mirrors the D1
 // pins (AdminReadAdmissionContractVersion,
 // AdminIdentityReadAdmissionContractVersion,
 // GovernanceAuditReadAdmissionContractVersion,
@@ -52,10 +55,11 @@ package api
 // credential-less callers (and junk-cookie carriers) keep the standing
 // dest 401. There is no public carve-out in this lane — every D3 read
 // is an admin/audit read the core serves authed. The promoted
-// work-items, dead-letters, and decisions queries keep the same gate
-// on their own anchors (see api/admin_workitems_terminate.go,
-// api/admin_deadletters_terminate.go, api/admin_decisions_terminate.go);
-// only their terminals differ.
+// work-items, dead-letters, decisions, and input-invalid-facts
+// queries keep the same gate on their own anchors (see
+// api/admin_workitems_terminate.go, api/admin_deadletters_terminate.go,
+// api/admin_decisions_terminate.go,
+// api/admin_inputinvalid_terminate.go); only their terminals differ.
 const d3ServeGated = "gated"
 
 // d3Route is one frozen D3 wave entry: the exact cross-repo surface
@@ -70,19 +74,20 @@ type d3Route struct {
 	Fragment string
 }
 
-// d3Wave is the frozen D3 termination target: 13 routes across the 4
+// d3Wave is the frozen D3 termination target: 12 routes across the 4
 // D1-pinned families (admin query POSTs, admin identity GETs,
 // governance-audit GETs, terminal-failure query POSTs). The admin
 // work-items query POST promoted out in eshu-hq/eshu-api#335 (see
 // api/admin_workitems_terminate.go), the admin dead-letters query
 // POST promoted out in eshu-hq/eshu-api#324 (see
-// api/admin_deadletters_terminate.go), and the admin decisions query
+// api/admin_deadletters_terminate.go), the admin decisions query
 // POST promoted out in eshu-hq/eshu-api#325 (see
-// api/admin_decisions_terminate.go).
+// api/admin_decisions_terminate.go), and the admin
+// input-invalid-facts query POST promoted out in
+// eshu-hq/eshu-api#326 (see api/admin_inputinvalid_terminate.go).
 // TestD3WaveFrozen pins it entry by entry; a wave change moves the
 // spec, the skeleton table, and this mirror together.
 var d3Wave = []d3Route{
-	{Method: "POST", Path: "/api/v0/admin/input-invalid-facts/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "POST", Path: "/api/v0/admin/changed-since/poisoned-links/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "POST", Path: "/api/v0/admin/replay-events/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "GET", Path: "/api/v0/auth/admin/api-tokens", Family: "admin_identity", Serve: d3ServeGated, Fragment: "paths/auth/admin_reads.go"},

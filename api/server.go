@@ -41,6 +41,12 @@ type Server struct {
 	// Nil is the unconfigured lane: shared-key calls answer the
 	// apilib local 503 and never forward.
 	decisions apilibadmin.DecisionStore
+	// inputInvalid is the reader-role PG source behind the promoted
+	// input-invalid-facts query lane (see
+	// api/admin_inputinvalid_terminate.go). Nil is the unconfigured
+	// lane: shared-key calls answer the apilib local 503 and never
+	// forward.
+	inputInvalid apilibadmin.InputInvalidStore
 	// reindexProgress is the reader-role PG source behind the
 	// promoted reindex-progress read lane (see
 	// api/admin_reindex_progress_terminate.go). Nil is the
