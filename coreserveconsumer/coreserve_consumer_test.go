@@ -86,8 +86,9 @@ func (fixtureProviderStore) ListLoginProviders(_ context.Context, tenantID strin
 	}}, nil
 }
 
-// guardTransport fails the test on ANY outbound HTTP dial, proving the
-// served requests computed in-process with zero core-origin calls.
+// guardTransport fails the test on ANY outbound HTTP dial routed via
+// http.DefaultTransport, proving the served requests computed in-process
+// with zero core-origin calls on the default transport.
 type guardTransport struct {
 	t    *testing.T
 	hits *atomic.Int64

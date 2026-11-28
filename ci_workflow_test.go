@@ -317,7 +317,7 @@ func TestCICompleteAggregatesEveryLane(t *testing.T) {
 	for _, name := range strings.Split(m[1], ",") {
 		needed[strings.TrimSpace(name)] = true
 	}
-	for _, name := range []string{"changes", "parity", "lanes"} {
+	for _, name := range []string{"changes", "parity", "lanes", "coreserve-consumer"} {
 		if !needed[name] {
 			t.Errorf("ci-complete needs %q missing: its failure would not fail the required context", name)
 		}
