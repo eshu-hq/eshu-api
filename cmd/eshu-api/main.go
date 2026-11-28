@@ -62,10 +62,11 @@ func newServer(coreBaseURL, apiKey string, log *slog.Logger) *server {
 // routes, with the sunset date read from the environment. The request
 // log flows through log, so binary output carries the per-request
 // structured lines. The N3 credential front rides dark unless
-// ESHU_LOCAL_AUTH switches it on. The work-items and dead-letters
-// query lanes read through the reader-role PG store when
-// ESHU_API_ADMIN_READ_DSN mounts it; unset keeps the unconfigured
-// lane (shared-key calls answer the local 503, never a forward).
+// ESHU_LOCAL_AUTH switches it on. The work-items, dead-letters,
+// and decisions query lanes read through the reader-role PG store
+// when ESHU_API_ADMIN_READ_DSN mounts it; unset keeps the
+// unconfigured lane (shared-key calls answer the local 503, never a
+// forward).
 func (s *server) handler() (http.Handler, error) {
 	srv := api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log))
 	if strings.TrimSpace(os.Getenv(adminread.AdminReadDSNEnv)) != "" {
@@ -79,7 +80,7 @@ func (s *server) handler() (http.Handler, error) {
 		if err != nil {
 			return nil, err
 		}
-		srv.WithWorkItemStore(store).WithDeadLetterStore(store).WithReindexProgress(store)
+		srv.WithWorkItemStore(store).WithDeadLetterStore(store).WithDecisionStore(store).WithReindexProgress(store)
 	}
 	if localAuthEnabled(os.Getenv) {
 		// The session store is genuinely absent in this lane: no

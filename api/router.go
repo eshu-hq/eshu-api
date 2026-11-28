@@ -247,11 +247,14 @@ func (s *Server) routes() *http.ServeMux {
 	// Native termination, AdminDeadLettersQuery (satellite
 	// eshu-hq/eshu-api#324): own anchor ahead of the D3 loops.
 	s.registerAdminDeadLettersQuery(mux)
+	// Native termination, AdminDecisionsQuery (satellite
+	// eshu-hq/eshu-api#325): own anchor ahead of the D3 loops.
+	s.registerAdminDecisionsQuery(mux)
 	// Native termination, AdminReindexProgress (satellite
 	// eshu-hq/eshu-api#170): own anchor ahead of the D3 loops.
 	s.registerAdminReindexProgress(mux)
 	// D3 admin/identity/recovery reads termination (Refs
-	// eshu-hq/eshu#9669): the 14 D1-pinned read routes register
+	// eshu-hq/eshu#9669): the 13 D1-pinned read routes register
 	// explicitly inside the D3 wave gate, ahead of the generic proxy.
 	// A valid shared key terminates on the native lane; a foreign
 	// credential class (scoped token, OIDC bearer, session cookie)
@@ -262,8 +265,9 @@ func (s *Server) routes() *http.ServeMux {
 	// reason. The 1 remaining Gap 02 Admin GET (delta-union
 	// completeness) rides the trio registration below
 	// (tuning-report promoted to its own lane in #171, work-items
-	// query in #335, dead-letters query in #324, reindex progress in
-	// #170); every other family still crosses its existing lane.
+	// query in #335, dead-letters query in #324, decisions query in
+	// #325, reindex progress in #170); every other family still
+	// crosses its existing lane.
 	for _, entry := range d3Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))

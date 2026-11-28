@@ -28,7 +28,7 @@ import (
 
 // TestD3TrioAuthorizerSharedKeyAllowDeny pins the family gate for the
 // trio: the shared-key identity allows, anything else denies — the
-// same authorizer the 15 D3 wave routes (plus the two promoted
+// same authorizer the 13 D3 wave routes (plus the promoted
 // singletons on their own anchors) use.
 func TestD3TrioAuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()

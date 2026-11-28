@@ -416,8 +416,9 @@ func TestD7Native_DispatchViaIsNative(t *testing.T) {
 // unaffected by the D7 registrations: the replay POST still rides its
 // recovery native route with exactly one upstream hit, and a D3 admin
 // read still terminates on its own lane. (The dead-letters query POST
-// promoted to its own local lane in eshu-hq/eshu-api#324, so the D3
-// read leg below rides decisions/query instead.) The admin-four routes
+// promoted to its own local lane in eshu-hq/eshu-api#324 and the
+// decisions query POST in eshu-hq/eshu-api#325, so the D3 read leg
+// below rides input-invalid-facts/query instead.) The admin-four routes
 // share no path prefix with the recovery or read routes beyond
 // /api/v0/admin, and Go matches method and path together, so the lanes
 // never merge.
@@ -429,7 +430,7 @@ func TestD7Native_RecoveryStillNative(t *testing.T) {
 		"/api/v0/admin/reopen",
 		"/api/v0/admin/refinalize",
 		"/api/v0/admin/recover-generations",
-		"/api/v0/admin/decisions/query",
+		"/api/v0/admin/input-invalid-facts/query",
 	} {
 		core := &stubCore{status: http.StatusOK, body: `{"status":"accepted"}`}
 		mux := http.NewServeMux()

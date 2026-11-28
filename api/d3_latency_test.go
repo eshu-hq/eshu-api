@@ -43,7 +43,7 @@ func BenchmarkD3TerminatedRead(b *testing.B) {
 	handler := srv.Handler(DefaultV0Sunset)
 
 	get := authedRequest(http.MethodGet, "/api/v0/auth/admin/roles")
-	post := authedRequest(http.MethodPost, "/api/v0/admin/decisions/query")
+	post := authedRequest(http.MethodPost, "/api/v0/admin/input-invalid-facts/query")
 	post.Body = io.NopCloser(strings.NewReader(`{"limit":10,"timeout_ms":5000}`))
 
 	b.Run("get", func(b *testing.B) {
