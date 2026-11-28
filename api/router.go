@@ -247,6 +247,9 @@ func (s *Server) routes() *http.ServeMux {
 	// Native termination, AdminDeadLettersQuery (satellite
 	// eshu-hq/eshu-api#324): own anchor ahead of the D3 loops.
 	s.registerAdminDeadLettersQuery(mux)
+	// Native termination, AdminReindexProgress (satellite
+	// eshu-hq/eshu-api#170): own anchor ahead of the D3 loops.
+	s.registerAdminReindexProgress(mux)
 	// D3 admin/identity/recovery reads termination (Refs
 	// eshu-hq/eshu#9669): the 14 D1-pinned read routes register
 	// explicitly inside the D3 wave gate, ahead of the generic proxy.
@@ -256,20 +259,21 @@ func (s *Server) routes() *http.ServeMux {
 	// credential-less callers — and junk-cookie carriers, per the D2
 	// follow-up lesson — get the standing 401. Each trailing-slash
 	// spelling stays on the wave route for the same never-split
-	// reason. The 2 remaining Gap 02 Admin GETs (delta-union
-	// completeness, reindex progress) ride the trio registration
-	// below (tuning-report promoted to its own lane in #171,
-	// work-items query in #335, dead-letters query in #324); every
-	// other family still crosses its existing lane.
+	// reason. The 1 remaining Gap 02 Admin GET (delta-union
+	// completeness) rides the trio registration below
+	// (tuning-report promoted to its own lane in #171, work-items
+	// query in #335, dead-letters query in #324, reindex progress in
+	// #170); every other family still crosses its existing lane.
 	for _, entry := range d3Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))
 		mux.Handle(pattern, gated)
 		mux.Handle(pattern+"/", gated)
 	}
-	// D3 Gap 02 duo (Refs eshu-hq/eshu#9669, satellite
-	// eshu-hq/eshu-api#70): the two remaining Gap 02 Admin GETs ride
-	// the same D3 wave gate (tuning-report promoted out in #171).
+	// D3 Gap 02 solo (Refs eshu-hq/eshu#9669, satellite
+	// eshu-hq/eshu-api#70): the one remaining Gap 02 Admin GET rides
+	// the same D3 wave gate (tuning-report promoted out in #171,
+	// reindex progress in #170).
 	for _, entry := range d3TrioWave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))

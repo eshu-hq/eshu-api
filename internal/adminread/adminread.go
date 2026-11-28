@@ -2,14 +2,16 @@
 // Copyright (c) 2025-2026 eshu-hq
 
 // Package adminread is the satellite reader-role PG store behind the
-// work-items query native lane (satellite eshu-hq/eshu-api#335) and
-// the dead-letters query native lane (satellite eshu-hq/eshu-api#324).
-// It implements the pinned apilib WorkItemStore and DeadLetterStore
-// ports over one bounded SELECT each, issuing no writes, no DDL, and
-// no lock or advisory calls — every query is grantable to a
-// read-only role, which is the constraint this package exists to
-// hold (work-items lane; the dead-letters lane documents its own
-// contract in deadletters.go):
+// work-items query native lane (satellite eshu-hq/eshu-api#335), the
+// dead-letters query native lane (satellite eshu-hq/eshu-api#324),
+// and the reindex-progress read native lane (satellite
+// eshu-hq/eshu-api#170). It implements the pinned apilib
+// WorkItemStore, DeadLetterStore, and MaintenanceStore ports over
+// bounded SELECTs, issuing no writes, no DDL, and no lock or advisory
+// calls — every query is grantable to a read-only role, which is the
+// constraint this package exists to hold (work-items lane; the
+// dead-letters lane documents its own contract in deadletters.go and
+// the reindex-progress lane in reindexprogress.go):
 //
 //   - the only table touched is fact_work_items, SELECT only;
 //   - the only columns read are work_item_id, scope_id,
@@ -30,10 +32,17 @@
 //	GRANT USAGE ON SCHEMA public TO eshu_api_admin_read;
 //	GRANT SELECT ON fact_work_items TO eshu_api_admin_read;
 //	GRANT SELECT ON ingestion_scopes TO eshu_api_admin_read;
+//	GRANT SELECT ON runtime_ingester_control TO eshu_api_admin_read;
+//	GRANT SELECT ON repository_reindex_requests TO eshu_api_admin_read;
+//	GRANT SELECT ON scope_generations TO eshu_api_admin_read;
 //
 // The ingestion_scopes grant serves only the dead-letters lane
 // (satellite eshu-hq/eshu-api#324), which joins it for the collector
-// kind: still SELECT-only, still grantable to a reader.
+// kind: still SELECT-only, still grantable to a reader. The
+// runtime_ingester_control, repository_reindex_requests, and
+// scope_generations grants serve only the reindex-progress lane
+// (satellite eshu-hq/eshu-api#170): still SELECT-only, still
+// grantable to a reader.
 //
 // The serving pods authenticate AS that role with a per-role
 // password granted via the secret store; the DSN travels by

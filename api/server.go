@@ -36,6 +36,12 @@ type Server struct {
 	// Nil is the unconfigured lane: shared-key calls answer the
 	// apilib local 503 and never forward.
 	deadLetters apilibadmin.DeadLetterStore
+	// reindexProgress is the reader-role PG source behind the
+	// promoted reindex-progress read lane (see
+	// api/admin_reindex_progress_terminate.go). Nil is the
+	// unconfigured lane: shared-key calls answer the apilib local
+	// 503 and never forward.
+	reindexProgress apilibadmin.MaintenanceStore
 }
 
 // NewServer builds a Server that dispatches to coreBaseURL and gates
