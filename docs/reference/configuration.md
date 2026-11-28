@@ -11,7 +11,7 @@ walkthrough, see [Auth setup](../guides/auth-setup.md) and
 | `--addr` | No | `:8080` | Address and port to listen on |
 | `--core-base-url` | Yes | none | Core read-API origin, for example `https://core:8443` |
 | `ESHU_API_KEY` (env) | Yes, in practice | empty | Shared Bearer token checked on gated `/api/*` routes |
-| `ESHU_API_ADMIN_READ_DSN` (env) | No | empty | Reader-role PG DSN for the work-items and dead-letters query lanes (one pool serves both); unset keeps the unconfigured lane (local 503, never a forward), set-but-bad refuses the boot |
+| `ESHU_API_ADMIN_READ_DSN` (env) | No | empty | Reader-role PG DSN for the work-items, dead-letters, and decisions query lanes (one pool serves all three); unset keeps the unconfigured lane (local 503, never a forward), set-but-bad refuses the boot |
 | `ESHU_API_ADMIN_READ_MAX_CONNS` (env) | No | `5` | Per-replica reader-pool ceiling; must stay inside the census reader budget |
 | `ESHU_API_V0_SUNSET_DATE` (env) | No | `Thu, 01 Jul 2027 00:00:00 GMT` | Date sent in the `Sunset` header on `/api/v0/*` replies |
 
