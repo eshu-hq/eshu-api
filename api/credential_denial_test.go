@@ -21,7 +21,7 @@ import (
 // the matrix presents: "sha256:"+hex(sha256("valid-session")), the
 // core BrowserSessionSecretHash vector the resolver applies before
 // the store call. The literal pins the derivation cross-package (see
-// TestSessionSecretHashMatchesCore in internal/credresolver).
+// TestSessionSecretHashLocalDerivation in internal/credresolver).
 const validSessionHash = "sha256:3547c20033d01a8aeb923117229f1d15f03080ace8de294f4ed2e2b7a09703ad"
 
 // storeErrorHash is the durable hash of the "store-error-session"

@@ -96,7 +96,7 @@ var sessionCookieNames = map[string]struct{}{
 // "sha256:"+hex(sha256(secret)). The copy exists because
 // internal/sessionstore deliberately pins no core import (see its
 // doc.go); any drift here silently denies every real session, so
-// TestSessionSecretHashMatchesCore pins the vector byte for byte.
+// TestSessionSecretHashLocalDerivation pins the vector byte for byte.
 func sessionSecretHash(secret string) string {
 	secret = strings.TrimSpace(secret)
 	if secret == "" {
@@ -189,7 +189,9 @@ func (res *Resolver) now() time.Time {
 // identity. The order is binding: fail-closed key check first, then
 // the shared-key comparison, then the local cookie path (safe methods
 // with a configured store only), then relay for foreign classes,
-// deny for everything else. The cookie path hashes the presented
+// deny for everything else. With no store configured the safe-method
+// cookie path keeps the legacy shape split (shaped relays, junk
+// denies) so lit wiring matches dark. The cookie path hashes the presented
 // value with sessionSecretHash and makes exactly one
 // ResolveBrowserSession call carrying r.Context(); ok with a nil
 // error allows, while !ok or a store error denies — the relay-lane
@@ -210,25 +212,46 @@ func (res *Resolver) Resolve(r *http.Request) (sessionstore.AuthContext, Outcome
 		return sessionstore.AuthContext{}, OutcomeRelay
 	}
 	value, hasCookie := sessionCookieValue(r)
-	if hasCookie && safeMethod(r.Method) && res.sessions != nil {
-		// Safe-method cookie traffic resolves locally through one
-		// store lookup — shaped and junk alike, so the old
-		// shape-based split (junk=local 401 vs shaped=relay) cannot
-		// oracle the cookie jar. requireCSRF stays false: safe
-		// methods carry no CSRF binding to enforce. The call runs
-		// unconditionally (even for a blank value, whose hash is
-		// "" and which the store denies without touching the
-		// database) so junk costs the same single lookup as shaped.
-		if ctx, ok, err := res.sessions.ResolveBrowserSession(r.Context(), sessionSecretHash(value), "", false, res.now()); err == nil && ok {
-			return ctx, OutcomeAllowSession
+	if hasCookie && safeMethod(r.Method) {
+		if res.sessions != nil {
+			// Safe-method cookie traffic resolves locally through one
+			// store lookup — shaped and junk alike, so the old
+			// shape-based split (junk=local 401 vs shaped=relay) cannot
+			// oracle the cookie jar. requireCSRF stays false: safe
+			// methods carry no CSRF binding to enforce. The call runs
+			// unconditionally (even for a blank value, whose hash is
+			// "" and which the store denies without touching the
+			// database) so junk costs the same single lookup as shaped.
+			if ctx, ok, err := res.sessions.ResolveBrowserSession(r.Context(), sessionSecretHash(value), "", false, res.now()); err == nil && ok {
+				return ctx, OutcomeAllowSession
+			}
+			return sessionstore.AuthContext{}, OutcomeDeny
+		}
+		// No store configured: preserve the legacy shape split so
+		// lit wiring behaves like dark — a shaped session cookie
+		// relays for core judgment while a junk cookie denies
+		// locally with zero core contact (D2 lesson).
+		if hasShapedSessionCookie(r) {
+			return sessionstore.AuthContext{}, OutcomeRelay
 		}
 		return sessionstore.AuthContext{}, OutcomeDeny
 	}
 	if hasCookie {
-		// Unsafe-method cookie traffic, or cookie traffic with no
-		// store configured: relay explicitly so the core judges it
-		// (and keeps its CSRF 403 semantics).
+		// Unsafe-method cookie traffic relays explicitly so the
+		// core judges it (and keeps its CSRF 403 semantics).
 		return sessionstore.AuthContext{}, OutcomeRelay
 	}
 	return sessionstore.AuthContext{}, OutcomeDeny
+}
+
+// hasShapedSessionCookie reports whether the request carries a
+// cookie with a session-cookie name. Names are the wire contract,
+// never secrets, so matching is by name, never by value.
+func hasShapedSessionCookie(r *http.Request) bool {
+	for _, c := range r.Cookies() {
+		if _, ok := sessionCookieNames[c.Name]; ok {
+			return true
+		}
+	}
+	return false
 }

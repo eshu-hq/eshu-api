@@ -36,12 +36,16 @@ func (f *fakeSessions) ResolveBrowserSession(_ context.Context, sessionHash, _ s
 
 const testKey = "test-shared-key"
 
-// TestSessionSecretHashMatchesCore pins the cookie-to-hash derivation
-// byte for byte against the core's BrowserSessionSecretHash
-// (go/internal/query/auth/session/cookies.go in the eshu repo):
-// trim, blank to "", else "sha256:"+hex(sha256(secret)). Any drift
-// silently denies every real session, so the vector is literal.
-func TestSessionSecretHashMatchesCore(t *testing.T) {
+// TestSessionSecretHashLocalDerivation pins the cookie-to-hash
+// derivation byte for byte as implemented here: trim, blank to "",
+// else "sha256:"+hex(sha256(secret)). The vector was transcribed
+// from the core's BrowserSessionSecretHash
+// (go/internal/query/auth/session/cookies.go in the eshu repo), but
+// this test proves the LOCAL derivation only — it cannot fail on
+// core-side drift. A parity gate tying the vector to the core source
+// is still owed before sessions go live; until then any drift
+// silently denies every real session, so the vector stays literal.
+func TestSessionSecretHashLocalDerivation(t *testing.T) {
 	t.Parallel()
 
 	if got := sessionSecretHash("valid-session"); got != "sha256:3547c20033d01a8aeb923117229f1d15f03080ace8de294f4ed2e2b7a09703ad" {
@@ -219,14 +223,19 @@ func TestResolver(t *testing.T) {
 		}
 	})
 
-	t.Run("nil store falls back to relay for cookies", func(t *testing.T) {
+	t.Run("nil store keeps the legacy shape split", func(t *testing.T) {
 		t.Parallel()
 		res := New(testKey, nil)
 		res.Enabled = true
-		req := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
-		req.AddCookie(&http.Cookie{Name: "eshu_session", Value: "valid-session"})
-		if _, outcome := res.Resolve(req); outcome != OutcomeRelay {
-			t.Errorf("outcome = %v, want OutcomeRelay (no store, core judges)", outcome)
+		shaped := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
+		shaped.AddCookie(&http.Cookie{Name: "eshu_session", Value: "valid-session"})
+		if _, outcome := res.Resolve(shaped); outcome != OutcomeRelay {
+			t.Errorf("shaped outcome = %v, want OutcomeRelay (no store, core judges)", outcome)
+		}
+		junk := httptest.NewRequest(http.MethodGet, "/api/v0/auth/profile", nil)
+		junk.AddCookie(&http.Cookie{Name: "tracking", Value: "junk"})
+		if _, outcome := res.Resolve(junk); outcome != OutcomeDeny {
+			t.Errorf("junk outcome = %v, want OutcomeDeny (legacy 401, zero core contact)", outcome)
 		}
 	})
 }
