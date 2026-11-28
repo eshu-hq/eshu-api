@@ -271,4 +271,15 @@ func TestLoadKeyFromEnv_PEMValueRefusedWithoutEcho(t *testing.T) {
 	if !strings.Contains(err.Error(), `"`+missing+`"`) {
 		t.Fatalf("refusal must quote the genuine path, got: %q", err)
 	}
+	// Slash-containing single-line blobs (base64 routinely holds
+	// "/") must redact exactly like headerless ones.
+	const slashCanary = "RkFL/QQQvQ0FOQVJZLVNMQVNILUJPQg"
+	t.Setenv("ESHU_TEST_451_SP_KEY_BLOB", slashCanary)
+	_, err = LoadKeyFromEnv("acme", "ESHU_TEST_451_SP_KEY_BLOB", "ESHU_TEST_451_SP_CERT_BLOB", "")
+	if err == nil {
+		t.Fatal("slash blob as path value must fail closed")
+	}
+	if strings.Contains(err.Error(), slashCanary) {
+		t.Fatalf("refusal must not echo slash-containing material: %q", err)
+	}
 }
