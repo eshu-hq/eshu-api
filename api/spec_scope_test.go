@@ -126,6 +126,9 @@ func specScopeMounted() []string {
 	// The promoted tuning-report singleton registers on its own anchor
 	// ahead of the D3 loops (never-split twin normalized away by add).
 	add(adminTuningReportRoute)
+	// The promoted work-items query singleton registers on its own
+	// anchor ahead of the D3 loops (likewise normalized).
+	add(adminWorkItemsRoute)
 	for _, entry := range d4Wave {
 		add(entry.Method + " " + entry.Path)
 	}

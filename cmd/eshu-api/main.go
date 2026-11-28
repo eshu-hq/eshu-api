@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/eshu-hq/eshu-api/api"
+	"github.com/eshu-hq/eshu-api/internal/adminread"
 	"github.com/eshu-hq/eshu-api/internal/credresolver"
 	"github.com/eshu-hq/eshu-api/internal/sessionstore"
 )
@@ -60,25 +62,46 @@ func newServer(coreBaseURL, apiKey string, log *slog.Logger) *server {
 // routes, with the sunset date read from the environment. The request
 // log flows through log, so binary output carries the per-request
 // structured lines. The N3 credential front rides dark unless
-// ESHU_LOCAL_AUTH switches it on.
-func (s *server) handler() http.Handler {
+// ESHU_LOCAL_AUTH switches it on. The work-items query lane reads
+// through the reader-role PG store when ESHU_API_ADMIN_READ_DSN mounts
+// it; unset keeps the unconfigured lane (shared-key calls answer the
+// local 503, never a forward).
+func (s *server) handler() (http.Handler, error) {
 	srv := api.NewServer(s.coreBaseURL, s.apiKey).WithTelemetry(api.NewTelemetry(s.log))
+	if strings.TrimSpace(os.Getenv(adminread.AdminReadDSNEnv)) != "" {
+		cfg, err := adminread.LoadConfigFromEnv(os.Getenv)
+		if err != nil {
+			return nil, err
+		}
+		openCtx, cancel := context.WithTimeout(context.Background(), adminReadOpenTimeout)
+		defer cancel()
+		store, err := adminread.NewStore(openCtx, cfg)
+		if err != nil {
+			return nil, err
+		}
+		srv.WithWorkItemStore(store)
+	}
 	if localAuthEnabled(os.Getenv) {
-		// The store is genuinely absent in this lane: the module
-		// pins no postgres driver yet, so no pool can be dialed
-		// and no *sessionstore.Store can be constructed. Pass a
-		// nil interface, never a typed-nil store, so cookie
-		// traffic takes the nil-store relay split. The later
-		// store wiring loads the secret-mapped ESHU_SESSION_DSN
-		// via sessionstore.LoadCredentialFromEnv (RoleSessionRW)
-		// and passes the live store here.
+		// The session store is genuinely absent in this lane: no
+		// session-pool construction has landed yet, so no
+		// *sessionstore.Store can be constructed. Pass a nil
+		// interface, never a typed-nil store, so cookie traffic
+		// takes the nil-store relay split. The later store wiring
+		// loads the secret-mapped ESHU_SESSION_DSN via
+		// sessionstore.LoadCredentialFromEnv (RoleSessionRW) and
+		// passes the live store here. (Unrelated: the work-items
+		// reader pool above is a different store on its own DSN.)
 		var sessions sessionstore.Resolver
 		res := credresolver.New(s.apiKey, sessions)
 		res.Enabled = true
 		srv.WithCredentialResolver(res)
 	}
-	return srv.Handler(api.V0SunsetFromEnv(os.Getenv))
+	return srv.Handler(api.V0SunsetFromEnv(os.Getenv)), nil
 }
+
+// adminReadOpenTimeout bounds reader-pool establishment at boot: a
+// hanging database fails the boot fast instead of stalling it.
+const adminReadOpenTimeout = 30 * time.Second
 
 func run(args []string, logOut *slog.Logger) error {
 	flags := flag.NewFlagSet("eshu-api", flag.ContinueOnError)
@@ -94,12 +117,16 @@ func run(args []string, logOut *slog.Logger) error {
 		return fmt.Errorf("eshu-api: --core-base-url is required")
 	}
 	srv := newServer(*coreBaseURL, key, logOut)
+	h, err := srv.handler()
+	if err != nil {
+		return err
+	}
 	logOut.Info("eshu-api serving",
 		"core_read_contracts", api.CoreReadContractsVersion,
 		"admission_contracts", api.SuppressionAdmissionContractVersion,
 		"addr", *addr,
 	)
-	return buildServer(*addr, srv.handler()).ListenAndServe()
+	return buildServer(*addr, h).ListenAndServe()
 }
 
 // Server timeouts. ReadHeaderTimeout stays the first bound a slow

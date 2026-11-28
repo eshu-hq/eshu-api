@@ -26,7 +26,6 @@ var d3ParityRoutes = []struct {
 	path    string
 	payload string
 }{
-	{http.MethodPost, "/api/v0/admin/work-items/query", `{"limit":10,"timeout_ms":5000}`},
 	{http.MethodPost, "/api/v0/admin/decisions/query", `{"limit":10}`},
 	{http.MethodGet, "/api/v0/auth/admin/roles", ""},
 	{http.MethodGet, "/api/v0/auth/local/invitations", ""},
