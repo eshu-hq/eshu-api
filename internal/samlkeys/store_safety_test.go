@@ -109,6 +109,12 @@ func TestStore_PaddedProviderIdHasNoGhost(t *testing.T) {
 	if !ok || got.Version() != "v1" {
 		t.Fatal("padded reload must address the trimmed entry Get finds")
 	}
+	if _, ok := store.Get(" acme "); !ok {
+		t.Fatal("padded Get must address the same trimmed entry")
+	}
+	if store.DropPrevious("actor", " acme ") {
+		t.Fatal("padded DropPrevious with no overlap must report false, not miss")
+	}
 	secondPath, secondCert := writeFakePair(t, dir, "k2", now.Add(-time.Hour), now.Add(time.Hour))
 	second, err := LoadKeyFromFiles("acme", secondPath, secondCert, "v2")
 	if err != nil {

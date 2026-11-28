@@ -250,4 +250,25 @@ func TestLoadKeyFromEnv_PEMValueRefusedWithoutEcho(t *testing.T) {
 	if strings.Contains(err.Error(), canary) {
 		t.Fatalf("refusal must not echo key material: %q", err)
 	}
+	// Single-line headerless blobs carry no newline or PEM header,
+	// so they exercise the not-a-plausible-path redaction leg.
+	const flatCanary = "RkFLRS1IRUFERVJMRVNTLUJMT0ItQ0FOQVJZLVNJR0hUTEVTUw"
+	t.Setenv("ESHU_TEST_451_SP_KEY_BLOB", flatCanary)
+	_, err = LoadKeyFromEnv("acme", "ESHU_TEST_451_SP_KEY_BLOB", "ESHU_TEST_451_SP_CERT_BLOB", "")
+	if err == nil {
+		t.Fatal("headerless blob as path value must fail closed")
+	}
+	if strings.Contains(err.Error(), flatCanary) {
+		t.Fatalf("refusal must not echo headerless material: %q", err)
+	}
+	// Genuine paths keep %q rendering for diagnosability.
+	const missing = "/no-such-dir/sp-key.pem"
+	t.Setenv("ESHU_TEST_451_SP_KEY_BLOB", missing)
+	_, err = LoadKeyFromEnv("acme", "ESHU_TEST_451_SP_KEY_BLOB", "ESHU_TEST_451_SP_CERT_BLOB", "")
+	if err == nil {
+		t.Fatal("missing file must fail closed")
+	}
+	if !strings.Contains(err.Error(), `"`+missing+`"`) {
+		t.Fatalf("refusal must quote the genuine path, got: %q", err)
+	}
 }

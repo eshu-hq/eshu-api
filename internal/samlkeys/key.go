@@ -73,12 +73,15 @@ func LoadKeyFromFiles(provider, keyPath, certPath, version string) (Key, error) 
 	return parseKey(provider, keyPEM, certPEM, version)
 }
 
-// safePath renders a configured file path for errors. A multiline
-// PEM blob passed where a path belongs (for example through an
-// environment variable) must not echo back out through the refusal:
-// values that look like material render as a fixed refusal instead.
+// safePath renders a configured file path for errors. A secret value
+// passed where a path belongs (for example through an environment
+// variable) must not echo back out through the refusal: values that
+// look like material render as a fixed refusal instead. Secret
+// mounts are always absolute paths, so a value with no path
+// separator is not a plausible mount and redacts too (a bare
+// relative filename pays that diagnosability cost by design).
 func safePath(path string) string {
-	if strings.Contains(path, "\n") || strings.Contains(path, "PRIVATE KEY") || strings.Contains(path, "CERTIFICATE") {
+	if strings.Contains(path, "\n") || strings.Contains(path, "PRIVATE KEY") || strings.Contains(path, "CERTIFICATE") || !strings.Contains(path, "/") {
 		return "[redacted: value looks like key material, not a file path]"
 	}
 	return fmt.Sprintf("%q", path)

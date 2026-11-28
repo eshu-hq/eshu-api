@@ -126,7 +126,10 @@ func NewStore(log *slog.Logger) *Store {
 // or empty provider ids instead of failing closed: signing callers
 // judge the miss, custody never invents a key.
 func (s *Store) Get(provider string) (Snapshot, bool) {
-	if strings.TrimSpace(provider) == "" {
+	// Canonicalize like the write path: padded reads address the
+	// same entry Reload stores.
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
 		return Snapshot{}, false
 	}
 	table := s.current.Load()
@@ -223,6 +226,9 @@ func (s *Store) DropPrevious(actor, provider string) bool {
 // snapshotFor reads one provider's live snapshot without locking:
 // the atomic table pointer makes the read race-free.
 func (s *Store) snapshotFor(provider string) *Snapshot {
+	// Canonicalize like the write path (also fixes DropPrevious,
+	// which reads through here).
+	provider = strings.TrimSpace(provider)
 	table := s.current.Load()
 	if table == nil {
 		return nil
