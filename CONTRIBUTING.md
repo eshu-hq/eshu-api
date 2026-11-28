@@ -46,6 +46,13 @@ marker keeps the module toolchain from loading parity evidence as build
 inputs (see `docs/provenance.md`), so `go build ./...` and friends never
 see it.
 
+`make pre-pr` and `make pre-push` are aliases for `make ci` (the same
+`parity`, `lint`, `test`, and `race` gates): run `pre-push` once per PR on
+the opening push, and `pre-pr` for package moves, CI-red reproduction, or
+owner request. Neither runs the CI-only `shell`, `image`, `govulncheck`,
+`gosec`, or `actionlint` lanes, so a red in those lanes is not reproduced
+locally.
+
 `bash scripts/api-seed-matrix.sh` is the local seeded RED/GREEN matrix (not a CI
 gate): it plants a defect per lane (vet, lint, format, race, tidy, the 500-line
 cap, the coverage floor), asserts the lane command goes red, then green, and

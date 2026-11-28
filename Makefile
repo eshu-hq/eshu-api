@@ -12,9 +12,17 @@
 # of statements, past the 90% finish line. The floor may only rise.
 COVERAGE_FLOOR ?= 96.5
 
-.PHONY: ci parity lint test race
+.PHONY: ci parity lint test race pre-pr pre-push
 
 ci: parity lint test race
+
+# issue-driver names for the same full local gate set (eshu-hq/eshu-api#452).
+# The split is when each runs, not which gates run: pre-push once per PR on
+# the opening push; pre-pr for package moves, CI-red reproduction, or owner
+# request. CI-only lanes (shell, image, govulncheck, gosec, actionlint) have
+# no local target and are not claimed here; see .github/workflows/ci.yml.
+pre-pr: ci
+pre-push: ci
 
 parity:
 	bash scripts/check-parity.sh
