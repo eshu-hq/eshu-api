@@ -236,3 +236,18 @@ func TestParseKey_NotYetValid(t *testing.T) {
 		t.Fatalf("error = %q, want the not-yet-valid refusal", err)
 	}
 }
+
+func TestLoadKeyFromEnv_PEMValueRefusedWithoutEcho(t *testing.T) {
+	// No t.Parallel: t.Setenv forbids parallel use.
+	const canary = "FAKE-CANARY-MATERIAL-MUST-NEVER-ECHO"
+	blob := "-----BEGIN PRIVATE KEY-----\n" + canary + "\n-----END PRIVATE KEY-----\n"
+	t.Setenv("ESHU_TEST_451_SP_KEY_BLOB", blob)
+	t.Setenv("ESHU_TEST_451_SP_CERT_BLOB", blob)
+	_, err := LoadKeyFromEnv("acme", "ESHU_TEST_451_SP_KEY_BLOB", "ESHU_TEST_451_SP_CERT_BLOB", "")
+	if err == nil {
+		t.Fatal("PEM blob as path value must fail closed")
+	}
+	if strings.Contains(err.Error(), canary) {
+		t.Fatalf("refusal must not echo key material: %q", err)
+	}
+}

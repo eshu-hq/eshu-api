@@ -48,7 +48,10 @@ type Key struct {
 // error carries paths only, never key or certificate bytes. Parsed
 // input buffers are cleared before return.
 func LoadKeyFromFiles(provider, keyPath, certPath, version string) (Key, error) {
-	if strings.TrimSpace(provider) == "" {
+	// Canonicalize once: Get and Reload look up the trimmed id, so
+	// a padded id must not create a second unreachable entry.
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
 		return Key{}, fmt.Errorf("samlkeys: refusing to load a key with an empty provider id")
 	}
 	if strings.TrimSpace(keyPath) == "" {
@@ -59,15 +62,26 @@ func LoadKeyFromFiles(provider, keyPath, certPath, version string) (Key, error) 
 	}
 	keyPEM, err := os.ReadFile(keyPath)
 	if err != nil {
-		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: cannot read key file %q", provider, keyPath)
+		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: cannot read key file %s", provider, safePath(keyPath))
 	}
 	defer clearBytes(keyPEM)
 	certPEM, err := os.ReadFile(certPath)
 	if err != nil {
-		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: cannot read certificate file %q", provider, certPath)
+		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: cannot read certificate file %s", provider, safePath(certPath))
 	}
 	defer clearBytes(certPEM)
 	return parseKey(provider, keyPEM, certPEM, version)
+}
+
+// safePath renders a configured file path for errors. A multiline
+// PEM blob passed where a path belongs (for example through an
+// environment variable) must not echo back out through the refusal:
+// values that look like material render as a fixed refusal instead.
+func safePath(path string) string {
+	if strings.Contains(path, "\n") || strings.Contains(path, "PRIVATE KEY") || strings.Contains(path, "CERTIFICATE") {
+		return "[redacted: value looks like key material, not a file path]"
+	}
+	return fmt.Sprintf("%q", path)
 }
 
 // LoadKeyFromEnv reads one SP signing key through secret references:

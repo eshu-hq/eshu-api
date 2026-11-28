@@ -143,9 +143,16 @@ func (s *Store) Get(provider string) (Snapshot, bool) {
 // live untouched and the rejection is audited. The caller passes the
 // human or controller identity performing the rotation.
 func (s *Store) Reload(actor, provider string, next Key) error {
-	if strings.TrimSpace(provider) == "" {
+	// Canonicalize like the loader: a padded id addresses the same
+	// entry Get finds, never a ghost.
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
 		s.audit("saml-sp-key-rejected", actor, provider, "", "", time.Time{})
 		return fmt.Errorf("samlkeys: refusing to reload with an empty provider id")
+	}
+	if s.current.Load() == nil {
+		s.audit("saml-sp-key-rejected", actor, provider, next.Version(), next.Fingerprint(), time.Time{})
+		return fmt.Errorf("samlkeys: refusing to reload provider %q on an uninitialized store", provider)
 	}
 	if next.Provider() != provider {
 		s.audit("saml-sp-key-rejected", actor, provider, next.Version(), next.Fingerprint(), time.Time{})
@@ -155,10 +162,25 @@ func (s *Store) Reload(actor, provider string, next Key) error {
 		s.audit("saml-sp-key-rejected", actor, provider, next.Version(), next.Fingerprint(), time.Time{})
 		return fmt.Errorf("samlkeys: refusing to reload provider %q with an invalid key", provider)
 	}
+	// Re-check validity at publish time: the clock may have
+	// advanced past expiry since the key was loaded, and the
+	// fully-validated-before-publish promise is kept here, not at
+	// load.
+	now := time.Now()
+	if cert := next.Certificate(); now.After(cert.NotAfter) || now.Before(cert.NotBefore) {
+		s.audit("saml-sp-key-rejected", actor, provider, next.Version(), next.Fingerprint(), next.NotAfter())
+		return fmt.Errorf("samlkeys: refusing to reload provider %q with a key outside its validity window", provider)
+	}
 	old := s.snapshotFor(provider)
 	next2 := Snapshot{current: next}
 	event := "saml-sp-key-load"
 	if old != nil {
+		if old.hasPrevious {
+			// A second rotation before DropPrevious evicts the
+			// overlapped key: audit the eviction with the
+			// evicted identity so no lifecycle event goes silent.
+			s.audit("saml-sp-key-overlap-evict", actor, provider, old.previous.Version(), old.previous.Fingerprint(), old.previous.NotAfter())
+		}
 		next2.previous = old.current
 		next2.hasPrevious = true
 		event = "saml-sp-key-rotation"
@@ -230,7 +252,13 @@ func (s *Store) swap(provider string, next Snapshot) {
 // actor, provider, version, fingerprint, expiry, and timestamp only,
 // mirroring the sessionstore Rotating audit shape.
 func (s *Store) audit(event, actor, provider, version, fingerprint string, notAfter time.Time) {
-	s.log.Info("saml sp key "+event,
+	log := s.log
+	if log == nil {
+		// A zero-value Store still audits refusals instead of
+		// panicking; callers should still prefer NewStore.
+		log = slog.Default()
+	}
+	log.Info("saml sp key "+event,
 		"event", event,
 		"actor", actor,
 		"provider", provider,
