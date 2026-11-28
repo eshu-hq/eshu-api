@@ -224,3 +224,15 @@ func TestLoadKeyFromFiles_ErrorCarriesNoMaterial(t *testing.T) {
 		t.Fatalf("load error must never echo file contents: %q", err)
 	}
 }
+
+func TestParseKey_NotYetValid(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	keyPEM, certPEM := fakeKeyPair(t, now.Add(time.Hour), now.Add(2*time.Hour))
+	if _, err := parseKey("acme", keyPEM, certPEM, "v1"); err == nil {
+		t.Fatal("not-yet-valid certificate must fail closed")
+	} else if !strings.Contains(err.Error(), "not yet valid") {
+		t.Fatalf("error = %q, want the not-yet-valid refusal", err)
+	}
+}

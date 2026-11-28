@@ -102,12 +102,12 @@ func parseKey(provider string, keyPEM, certPEM []byte, version string) (Key, err
 	if !ok || signer == nil {
 		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: private key cannot sign", provider)
 	}
+	// X509KeyPair populates Leaf on success (Go >= 1.23); a nil
+	// leaf here would mean the toolchain changed under us, so fail
+	// closed rather than signing with an unparsed certificate.
 	leaf := pair.Leaf
 	if leaf == nil {
-		leaf, err = x509.ParseCertificate(pair.Certificate[0])
-		if err != nil {
-			return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: certificate does not parse", provider)
-		}
+		return Key{}, fmt.Errorf("samlkeys: refusing to load provider %q: certificate did not parse", provider)
 	}
 	now := time.Now()
 	if now.After(leaf.NotAfter) {

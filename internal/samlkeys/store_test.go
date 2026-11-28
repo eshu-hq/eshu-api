@@ -281,3 +281,160 @@ func TestStore_UnknownProvider(t *testing.T) {
 		t.Fatal("DropPrevious on an unknown provider must report absent")
 	}
 }
+
+func TestStore_GetMissPaths(t *testing.T) {
+	t.Parallel()
+
+	store := NewStore(discardLog())
+	if _, ok := store.Get(""); ok {
+		t.Fatal("Get on an empty provider id must report absent without touching the table")
+	}
+	// A Store that never went through NewStore has a nil table:
+	// reads must report absent, never panic.
+	bare := &Store{}
+	if _, ok := bare.Get("acme"); ok {
+		t.Fatal("Get on a nil table must report absent")
+	}
+	if bare.DropPrevious("actor", "acme") {
+		t.Fatal("DropPrevious on a nil table must report absent")
+	}
+}
+
+func TestStore_NewStoreNilLogger(t *testing.T) {
+	t.Parallel()
+
+	store := NewStore(nil)
+	dir := t.TempDir()
+	now := time.Now()
+	keyPath, certPath := writeFakePair(t, dir, "k", now.Add(-time.Hour), now.Add(time.Hour))
+	key, err := LoadKeyFromFiles("acme", keyPath, certPath, "v1")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if err := store.Reload("actor", "acme", key); err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if _, ok := store.Get("acme"); !ok {
+		t.Fatal("nil-logger store must serve reloaded keys")
+	}
+}
+
+func TestStore_ReloadRejects(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	now := time.Now()
+	keyPath, certPath := writeFakePair(t, dir, "k", now.Add(-time.Hour), now.Add(time.Hour))
+	key, err := LoadKeyFromFiles("acme", keyPath, certPath, "v1")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	store := NewStore(discardLog())
+	if err := store.Reload("actor", "acme", key); err != nil {
+		t.Fatalf("baseline reload: %v", err)
+	}
+	for name, tc := range map[string]struct {
+		actor    string
+		provider string
+		next     Key
+	}{
+		"empty provider": {"actor", "", key},
+		"mismatched key": {"actor", "other", key},
+		"invalid key":    {"actor", "acme", Key{}},
+	} {
+		if err := store.Reload(tc.actor, tc.provider, tc.next); err == nil {
+			t.Errorf("%s: reload must fail closed", name)
+		}
+	}
+	// Rejections leave the live snapshot untouched.
+	got, ok := store.Get("acme")
+	if !ok || got.Version() != "v1" {
+		t.Fatalf("rejected reloads must keep the old snapshot live, got %+v %v", got.Version(), ok)
+	}
+}
+
+func TestStore_ReloadFromFilesRejects(t *testing.T) {
+	t.Parallel()
+
+	store := NewStore(discardLog())
+	if err := store.ReloadFromFiles("actor", "acme", "/no-such/key.pem", "/no-such/cert.pem", "v9"); err == nil {
+		t.Fatal("reload from missing files must fail")
+	}
+	if _, ok := store.Get("acme"); ok {
+		t.Fatal("failed file reload must leave no snapshot behind")
+	}
+}
+
+func TestStore_DropPreviousWithoutOverlap(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	now := time.Now()
+	keyPath, certPath := writeFakePair(t, dir, "k", now.Add(-time.Hour), now.Add(time.Hour))
+	key, err := LoadKeyFromFiles("acme", keyPath, certPath, "v1")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	store := NewStore(discardLog())
+	if err := store.Reload("actor", "acme", key); err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if store.DropPrevious("actor", "acme") {
+		t.Fatal("DropPrevious with no overlap open must report false")
+	}
+}
+
+func TestSnapshot_PreviousAccessors(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	now := time.Now()
+	firstPath, firstCert := writeFakePair(t, dir, "first", now.Add(-time.Hour), now.Add(2*time.Hour))
+	secondPath, secondCert := writeFakePair(t, dir, "second", now.Add(-time.Hour), now.Add(2*time.Hour))
+	first, err := LoadKeyFromFiles("acme", firstPath, firstCert, "v1")
+	if err != nil {
+		t.Fatalf("load first: %v", err)
+	}
+	second, err := LoadKeyFromFiles("acme", secondPath, secondCert, "v2")
+	if err != nil {
+		t.Fatalf("load second: %v", err)
+	}
+	store := NewStore(discardLog())
+	if err := store.Reload("actor", "acme", first); err != nil {
+		t.Fatalf("reload first: %v", err)
+	}
+	if err := store.Reload("actor", "acme", second); err != nil {
+		t.Fatalf("reload second: %v", err)
+	}
+	got, ok := store.Get("acme")
+	if !ok {
+		t.Fatal("Get must find the provider during overlap")
+	}
+	prev, ok := got.PreviousSigner()
+	if !ok || prev == nil {
+		t.Fatal("PreviousSigner must report the overlap key")
+	}
+	if got.PreviousVersion() != "v1" {
+		t.Fatalf("PreviousVersion = %q, want v1", got.PreviousVersion())
+	}
+	if got.PreviousFingerprint() != first.Fingerprint() {
+		t.Fatal("PreviousFingerprint must identify the overlap key")
+	}
+	if s := got.String(); !strings.Contains(s, "previous:") {
+		t.Fatalf("overlap String must name the previous key, got %q", s)
+	}
+	if fmt.Sprintf("%#v", got) != got.String() {
+		t.Fatal("GoString must redact exactly like String")
+	}
+	store.DropPrevious("actor", "acme")
+	got, _ = store.Get("acme")
+	if _, ok := got.PreviousSigner(); ok {
+		t.Fatal("PreviousSigner must report absent after overlap ends")
+	}
+	if got.PreviousVersion() != "" || got.PreviousFingerprint() != "" {
+		t.Fatal("previous accessors must empty out after overlap ends")
+	}
+	if s := got.String(); strings.Contains(s, "previous:") {
+		t.Fatalf("single-key String must not name a previous key, got %q", s)
+	}
+}
