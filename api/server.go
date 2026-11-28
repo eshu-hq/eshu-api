@@ -31,6 +31,11 @@ type Server struct {
 	// Nil is the unconfigured lane: shared-key calls answer the
 	// apilib local 503 and never forward.
 	workItems apilibadmin.WorkItemStore
+	// deadLetters is the reader-role PG source behind the promoted
+	// dead-letters query lane (see api/admin_deadletters_terminate.go).
+	// Nil is the unconfigured lane: shared-key calls answer the
+	// apilib local 503 and never forward.
+	deadLetters apilibadmin.DeadLetterStore
 }
 
 // NewServer builds a Server that dispatches to coreBaseURL and gates

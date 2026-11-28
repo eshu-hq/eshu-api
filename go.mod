@@ -3,7 +3,7 @@ module github.com/eshu-hq/eshu-api
 go 1.26.11
 
 require (
-	github.com/eshu-hq/eshu/go/apilib v0.1.0
+	github.com/eshu-hq/eshu/go/apilib v0.2.0
 	github.com/jackc/pgx/v5 v5.9.2
 )
 

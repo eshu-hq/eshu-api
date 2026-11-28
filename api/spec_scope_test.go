@@ -129,6 +129,9 @@ func specScopeMounted() []string {
 	// The promoted work-items query singleton registers on its own
 	// anchor ahead of the D3 loops (likewise normalized).
 	add(adminWorkItemsRoute)
+	// The promoted dead-letters query singleton registers on its own
+	// anchor ahead of the D3 loops (likewise normalized).
+	add(adminDeadLettersRoute)
 	for _, entry := range d4Wave {
 		add(entry.Method + " " + entry.Path)
 	}

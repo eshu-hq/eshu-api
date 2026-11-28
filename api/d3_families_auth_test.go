@@ -25,9 +25,9 @@ import (
 
 // TestD3AuthorizerSharedKeyAllowDeny pins the family gate: the
 // shared-key identity allows, anything else denies. One shared
-// authorizer covers all 15 D3 wave routes (plus the promoted
-// work-items query on its own anchor) until D8 resolves per-class
-// handling.
+// authorizer covers all 14 D3 wave routes (plus the promoted
+// work-items and dead-letters queries on their own anchors) until D8
+// resolves per-class handling.
 func TestD3AuthorizerSharedKeyAllowDeny(t *testing.T) {
 	t.Parallel()
 
@@ -101,7 +101,6 @@ func TestD3DenyBranchShapePinned(t *testing.T) {
 		path   string
 	}{
 		{http.MethodPost, "/api/v0/admin/decisions/query"},
-		{http.MethodPost, "/api/v0/admin/dead-letters/query"},
 		{http.MethodPost, "/api/v0/admin/input-invalid-facts/query"},
 		{http.MethodPost, "/api/v0/admin/changed-since/poisoned-links/query"},
 		{http.MethodPost, "/api/v0/admin/replay-events/query"},
@@ -116,8 +115,8 @@ func TestD3DenyBranchShapePinned(t *testing.T) {
 		{http.MethodPost, "/api/v0/admin/collector-failures/acknowledgements/query"},
 		{http.MethodPost, "/api/v0/admin/collector-failures/query"},
 	}
-	if len(cases) != 15 {
-		t.Fatalf("deny-shape cases = %d, want the 15 D3 wave routes", len(cases))
+	if len(cases) != 14 {
+		t.Fatalf("deny-shape cases = %d, want the 14 D3 wave routes", len(cases))
 	}
 	for _, tc := range cases {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {
