@@ -72,9 +72,11 @@ func zeroCoreSinkName(name string) bool {
 // client inside one function body: direct assignment from
 // *.httpClient or http.DefaultClient, address-of or composite
 // http.Client literals, transitive copies of a known alias, and
-// parameters typed *http.Client. A method value stored elsewhere and
-// called later is out of scope for this AST walk and must stay a
-// same-package edge, never a silent pass.
+// parameters typed *http.Client. Bare method-value mentions
+// (s.httpClient.Do, clientish .Get/.Post/.PostForm/.Head) are
+// caught as sinks at the SelectorExpr mention site, so only
+// cross-function func-value flow stays a same-package edge — and
+// the index fails that closed when the target is unresolvable.
 func zeroCoreClientAliases(decl *ast.FuncDecl) map[string]bool {
 	aliases := map[string]bool{}
 	var clientExpr func(e ast.Expr) bool
