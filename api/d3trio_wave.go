@@ -7,10 +7,12 @@ package api
 // part of #6707, satellite eshu-hq/eshu-api#70). This file owns the
 // frozen wave table for the Admin GETs the D3 lane left on the
 // generic relay for want of a versioned pin: delta-union
-// completeness and reindex progress. (The third Gap 02 GET, the
-// static shared-projection tuning report, promoted to its own native
-// lane in eshu-hq/eshu-api#171 — see api/admin_tuning_terminate.go —
-// so the frozen table below holds the remaining duo.) The core pins
+// completeness. (The third Gap 02 GET, the static
+// shared-projection tuning report, promoted to its own native lane
+// in eshu-hq/eshu-api#171 — see api/admin_tuning_terminate.go — and
+// the second, the reindex progress read, in eshu-hq/eshu-api#170 —
+// see api/admin_reindex_progress_terminate.go — so the frozen table
+// below holds the remaining solo.) The core pins
 // merged as eshu-hq/eshu#10412 (merge 4a587431fd):
 // DeltaUnionCompletenessReadAdmission v0 (Check),
 // ReindexProgressReadAdmission v0 (the 3-method alias), and
@@ -55,13 +57,14 @@ type d3TrioRoute struct {
 	Fragment string
 }
 
-// d3TrioWave is the frozen Gap 02 termination target: the 2 Admin
-// GETs the core pins admit that still ride the D3 wave gate. The
+// d3TrioWave is the frozen Gap 02 termination target: the 1 Admin
+// GET the core pins admit that still rides the D3 wave gate. The
 // tuning-report GET promoted out in eshu-hq/eshu-api#171 (see
-// api/admin_tuning_terminate.go). TestD3TrioWaveFrozen pins the table
-// entry by entry; a wave change moves the spec, the skeleton table,
-// and this mirror together.
+// api/admin_tuning_terminate.go) and the reindex-progress GET in
+// eshu-hq/eshu-api#170 (see
+// api/admin_reindex_progress_terminate.go). TestD3TrioWaveFrozen pins
+// the table entry by entry; a wave change moves the spec, the
+// skeleton table, and this mirror together.
 var d3TrioWave = []d3TrioRoute{
 	{Method: "GET", Path: "/api/v0/admin/delta-union/completeness", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/delta_union_completeness.go"},
-	{Method: "GET", Path: "/api/v0/admin/reindex/progress", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/reindex_progress.go"},
 }

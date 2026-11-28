@@ -35,7 +35,6 @@ func BenchmarkD3TrioTerminatedRead(b *testing.B) {
 
 	for _, tc := range []struct{ name, target string }{
 		{"delta-union-completeness", "/api/v0/admin/delta-union/completeness?scope=s1"},
-		{"reindex-progress", "/api/v0/admin/reindex/progress?scope_id=s1"},
 	} {
 		b.Run(tc.name, func(b *testing.B) {
 			b.ReportAllocs()

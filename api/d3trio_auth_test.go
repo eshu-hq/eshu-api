@@ -52,7 +52,6 @@ func TestD3TrioAuthorizerCountersPinned(t *testing.T) {
 
 	for _, path := range []string{
 		"/api/v0/admin/delta-union/completeness?scope=s1",
-		"/api/v0/admin/reindex/progress?scope_id=s1",
 	} {
 		core := &stubCore{status: http.StatusOK, body: `{"data":[]}`}
 		mux := http.NewServeMux()
@@ -96,7 +95,6 @@ func TestD3TrioDenyBranchShapePinned(t *testing.T) {
 		path   string
 	}{
 		{http.MethodGet, "/api/v0/admin/delta-union/completeness?scope=s1"},
-		{http.MethodGet, "/api/v0/admin/reindex/progress?scope_id=s1"},
 	}
 	if len(cases) != len(d3TrioWave) {
 		t.Fatalf("deny-shape cases = %d, want the %d wave routes", len(cases), len(d3TrioWave))

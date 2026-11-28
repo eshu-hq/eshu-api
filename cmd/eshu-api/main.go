@@ -79,7 +79,7 @@ func (s *server) handler() (http.Handler, error) {
 		if err != nil {
 			return nil, err
 		}
-		srv.WithWorkItemStore(store).WithDeadLetterStore(store)
+		srv.WithWorkItemStore(store).WithDeadLetterStore(store).WithReindexProgress(store)
 	}
 	if localAuthEnabled(os.Getenv) {
 		// The session store is genuinely absent in this lane: no

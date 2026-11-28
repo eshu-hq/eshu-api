@@ -20,18 +20,19 @@ import (
 // the relay contract it mirrors.
 
 // d3TrioParityRoutes covers one concrete path per remaining wave
-// route. The delta-union read carries its required scope filter and
-// the reindex progress read its scope_id. (The tuning report promoted
-// to its own local lane in eshu-hq/eshu-api#171 — a relay comparison
-// no longer applies, so its byte-identical proof lives in
-// api/admin_tuning_terminate_test.go.)
+// route. The delta-union read carries its required scope filter.
+// (The tuning report promoted to its own local lane in
+// eshu-hq/eshu-api#171 and the reindex progress read in
+// eshu-hq/eshu-api#170 — a relay comparison no longer applies, so
+// their byte-identical proofs live in
+// api/admin_tuning_terminate_test.go and
+// api/admin_reindex_progress_terminate_test.go.)
 var d3TrioParityRoutes = []struct {
 	method string
 	path   string
 	body   string
 }{
 	{http.MethodGet, "/api/v0/admin/delta-union/completeness?scope=s1", `{"data":[],"error":null,"truth":null}`},
-	{http.MethodGet, "/api/v0/admin/reindex/progress?scope_id=s1", `{"data":[],"error":null,"truth":null}`},
 }
 
 // TestD3TrioTerminatedMatchesRelayByteForByte pins that the
