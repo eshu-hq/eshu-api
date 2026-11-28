@@ -282,4 +282,15 @@ func TestLoadKeyFromEnv_PEMValueRefusedWithoutEcho(t *testing.T) {
 	if strings.Contains(err.Error(), slashCanary) {
 		t.Fatalf("refusal must not echo slash-containing material: %q", err)
 	}
+	// Leading-slash blobs are not mount paths either: quote only
+	// absolute paths with depth or an extension.
+	const leadCanary = "/RkFLQ0FOQVJZLUxFQURJTkctU0xBU0g"
+	t.Setenv("ESHU_TEST_451_SP_KEY_BLOB", leadCanary)
+	_, err = LoadKeyFromEnv("acme", "ESHU_TEST_451_SP_KEY_BLOB", "ESHU_TEST_451_SP_CERT_BLOB", "")
+	if err == nil {
+		t.Fatal("leading-slash blob as path value must fail closed")
+	}
+	if strings.Contains(err.Error(), leadCanary) {
+		t.Fatalf("refusal must not echo leading-slash material: %q", err)
+	}
 }

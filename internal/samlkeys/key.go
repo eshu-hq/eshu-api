@@ -77,12 +77,15 @@ func LoadKeyFromFiles(provider, keyPath, certPath, version string) (Key, error) 
 // passed where a path belongs (for example through an environment
 // variable) must not echo back out through the refusal: values that
 // look like material render as a fixed refusal instead. Secret
-// mounts are always absolute paths, so only an absolute path renders
-// quoted — anything else (including single-line headerless blobs,
-// whose base64 routinely contains "/") redacts. A bare relative
-// filename pays that diagnosability cost by design.
+// mounts are absolute paths with depth or an extension, so only such
+// a value renders quoted — anything else (including leading-slash
+// blobs, whose base64 routinely starts with "/") redacts.
+// Extensionless leaf mounts pay the same documented diagnosability
+// cost as bare relative filenames.
 func safePath(path string) string {
-	if strings.Contains(path, "\n") || strings.Contains(path, "PRIVATE KEY") || strings.Contains(path, "CERTIFICATE") || !strings.HasPrefix(path, "/") {
+	rest := strings.TrimPrefix(path, "/")
+	if strings.Contains(path, "\n") || strings.Contains(path, "PRIVATE KEY") || strings.Contains(path, "CERTIFICATE") ||
+		!strings.HasPrefix(path, "/") || (!strings.Contains(rest, "/") && !strings.Contains(rest, ".")) {
 		return "[redacted: value looks like key material, not a file path]"
 	}
 	return fmt.Sprintf("%q", path)
