@@ -20,7 +20,10 @@
 //  1. Hash-only storage. Session hashes, CSRF hashes, token hashes,
 //     and subject-ID hashes travel as query arguments only, never
 //     interpolated into SQL text and never returned by metadata
-//     lists. Revocation is a revoked_at UPDATE, never a DELETE.
+//     lists. Revocation is a revoked_at UPDATE, never a DELETE. The
+//     serving path never DELETEs at all: only the out-of-band
+//     login-state purger DELETEs, and only login_states rows past
+//     retention (Refs eshu-hq/eshu-api#462).
 //  2. Least privilege by role. The resolver is a WRITE — it refreshes
 //     last_seen_at/idle_expires_at inside the resolve — so it runs on
 //     the PRIMARY with the eshu_api_session_rw role. Metadata-only
@@ -41,6 +44,22 @@
 // out-of-band: runtime roles hold no DDL. Tables come from
 // migrations/001_session_tables.sql, ordered first so the 002
 // GRANTs resolve on a fresh database.
+//
+// Login-state retention (Refs eshu-hq/eshu-api#462): consumed and
+// expired login_states rows survive as replay evidence for
+// LoginStateRetention (7 days past expiry) then the out-of-band
+// purge job deletes them in batches by expires_at cutoff. The
+// purger (LoginStatePurger, cmd/eshu-api-purge-login-states)
+// authenticates as the purge-only eshu_api_session_purge role from
+// migrations/005_login_state_retention_purge.sql, which also
+// carries the expires_at btree the purge range scan needs. The
+// serving rw/ro roles keep no DELETE grant anywhere; no per-leaf
+// handler or serving goroutine purges. Chart contract: run the job
+// hourly with concurrencyPolicy: Forbid; concurrent purges are
+// safe-but-wasteful (idempotent predicate, per-row locks), so at
+// most one runs. Purged rows already deny (expired or consumed),
+// absent rows deny identically, and plain-INSERT create cannot
+// resurrect — the purge can never allow or resurrect a state.
 //
 // Observability is stdlib-only until the OTEL dependency lands:
 // errors and resolve/deny outcomes log a structured slog line

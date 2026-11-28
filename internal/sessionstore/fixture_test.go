@@ -13,14 +13,14 @@ import (
 )
 
 // applyMigrations runs the shipped 001 tables + 002 roles + 003
-// login-state tables + 004 login-state grants migrations against the
+// login-state tables + 004 login-state grants + 005 retention purge migrations against the
 // fixture database, twice: the second pass proves the idempotency
 // the migration headers promise.
 func applyMigrations(t *testing.T, db *sql.DB) {
 	t.Helper()
 	ctx := context.Background()
 	for pass := 0; pass < 2; pass++ {
-		for _, f := range []string{"001_session_tables.sql", "002_session_least_privilege_roles.sql", "003_login_state_tables.sql", "004_login_state_least_privilege.sql"} {
+		for _, f := range []string{"001_session_tables.sql", "002_session_least_privilege_roles.sql", "003_login_state_tables.sql", "004_login_state_least_privilege.sql", "005_login_state_retention_purge.sql"} {
 			raw, err := os.ReadFile(filepath.Join("migrations", f))
 			if err != nil {
 				t.Fatalf("read %s: %v", f, err)
