@@ -289,7 +289,9 @@ func TestScanEvidenceFoldsNullables(t *testing.T) {
 		{
 			"e2", "d1",
 			sql.NullString{Valid: false},
-			"span", []byte{}, created,
+			"span",
+			[]byte{},
+			created,
 		},
 	}}
 
