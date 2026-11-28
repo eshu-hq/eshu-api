@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -291,7 +292,11 @@ func TestLoginStateMigration_TablesAreIdempotentAndGuarded(t *testing.T) {
 			t.Fatalf("003 must CHECK provider_kind against %s", kind)
 		}
 	}
-	if !strings.Contains(upper, "EXPIRES_AT") || !strings.Contains(upper, "ISSUED_AT") {
+	// Hermetic CHECK guard: pin the comparison itself, not the
+	// column mentions — deleting the CHECK line must fail this
+	// test. The live twice-applied migration is the backstop.
+	matched, err := regexp.MatchString(`EXPIRES_AT\s*>\s*ISSUED_AT`, upper)
+	if err != nil || !matched {
 		t.Fatal("003 must CHECK expires_at > issued_at so callers cannot persist a dead window")
 	}
 	if !strings.Contains(upper, "PRIMARY KEY") {
