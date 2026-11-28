@@ -213,6 +213,11 @@ func (s *Store) ReloadFromFiles(actor, provider, keyPath, certPath, version stri
 // certificate. It reports false for unknown or empty provider ids
 // and for providers with no overlap open.
 func (s *Store) DropPrevious(actor, provider string) bool {
+	// Canonicalize like every other entry point: snapshotFor trims
+	// for the read, but the swap below must write the same
+	// canonical id or a padded call reports success while leaking
+	// an unreachable ghost entry.
+	provider = strings.TrimSpace(provider)
 	old := s.snapshotFor(provider)
 	if old == nil || !old.hasPrevious {
 		return false

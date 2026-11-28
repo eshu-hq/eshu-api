@@ -115,6 +115,23 @@ func TestStore_PaddedProviderIdHasNoGhost(t *testing.T) {
 	if store.DropPrevious("actor", " acme ") {
 		t.Fatal("padded DropPrevious with no overlap must report false, not miss")
 	}
+	// Padded overlap-end must end the live overlap, not report
+	// success on a ghost entry.
+	thirdPath, thirdCert := writeFakePair(t, dir, "k3", now.Add(-time.Hour), now.Add(time.Hour))
+	third, err := LoadKeyFromFiles("acme", thirdPath, thirdCert, "v3")
+	if err != nil {
+		t.Fatalf("load third: %v", err)
+	}
+	if err := store.Reload("actor", "acme", third); err != nil {
+		t.Fatalf("reload third: %v", err)
+	}
+	if !store.DropPrevious("actor", " acme ") {
+		t.Fatal("padded DropPrevious with an overlap open must report true")
+	}
+	got, _ = store.Get("acme")
+	if got.HasPrevious() {
+		t.Fatal("padded DropPrevious must end the live overlap, not a ghost")
+	}
 	secondPath, secondCert := writeFakePair(t, dir, "k2", now.Add(-time.Hour), now.Add(time.Hour))
 	second, err := LoadKeyFromFiles("acme", secondPath, secondCert, "v2")
 	if err != nil {
