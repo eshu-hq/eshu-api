@@ -323,6 +323,58 @@ func TestScanEvidenceFoldsNullables(t *testing.T) {
 	}
 }
 
+// TestScanEvidenceSurfacesFailures pins the evidence scan's error
+// legs: malformed detail JSON and a trailing cursor error surface
+// wrapped errors (never partial rows or panics).
+func TestScanEvidenceSurfacesFailures(t *testing.T) {
+	t.Parallel()
+
+	created := time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
+	badJSON := &stubEvidenceRows{records: [][]any{
+		{"e1", "d1", sql.NullString{Valid: false}, "file", []byte(`{"p":`), created},
+	}}
+	if _, err := scanEvidence(badJSON); err == nil {
+		t.Error("malformed detail JSON: want wrapped error, got nil")
+	}
+	trailing := &stubEvidenceRows{
+		records: [][]any{
+			{"e1", "d1", sql.NullString{Valid: false}, "file", []byte(`{}`), created},
+		},
+		err: context.DeadlineExceeded,
+	}
+	if _, err := scanEvidence(trailing); err == nil {
+		t.Error("trailing cursor error: want wrapped error, got nil")
+	}
+}
+
+// TestListEvidenceThroughPool pins the evidence fan-out read path:
+// success folds rows, and a nil store fails closed without a query.
+func TestListEvidenceThroughPool(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	created := time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
+	rows := &stubEvidenceRows{records: [][]any{
+		{"e1", "d1", sql.NullString{String: "f1", Valid: true}, "file", []byte(`{}`), created},
+	}}
+	store := newStore(&stubDecisionPool{rows: rows})
+	items, err := store.ListEvidence(ctx, "d1")
+	if err != nil {
+		t.Fatalf("list evidence: %v", err)
+	}
+	if len(items) != 1 || items[0].EvidenceID != "e1" {
+		t.Fatalf("items = %+v, want the one row", items)
+	}
+	if !rows.closed {
+		t.Error("cursor left open after the read")
+	}
+
+	var nilStore *Store
+	if _, err := nilStore.ListEvidence(ctx, "d1"); err == nil {
+		t.Error("nil store evidence: want a not-configured error, got nil")
+	}
+}
+
 // stubDecisionPool binds canned decisions rows or a canned query
 // error behind the adminread Pool seam: ListDecisions success and
 // query-failure legs without a live database.
