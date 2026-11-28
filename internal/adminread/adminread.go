@@ -233,8 +233,8 @@ type workItemRows interface {
 
 // buildListWorkItemsQuery renders the bounded reader SELECT: the
 // core column set in core order, optional equality/ANY filters, and
-// the updated_at DESC + work_item_id ASC page with a LIMIT
-// placeholder. An absent limit defaults to 100; selectors trim, like
+// the updated_at DESC + work_item_id ASC page with a LIMIT bind
+// marker. An absent limit defaults to 100; selectors trim, like
 // the apilib handler already does for its own fields.
 func buildListWorkItemsQuery(f apilibadmin.WorkItemFilter) (string, []any) {
 	var builder strings.Builder

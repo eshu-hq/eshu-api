@@ -148,7 +148,7 @@ func TestReaderBudgetDefaultValidates(t *testing.T) {
 
 // TestBuildListWorkItemsQueryPinsCoreColumns pins the reader SELECT
 // against the core column set, order, and bound: same columns in the
-// same order, the same default limit, one placeholder per bound
+// same order, the same default limit, one bind marker per bound
 // selector, and no clause for absent selectors.
 func TestBuildListWorkItemsQueryPinsCoreColumns(t *testing.T) {
 	t.Parallel()
@@ -194,7 +194,7 @@ func TestBuildListWorkItemsQueryPinsCoreColumns(t *testing.T) {
 
 	bare, bareArgs := buildListWorkItemsQuery(apilibadmin.WorkItemFilter{})
 	if !strings.Contains(bare, "LIMIT $1") {
-		t.Errorf("bare query lacks the limit placeholder:\n%s", bare)
+		t.Errorf("bare query lacks the LIMIT bind marker:\n%s", bare)
 	}
 	if len(bareArgs) != 1 || bareArgs[0] != 100 {
 		t.Errorf("bare args = %v, want the default limit 100", bareArgs)
