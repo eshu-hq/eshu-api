@@ -23,20 +23,21 @@ import (
 // (or the key gate), so the ahead-of-relay assertions fail first. That
 // red is the recorded expectation, not a defect.
 //
-// Scope (13 routes: the 16th wave route, the admin work-items query
+// Scope (12 routes: the 16th wave route, the admin work-items query
 // POST, promoted to its own native lane in eshu-hq/eshu-api#335, the
 // 15th wave route, the admin dead-letters query POST, promoted to
-// its own native lane in eshu-hq/eshu-api#324, and the 14th wave
-// route, the admin decisions query POST, promoted to its own native
-// lane in eshu-hq/eshu-api#325;
+// its own native lane in eshu-hq/eshu-api#324, the 14th wave route,
+// the admin decisions query POST, promoted to its own native lane in
+// eshu-hq/eshu-api#325, and the 13th wave route, the admin
+// input-invalid-facts query POST, promoted to its own native lane in
+// eshu-hq/eshu-api#326;
 // from go/cmd/api/CUTOVER_OWNERSHIP.md at the D2 lane base plus the
 // four D1 pins; no guessing):
 //
-//   - AdminReadAdmission v0 (family admin): the 3 remaining query
-//     POSTs served through ReadStore (input-invalid facts, poisoned
-//     links, replay events). The decisions query POST (with decision
-//     evidence) promoted to its own native lane in
-//     eshu-hq/eshu-api#325. The 3 Gap
+//   - AdminReadAdmission v0 (family admin): the 2 remaining query
+//     POSTs served through ReadStore (poisoned links, replay
+//     events). The input-invalid-facts query POST promoted to its
+//     own native lane in eshu-hq/eshu-api#326. The 3 Gap
 //     02 Admin GETs (delta-union completeness,
 //     reindex progress, shared-projection tuning-report) are out of
 //     this wave's scope: the trio lane in api/d3trio_wave.go
@@ -65,7 +66,6 @@ func TestD3WaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
-		"POST /api/v0/admin/input-invalid-facts/query admin gated paths/status/admin.go",
 		"POST /api/v0/admin/changed-since/poisoned-links/query admin gated paths/status/admin.go",
 		"POST /api/v0/admin/replay-events/query admin gated paths/status/admin.go",
 		"GET /api/v0/auth/admin/api-tokens admin_identity gated paths/auth/admin_reads.go",
@@ -101,7 +101,6 @@ func TestD3WaveFrozen(t *testing.T) {
 // native registration (never-split), so each entry also names its
 // slash variant where the mux distinguishes it.
 var d3ConcretePaths = map[string]string{
-	"POST /api/v0/admin/input-invalid-facts/query":                 "/api/v0/admin/input-invalid-facts/query",
 	"POST /api/v0/admin/changed-since/poisoned-links/query":        "/api/v0/admin/changed-since/poisoned-links/query",
 	"POST /api/v0/admin/replay-events/query":                       "/api/v0/admin/replay-events/query",
 	"GET /api/v0/auth/admin/api-tokens":                            "/api/v0/auth/admin/api-tokens",

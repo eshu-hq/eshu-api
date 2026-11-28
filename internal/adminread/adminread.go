@@ -5,15 +5,17 @@
 // work-items query native lane (satellite eshu-hq/eshu-api#335), the
 // dead-letters query native lane (satellite eshu-hq/eshu-api#324),
 // the decisions query native lane (satellite eshu-hq/eshu-api#325),
-// and the reindex-progress read native lane (satellite
-// eshu-hq/eshu-api#170). It implements the pinned apilib
-// WorkItemStore, DeadLetterStore, DecisionStore, and MaintenanceStore
-// ports over bounded SELECTs, issuing no writes, no DDL, and no lock
-// or advisory calls — every query is grantable to a read-only role,
-// which is the constraint this package exists to hold (work-items
-// lane; the dead-letters lane documents its own contract in
-// deadletters.go, the decisions lane in decisions.go, and the
-// reindex-progress lane in reindexprogress.go):
+// the input-invalid-facts query native lane (satellite
+// eshu-hq/eshu-api#326), and the reindex-progress read native lane
+// (satellite eshu-hq/eshu-api#170). It implements the pinned apilib
+// WorkItemStore, DeadLetterStore, DecisionStore, InputInvalidStore,
+// and MaintenanceStore ports over bounded SELECTs, issuing no
+// writes, no DDL, and no lock or advisory calls — every query is
+// grantable to a read-only role, which is the constraint this package
+// exists to hold (work-items lane; the dead-letters lane documents
+// its own contract in deadletters.go, the decisions lane in
+// decisions.go, the input-invalid-facts lane in inputinvalid.go, and
+// the reindex-progress lane in reindexprogress.go):
 //
 //   - the only table touched is fact_work_items, SELECT only;
 //   - the only columns read are work_item_id, scope_id,
@@ -36,6 +38,7 @@
 //	GRANT SELECT ON ingestion_scopes TO eshu_api_admin_read;
 //	GRANT SELECT ON projection_decisions TO eshu_api_admin_read;
 //	GRANT SELECT ON projection_decision_evidence TO eshu_api_admin_read;
+//	GRANT SELECT ON reducer_input_invalid_facts TO eshu_api_admin_read;
 //	GRANT SELECT ON runtime_ingester_control TO eshu_api_admin_read;
 //	GRANT SELECT ON repository_reindex_requests TO eshu_api_admin_read;
 //	GRANT SELECT ON scope_generations TO eshu_api_admin_read;
@@ -46,7 +49,11 @@
 // projection_decisions and projection_decision_evidence grants serve
 // only the decisions lane (satellite eshu-hq/eshu-api#325), which
 // reads the pair plus the per-decision fan-out: still SELECT-only,
-// still grantable to a reader. The
+// still grantable to a reader. The reducer_input_invalid_facts grant
+// serves only the input-invalid-facts lane (satellite
+// eshu-hq/eshu-api#326), which reads the quarantine join to the
+// already-granted ingestion_scopes: still SELECT-only, still
+// grantable to a reader. The
 // runtime_ingester_control, repository_reindex_requests, and
 // scope_generations grants serve only the reindex-progress lane
 // (satellite eshu-hq/eshu-api#170): still SELECT-only, still
