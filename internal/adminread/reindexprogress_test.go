@@ -204,6 +204,55 @@ func TestScanProgressRowsFoldsProgressRead(t *testing.T) {
 	}
 }
 
+// TestScanProgressRowsSurfaceFailures pins the three scans' error
+// legs: an iteration error with no rows, a scan-shape failure, and a
+// trailing error after rows all surface wrapped errors (never silent
+// zero values or panics).
+func TestScanProgressRowsSurfaceFailures(t *testing.T) {
+	t.Parallel()
+
+	boom := context.DeadlineExceeded
+
+	if _, err := scanReindexState(&stubReindexRows{err: boom}); err == nil {
+		t.Error("fleet iteration error: want wrapped error, got nil")
+	}
+	if _, err := scanReindexState(&stubReindexRows{records: [][]any{{time.Now(), "extra-col"}}}); err == nil {
+		t.Error("fleet scan-shape failure: want wrapped error, got nil")
+	}
+	if _, err := scanReindexState(&stubReindexRows{
+		records: [][]any{{time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)}},
+		err:     boom,
+	}); err == nil {
+		t.Error("fleet trailing error: want wrapped error, got nil")
+	}
+
+	if _, err := scanRepositoryWatermarks(&stubReindexRows{err: boom}); err == nil {
+		t.Error("per-repository iteration error: want wrapped error, got nil")
+	}
+	if _, err := scanRepositoryWatermarks(&stubReindexRows{records: [][]any{{"only-one-col"}}}); err == nil {
+		t.Error("per-repository scan-shape failure: want wrapped error, got nil")
+	}
+	if _, err := scanRepositoryWatermarks(&stubReindexRows{
+		records: [][]any{{"s1", time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)}},
+		err:     boom,
+	}); err == nil {
+		t.Error("per-repository trailing error: want wrapped error, got nil")
+	}
+
+	if _, err := scanFullReconcileState(&stubReindexRows{err: boom}); err == nil {
+		t.Error("scope iteration error: want wrapped error, got nil")
+	}
+	if _, err := scanFullReconcileState(&stubReindexRows{records: [][]any{{"only-one-col"}}}); err == nil {
+		t.Error("scope scan-shape failure: want wrapped error, got nil")
+	}
+	if _, err := scanFullReconcileState(&stubReindexRows{
+		records: [][]any{{sql.NullTime{Valid: false}, sql.NullString{Valid: false}}},
+		err:     boom,
+	}); err == nil {
+		t.Error("scope trailing error: want wrapped error, got nil")
+	}
+}
+
 // TestMaintenanceStoreThroughPool pins the reader store read path:
 // success folds rows and releases cursors, a query failure
 // surfaces, and a nil pool fails closed without a query.
