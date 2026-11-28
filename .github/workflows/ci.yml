@@ -261,7 +261,7 @@ jobs:
         # pre-C23 standard the proof was developed under (host GOENV).
         env:
           CGO_CFLAGS: -std=gnu17
-        run: cd coreserveconsumer && go test ./... -count=1
+        run: cd coreserveconsumer && go vet ./... && go test -race ./... -count=1
 
   ci-complete:
     needs: [changes, parity, lanes, coreserve-consumer]
