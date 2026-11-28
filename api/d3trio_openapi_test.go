@@ -32,14 +32,18 @@ var d3TrioSpecKeys = []string{
 	"/api/v0/admin/shared-projection/tuning-report",
 }
 
-// TestD3TrioWaveSpecKeyCount pins the trio claim surface: exactly the
-// three Gap 02 routes, no more (the D7 reindex mutation POST keeps
-// its own key and stays out of this lane).
+// TestD3TrioWaveSpecKeyCount pins the trio claim surface: the three
+// Gap 02 path keys stay served (the D7 reindex mutation POST keeps
+// its own key and stays out of this lane), and every remaining wave
+// route keeps its key. The tuning-report key no longer mirrors a wave
+// entry — it promoted to its own native lane in
+// eshu-hq/eshu-api#171, and TestAdminTuningReportSpecKeyServed pins
+// its key there — so the wave is a strict subset of the keys.
 func TestD3TrioWaveSpecKeyCount(t *testing.T) {
 	t.Parallel()
 
-	if len(d3TrioSpecKeys) != len(d3TrioWave) {
-		t.Fatalf("d3TrioSpecKeys holds %d keys, want the %d trio routes", len(d3TrioSpecKeys), len(d3TrioWave))
+	if len(d3TrioSpecKeys) != 3 {
+		t.Fatalf("d3TrioSpecKeys holds %d keys, want the 3 Gap 02 keys", len(d3TrioSpecKeys))
 	}
 	seen := map[string]bool{}
 	for _, path := range d3TrioSpecKeys {
@@ -50,8 +54,11 @@ func TestD3TrioWaveSpecKeyCount(t *testing.T) {
 	}
 	for _, entry := range d3TrioWave {
 		if !seen[entry.Path] {
-			t.Errorf("d3TrioSpecKeys lacks trio route %s", entry.Path)
+			t.Errorf("d3TrioSpecKeys lacks wave route %s", entry.Path)
 		}
+	}
+	if len(d3TrioWave) >= len(d3TrioSpecKeys) {
+		t.Errorf("d3TrioWave holds %d entries for %d keys, want a strict subset (tuning-report promoted out)", len(d3TrioWave), len(d3TrioSpecKeys))
 	}
 }
 

@@ -19,13 +19,12 @@ import (
 // (forwardToCore on the native lane) against future divergence from
 // the relay contract it mirrors.
 
-// d3TrioParityRoutes covers one concrete path per trio route. The
-// delta-union read carries its required scope filter and the reindex
-// progress read its scope_id; the tuning report takes no query. The
-// tuning 200 body below is the exact frozen report body
-// (SharedProjectionTuningReport v0: status not_applicable plus the
-// frozen detail text), so the matrix also proves the native lane
-// relays the pinned static shape byte-identical.
+// d3TrioParityRoutes covers one concrete path per remaining wave
+// route. The delta-union read carries its required scope filter and
+// the reindex progress read its scope_id. (The tuning report promoted
+// to its own local lane in eshu-hq/eshu-api#171 — a relay comparison
+// no longer applies, so its byte-identical proof lives in
+// api/admin_tuning_terminate_test.go.)
 var d3TrioParityRoutes = []struct {
 	method string
 	path   string
@@ -33,16 +32,15 @@ var d3TrioParityRoutes = []struct {
 }{
 	{http.MethodGet, "/api/v0/admin/delta-union/completeness?scope=s1", `{"data":[],"error":null,"truth":null}`},
 	{http.MethodGet, "/api/v0/admin/reindex/progress?scope_id=s1", `{"data":[],"error":null,"truth":null}`},
-	{http.MethodGet, "/api/v0/admin/shared-projection/tuning-report", `{"detail":"Shared-projection tuning is managed internally by the Go projector pipeline.","status":"not_applicable"}`},
 }
 
 // TestD3TrioTerminatedMatchesRelayByteForByte pins that the
-// terminated trio reader relays core bytes exactly like the generic
+// terminated wave reader relays core bytes exactly like the generic
 // proxy: same status, same headers (modulo per-hop framing), same
 // body — across the pinned outcome matrix in both negotiated shapes.
-// The matrix runs every trio route; the stub answers the pinned wire
-// strings where core owns the text, and opaque bytes where the relay
-// (not the text) is what this test pins.
+// The matrix runs every remaining wave route; the stub answers the
+// pinned wire strings where core owns the text, and opaque bytes
+// where the relay (not the text) is what this test pins.
 func TestD3TrioTerminatedMatchesRelayByteForByte(t *testing.T) {
 	t.Parallel()
 

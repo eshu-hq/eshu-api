@@ -13,15 +13,17 @@ import (
 
 // D3 Gap 02 trio conformance (Refs eshu-hq/eshu#9669, satellite
 // eshu-hq/eshu-api#70). TDD record: this suite is RED as committed —
-// the frozen wave below mirrors the three Gap 02 pins
+// the frozen wave below mirrors the Gap 02 pins
 // (DeltaUnionCompletenessReadAdmission v0, ReindexProgressReadAdmission
 // v0, SharedProjectionTuningReport v0 at the core merge 4a587431fd),
-// and the behavior tests require every trio route to terminate
+// and the behavior tests require every wave route to terminate
 // natively for shared-key callers while relaying unresolvable
-// identity classes explicitly. Until the lane registers the routes,
-// every trio call crosses the generic byte-relay (or the key gate),
-// so the ahead-of-relay assertions fail first. That red is the
-// recorded expectation, not a defect.
+// identity classes explicitly. (The tuning-report pin promoted to its
+// own native lane in eshu-hq/eshu-api#171, so the wave holds the
+// remaining duo.) Until the lane registers the routes, every wave
+// call crosses the generic byte-relay (or the key gate), so the
+// ahead-of-relay assertions fail first. That red is the recorded
+// expectation, not a defect.
 //
 // Cookie rule (D2 follow-up lesson): only session-cookie-shaped
 // credentials relay — a Cookie header carrying eshu_session or
@@ -32,14 +34,15 @@ import (
 // TestD3TrioWaveFrozen pins the exact Gap 02 termination surface. A
 // wave change (route added, removed, renamed, or rehomed) fails here
 // until the eshu spec, the skeleton table, and this mirror move
-// together — the same frozen-set pattern as TestD3WaveFrozen.
+// together — the same frozen-set pattern as TestD3WaveFrozen. The
+// tuning-report GET promoted to its own native lane in
+// eshu-hq/eshu-api#171, so the frozen table holds the remaining duo.
 func TestD3TrioWaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
 		"GET /api/v0/admin/delta-union/completeness admin gated paths/status/delta_union_completeness.go",
 		"GET /api/v0/admin/reindex/progress admin gated paths/status/reindex_progress.go",
-		"GET /api/v0/admin/shared-projection/tuning-report admin gated paths/status/admin.go",
 	}
 	if len(d3TrioWave) != len(want) {
 		t.Fatalf("d3TrioWave holds %d routes, want frozen %d: move the spec, the skeleton table, and this mirror together",
@@ -61,12 +64,12 @@ func TestD3TrioWaveFrozen(t *testing.T) {
 // d3TrioConcretePaths fills the wave's query strings so the behavior
 // tests drive real mux matches. The delta-union read requires at
 // least one scope filter and the reindex progress read at least one
-// scope_id; the tuning report takes none. Trailing-slash spellings
-// ride the same native registration (never-split).
+// scope_id. (The tuning report took none; it promoted to its own
+// lane in eshu-hq/eshu-api#171.) Trailing-slash spellings ride the
+// same native registration (never-split).
 var d3TrioConcretePaths = map[string]string{
-	"GET /api/v0/admin/delta-union/completeness":        "/api/v0/admin/delta-union/completeness?scope=s1",
-	"GET /api/v0/admin/reindex/progress":                "/api/v0/admin/reindex/progress?scope_id=s1",
-	"GET /api/v0/admin/shared-projection/tuning-report": "/api/v0/admin/shared-projection/tuning-report",
+	"GET /api/v0/admin/delta-union/completeness": "/api/v0/admin/delta-union/completeness?scope=s1",
+	"GET /api/v0/admin/reindex/progress":         "/api/v0/admin/reindex/progress?scope_id=s1",
 }
 
 // TestD3TrioWaveRoutesAheadOfRelay pins that every trio route is an
@@ -255,7 +258,6 @@ func TestD3TrioGated_TrailingSlashStaysNative(t *testing.T) {
 	targets := []struct{ target, wantPath, wantQuery string }{
 		{"/api/v0/admin/delta-union/completeness/?scope=s1", "/api/v0/admin/delta-union/completeness/", "scope=s1"},
 		{"/api/v0/admin/reindex/progress/?scope_id=s1", "/api/v0/admin/reindex/progress/", "scope_id=s1"},
-		{"/api/v0/admin/shared-projection/tuning-report/", "/api/v0/admin/shared-projection/tuning-report/", ""},
 	}
 	for _, tc := range targets {
 		req := authedRequest(http.MethodGet, tc.target)
@@ -272,8 +274,8 @@ func TestD3TrioGated_TrailingSlashStaysNative(t *testing.T) {
 		}
 	}
 	snap := tel.snapshot()
-	if got := snap.dispatches["admin"][viaNative][outcomeCoreOK]; got < 3 {
-		t.Errorf("family admin native core_ok = %d, want >= 3 (slash spellings on the native lane)", got)
+	if got := snap.dispatches["admin"][viaNative][outcomeCoreOK]; got < 2 {
+		t.Errorf("family admin native core_ok = %d, want >= 2 (slash spellings on the native lane)", got)
 	}
 }
 
@@ -295,7 +297,6 @@ func TestD3TrioGated_V1AliasTerminates(t *testing.T) {
 	for _, tc := range []struct{ v1, v0 string }{
 		{"/api/v1/admin/delta-union/completeness?scope=s1", "/api/v0/admin/delta-union/completeness"},
 		{"/api/v1/admin/reindex/progress?scope_id=s1", "/api/v0/admin/reindex/progress"},
-		{"/api/v1/admin/shared-projection/tuning-report", "/api/v0/admin/shared-projection/tuning-report"},
 	} {
 		req := authedRequest(http.MethodGet, tc.v1)
 		rec := httptest.NewRecorder()

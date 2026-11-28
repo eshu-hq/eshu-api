@@ -2,7 +2,10 @@ module github.com/eshu-hq/eshu-api
 
 go 1.26.11
 
-require github.com/jackc/pgx/v5 v5.7.4
+require (
+	github.com/eshu-hq/eshu/go/apilib v0.1.0
+	github.com/jackc/pgx/v5 v5.7.4
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
