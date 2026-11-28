@@ -4,8 +4,8 @@
 // Package ciworkflow holds the contract test for .github/workflows/ci.yml:
 // the lane bodies live in the pinned eshu-hq/.github reusable, and this
 // caller keeps its classifier, the api-specific parity lane, the lanes call,
-// and the required aggregator. The checks are plain string reads so the
-// module stays dependency-free.
+// the #446 external-consumer proof lane, and the required aggregator. The
+// checks are plain string reads so the module stays dependency-free.
 package ciworkflow
 
 import (
@@ -198,13 +198,13 @@ func TestCallerCallsPinnedReusable(t *testing.T) {
 }
 
 // TestCallerKeepsFrozenJobNames keeps the org contract: the classifier, the
-// api-specific parity lane, the reusable call, and the only
-// ruleset-required context.
+// api-specific parity lane, the reusable call, the #446 external-consumer
+// proof lane, and the only ruleset-required context.
 func TestCallerKeepsFrozenJobNames(t *testing.T) {
 	t.Parallel()
 
 	got, _ := jobBlocks(t)
-	want := []string{"changes", "parity", "lanes", "ci-complete"}
+	want := []string{"changes", "parity", "lanes", "coreserve-consumer", "ci-complete"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("ci.yml jobs = %v, want exactly %v", got, want)
 	}
@@ -317,7 +317,7 @@ func TestCICompleteAggregatesEveryLane(t *testing.T) {
 	for _, name := range strings.Split(m[1], ",") {
 		needed[strings.TrimSpace(name)] = true
 	}
-	for _, name := range []string{"changes", "parity", "lanes"} {
+	for _, name := range []string{"changes", "parity", "lanes", "coreserve-consumer"} {
 		if !needed[name] {
 			t.Errorf("ci-complete needs %q missing: its failure would not fail the required context", name)
 		}

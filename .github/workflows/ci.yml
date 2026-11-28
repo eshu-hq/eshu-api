@@ -18,6 +18,11 @@
 # - `parity` (scripts/check-parity.sh) is api-specific, so it stays a
 #   separate job beside `lanes`, with its retired gate, and is a ci-complete
 #   need.
+# - `coreserve-consumer` (eshu-hq/eshu-api#446) runs the external-consumer
+#   proof in coreserveconsumer/ (`cd coreserveconsumer && go test
+#   ./... -count=1`) against the versioned shared library. It is a separate
+#   Go module so the reusable root-module lanes cannot run it; it carries
+#   the run-test gate, and is a ci-complete need.
 # - The `image` lane maps onto the reusable image inputs: a plain
 #   `docker build` of ./Dockerfile on the amd64 runner (no push), which
 #   keeps the build-only, linux/amd64 semantics. Tag pushes and main still
@@ -70,6 +75,7 @@
 # Pinned actions (SHAs synced with the uses: lines below; re-verify with
 # git ls-remote when auditing):
 #   actions/checkout v7.0.1              3d3c42e5aac5ba805825da76410c181273ba90b1
+#   actions/setup-go v7.1.0              d8cbb8045d7f43706b9177cceb36c1f91a6644d5
 #   dorny/paths-filter v4                ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
 #   eshu-hq/.github go-collector-ci v2   4d01ab90baf5dd77c21cc1ee6bdf701332613449
 # Every other action runs inside the reusable at that same pin.
@@ -233,8 +239,32 @@ jobs:
       gosec-fail-on-findings: ${{ github.event_name == 'schedule' }}
       run-actionlint: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && needs.changes.outputs.workflows == 'true') }}
 
+  coreserve-consumer:
+    # N1 (eshu-hq/eshu-api#446) external-consumer proof: the versioned
+    # shared library (coreserve v0.1.0) serving /readyz plus one auth read
+    # from fixture stores with zero core-origin HTTP calls. Separate Go
+    # module, so the reusable root-module lanes cannot cover it.
+    needs: [changes]
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && (needs.changes.outputs.go == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.misc == 'true' || needs.changes.outputs.workflows == 'true'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: coreserveconsumer/go.mod
+      - name: Test external consumer via shared library
+        # The shared library's transitive tree-sitter graph vendors a BSD
+        # bsearch.h (go-sitter-forest/perl) that collides with glibc's
+        # _Generic-based bsearch macro when compiled in C23 mode; pin the
+        # pre-C23 standard the proof was developed under (host GOENV).
+        env:
+          CGO_CFLAGS: -std=gnu17
+        run: cd coreserveconsumer && go vet ./... && go test -race ./... -count=1
+
   ci-complete:
-    needs: [changes, parity, lanes]
+    needs: [changes, parity, lanes, coreserve-consumer]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
