@@ -3238,7 +3238,7 @@ echo "OK: W7-read admin sign-in-policy lane file carries no dest-side store or p
 # the runtime module must not import eshu-hq/eshu core packages; dest
 # dispatches over HTTP write-through. Single exemption, per the P1
 # shared-library GO (eshu-hq/eshu-api#456): the pinned
-# github.com/eshu-hq/eshu/go/apilib v0.1.0 — versioned, stdlib-only,
+# github.com/eshu-hq/eshu/go/apilib v0.2.1 — versioned, stdlib-only,
 # per-family mounts, no replace. Everything else under eshu-hq/eshu
 # (go/internal query tree, sdk, any apilib sibling) stays banned, and
 # a listing-tool failure is never proof.
@@ -3252,8 +3252,8 @@ apilib_pin="$(go list -m -f '{{.Version}} {{if .Replace}}replaced{{else}}clean{{
   cat "${tmpdir}/apilib.err" >&2
   exit 1
 }
-if [ "${apilib_pin}" != "v0.1.0 clean" ]; then
-  echo "FAIL: apilib exemption needs exactly v0.1.0 with no replace, got: ${apilib_pin}" >&2
+if [ "${apilib_pin}" != "v0.2.1 clean" ]; then
+  echo "FAIL: apilib exemption needs exactly v0.2.1 with no replace, got: ${apilib_pin}" >&2
   exit 1
 fi
 if ! go list -deps 'github.com/eshu-hq/eshu/go/apilib/...' >"${tmpdir}/apilib.deps" 2>"${tmpdir}/apilib.deps.err"; then
@@ -3273,6 +3273,6 @@ if [ -s "${tmpdir}/core.deps" ]; then
   cat "${tmpdir}/core.deps" >&2
   exit 1
 fi
-echo "OK: runtime packages import no eshu-hq/eshu code outside pinned go/apilib v0.1.0"
+echo "OK: runtime packages import no eshu-hq/eshu code outside pinned go/apilib v0.2.1"
 
 echo "parity: all checks passed"
