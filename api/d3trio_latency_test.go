@@ -13,14 +13,16 @@ import (
 // eshu-hq/eshu-api#70). The terminated reader does the same
 // single-server-side fetch as the generic relay plus the wave gate
 // and the family authorizer; these benchmarks bound that overhead per
-// trio route so the lane can report per-route numbers. The stub core
-// answers from memory — the numbers isolate dest-side cost, not core
-// or network time. Absolute deployment numbers ride the
+// remaining wave route so the lane can report per-route numbers. The
+// stub core answers from memory — the numbers isolate dest-side cost,
+// not core or network time. Absolute deployment numbers ride the
 // pinned-core-image leg at flip prep (D11).
 
-// BenchmarkD3TrioTerminatedRead measures the terminated path per trio
-// route for a shared-key identity GET through the full production
-// chain.
+// BenchmarkD3TrioTerminatedRead measures the terminated path per
+// remaining wave route for a shared-key identity GET through the full
+// production chain. (The tuning-report member promoted to a local
+// lane in eshu-hq/eshu-api#171; its bound lives in
+// BenchmarkAdminTuningTerminated.)
 func BenchmarkD3TrioTerminatedRead(b *testing.B) {
 	core := &stubCore{status: http.StatusOK, body: `{"data":[],"error":null,"truth":null}`}
 	mux := http.NewServeMux()
@@ -34,7 +36,6 @@ func BenchmarkD3TrioTerminatedRead(b *testing.B) {
 	for _, tc := range []struct{ name, target string }{
 		{"delta-union-completeness", "/api/v0/admin/delta-union/completeness?scope=s1"},
 		{"reindex-progress", "/api/v0/admin/reindex/progress?scope_id=s1"},
-		{"tuning-report", "/api/v0/admin/shared-projection/tuning-report"},
 	} {
 		b.Run(tc.name, func(b *testing.B) {
 			b.ReportAllocs()

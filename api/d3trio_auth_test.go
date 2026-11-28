@@ -41,16 +41,17 @@ func TestD3TrioAuthorizerSharedKeyAllowDeny(t *testing.T) {
 }
 
 // TestD3TrioAuthorizerCountersPinned pins the authorizer telemetry
-// for the trio: a terminated shared-key call files one allow judgment
+// for the wave: a terminated shared-key call files one allow judgment
 // on the admin family, and the unreachable deny branch stays
-// observable. One representative route per trio member.
+// observable. One representative route per remaining wave member (the
+// tuning-report member promoted to its own lane in
+// eshu-hq/eshu-api#171, pinned in api/admin_tuning_terminate_test.go).
 func TestD3TrioAuthorizerCountersPinned(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{
 		"/api/v0/admin/delta-union/completeness?scope=s1",
 		"/api/v0/admin/reindex/progress?scope_id=s1",
-		"/api/v0/admin/shared-projection/tuning-report",
 	} {
 		core := &stubCore{status: http.StatusOK, body: `{"data":[]}`}
 		mux := http.NewServeMux()
@@ -95,10 +96,9 @@ func TestD3TrioDenyBranchShapePinned(t *testing.T) {
 	}{
 		{http.MethodGet, "/api/v0/admin/delta-union/completeness?scope=s1"},
 		{http.MethodGet, "/api/v0/admin/reindex/progress?scope_id=s1"},
-		{http.MethodGet, "/api/v0/admin/shared-projection/tuning-report"},
 	}
 	if len(cases) != len(d3TrioWave) {
-		t.Fatalf("deny-shape cases = %d, want the %d trio routes", len(cases), len(d3TrioWave))
+		t.Fatalf("deny-shape cases = %d, want the %d wave routes", len(cases), len(d3TrioWave))
 	}
 	for _, tc := range cases {
 		for _, accept := range []string{EnvelopeMIME, "application/json"} {

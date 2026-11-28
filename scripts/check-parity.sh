@@ -3234,23 +3234,45 @@ for call in '.Query(' ParseForm FormValue PathValue '.RequestURI' '"tenant_id"' 
 done
 echo "OK: W7-read admin sign-in-policy lane file carries no dest-side store or parse"
 
-# No-core-import proof (native-dispatch pilot, arbiter ruling (a)): the
-# runtime module (api, internal, cmd) must not import eshu-hq/eshu core
-# packages. Dest dispatches over HTTP write-through; the vendored
-# contracts/upstream copies are parity evidence, not build inputs (their
-# own go.mod is a separate module). Fails closed on any core import AND
-# on a listing-tool failure: a suppressed stderr that yields an empty
-# list must never read as proof.
+# No-core-import proof (native-dispatch pilot, arbiter ruling (a)):
+# the runtime module must not import eshu-hq/eshu core packages; dest
+# dispatches over HTTP write-through. Single exemption, per the P1
+# shared-library GO (eshu-hq/eshu-api#456): the pinned
+# github.com/eshu-hq/eshu/go/apilib v0.1.0 — versioned, stdlib-only,
+# per-family mounts, no replace. Everything else under eshu-hq/eshu
+# (go/internal query tree, sdk, any apilib sibling) stays banned, and
+# a listing-tool failure is never proof.
 if ! go list -deps ./api/... ./internal/... ./cmd/... >"${tmpdir}/deps" 2>"${tmpdir}/deps.err"; then
   echo "FAIL: go list -deps failed, no-core-import unproven" >&2
   cat "${tmpdir}/deps.err" >&2
   exit 1
 fi
-if grep -q '^github\.com/eshu-hq/eshu\(/\|$\)' "${tmpdir}/deps"; then
-  echo "FAIL: runtime packages import eshu-hq/eshu core code (HTTP write-through only)" >&2
-  grep '^github\.com/eshu-hq/eshu\(/\|$\)' "${tmpdir}/deps" >&2
+apilib_pin="$(go list -m -f '{{.Version}} {{if .Replace}}replaced{{else}}clean{{end}}' github.com/eshu-hq/eshu/go/apilib 2>"${tmpdir}/apilib.err")" || {
+  echo "FAIL: go list -m apilib failed, apilib exemption unproven" >&2
+  cat "${tmpdir}/apilib.err" >&2
+  exit 1
+}
+if [ "${apilib_pin}" != "v0.1.0 clean" ]; then
+  echo "FAIL: apilib exemption needs exactly v0.1.0 with no replace, got: ${apilib_pin}" >&2
   exit 1
 fi
-echo "OK: runtime packages import no eshu-hq/eshu core code"
+if ! go list -deps 'github.com/eshu-hq/eshu/go/apilib/...' >"${tmpdir}/apilib.deps" 2>"${tmpdir}/apilib.deps.err"; then
+  echo "FAIL: go list -deps apilib failed, apilib slimness unproven" >&2
+  cat "${tmpdir}/apilib.deps.err" >&2
+  exit 1
+fi
+awk -F/ '$1 ~ /\./' "${tmpdir}/apilib.deps" | grep -v '^github\.com/eshu-hq/eshu/go/apilib\(/\|$\)' >"${tmpdir}/apilib.extra" || true
+if [ -s "${tmpdir}/apilib.extra" ]; then
+  echo "FAIL: pinned apilib closure is not stdlib-only (eshu-hq/eshu-api#456 slim rule)" >&2
+  cat "${tmpdir}/apilib.extra" >&2
+  exit 1
+fi
+{ grep '^github\.com/eshu-hq/eshu\(/\|$\)' "${tmpdir}/deps" | grep -v '^github\.com/eshu-hq/eshu/go/apilib\(/\|$\)' || true; } >"${tmpdir}/core.deps"
+if [ -s "${tmpdir}/core.deps" ]; then
+  echo "FAIL: runtime packages import eshu-hq/eshu code outside pinned go/apilib (HTTP write-through or pinned apilib only)" >&2
+  cat "${tmpdir}/core.deps" >&2
+  exit 1
+fi
+echo "OK: runtime packages import no eshu-hq/eshu code outside pinned go/apilib v0.1.0"
 
 echo "parity: all checks passed"

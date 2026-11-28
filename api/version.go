@@ -174,8 +174,8 @@ const ReindexProgressReadAdmissionContractVersion = "v0"
 // move in lockstep with the in-tree
 // SharedProjectionTuningReportContractVersion; the vendored pin lives
 // in contracts/admin-trio-read-admission.md. Reads over this shape
-// terminate natively since the Gap 02 trio lane (api/d3trio_wave.go);
-// see contracts/d3-admin-reads.md.
+// terminate natively since eshu-hq/eshu-api#171
+// (api/admin_tuning_terminate.go); see contracts/d3-admin-reads.md.
 const SharedProjectionTuningReportContractVersion = "v0"
 
 // AuditAppendAdmissionContractVersion names the versioned

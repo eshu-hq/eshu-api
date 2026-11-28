@@ -34,15 +34,30 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
 
 - **d3ReadGate-gated** — registered as
   `s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated))`
-  (`api/router.go:295`, `api/router.go:308`). A valid shared key
-  terminates natively; a non-key Bearer or session-cookie-shaped
-  Cookie relays explicitly; credential-less and junk-cookie callers
-  get the standing 401 (`api/d3_terminate.go:119-144`). Terminated
-  calls forward at `api/d3_terminate.go:94`
-  (`forwardToCore(s, w, r, viaNative)`); explicit relays forward at
-  `api/d3_terminate.go:162` (`viaRelay`). Family authorizer:
-  `authorizeD3SharedKey` (`api/d3_terminate.go:46-48`), invoked in
-  `serveD3TerminatedAs` (`api/d3_terminate.go:82`).
+  (`api/router.go:301` in the D3 loop, `api/router.go:310` in the
+  trio loop). A valid shared key terminates natively; a non-key
+  Bearer or session-cookie-shaped Cookie relays explicitly;
+  credential-less and junk-cookie callers get the standing 401
+  (`api/d3_terminate.go:121-167`). Terminated calls forward at
+  `api/d3_terminate.go:96` (`forwardToCore(s, w, r, viaNative)`);
+  explicit relays forward at `api/d3_terminate.go:185` (`viaRelay`).
+  Family authorizer: `authorizeD3SharedKey`
+  (`api/d3_terminate.go:48-50`), invoked in `serveD3TerminatedAs`
+  (`api/d3_terminate.go:84`).
+- **d3ReadGate-gated, locally terminated (#171 only)** — the
+  tuning-report GET keeps the d3ReadGate credential matrix above but
+  terminates locally: registered on its own anchor ahead of the D3
+  loops (`s.registerAdminTuningReport`, `api/router.go:283-285`;
+  route const and handler `api/admin_tuning_terminate.go:52-109`),
+  shared-key calls serve the pinned apilib static body
+  (`apilibadmin.WriteTuningReport`, `api/admin_tuning_terminate.go:109`)
+  filing `local_ok` on the native lane
+  (`api/admin_tuning_terminate.go:108`) with zero core and zero
+  store contact, foreign classes relay explicitly on the untouched
+  gate, credential-less callers keep the standing 401. Family
+  authorizer: the shared `authorizeD3SharedKey` trust root
+  (`api/d3_terminate.go:48-50`), judged in
+  `serveAdminTuningTerminatedAs` (`api/admin_tuning_terminate.go:93`).
 - **RequireAuth-native** — registered as
   `RequireAuth(s.apiKey, http.HandlerFunc(s.<family>WriteThrough))`
   (`RequireAuth` defined at `api/auth.go:189`; cited read-only, not
@@ -57,17 +72,22 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
 
 ## Frozen baseline table — 3 GETs (#169–171)
 
-All three are Gap 02 trio routes: wave entries
-`api/d3trio_wave.go:60-62` (`Serve: d3ServeGated`), registered by the
-loop at `api/router.go:306-311`. Contract record:
+#169–170 are the remaining Gap 02 wave routes: wave entries
+`api/d3trio_wave.go:65-66` (`Serve: d3ServeGated`), registered by the
+loop at `api/router.go:308-312` via `s.d3ReadGate`
+(`api/router.go:310`). #171 promoted to its own native lane in
+eshu-hq/eshu-api#171 (no wave entry; anchor
+`api/router.go:283-285`). Contract record:
 `contracts/d3-admin-reads.md:26-42`, `:98-99` (Gap 02 pins v0, no D1
-`ReadStore` claim).
+`ReadStore` claim); the #171 termination proof lives in
+`api/admin_tuning_terminate_test.go` (P-FLOW zero-core case, census
+`AssertNoCorePath`, byte-identical body pin).
 
 | # | Operation | Lane | Wave entry | Registration | forwardToCore site |
 | --- | --- | --- | --- | --- | --- |
-| 169 | `GET /api/v0/admin/delta-union/completeness` | d3ReadGate-gated | `api/d3trio_wave.go:60` | `api/router.go:306-311` via `s.d3ReadGate` (`api/router.go:308`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 170 | `GET /api/v0/admin/reindex/progress` | d3ReadGate-gated | `api/d3trio_wave.go:61` | `api/router.go:306-311` via `s.d3ReadGate` (`api/router.go:308`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 171 | `GET /api/v0/admin/shared-projection/tuning-report` | d3ReadGate-gated | `api/d3trio_wave.go:62` | `api/router.go:306-311` via `s.d3ReadGate` (`api/router.go:308`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
+| 169 | `GET /api/v0/admin/delta-union/completeness` | d3ReadGate-gated | `api/d3trio_wave.go:65` | `api/router.go:308-312` via `s.d3ReadGate` (`api/router.go:310`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 170 | `GET /api/v0/admin/reindex/progress` | d3ReadGate-gated | `api/d3trio_wave.go:66` | `api/router.go:308-312` via `s.d3ReadGate` (`api/router.go:310`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 171 | `GET /api/v0/admin/shared-projection/tuning-report` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_tuning_terminate.go:52`) | `api/router.go:283-285` via `s.d3ReadGate` + `serveAdminTuningTerminated` | none — local `apilibadmin.WriteTuningReport` (`local_ok`); foreign classes relay `api/d3_terminate.go:185` |
 
 ## Frozen baseline table — 19 POSTs (#318–336)
 
@@ -75,21 +95,21 @@ loop at `api/router.go:306-311`. Contract record:
 
 Wave entries in `d3Wave` (`Serve: d3ServeGated`,
 `api/d3_wave.go:46`), registered by the loop at
-`api/router.go:293-298` through `s.d3ReadGate` (`api/router.go:295`).
+`api/router.go:299-303` through `s.d3ReadGate` (`api/router.go:301`).
 Same forward sites as the GETs. Contract rows:
 `contracts/d3-admin-reads.md:98` (Admin, 6 POSTs) and
 `contracts/d3-admin-reads.md:102` (TerminalFailure, 2 POSTs).
 
 | # | Operation | Lane | Wave entry | Registration | forwardToCore site |
 | --- | --- | --- | --- | --- | --- |
-| 319 | `POST /api/v0/admin/changed-since/poisoned-links/query` | d3ReadGate-gated | `api/d3_wave.go:70` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 321 | `POST /api/v0/admin/collector-failures/acknowledgements/query` | d3ReadGate-gated | `api/d3_wave.go:80` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 322 | `POST /api/v0/admin/collector-failures/query` | d3ReadGate-gated | `api/d3_wave.go:81` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated | `api/d3_wave.go:68` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 325 | `POST /api/v0/admin/decisions/query` | d3ReadGate-gated | `api/d3_wave.go:67` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 326 | `POST /api/v0/admin/input-invalid-facts/query` | d3ReadGate-gated | `api/d3_wave.go:69` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 332 | `POST /api/v0/admin/replay-events/query` | d3ReadGate-gated | `api/d3_wave.go:71` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
-| 335 | `POST /api/v0/admin/work-items/query` | d3ReadGate-gated | `api/d3_wave.go:66` | `api/router.go:293-298` via `s.d3ReadGate` (`api/router.go:295`) | `api/d3_terminate.go:94` (`viaNative`); relay `api/d3_terminate.go:162` |
+| 319 | `POST /api/v0/admin/changed-since/poisoned-links/query` | d3ReadGate-gated | `api/d3_wave.go:70` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 321 | `POST /api/v0/admin/collector-failures/acknowledgements/query` | d3ReadGate-gated | `api/d3_wave.go:80` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 322 | `POST /api/v0/admin/collector-failures/query` | d3ReadGate-gated | `api/d3_wave.go:81` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated | `api/d3_wave.go:68` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 325 | `POST /api/v0/admin/decisions/query` | d3ReadGate-gated | `api/d3_wave.go:67` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 326 | `POST /api/v0/admin/input-invalid-facts/query` | d3ReadGate-gated | `api/d3_wave.go:69` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 332 | `POST /api/v0/admin/replay-events/query` | d3ReadGate-gated | `api/d3_wave.go:71` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
+| 335 | `POST /api/v0/admin/work-items/query` | d3ReadGate-gated | `api/d3_wave.go:66` | `api/router.go:299-303` via `s.d3ReadGate` (`api/router.go:301`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
 
 ### RequireAuth-native mutation POSTs (11 of 19)
 
@@ -116,12 +136,14 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
 
 ## Reconciliation
 
-- 22 = 11 d3ReadGate-gated (3 trio GETs + 8 query POSTs) + 11
+- 22 = 10 d3ReadGate-gated (2 wave GETs + 8 query POSTs) + 1
+  d3ReadGate-gated, locally terminated (#171) + 11
   RequireAuth-native (4 D7 + 4 recovery + acknowledge + retirement
   + retire-unclaimed). No census operation rides the generic
   byte-relay as its primary lane today; relay appears only as the
   d3ReadGate explicit-relay branch for unresolvable credential
-  classes (`api/d3_terminate.go:152-162`).
+  classes (`api/d3_terminate.go:175-186`), which #171 keeps for its
+  foreign classes.
 - Every native handler passes `allScopes=true` today (e.g.
   `api/d7.go:115-117`, `api/recovery.go:81-83`,
   `api/terminalfailure.go:50-52`, `api/retirement.go:37-39`,
@@ -136,11 +158,19 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
   order in `routes()` for census rows is therefore: native singles
   (`api/router.go:93`) → retire-unclaimed (`api/router.go:95-96`) →
   D7 (`api/router.go:165-168`) → recovery (`api/router.go:256-259`)
-  → D3 wave (`api/router.go:293-298`) → D3 trio
-  (`api/router.go:306-311`), all ahead of the generic proxy.
+  → tuning-report anchor (`api/router.go:283-285`) → D3 wave
+  (`api/router.go:299-303`) → D3 trio (`api/router.go:308-312`), all
+  ahead of the generic proxy. The anchor precedes the loops so the
+  promoted route never falls through to a wave registration; the
+  mux would panic on the duplicate pattern if the wave entry had
+  not been deleted with the promotion.
 - Wave-freeze tests pinning the gated tables exist by reference in
   the wave files (`TestD3WaveFrozen`, `api/d3_wave.go:60-64`;
-  `TestD3TrioWaveFrozen`, `api/d3trio_wave.go:55-58`); this census
+  `TestD3TrioWaveFrozen`, `api/d3trio_wave.go:58-67`); the promoted
+  tuning-report lane pins its own freeze in
+  `api/admin_tuning_terminate_test.go`
+  (`TestAdminTuningReportRouteFrozen`,
+  `TestAdminTuningReportTerminatesLocally`); this census
   ran no test suite (docs-only step; `make pre-pr` / `pre-push` are
   coordinator-only).
 
@@ -148,8 +178,11 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
 
 - This is a lane census, not a termination or removal-readiness
   claim for any row. D7 rows stay tier-C dispatch per
-  `contracts/d7-admin-four.md:201-208`; D3 rows stay provisional
-  per `contracts/d3-admin-reads.md:44-54` (blocker B1).
+  `contracts/d7-admin-four.md:201-208`; the remaining D3 wave rows
+  stay provisional per `contracts/d3-admin-reads.md:44-54`
+  (blocker B1). #171 terminated locally under its own proof
+  (`api/admin_tuning_terminate_test.go`); its core-side removal
+  readiness is a separate claim this census does not make.
 - No `api/auth.go`, `api/d8*.go`, or other auth/D8 file was edited;
   `api/auth.go:189` is cited read-only as the `RequireAuth`
   definition site.
@@ -160,12 +193,17 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
 
 ## Migration verdict (ADR-0002 test)
 
-Zero of 22 are migrated under ADR-0002's test
+One of 22 is migrated under ADR-0002's test
 (`docs/decisions/0002-eshu-api-owns-api-compute.md:53-57`:
 migrated means `eshu-api` executes the handler against a store with
 zero core HTTP calls; forwarding labelled `viaNative` is not
-termination), because every row above ends at `forwardToCore`
-(`api/dispatch.go:252`; lane tables `## Frozen baseline table`).
+termination): #171 serves the pinned static body with zero core HTTP
+calls and zero store contact (no-store class; the ADR's "against a
+store" leg is vacuous for the static report — the evidence is the
+P-FLOW span silence plus the counting-transport zero in
+`api/admin_tuning_terminate_test.go`). The other 21 rows still end
+at `forwardToCore` (`api/dispatch.go:252`; lane tables
+`## Frozen baseline table`).
 The config surface is only `--core-base-url`
 (`cmd/eshu-api/main.go:49`, required at `:57`) plus `ESHU_API_KEY`
 (`cmd/eshu-api/main.go:21`; `docs/reference/configuration.md:12-13`):

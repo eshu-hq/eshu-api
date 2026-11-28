@@ -26,12 +26,15 @@ const (
 // dispatch step. A local_503 is synthesized by dest (unconfigured
 // origin, unreachable core, unbuildable request) and never carries
 // Retry-After; core_503 and core_retryable_503 are relayed core
-// answers, the latter keeping the Retry-After the core sent.
+// answers, the latter keeping the Retry-After the core sent; a
+// local_ok is a dest-side termination with no core contact (static or
+// store-backed native leaf), filed with zero core latency.
 const (
 	outcomeCoreOK        = "core_ok"
 	outcomeCore503       = "core_503"
 	outcomeCoreRetryable = "core_retryable_503"
 	outcomeLocal503      = "local_503"
+	outcomeLocalOK       = "local_ok"
 	outcomeDenied        = "denied"
 )
 

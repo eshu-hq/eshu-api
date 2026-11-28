@@ -18,7 +18,8 @@ import (
 // non-API mounts below, which have no spec entry by design.
 //
 // The mounted set is rebuilt here from the exact tables and route
-// constants the router registers (leafbWave, d3Wave, d3TrioWave,
+// constants the router registers (leafbWave, d3Wave, d3TrioWave, the
+// adminTuningReportRoute singleton,
 // d4Wave, d6Wave, compareWave, codeFlowWave, codeGraphWave,
 // deadCodeWave, codeDivergenceWave, relationshipWave, codeScanWave,
 // codeInvestigationWave, codeSecretsWave, codeCypherWave,
@@ -122,6 +123,9 @@ func specScopeMounted() []string {
 	for _, entry := range d3TrioWave {
 		add(entry.Method + " " + entry.Path)
 	}
+	// The promoted tuning-report singleton registers on its own anchor
+	// ahead of the D3 loops (never-split twin normalized away by add).
+	add(adminTuningReportRoute)
 	for _, entry := range d4Wave {
 		add(entry.Method + " " + entry.Path)
 	}
