@@ -6,6 +6,8 @@ package api
 import (
 	"crypto/subtle"
 	"net/http"
+
+	"github.com/eshu-hq/eshu-api/internal/credresolver"
 )
 
 // Session-resolver tier-C dispatch clones (Refs eshu-hq/eshu#9669, part
@@ -235,6 +237,27 @@ func authorizeD8(allScopes bool) bool {
 // fails closed like RequireAuth.
 func (s *Server) d8Gate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if owned, ctx, outcome := s.credentialFront(r); owned {
+			// N3 unified front (dark unless enabled): the resolver
+			// owned this request, so the legacy split below stays
+			// untouched. Shared-key allow rides the native lane;
+			// session allow binds the identity and drives the
+			// family authorizer through its AllScopes bit (a
+			// non-AllScopes identity reaches the plain 403 deny);
+			// foreign classes relay explicitly; denials collapse
+			// to the single 401 with zero core contact.
+			switch outcome {
+			case credresolver.OutcomeAllowSharedKey:
+				next.ServeHTTP(w, r)
+			case credresolver.OutcomeAllowSession:
+				s.d8WriteThroughAs(w, withAuthContext(r, ctx), ctx.AllScopes)
+			case credresolver.OutcomeRelay:
+				s.d8RelayExplicit(w, r)
+			default:
+				WriteUnauthorized(w, r)
+			}
+			return
+		}
 		if s.apiKey == "" {
 			WriteUnauthorized(w, r)
 			return
