@@ -4,10 +4,14 @@
 package api
 
 // D3 admin/identity/recovery reads termination (Refs eshu-hq/eshu#9669,
-// part of #6707). This file owns the frozen wave table: the 16 routes
+// part of #6707). This file owns the frozen wave table: the 15 routes
 // across the 4 D1-pinned read families the satellite terminates after
-// the D2 Leaf B wave. It mirrors the D1 pins
-// (AdminReadAdmissionContractVersion, AdminIdentityReadAdmissionContractVersion,
+// the D2 Leaf B wave. (The 16th wave route, the admin work-items
+// query POST, promoted to its own native lane in
+// eshu-hq/eshu-api#335 — see api/admin_workitems_terminate.go — so
+// the frozen table below holds the remaining 15.) It mirrors the D1
+// pins (AdminReadAdmissionContractVersion,
+// AdminIdentityReadAdmissionContractVersion,
 // GovernanceAuditReadAdmissionContractVersion,
 // TerminalFailureReadAdmissionContractVersion, all v0 at the satellite
 // pin #50) entry by entry; a wave change moves the eshu spec, the
@@ -42,7 +46,9 @@ package api
 // callers terminate, unresolvable credential classes relay explicitly,
 // credential-less callers (and junk-cookie carriers) keep the standing
 // dest 401. There is no public carve-out in this lane — every D3 read
-// is an admin/audit read the core serves authed.
+// is an admin/audit read the core serves authed. The promoted
+// work-items query keeps the same gate on its own anchor (see
+// api/admin_workitems_terminate.go); only its terminal differs.
 const d3ServeGated = "gated"
 
 // d3Route is one frozen D3 wave entry: the exact cross-repo surface
@@ -57,13 +63,14 @@ type d3Route struct {
 	Fragment string
 }
 
-// d3Wave is the frozen D3 termination target: 16 routes across the 4
+// d3Wave is the frozen D3 termination target: 15 routes across the 4
 // D1-pinned families (admin query POSTs, admin identity GETs,
-// governance-audit GETs, terminal-failure query POSTs).
+// governance-audit GETs, terminal-failure query POSTs). The admin
+// work-items query POST promoted out in eshu-hq/eshu-api#335 (see
+// api/admin_workitems_terminate.go).
 // TestD3WaveFrozen pins it entry by entry; a wave change moves the
 // spec, the skeleton table, and this mirror together.
 var d3Wave = []d3Route{
-	{Method: "POST", Path: "/api/v0/admin/work-items/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "POST", Path: "/api/v0/admin/decisions/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "POST", Path: "/api/v0/admin/dead-letters/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},
 	{Method: "POST", Path: "/api/v0/admin/input-invalid-facts/query", Family: "admin", Serve: d3ServeGated, Fragment: "paths/status/admin.go"},

@@ -310,10 +310,12 @@ func TestRecoveryNative_AdminFourMovedToD7Lane(t *testing.T) {
 }
 
 // TestRecoveryNative_D3ReadsForwardIntact pins that the D3 lane moves
-// these reads without changing the forwarding: the replay-events,
-// work-items, and dead-letters query POSTs terminate natively since D3
+// these reads without changing the forwarding: the replay-events and
+// dead-letters query POSTs terminate natively since D3
 // (api/d3_wave.go, family admin) with exactly one upstream hit, path,
-// method, and body intact on the native lane. The admin-four
+// method, and body intact on the native lane. (The work-items query
+// POST promoted to its own local lane in eshu-hq/eshu-api#335.) The
+// admin-four
 // (backfill, dead-letter, reindex, skip) moved to the D7 clone lane;
 // they are unaffected above.
 func TestRecoveryNative_D3ReadsForwardIntact(t *testing.T) {
@@ -321,7 +323,6 @@ func TestRecoveryNative_D3ReadsForwardIntact(t *testing.T) {
 
 	for _, path := range []string{
 		"/api/v0/admin/replay-events/query",
-		"/api/v0/admin/work-items/query",
 		"/api/v0/admin/dead-letters/query",
 	} {
 		core := &stubCore{status: http.StatusOK, body: `{"data":[]}`}

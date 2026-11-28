@@ -426,7 +426,6 @@ func TestD7Native_RecoveryStillNative(t *testing.T) {
 		"/api/v0/admin/reopen",
 		"/api/v0/admin/refinalize",
 		"/api/v0/admin/recover-generations",
-		"/api/v0/admin/work-items/query",
 		"/api/v0/admin/dead-letters/query",
 	} {
 		core := &stubCore{status: http.StatusOK, body: `{"status":"accepted"}`}

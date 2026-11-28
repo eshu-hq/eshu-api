@@ -21,9 +21,11 @@ import (
 // credentials present.
 
 // d3SpecKeys are the path keys the D3 wave adds to the served
-// document: the six admin query POSTs plus the invitations list GET
-// (whose create POST shares the key and stays relay until D8, so the
-// served entry is get-only).
+// document: the five remaining admin query POSTs (work-items query
+// promoted to its own native lane in eshu-hq/eshu-api#335 but keeping
+// the same served key) plus the invitations list GET (whose create
+// POST shares the key and stays relay until D8, so the served entry
+// is get-only).
 var d3SpecKeys = []string{
 	"/api/v0/admin/work-items/query",
 	"/api/v0/admin/decisions/query",

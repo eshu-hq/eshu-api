@@ -23,11 +23,13 @@ import (
 // (or the key gate), so the ahead-of-relay assertions fail first. That
 // red is the recorded expectation, not a defect.
 //
-// Scope (16 routes, from go/cmd/api/CUTOVER_OWNERSHIP.md at the D2
-// lane base plus the four D1 pins; no guessing):
+// Scope (15 routes: the 16th wave route, the admin work-items query
+// POST, promoted to its own native lane in eshu-hq/eshu-api#335;
+// from go/cmd/api/CUTOVER_OWNERSHIP.md at the D2 lane base plus the
+// four D1 pins; no guessing):
 //
-//   - AdminReadAdmission v0 (family admin): the 6 query POSTs served
-//     through ReadStore (work items, dead letters, input-invalid
+//   - AdminReadAdmission v0 (family admin): the 5 remaining query
+//     POSTs served through ReadStore (dead letters, input-invalid
 //     facts, poisoned links, replay events, decisions + decision
 //     evidence). The 3 Gap 02 Admin GETs (delta-union completeness,
 //     reindex progress, shared-projection tuning-report) are out of
@@ -57,7 +59,6 @@ func TestD3WaveFrozen(t *testing.T) {
 	t.Parallel()
 
 	want := []string{
-		"POST /api/v0/admin/work-items/query admin gated paths/status/admin.go",
 		"POST /api/v0/admin/decisions/query admin gated paths/status/admin.go",
 		"POST /api/v0/admin/dead-letters/query admin gated paths/status/admin.go",
 		"POST /api/v0/admin/input-invalid-facts/query admin gated paths/status/admin.go",
@@ -96,7 +97,6 @@ func TestD3WaveFrozen(t *testing.T) {
 // native registration (never-split), so each entry also names its
 // slash variant where the mux distinguishes it.
 var d3ConcretePaths = map[string]string{
-	"POST /api/v0/admin/work-items/query":                          "/api/v0/admin/work-items/query",
 	"POST /api/v0/admin/decisions/query":                           "/api/v0/admin/decisions/query",
 	"POST /api/v0/admin/dead-letters/query":                        "/api/v0/admin/dead-letters/query",
 	"POST /api/v0/admin/input-invalid-facts/query":                 "/api/v0/admin/input-invalid-facts/query",

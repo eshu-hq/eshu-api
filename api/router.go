@@ -5,51 +5,9 @@ package api
 
 import (
 	"net/http"
-	"net/url"
 
-	"github.com/eshu-hq/eshu-api/internal/credresolver"
 	"github.com/eshu-hq/eshu-api/openapi"
 )
-
-// Server holds the dependencies of the dispatch surface. It answers
-// health and readiness itself and proxies the authenticated /api/*
-// subtree to the configured core origin (see dispatch.go). The server
-// carries no credential: the key gates requests and crosses to the core
-// only in the Authorization header, never in logs or health output.
-// Telemetry (see telemetry.go) records per-family request, dispatch,
-// authorizer, and audit-drop signals plus the structured request log.
-type Server struct {
-	coreBaseURL string
-	apiKey      string
-	core        *url.URL
-	httpClient  *http.Client
-	telemetry   *Telemetry
-	credentials *credresolver.Resolver
-}
-
-// NewServer builds a Server that dispatches to coreBaseURL and gates
-// /api/* behind apiKey. An empty apiKey fails closed: every /api/*
-// request is denied until a key is configured. An empty or unparsable
-// origin fails closed too: dispatch answers the local 503 until a valid
-// origin is configured. Telemetry defaults to a log-silent registry;
-// use WithTelemetry to attach a logging one.
-func NewServer(coreBaseURL, apiKey string) *Server {
-	return &Server{
-		coreBaseURL: coreBaseURL,
-		apiKey:      apiKey,
-		core:        parseCoreOrigin(coreBaseURL),
-		httpClient:  dispatchClient(),
-		telemetry:   NewTelemetry(nil),
-	}
-}
-
-// WithTelemetry attaches tel as this server's signal registry and
-// returns the server for chaining. The binary wires its structured
-// logger here; tests attach capturing or discard registries.
-func (s *Server) WithTelemetry(tel *Telemetry) *Server {
-	s.telemetry = tel
-	return s
-}
 
 // writeError writes a status-coded JSON error in the caller's negotiated
 // shape: the envelope error section for envelope callers, the plain
@@ -283,8 +241,11 @@ func (s *Server) routes() *http.ServeMux {
 	// Native termination, AdminTuningReport (satellite
 	// eshu-hq/eshu-api#171): own anchor ahead of the D3 loops.
 	s.registerAdminTuningReport(mux)
+	// Native termination, AdminWorkItemsQuery (satellite
+	// eshu-hq/eshu-api#335): own anchor ahead of the D3 loops.
+	s.registerAdminWorkItemsQuery(mux)
 	// D3 admin/identity/recovery reads termination (Refs
-	// eshu-hq/eshu#9669): the 16 D1-pinned read routes register
+	// eshu-hq/eshu#9669): the 15 D1-pinned read routes register
 	// explicitly inside the D3 wave gate, ahead of the generic proxy.
 	// A valid shared key terminates on the native lane; a foreign
 	// credential class (scoped token, OIDC bearer, session cookie)
@@ -294,8 +255,9 @@ func (s *Server) routes() *http.ServeMux {
 	// spelling stays on the wave route for the same never-split
 	// reason. The 2 remaining Gap 02 Admin GETs (delta-union
 	// completeness, reindex progress) ride the trio registration
-	// below (tuning-report promoted to its own lane above); every
-	// other family still crosses its existing lane.
+	// below (tuning-report promoted to its own lane in #171,
+	// work-items query in #335); every other family still crosses
+	// its existing lane.
 	for _, entry := range d3Wave {
 		pattern := entry.Method + " " + entry.Path
 		gated := s.instrumented(viaNative, s.d3ReadGate(http.HandlerFunc(s.serveD3Terminated)))

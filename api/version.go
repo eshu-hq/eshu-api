@@ -117,7 +117,9 @@ const RecoveryAdmissionContractVersion = "v0"
 // ReadStore. It must move in lockstep with the in-tree
 // AdminReadAdmissionContractVersion; the vendored pin lives in
 // contracts/admin-read-admission.md. Reads over this port terminate
-// natively since the D3 lane (api/d3_wave.go); see
+// natively since the D3 lane (api/d3_wave.go), except the work-items
+// query which terminates on its own reader-role lane since
+// eshu-hq/eshu-api#335 (api/admin_workitems_terminate.go); see
 // contracts/d3-admin-reads.md.
 const AdminReadAdmissionContractVersion = "v0"
 
