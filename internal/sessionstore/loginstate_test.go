@@ -142,8 +142,11 @@ func TestLoginStateConsume_HappyPathReturnsStoredFields(t *testing.T) {
 			t.Fatalf("consume must be a single guarded UPDATE ... RETURNING with %q, got: %s", want, q)
 		}
 	}
-	if !strings.Contains(q, "expires_at") || !strings.Contains(q, ">") {
-		t.Fatalf("consume must carry the expires_at > now predicate, got: %s", q)
+	// Hermetic boundary guard: the strict expires_at > now form (not
+	// >=) is what makes expires_at == now dead. A > vs >= mutation
+	// must fail this test; the live fixture is the semantic backstop.
+	if !strings.Contains(upper, "EXPIRES_AT > ") {
+		t.Fatalf("consume must carry the strict expires_at > now predicate, got: %s", q)
 	}
 	for _, want := range []string{"provider_kind", "secondary_hash"} {
 		if !strings.Contains(strings.ToLower(q), want) {

@@ -27,7 +27,10 @@
 --     window. consumed_at stays NULL until the single atomic consume
 --     stamps it; expiry is enforced by the consume predicate, not by
 --     deletion — consumed and expired rows are retained as replay
---     evidence until a future out-of-band owner job purges them.
+--     evidence until a future out-of-band owner job purges them
+--     (tracked in eshu-hq/eshu-api#462; must land before or with G7
+--     handler wiring, after which unauthenticated callers can grow
+--     this table on every login attempt).
 --   No expires_at index: the primary-key row lock (not a scan) is
 --     the consume contention domain, and no serving sweeper exists
 --     to use one.
