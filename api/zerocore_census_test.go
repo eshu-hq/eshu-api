@@ -213,6 +213,18 @@ func zeroCoreCalleeFacts(decl *ast.FuncDecl) (callees []string, sinks []string) 
 					addSink("httpGet")
 				}
 			}
+			// Method values stored and called later (do :=
+			// s.httpClient.Do; do(req)) carry the sink without a
+			// call site here: mirror the call-site rules for bare
+			// mentions, or the value spelling evades the census
+			// while the call spelling is caught.
+			if sel.Sel.Name == "Do" {
+				addSink("httpDo")
+			}
+			if (sel.Sel.Name == "Get" || sel.Sel.Name == "Post" || sel.Sel.Name == "PostForm" || sel.Sel.Name == "Head") &&
+				zeroCoreClientish(sel.X, aliases) {
+				addSink("httpGet")
+			}
 			return true
 		}
 		call, ok := n.(*ast.CallExpr)

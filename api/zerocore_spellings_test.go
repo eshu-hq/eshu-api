@@ -36,6 +36,16 @@ func zeroCoreForeignDo() {
 	_, _ = http.DefaultClient.Do(nil)
 }
 
+func (s zeroCoreSpellingServer) zeroCoreMethodValueDo() {
+	do := s.httpClient.Do
+	_, _ = do(nil)
+}
+
+func (s zeroCoreSpellingServer) zeroCoreMethodValueGet() {
+	get := s.httpClient.Get
+	_, _ = get("http://core.invalid")
+}
+
 func zeroCoreBenignHeaderGet(h string) string {
 	return http.Header{"X-Test": []string{h}}.Get("X-Test")
 }
@@ -101,5 +111,32 @@ func TestZeroCore_CensusSpellingBenignHeaderGet(t *testing.T) {
 	chain := walkZeroCoreIndex(index, "zeroCoreBenignHeaderGet", index["zeroCoreBenignHeaderGet"])
 	if len(chain) != 0 {
 		t.Fatalf("header Get must stay silent, got chain %q", strings.Join(chain, " -> "))
+	}
+}
+
+// TestZeroCore_CensusSpellingMethodValueDo is the RED regression
+// test for the method-value evasion: do := s.httpClient.Do stored
+// and called later must report a chain, never an empty pass.
+func TestZeroCore_CensusSpellingMethodValueDo(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreSpellingServer.zeroCoreMethodValueDo", index["zeroCoreSpellingServer.zeroCoreMethodValueDo"])
+	if len(chain) == 0 {
+		t.Fatal("stored s.httpClient.Do value must report a core chain, got empty (census evasion)")
+	}
+}
+
+// TestZeroCore_CensusSpellingMethodValueGet is the RED regression
+// test for the method-value evasion on wrappers: get :=
+// s.httpClient.Get stored and called later must report a chain,
+// never an empty pass.
+func TestZeroCore_CensusSpellingMethodValueGet(t *testing.T) {
+	t.Parallel()
+
+	index := zeroCoreSpellingIndex(t)
+	chain := walkZeroCoreIndex(index, "zeroCoreSpellingServer.zeroCoreMethodValueGet", index["zeroCoreSpellingServer.zeroCoreMethodValueGet"])
+	if len(chain) == 0 {
+		t.Fatal("stored s.httpClient.Get value must report a core chain, got empty (census evasion)")
 	}
 }
