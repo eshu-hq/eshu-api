@@ -142,6 +142,17 @@ func (t *Telemetry) render() string {
 	writeCounter("eshu_api_authorizer_total",
 		"Family authorizer judgments by route family and decision.", authorizerRows)
 
+	var resolverRows []string
+	for _, outcome := range []string{"allow", "relay", "deny"} {
+		if count, ok := snap.resolver[outcome]; ok {
+			resolverRows = append(resolverRows, fmt.Sprintf(
+				`eshu_api_resolver_total{outcome="%s"} %d`,
+				outcome, count))
+		}
+	}
+	writeCounter("eshu_api_resolver_total",
+		"Unified credential resolutions by outcome class. No credential-class label: denials stay non-disclosing.", resolverRows)
+
 	var readinessRows []string
 	for _, result := range sortedKeys(snap.readiness) {
 		reasons := make([]string, 0, len(snap.readiness[result]))
