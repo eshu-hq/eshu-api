@@ -115,7 +115,7 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
     (`api/admin_inputinvalid_terminate.go:120-163`). Shared-key
     calls first validate the required limit (1-500) and timeout_ms
     (1-30000) dest-side with the core-identical 400 details
-    (`api/admin_inputinvalid_terminate.go:173-205`), then serve the
+    (`api/admin_inputinvalid_terminate.go:173-217`), then serve the
     pinned apilib bounded-list body
     (`apilibadmin.ServeInputInvalidFactsQuery`,
     `api/admin_inputinvalid_terminate.go:162`) filing `local_ok` on
