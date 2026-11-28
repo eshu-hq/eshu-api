@@ -13,9 +13,11 @@ import (
 )
 
 // CredentialRole names the PostgreSQL role a credential authenticates
-// as. Only the two least-privilege session roles exist: the read-write
-// role rides the primary, the read-only role rides the replica for
-// metadata-only lists. There is deliberately no superuser, owner, or
+// as. Only the three least-privilege session roles exist: the
+// read-write role rides the primary, the read-only role rides the
+// replica for metadata-only lists, and the purge role rides the
+// out-of-band login-state retention job only — it is never mounted
+// in the serving pods. There is deliberately no superuser, owner, or
 // shared 'dsn' role.
 type CredentialRole string
 
@@ -28,6 +30,10 @@ const (
 	// read replica: SELECT on metadata-only list surfaces. Never used
 	// for ResolveBrowserSession, which is a write.
 	RoleSessionRO CredentialRole = "eshu_api_session_ro"
+	// RoleSessionPurge authenticates as eshu_api_session_purge for the
+	// out-of-band login-state retention job: SELECT plus DELETE on
+	// login_states only. Never mounted in the serving pods.
+	RoleSessionPurge CredentialRole = "eshu_api_session_purge"
 )
 
 // Credential is one loaded database credential: its role plus an
@@ -66,7 +72,7 @@ func (c Credential) GoString() string { return c.String() }
 // optionally names a variable carrying the secret version for
 // audit. Empty input fails closed; unknown roles fail closed.
 func LoadCredentialFromEnv(role CredentialRole, dsnEnv, versionEnv string) (Credential, error) {
-	if role != RoleSessionRW && role != RoleSessionRO {
+	if role != RoleSessionRW && role != RoleSessionRO && role != RoleSessionPurge {
 		return Credential{}, fmt.Errorf("sessionstore: unknown credential role %q", role)
 	}
 	dsn := strings.TrimSpace(os.Getenv(dsnEnv))

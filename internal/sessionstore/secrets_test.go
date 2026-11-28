@@ -30,7 +30,7 @@ func TestLoadCredential_WhitespaceOnlyFailsClosed(t *testing.T) {
 func TestLoadCredential_UnknownRoleFailsClosed(t *testing.T) {
 	t.Setenv("ESHU_TEST_447_RW_DSN", "postgres://db:5432/eshu")
 	if _, err := LoadCredentialFromEnv(CredentialRole("superuser"), "ESHU_TEST_447_RW_DSN", ""); err == nil {
-		t.Fatal("unknown roles must fail closed: only the two least-privilege roles load")
+		t.Fatal("unknown roles must fail closed: only the three least-privilege roles load")
 	}
 }
 
@@ -100,6 +100,20 @@ func TestRotating_ReloadSwapsWithoutDroppingReaders(t *testing.T) {
 	wg.Wait()
 	if got := r.Get().Version(); got != next.Version() {
 		t.Fatalf("rotated version = %q, want %q", got, next.Version())
+	}
+}
+
+func TestLoadCredential_PurgeRoleLoads(t *testing.T) {
+	t.Setenv("ESHU_TEST_462_PURGE_DSN", "postgres://db:5432/eshu")
+	cred, err := LoadCredentialFromEnv(RoleSessionPurge, "ESHU_TEST_462_PURGE_DSN", "")
+	if err != nil {
+		t.Fatalf("purge role must load: %v", err)
+	}
+	if cred.Role() != RoleSessionPurge {
+		t.Fatalf("credential role = %q, want %q", cred.Role(), RoleSessionPurge)
+	}
+	if got := cred.String(); strings.Contains(got, "postgres://") {
+		t.Fatalf("purge credential String must redact the DSN, got: %s", got)
 	}
 }
 
