@@ -46,7 +46,7 @@ import (
 // backend text).
 //
 // Required fields (core parity, preserved dest-side because the
-// pinned apilib v0.2.0 defaults instead of requiring): limit
+// pinned apilib v0.2.1 defaults instead of requiring): limit
 // (1-500) and timeout_ms (1-30000) are required; the bounds and the
 // updated_after/updated_before RFC3339/ordering errors carry the
 // core-identical detail strings. The timeout also bounds the store
@@ -327,6 +327,26 @@ func TestAdminDeadLettersBoundedListParity(t *testing.T) {
 			if _, present := doc.Items[1][key]; present {
 				t.Errorf("second row keeps nil pointer %q: %v", key, doc.Items[1])
 			}
+		}
+	})
+
+	t.Run("window bounds pass through to the store", func(t *testing.T) {
+		t.Parallel()
+		store := &fakeDeadLetterStore{}
+		rec := serve(store, `{"limit":10,"timeout_ms":5000,"updated_after":"2026-03-04T06:06:07Z","updated_before":"2026-03-04T08:06:07Z"}`)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200 (%s)", rec.Code, rec.Body.String())
+		}
+		if store.calls != 1 {
+			t.Fatalf("store calls = %d, want 1", store.calls)
+		}
+		wantAfter := parseDeadLettersTime(t, "2026-03-04T06:06:07Z")
+		wantBefore := parseDeadLettersTime(t, "2026-03-04T08:06:07Z")
+		if store.got.UpdatedAfter == nil || !store.got.UpdatedAfter.Equal(wantAfter) {
+			t.Errorf("updated_after = %v, want %v", store.got.UpdatedAfter, wantAfter)
+		}
+		if store.got.UpdatedBefore == nil || !store.got.UpdatedBefore.Equal(wantBefore) {
+			t.Errorf("updated_before = %v, want %v", store.got.UpdatedBefore, wantBefore)
 		}
 	})
 

@@ -146,7 +146,7 @@ promoted in #335 and dead-letters in #324) and
 | 319 | `POST /api/v0/admin/changed-since/poisoned-links/query` | d3ReadGate-gated | `api/d3_wave.go:82` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
 | 321 | `POST /api/v0/admin/collector-failures/acknowledgements/query` | d3ReadGate-gated | `api/d3_wave.go:92` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
 | 322 | `POST /api/v0/admin/collector-failures/query` | d3ReadGate-gated | `api/d3_wave.go:93` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
-| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_deadletters_terminate.go:76`) | `api/router.go:249` via `s.d3ReadGate` + `serveAdminDeadLettersTerminated` | none — local `apilibadmin.ServeDeadLettersQuery` on the reader-role store (`local_ok`); required limit+timeout_ms enforced dest-side with core-identical 400s; foreign classes relay `api/d3_terminate.go:185` |
+| 324 | `POST /api/v0/admin/dead-letters/query` | d3ReadGate-gated, locally terminated | none (promoted; `api/admin_deadletters_terminate.go:76`) | `api/router.go:249` via `s.d3ReadGate` + `serveAdminDeadLettersTerminated` | none — local `apilibadmin.ServeDeadLettersQuery` (pinned apilib v0.2.1, no replace) on the reader-role store (`local_ok`); required limit+timeout_ms enforced dest-side with core-identical 400s; updated_after/updated_before validated dest-side and applied through the reader-store core-exact range; foreign classes relay `api/d3_terminate.go:185` |
 | 325 | `POST /api/v0/admin/decisions/query` | d3ReadGate-gated | `api/d3_wave.go:80` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
 | 326 | `POST /api/v0/admin/input-invalid-facts/query` | d3ReadGate-gated | `api/d3_wave.go:81` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
 | 332 | `POST /api/v0/admin/replay-events/query` | d3ReadGate-gated | `api/d3_wave.go:83` | `api/router.go:264-268` via `s.d3ReadGate` (`api/router.go:266`) | `api/d3_terminate.go:96` (`viaNative`); relay `api/d3_terminate.go:185` |
@@ -255,8 +255,9 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
   (`api/admin_deadletters_terminate_test.go`,
   `api/admin_deadletters_parity_test.go`, live reader proof
   `TestAdminReadDeadLettersLiveProof` in
-  `internal/adminread/adminread_live_test.go`). Each op's core-side
-  removal readiness is a separate claim this census does not make.
+  `internal/adminread/adminread_live_test.go`, windowed). Each op's
+  core-side removal readiness is a separate claim this census does
+  not make.
 - No `api/auth.go`, `api/d8*.go`, or other auth/D8 file was edited;
   `api/auth.go:189` is cited read-only as the `RequireAuth`
   definition site. `api/d3_terminate.go` is byte-identical: the
@@ -267,10 +268,10 @@ retire-unclaimed — `api/retireunclaimed.go:10-16`.
   behind each forward, and any census numbering authority outside
   this document's snapshot-order binding. The #324 lane validates
   `updated_after` / `updated_before` with the core-identical 400s
-  but does not apply the window: the pinned apilib v0.2.0 filter
-  surface carries no time bound, so success serves the unwindowed
-  page (a disclosed delta, not a parity break on any validated
-  error).
+  and applies the window through the reader store: the pinned
+  apilib v0.2.1 filter surface carries both bounds, and the store
+  renders the core-exact `updated_at` range (>= after inclusive,
+  < before exclusive).
 
 ## Migration verdict (ADR-0002 test)
 
@@ -296,8 +297,9 @@ termination):
   postgresql/read span plus the counting-transport zero in
   `api/admin_deadletters_terminate_test.go`, the required-field /
   bounds-error parity in
-  `TestAdminDeadLettersRequiredFieldsParity`, and the live PG proof
-  of the bounded join SELECT in
+  `TestAdminDeadLettersRequiredFieldsParity`, the windowed
+  success threading in `TestAdminDeadLettersBoundedListParity`,
+  and the live PG proof of the bounded join SELECT (windowed) in
   `TestAdminReadDeadLettersLiveProof`).
 The other 19 rows still end at `forwardToCore`
 (`api/dispatch.go:252`; lane tables `## Frozen baseline table`).

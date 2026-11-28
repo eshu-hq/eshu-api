@@ -97,6 +97,72 @@ func TestBuildListDeadLetterWorkItemsQueryCollectorKind(t *testing.T) {
 	}
 }
 
+// TestBuildListDeadLetterWorkItemsQueryWindow pins the core-exact
+// updated_at range: after inclusive (>=, the at-after row stays),
+// before exclusive (<, the at-before row drops), threaded as bind
+// args in core order (after CollectorKind, before the access clause
+// and the LIMIT).
+func TestBuildListDeadLetterWorkItemsQueryWindow(t *testing.T) {
+	t.Parallel()
+
+	after := time.Date(2026, 3, 4, 6, 6, 7, 0, time.UTC)
+	before := time.Date(2026, 3, 4, 8, 6, 7, 0, time.UTC)
+	query, args := buildListDeadLetterWorkItemsQuery(apilibadmin.DeadLetterListFilter{
+		CollectorKind: "ck",
+		UpdatedAfter:  &after,
+		UpdatedBefore: &before,
+		Limit:         10,
+	})
+	for _, clause := range []string{
+		"scope.collector_kind = $1",
+		"work.updated_at >= $2",
+		"work.updated_at < $3",
+		"ORDER BY work.updated_at DESC, work.work_item_id ASC LIMIT $4",
+	} {
+		if !strings.Contains(query, clause) {
+			t.Errorf("query lacks clause %q:\n%s", clause, query)
+		}
+	}
+	if len(args) != 4 {
+		t.Fatalf("args = %v, want 4 bound values", args)
+	}
+	if args[0] != "ck" || args[3] != 10 {
+		t.Errorf("args = %v, want [ck after before 10]", args)
+	}
+	if got, ok := args[1].(time.Time); !ok || !got.Equal(after) {
+		t.Errorf("args[1] = %v, want the after bound", args[1])
+	}
+	if got, ok := args[2].(time.Time); !ok || !got.Equal(before) {
+		t.Errorf("args[2] = %v, want the before bound", args[2])
+	}
+
+	afterOnly, afterOnlyArgs := buildListDeadLetterWorkItemsQuery(apilibadmin.DeadLetterListFilter{
+		UpdatedAfter: &after,
+	})
+	if !strings.Contains(afterOnly, "work.updated_at >= $1") {
+		t.Errorf("after-only query lacks the >= clause:\n%s", afterOnly)
+	}
+	if strings.Contains(strings.SplitN(afterOnly, "ORDER BY", 2)[0], "work.updated_at < $") {
+		t.Errorf("after-only query carries a before clause:\n%s", afterOnly)
+	}
+	if len(afterOnlyArgs) != 2 {
+		t.Errorf("after-only args = %v, want the bound plus the default limit", afterOnlyArgs)
+	}
+
+	beforeOnly, beforeOnlyArgs := buildListDeadLetterWorkItemsQuery(apilibadmin.DeadLetterListFilter{
+		UpdatedBefore: &before,
+	})
+	if !strings.Contains(beforeOnly, "work.updated_at < $1") {
+		t.Errorf("before-only query lacks the < clause:\n%s", beforeOnly)
+	}
+	if strings.Contains(strings.SplitN(beforeOnly, "ORDER BY", 2)[0], "work.updated_at >= $") {
+		t.Errorf("before-only query carries an after clause:\n%s", beforeOnly)
+	}
+	if len(beforeOnlyArgs) != 2 {
+		t.Errorf("before-only args = %v, want the bound plus the default limit", beforeOnlyArgs)
+	}
+}
+
 // TestBuildListDeadLetterWorkItemsQueryAccessClause pins the scoped
 // seam: granted repositories/scopes add the core-identical access
 // clause, and the empty-grant (shared-key, all-scopes) query carries

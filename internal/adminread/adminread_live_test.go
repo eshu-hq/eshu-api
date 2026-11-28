@@ -328,6 +328,20 @@ VALUES
 		t.Errorf("failure-class filter rows = %v, want [w4]", deadLetterRowIDs(classed))
 	}
 
+	// Windowed read: the core-exact updated_at range (>= after
+	// inclusive, < before exclusive). w2 sits exactly on the after
+	// bound (kept), w1 sits exactly on the before bound (dropped),
+	// and w4 falls below the window (dropped).
+	windowAfter := time.Date(2026, 3, 4, 6, 6, 7, 0, time.UTC)
+	windowBefore := time.Date(2026, 3, 4, 8, 6, 7, 0, time.UTC)
+	windowed, err := store.ListDeadLetterWorkItems(ctx, apilibadmin.DeadLetterListFilter{UpdatedAfter: &windowAfter, UpdatedBefore: &windowBefore})
+	if err != nil {
+		t.Fatalf("window filter: %v", err)
+	}
+	if len(windowed) != 1 || windowed[0].WorkItemID != "w2" {
+		t.Errorf("window filter rows = %v, want [w2]", deadLetterRowIDs(windowed))
+	}
+
 	// A canceled context fails the read: the store honors the
 	// caller's timeout bound instead of running unbounded.
 	canceled, stop := context.WithCancel(ctx)
@@ -391,6 +405,24 @@ VALUES
 	}
 	if len(roleItems) != 3 {
 		t.Errorf("reader-role rows = %d, want 3 (SELECT-only on both tables suffices)", len(roleItems))
+	}
+	// The windowed SELECT runs under the same SELECT-only grants:
+	// the reader role reads the bounded window (at-after w2 kept,
+	// at-before w1 dropped) with no extra privilege.
+	roleWindowAfter := time.Date(2026, 3, 4, 6, 6, 7, 0, time.UTC)
+	roleWindowBefore := time.Date(2026, 3, 4, 8, 6, 7, 0, time.UTC)
+	roleQuery, roleArgs := buildListDeadLetterWorkItemsQuery(apilibadmin.DeadLetterListFilter{UpdatedAfter: &roleWindowAfter, UpdatedBefore: &roleWindowBefore})
+	roleWindowRows, err := conn.Query(ctx, roleQuery, roleArgs...)
+	if err != nil {
+		t.Fatalf("reader-role window list: %v", err)
+	}
+	roleWindowItems, err := scanDeadLetters(roleWindowRows)
+	roleWindowRows.Close()
+	if err != nil {
+		t.Fatalf("reader-role window scan: %v", err)
+	}
+	if len(roleWindowItems) != 1 || roleWindowItems[0].WorkItemID != "w2" {
+		t.Errorf("reader-role window rows = %v, want [w2]", deadLetterRowIDs(roleWindowItems))
 	}
 	if _, err := conn.Exec(ctx, "INSERT INTO fact_work_items (work_item_id) VALUES ('wx')"); err == nil {
 		t.Error("reader-role write succeeded, want a permission refusal")

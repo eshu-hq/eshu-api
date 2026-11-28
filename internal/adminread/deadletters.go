@@ -72,11 +72,12 @@ type deadLetterRows interface {
 // buildListDeadLetterWorkItemsQuery renders the bounded dead-letter
 // reader SELECT: the core column set in core order over the
 // fact_work_items join to ingestion_scopes, optional equality/ANY
-// filters, and the updated_at DESC + work_item_id ASC page with a
-// LIMIT bind marker. An absent limit defaults to 100; selectors
-// trim, like the apilib handler already does for its own fields. The
-// access clause only binds when grants are present (never for the
-// shared-key lane); empty grants read unscoped.
+// filters, the core-exact updated_at range (>= after inclusive,
+// < before exclusive), and the updated_at DESC + work_item_id ASC
+// page with a LIMIT bind marker. An absent limit defaults to 100;
+// selectors trim, like the apilib handler already does for its own
+// fields. The access clause only binds when grants are present
+// (never for the shared-key lane); empty grants read unscoped.
 func buildListDeadLetterWorkItemsQuery(f apilibadmin.DeadLetterListFilter) (string, []any) {
 	var builder strings.Builder
 	builder.WriteString(`
@@ -112,6 +113,14 @@ WHERE work.status = 'dead_letter'
 	if value := strings.TrimSpace(f.CollectorKind); value != "" {
 		args = append(args, value)
 		_, _ = fmt.Fprintf(&builder, " AND scope.collector_kind = $%d\n", len(args))
+	}
+	if f.UpdatedAfter != nil {
+		args = append(args, *f.UpdatedAfter)
+		_, _ = fmt.Fprintf(&builder, " AND work.updated_at >= $%d\n", len(args))
+	}
+	if f.UpdatedBefore != nil {
+		args = append(args, *f.UpdatedBefore)
+		_, _ = fmt.Fprintf(&builder, " AND work.updated_at < $%d\n", len(args))
 	}
 	if len(f.AllowedRepositoryIDs) > 0 || len(f.AllowedScopeIDs) > 0 {
 		args = append(args, f.AllowedRepositoryIDs)

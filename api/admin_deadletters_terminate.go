@@ -52,17 +52,17 @@ import (
 // defect: it answers the apilib 503 locally and never forwards.
 //
 // Required fields (core parity, enforced dest-side because the
-// pinned apilib v0.2.0 defaults instead of requiring): limit (1-500)
+// pinned apilib v0.2.1 defaults instead of requiring): limit (1-500)
 // and timeout_ms (1-30000) are required; the bounds and the
 // updated_after/updated_before RFC3339/ordering errors carry the
 // core-identical detail strings. The timeout also bounds the store
 // call through the request context. The updated_after/updated_before
-// window is validated for parity but not applied: the pinned apilib
-// filter surface carries no time window, so success serves the
-// unwindowed page (disclosed in the census row).
+// window is validated for parity and applied: the pinned apilib
+// passes the bounds through to the filter, and the reader store
+// renders the core-exact updated_at range (>= after, < before).
 //
 // Admission pin: the apilib dead-letters contract v0 (the pinned
-// external apilib v0.2.0, no replace). The served bytes are the
+// external apilib v0.2.1, no replace). The served bytes are the
 // apilib ServeDeadLettersQuery rendering of the reader rows: {count,
 // items} with core field/RFC3339/pointer-omission parity — the
 // apilib handler owns that shape, this lane owns only the gate, the
