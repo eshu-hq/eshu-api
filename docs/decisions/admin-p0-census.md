@@ -73,7 +73,7 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
     route const (`api/admin_deadletters_terminate.go:76`), server
     store field (`api/server.go:34-38`), `WithDeadLetterStore`
     option (`api/admin_deadletters_terminate.go:90-97`), and handler
-    (`api/admin_deadletters_terminate.go:99-162`). Shared-key calls
+    (`api/admin_deadletters_terminate.go:99-163`). Shared-key calls
     first validate the required limit (1-500) and timeout_ms
     (1-30000) dest-side with the core-identical 400 details
     (`api/admin_deadletters_terminate.go:173-230`), then serve the
@@ -96,7 +96,7 @@ routes in the same D3 wave (6 `auth/admin` / `auth/local` GETs and 2
   `serveAdminWorkItemsTerminatedAs`
   (`api/admin_workitems_terminate.go:95-128`), and
   `serveAdminDeadLettersTerminatedAs`
-  (`api/admin_deadletters_terminate.go:122-162`).
+  (`api/admin_deadletters_terminate.go:122-163`).
 - **RequireAuth-native** — registered as
   `RequireAuth(s.apiKey, http.HandlerFunc(s.<family>WriteThrough))`
   (`RequireAuth` defined at `api/auth.go:189`; cited read-only, not
