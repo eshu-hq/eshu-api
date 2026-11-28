@@ -156,7 +156,6 @@ func sessionCookieValue(r *http.Request) (value string, hasCookie bool) {
 	if r.Header.Get("Cookie") == "" && len(r.Cookies()) == 0 {
 		return "", false
 	}
-	hasCookie = true
 	for _, c := range r.Cookies() {
 		if _, ok := sessionCookieNames[c.Name]; ok {
 			return c.Value, true

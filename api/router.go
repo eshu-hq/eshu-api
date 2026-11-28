@@ -24,9 +24,6 @@ type Server struct {
 	core        *url.URL
 	httpClient  *http.Client
 	telemetry   *Telemetry
-	// credentials is the N3 unified credential front (see
-	// api/credential.go). Nil or disabled reproduces the legacy
-	// relay-gate behavior; attach via WithCredentialResolver.
 	credentials *credresolver.Resolver
 }
 
