@@ -6,12 +6,11 @@
 // (github.com/eshu-hq/eshu/go/coreserve) and serves /readyz plus one auth
 // read against fixture stores with zero core-origin HTTP calls.
 //
-// Status: RED. The go/coreserve library does not exist yet in eshu-hq/eshu,
-// so `go test ./...` here fails resolving the import. Turning it green
-// requires, in order: (1) the core-side extraction of the nested
-// go/coreserve module (aliases for CoreServeDeps/CoreAuthWiring plus a
-// delegating NewCoreServeMux), (2) tag go/coreserve/v0.1.0, (3) add that
-// exact require to this module's go.mod. No replace directive may land in
-// the committed go.mod. Production paths (cmd/eshu-api, api/auth.go, all
+// Status: LANDED. The go/coreserve library is tagged v0.1.0 in
+// eshu-hq/eshu, this module requires exactly
+// github.com/eshu-hq/eshu/go/coreserve v0.1.0, and the proof command
+// `cd coreserveconsumer && go test ./... -count=1` passes locally and in
+// the coreserve-consumer CI job. No replace directive is present in the
+// committed go.mod. Production paths (cmd/eshu-api, api/auth.go, all
 // api/*_terminate.go leaves) stay untouched until P5.
 package coreserveconsumer
